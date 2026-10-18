@@ -1,4 +1,7 @@
+import { ArrowRight, Mic } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useLang } from './i18n/index.jsx'
 
 export const MAX_SECONDS = 8
 // A second tap this soon after starting is taken as a shaky double tap, not a stop.
@@ -18,48 +21,74 @@ function haptic() {
   }
 }
 
-// Hindi text with small English underneath.
-export function T({ hi, en }) {
-  return (
-    <>
-      <span className="hi">{hi}</span>
-      <span className="en" lang="en">
-        {en}
-      </span>
-    </>
-  )
+// navigate(), with a quick crossfade where the view transitions api exists (not with reduced motion).
+export function useGo() {
+  const navigate = useNavigate()
+  return (to, options) => navigate(to, { viewTransition: !reducedMotion(), ...options })
 }
 
-// What happened and what to do, per kind of failure (see api.js for the server kinds).
-const MESSAGES = {
-  offline: [
-    'Sunn के सर्वर से जुड़ नहीं पाए। देखें कि कंप्यूटर पर सर्वर चल रहा है, फिर दोबारा कोशिश करें।',
-    "can't reach the Sunn server. check that it is running on the computer, then try again.",
-  ],
-  gnani: [
-    'पहचान सेवा ने जवाब नहीं दिया। थोड़ी देर रुककर फिर से कोशिश करें।',
-    "the speech service didn't answer. wait a moment, then try again.",
-  ],
-  silent: ['आवाज़ नहीं मिली, फिर से बोलिए।', 'no sound heard, please speak again.'],
-  micDenied: [
-    'माइक की अनुमति नहीं मिली। ब्राउज़र की सेटिंग में माइक चालू करें, फिर सूरज दबाएँ।',
-    'the microphone is blocked. allow it in the browser settings, then tap the sun.',
-  ],
-  noMic: ['कोई माइक नहीं मिला। माइक जोड़ें, फिर सूरज दबाएँ।', 'no microphone found. connect one, then tap the sun.'],
-  insecure: ['माइक के लिए https वाला पता खोलें।', 'open the https address to use the microphone.'],
-  playback: ['आवाज़ नहीं चल पाई। वाक्य को फिर से दबाएँ।', "the sound didn't play. tap the phrase again."],
-  server: ['कुछ गड़बड़ हुई। फिर से कोशिश करें।', 'something went wrong. please try again.'],
+// The "Sunn" wordmark, linking home. Always Latin: it is the name, in both languages.
+export function Wordmark() {
+  const { t } = useLang()
+  return (
+    <Link to="/" className="wordmark-link" lang="en" aria-label={t('nav.home')} viewTransition={!reducedMotion()}>
+      Sunn
+    </Link>
+  )
 }
 
 export const failure = (kind) => Object.assign(new Error(kind), { kind })
 
-export function Alert({ error }) {
+// What happened and what to do, in the current language. A refusal the API explains with a
+// code (bad_login, email_taken…) gets its own words; anything else is worded by its kind.
+export function errorText({ t, has }, error) {
+  if (error.code && has(`error.${error.code}`)) {
+    return t(`error.${error.code}`, { minutes: Math.max(1, Math.ceil((error.retryAfter || 0) / 60)) })
+  }
+  return t(has(`error.${error.kind}`) ? `error.${error.kind}` : 'error.server')
+}
+
+export function Alert({ error, id }) {
+  const i18n = useLang()
   if (!error) return null
-  const [hi, en] = MESSAGES[error.kind] || MESSAGES.server
   return (
-    <p className="alert" role="alert">
-      <T hi={hi} en={error.kind === 'server' && error.status ? `${en} (${error.message})` : en} />
+    <p className="alert" role="alert" id={id}>
+      {errorText(i18n, error)}
     </p>
+  )
+}
+
+// EN / हिं, an outline pill. Switches the whole interface; the user's own phrases stay as stored.
+export function LangToggle() {
+  const { lang, setLang, t } = useLang()
+  return (
+    <div className="lang-toggle" role="group" aria-label={t('lang.label')}>
+      <button type="button" lang="en" aria-pressed={lang === 'en'} onClick={() => setLang('en')}>
+        EN
+      </button>
+      <span className="lang-slash" aria-hidden="true">
+        /
+      </span>
+      <button type="button" lang="hi" aria-pressed={lang === 'hi'} onClick={() => setLang('hi')}>
+        हिं
+      </button>
+    </div>
+  )
+}
+
+// The white pill: [mic | label →]. Used for "Start speaking" and every form's submit.
+export function Pill({ children, icon: Icon = Mic, arrow = true, className = '', ...props }) {
+  return (
+    <button type="button" className={`pill ${className}`} {...props}>
+      {Icon && (
+        <>
+          <Icon className="pill-icon" aria-hidden="true" strokeWidth={1.5} />
+          <span className="pill-divider" aria-hidden="true" />
+        </>
+      )}
+      <span className="pill-label">{children}</span>
+      {arrow && <ArrowRight className="pill-icon" aria-hidden="true" strokeWidth={1.5} />}
+    </button>
   )
 }
 
@@ -166,6 +195,7 @@ export function useRecorder(onDone) {
 // The record button. Breathes at rest, its corona follows the voice while recording,
 // and it slowly dims and brightens while `waiting` for Prisma.
 export function Sun({ recorder, onClick = recorder.toggle, waiting, disabled, label, compact }) {
+  const { t } = useLang()
   const state = recorder.recording ? 'recording' : waiting ? 'waiting' : ''
   return (
     <div className={`sun-wrap ${compact ? 'compact' : ''}`}>
@@ -184,19 +214,17 @@ export function Sun({ recorder, onClick = recorder.toggle, waiting, disabled, la
         <span className="sun-label">
           {recorder.recording ? (
             <>
-              <T hi="रोकने के लिए दबाएँ" en="tap to stop" />
-              <span className="seconds">
-                {recorder.seconds} / {MAX_SECONDS} सेकंड
-              </span>
+              {t('sun.stop')}
+              <span className="seconds">{t('sun.seconds', { seconds: recorder.seconds, max: MAX_SECONDS })}</span>
             </>
           ) : (
-            label || <T hi="बोलने के लिए दबाएँ" en="tap to speak" />
+            label || t('sun.tap')
           )}
         </span>
       </button>
       {waiting && (
         <p className="listening" role="status">
-          <T hi="सुन रहे हैं…" en="listening…" />
+          {t('sun.listening')}
         </p>
       )}
     </div>
