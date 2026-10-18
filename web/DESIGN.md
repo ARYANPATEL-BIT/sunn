@@ -1,0 +1,100 @@
+# Sunn design system
+
+## Direction
+Reference-led: the landing hero follows `web/reference/landing.png` (kept out of git) for layout,
+spacing, type and feel, with Sunn's own copy. Everything else (sections below the hero, login,
+signup, the app) uses the same visual language: a dark navy sky with one soft glow, a huge
+glowing wordmark, white pill buttons, outline pills, thin dividers and thin line icons.
+
+Sunn = hindi "sun" (listen). The app's record button is still a sun, the only warm thing on
+screen, and the recognized phrase still resolves from blurry to sharp, because unclear speech
+becomes clear. Accessibility is never traded for looks.
+
+## Colors (the only colors allowed)
+- night #030A18: the base, darkest areas, the veil, text on the white pill
+- navy #0A1A33: the wide outer halo of the glow
+- haze #8FB0D8: the glow's soft core; focus rings
+- mist #B4C3D8: secondary text, inactive controls
+- foam #F2F6FB: primary text, the white pill, outline pill borders (at 40%), dividers (at 14%)
+- genda #F2A93B: ONLY the app's sun and the recording state. Never on the landing or auth pages
+Text must pass WCAG AA (4.5:1) against the BRIGHTEST background pixel that can pass behind it,
+not the average.
+
+## Type
+- Anek Latin + Anek Devanagari everywhere, including the user's phrases (Tiro is gone). The
+  stack is `'Anek Latin', 'Anek Devanagari'`, so each script gets its own cut of the same design
+- Wordmark "Sunn": always Latin, in both languages (it is the name). Hero 96–208px, weight 500,
+  tight tracking, a soft white glow (layered text-shadows in foam and haze)
+- Headline 30–52px / 500. Section titles 32–48px / 500. Body 18px; secondary lines in mist
+- Phrases: enroll 44px, top candidate 48px, other candidates 30px, all 500
+- Devanagari line height 1.7 (`:lang(hi)`)
+
+## Language
+- One language on screen at a time, never stacked. EN / हिं toggle in the landing nav (between
+  the links and Sign in), on login/signup, and in the app header
+- Default hindi if the browser language starts with "hi", else english; remembered in
+  localStorage; `<html lang>` follows it
+- Every UI string goes through `t()` (`src/i18n/en.js`, `hi.js`, same keys). Hindi is written
+  the way an educated person in UP writes: polite "-इए" forms in sentences, "-ें" on buttons,
+  common English loanwords where people actually use them (ईमेल, पासवर्ड, साइन इन)
+- The user's own phrases are data: shown exactly as stored, tagged with the user's language
+
+## Components
+- White pill (primary): foam, night text, fully rounded, 56px (64px in the app). The start
+  button is [mic | label →]: lucide Mic, a thin vertical divider, the label, lucide ArrowRight,
+  and a soft glow (`.pill-glow`). Form submits are [label →]
+- Outline pill (secondary): transparent, 1px foam at 40%, fully rounded, 44px (64px hit area in
+  the app). Used for Sign in / Open app, the language toggle, Log out, Play back, Cancel
+- Text link: underlined, no box, for low-emphasis actions
+- Thin dividers: 1px foam at 14%, vertical between columns (hero feature strip, who it's for,
+  privacy) and horizontal between rows (steps, FAQ)
+- Icons: lucide-react, line only, stroke 1.25–1.5. Arrows are allowed (ArrowRight on pills,
+  arrows in the pipeline). No filled icons, no emoji
+- Inputs: big (60px), a visible label above (never placeholder-only), hint and error under the
+  field, the field with an error gets focus. Show/hide on passwords. Correct autocomplete
+- Panels: a 1px divider-colored border and a dark translucent fill, only where content is a
+  self-contained unit (the example panel, the pipeline steps)
+
+## Background
+- One `<SeaLight>` behind every page: fixed, full viewport, a WebGL shader of a soft navy glow
+  drifting slowly near the middle over night, with ±1.5% grain
+- Intensity / veil per page (`src/App.jsx`, `SEA`): landing 1.0 / 0, login and signup 0.8 /
+  0.25, speak 0.45 / 0.35, other app screens 0.55 / 0.45
+- No WebGL: a still CSS gradient of the same glow. Reduced motion: one frozen frame
+
+## Interaction
+- Touch targets: 44px minimum on the landing, 64px in the app (enlarged hit areas where the
+  visual pill is smaller)
+- Visible focus everywhere: a 2px haze ring with a night gap
+- Recording: tap to start, tap to stop, never press-and-hold. Auto-stop at 8s. Show seconds
+- Errors say what happened and what to do, in the current language
+- Anything that loops for more than 5 seconds (the example panel) has a pause button
+
+## Motion
+- Background: slow drift, never fast or flashy
+- Sun at rest: slow 6s breathing. Recording: corona driven by real mic volume. Waiting: dims
+  and brightens
+- Resolve: the top phrase goes from blur(14px) + transparent to sharp in ~600ms; the example
+  panel on the landing uses the same resolve
+- Page changes: a quick crossfade via the view transitions API
+- prefers-reduced-motion: frozen background, no breathing, no blur, instant changes, a static
+  ring while recording, the example panel paused on a finished example
+
+## Honesty
+No invented statistics, testimonials or logos, no medical claims, no "real-time translation".
+Example content is labelled "Example" / "उदाहरण". Features that aren't built yet say so
+("Coming next" on own voice). Promises on the privacy section must stay true in the code.
+
+## Banned
+Glassmorphism or frosted panels, gradients as decoration on UI elements, ALL CAPS labels,
+emoji, filled icons, colors outside the tokens, genda outside the app's sun and recording
+state, a second animated thing competing with the sun inside the app.
+
+## Pages
+- `/` landing: nav (wordmark · How it works · Who it's for · Privacy · EN/हिं · Sign in), hero
+  (wordmark, headline, two lines, start pill, feature strip), how it works (+ example panel),
+  your own voice, who it's for, under the hood (speech → Gnani Prisma → personal correction
+  layer → Gnani Timbre), privacy, FAQ, closing line + start pill, footer
+- `/login`, `/signup`: centered column, wordmark on top, labelled fields, white pill submit
+- `/app/enroll`, `/app/speak`, `/app/progress`: header (wordmark → `/`, EN/हिं, user name,
+  log out), bottom tabs with line icons, the sun

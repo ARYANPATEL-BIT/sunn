@@ -1,82 +1,75 @@
-import { useEffect, useState } from 'react'
-import * as api from './api.js'
+import { useEffect, useRef } from 'react'
+import { createBrowserRouter, Navigate, Outlet, RouterProvider, ScrollRestoration, useLocation } from 'react-router-dom'
+import AppShell from './AppShell.jsx'
+import { AuthProvider, RequireAuth } from './auth.jsx'
+import { LoginPage, SignupPage } from './AuthPages.jsx'
 import Enroll from './Enroll.jsx'
+import { LanguageProvider } from './i18n/index.jsx'
+import Landing from './Landing.jsx'
 import Progress from './Progress.jsx'
-import Setup from './Setup.jsx'
+import SeaLight from './SeaLight.jsx'
 import Speak from './Speak.jsx'
-import { T } from './ui.jsx'
 
-const USER_KEY = 'sunn.userId'
+// Background per page (DESIGN.md): light intensity, and the abyss veil over it.
+// The veils keep text at WCAG AA over the brightest pixel the light can reach (README: contrast).
+const SEA = { '/': [1, 0], '/login': [0.8, 0.25], '/signup': [0.8, 0.25], '/app/speak': [0.45, 0.35] }
+const SEA_DEFAULT = [0.55, 0.45]
 
-function loadUserId() {
-  try {
-    return Number(localStorage.getItem(USER_KEY)) || null
-  } catch {
-    return null
-  }
-}
+function Root() {
+  const { pathname } = useLocation()
+  const main = useRef(null)
+  const first = useRef(true)
+  const [intensity, veil] = SEA[pathname] || SEA_DEFAULT
 
-function saveUserId(id) {
-  try {
-    if (id) localStorage.setItem(USER_KEY, id)
-    else localStorage.removeItem(USER_KEY)
-  } catch {
-    // storage blocked (e.g. private mode): the user just has to set up again next time
-  }
-}
-
-const TABS = [
-  { id: 'enroll', hi: 'सिखाएँ', en: 'Enroll' },
-  { id: 'speak', hi: 'बोलें', en: 'Speak' },
-  { id: 'progress', hi: 'प्रगति', en: 'Progress' },
-]
-
-export default function App() {
-  const [userId, setUserId] = useState(loadUserId)
-  const [tab, setTab] = useState('speak')
-
-  function changeUser(id) {
-    saveUserId(id)
-    setUserId(id)
-  }
-
-  // A stored user the server no longer knows (e.g. the database was reset) goes back to setup.
+  // After a page change, move focus to the content for screen reader users.
   useEffect(() => {
-    if (userId) api.stats(userId).catch((e) => e.status === 404 && changeUser(null))
-  }, [userId])
-
-  if (!userId) {
-    return (
-      <main>
-        <Setup
-          onDone={(id) => {
-            changeUser(id)
-            setTab('enroll')
-          }}
-        />
-      </main>
-    )
-  }
+    if (first.current) return void (first.current = false)
+    main.current?.focus({ preventScroll: true })
+  }, [pathname])
 
   return (
     <>
-      <main className="with-tabs">
-        {tab === 'enroll' && <Enroll userId={userId} onPause={() => setTab('speak')} />}
-        {tab === 'speak' && <Speak userId={userId} />}
-        {tab === 'progress' && <Progress userId={userId} />}
-      </main>
-      <nav className="tabs">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            aria-current={tab === t.id ? 'page' : undefined}
-            onClick={() => setTab(t.id)}
-          >
-            <T hi={t.hi} en={t.en} />
-          </button>
-        ))}
-      </nav>
+      <SeaLight intensity={intensity} veil={veil} />
+      <div ref={main} tabIndex={-1} className="page">
+        <Outlet />
+      </div>
+      <ScrollRestoration />
     </>
+  )
+}
+
+const router = createBrowserRouter([
+  {
+    element: <Root />,
+    children: [
+      { path: '/', element: <Landing /> },
+      { path: '/login', element: <LoginPage /> },
+      { path: '/signup', element: <SignupPage /> },
+      {
+        path: '/app',
+        element: (
+          <RequireAuth>
+            <AppShell />
+          </RequireAuth>
+        ),
+        children: [
+          { index: true, element: <Navigate replace to="/app/speak" /> },
+          { path: 'enroll', element: <Enroll /> },
+          { path: 'speak', element: <Speak /> },
+          { path: 'progress', element: <Progress /> },
+        ],
+      },
+      { path: '*', element: <Navigate replace to="/" /> },
+    ],
+  },
+])
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </LanguageProvider>
   )
 }

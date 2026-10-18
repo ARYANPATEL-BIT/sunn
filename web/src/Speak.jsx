@@ -1,25 +1,41 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import * as api from './api.js'
-import { Alert, RecordButton, T, useRecorder } from './ui.jsx'
+import { useAuth } from './auth.jsx'
+import { useLang } from './i18n/index.jsx'
+import { Alert, failure, Pill, Sun, useGo, useRecorder } from './ui.jsx'
 
-export default function Speak({ userId }) {
+export default function Speak() {
+  const { t } = useLang()
+  const { user } = useAuth()
+  const go = useGo()
+  const [learned, setLearned] = useState(null) // phrases with at least one enrollment recording
   const [result, setResult] = useState(null) // the /recognize response
-  const [spoken, setSpoken] = useState(null) // { phrase_id, text } that was confirmed and said
+  const [spoken, setSpoken] = useState(null) // { phrase_id, text } chosen for this result
   const [typing, setTyping] = useState(false)
   const [newText, setNewText] = useState('')
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState(null) // 'listening' while Prisma works, 'playing' while Timbre speaks
   const [error, setError] = useState(null)
-  const recorder = useRecorder((blob) => run(async () => setResult(await api.recognize(userId, blob))))
+  const recorder = useRecorder((blob) =>
+    run('listening', async () => {
+      const response = await api.recognize(blob)
+      if (!response.hypothesis?.trim()) throw failure('silent')
+      setResult(response)
+    }),
+  )
 
-  async function run(action) {
-    setBusy(true)
+  useEffect(() => {
+    api.listPhrases().then((phrases) => setLearned(phrases.filter((p) => p.enrolled > 0).length), setError)
+  }, [])
+
+  async function run(kind, action) {
+    setBusy(kind)
     setError(null)
     try {
       await action()
     } catch (e) {
       setError(e)
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
 
@@ -34,86 +50,106 @@ export default function Speak({ userId }) {
     recorder.toggle()
   }
 
+  // Say the phrase aloud. Choosing a phrase also tells the bank what this recording was.
   function choose(candidate) {
-    setSpoken(candidate)
-    run(() =>
-      Promise.all([
-        api.say(candidate.text),
-        api.confirm(userId, { sample_id: result.sample_id, phrase_id: candidate.phrase_id }),
-      ]),
-    )
+    run('playing', async () => {
+      const confirmed =
+        spoken?.phrase_id !== candidate.phrase_id &&
+        api.confirm({ sample_id: result.sample_id, phrase_id: candidate.phrase_id })
+      setSpoken(candidate)
+      await Promise.all([api.say(candidate.text), confirmed])
+    })
   }
 
   function submitNewText(e) {
     e.preventDefault()
-    run(async () => {
-      const phrase = await api.confirm(userId, { sample_id: result.sample_id, new_text: newText.trim() })
+    run('playing', async () => {
+      const phrase = await api.confirm({ sample_id: result.sample_id, new_text: newText.trim() })
       setSpoken(phrase)
       setTyping(false)
       await api.say(phrase.text)
     })
   }
 
+  if (learned === 0) {
+    return (
+      <section className="screen narrow">
+        <h1>{t('speak.none')}</h1>
+        <p className="muted">{t('speak.noneBody')}</p>
+        <Pill icon={null} onClick={() => go('/app/enroll')}>
+          {t('speak.goTeach')}
+        </Pill>
+      </section>
+    )
+  }
+
   const candidates = result?.candidates ?? []
   const typed = spoken && !candidates.some((c) => c.phrase_id === spoken.phrase_id)
+  const shown = typed ? [spoken] : candidates
 
   return (
-    <section>
-      <RecordButton recorder={recorder} onClick={record} disabled={busy && !result} className="giant" />
-      <Alert error={error || recorder.error} />
+    <section className="screen speak">
+      <h1 className="visually-hidden">{t('speak.title')}</h1>
 
-      {busy && !result && (
-        <p className="big-message" role="status">
-          <T hi="समझ रहे हैं…" en="Working it out…" />
-        </p>
-      )}
-
-      {result && (
-        <div className="stack" aria-live="polite">
-          {typed && (
-            <button type="button" className="candidate top chosen" onClick={() => run(() => api.say(spoken.text))}>
-              {spoken.text}
-            </button>
-          )}
-          {candidates.length === 0 && !typed && (
-            <p className="big-message">
-              <T hi="कोई वाक्य नहीं मिला।" en="No phrase found." />
-            </p>
-          )}
-          {result.low_confidence && candidates.length > 0 && (
-            <p className="maybe">
-              <T hi="शायद" en="Maybe" />
-            </p>
-          )}
-          {candidates.map((c, i) => (
-            <button
-              key={c.phrase_id}
-              type="button"
-              className={`candidate ${i === 0 ? 'top' : ''} ${spoken?.phrase_id === c.phrase_id ? 'chosen' : ''}`}
-              onClick={() => choose(c)}
-              disabled={busy}
-            >
-              {c.text}
-            </button>
-          ))}
-
-          {typing ? (
-            <form className="stack" onSubmit={submitNewText}>
-              <label className="field">
-                <T hi="सही वाक्य लिखें" en="Type the correct phrase" />
-                <textarea value={newText} onChange={(e) => setNewText(e.target.value)} rows={2} autoFocus />
-              </label>
-              <button type="submit" className="primary" disabled={!newText.trim() || busy}>
-                <T hi="बोलें" en="Speak it" />
+      <div className="results" aria-live="polite">
+        {result && (
+          <div className="stack" key={result.sample_id}>
+            {result.low_confidence && !typed && candidates.length > 0 && <p className="maybe">{t('speak.maybe')}</p>}
+            {shown.length === 0 && <p>{t('speak.unknown')}</p>}
+            {shown.map((c, i) => (
+              <button
+                key={c.phrase_id}
+                type="button"
+                className={i === 0 ? 'candidate top' : 'candidate'}
+                onClick={() => choose(c)}
+                disabled={busy !== null}
+              >
+                <span lang={user.language}>{c.text}</span>
+                {spoken?.phrase_id === c.phrase_id && (
+                  <span className="said">{t(busy === 'playing' ? 'speak.playing' : 'speak.played')}</span>
+                )}
               </button>
-            </form>
-          ) : (
-            <button type="button" onClick={() => setTyping(true)} disabled={busy}>
-              <T hi="इनमें से कोई नहीं" en="None of these" />
-            </button>
-          )}
-        </div>
-      )}
+            ))}
+
+            {typing ? (
+              <form className="stack" onSubmit={submitNewText}>
+                <div className="field">
+                  <label htmlFor="new-text">{t('speak.typeLabel')}</label>
+                  <textarea
+                    id="new-text"
+                    lang={user.language}
+                    value={newText}
+                    onChange={(e) => setNewText(e.target.value)}
+                    rows={2}
+                    autoFocus
+                  />
+                </div>
+                <div className="actions">
+                  <button type="button" className="pill-outline" onClick={() => setTyping(false)}>
+                    {t('speak.cancel')}
+                  </button>
+                  <Pill type="submit" icon={null} disabled={!newText.trim() || busy !== null}>
+                    {t('speak.sayIt')}
+                  </Pill>
+                </div>
+              </form>
+            ) : (
+              <button type="button" className="link none" onClick={() => setTyping(true)} disabled={busy !== null}>
+                {t(shown.length ? 'speak.noneOfThese' : 'speak.typeIt')}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <Alert error={error || recorder.error} />
+      <Sun
+        recorder={recorder}
+        onClick={record}
+        waiting={busy === 'listening'}
+        disabled={busy === 'playing'}
+        compact={!!result}
+      />
     </section>
   )
 }

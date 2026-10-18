@@ -1,0 +1,55 @@
+# basic needs
+I need water
+I need the bathroom
+Help me sit up
+Help me lie down
+Turn me on my side
+I feel cold
+I feel hot
+Turn on the fan
+Turn off the light
+Give me my glasses
+# pain and health
+I'm in pain
+My head hurts
+My stomach hurts
+Give me my medicine
+Call the doctor
+I can't breathe properly
+I feel dizzy
+I feel uneasy
+I feel tired
+I'm fine
+# food and drink
+I'm hungry
+Give me some food
+I want tea
+I need milk
+A little more
+That's enough, I'm full
+Heat up the food
+It needs more salt
+I need warm water
+Give me something sweet
+# family
+Call my mother
+Call my father
+Phone my son
+Call my daughter
+Call my brother
+Call my sister
+Where is everyone
+Sit with me
+Don't leave me alone
+Make a phone call for me
+# greetings and politeness
+Hello
+Thank you
+Yes
+No
+Okay
+Sorry
+Wait a minute
+Good night
+How are you
+Very good

@@ -5,10 +5,13 @@ from contextlib import closing
 DB_PATH = "data/app.db"
 
 SCHEMA = """
+-- email is stored lowercased; password_hash is argon2. language is "hi" or "en".
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
-    language TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    language TEXT NOT NULL CHECK (language IN ('hi', 'en')),
     consent_given_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS phrases (
@@ -54,3 +57,12 @@ def execute(sql, params=()):
     with closing(sqlite3.connect(DB_PATH)) as conn, conn:
         conn.execute("PRAGMA foreign_keys = ON")
         return conn.execute(sql, params).lastrowid
+
+
+def delete_user(user_id):
+    """Remove a user and everything that references them, in one transaction."""
+    with closing(sqlite3.connect(DB_PATH)) as conn, conn:
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.execute("DELETE FROM samples WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM phrases WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))

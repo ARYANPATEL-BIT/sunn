@@ -9,7 +9,8 @@ from dotenv import load_dotenv
 
 # From https://docs.gnani.ai/api/STT/speech-to-text.md
 URL = "https://api.vachana.ai/stt/v3"
-LANGUAGE = "hi-IN"
+# A user's language ("hi" or "en") -> Prisma language_code. en-IN is Indian English.
+LANGUAGES = {"hi": "hi-IN", "en": "en-IN"}
 CACHE_DIR = "data/cache/prisma"
 
 
@@ -25,13 +26,23 @@ def to_wav(src_path, dst_path):
     )
 
 
-def transcribe(wav_path):
+def request_form(language):
+    return {"language_code": LANGUAGES[language], "format": "verbatim"}
+
+
+def cache_path(audio, language):
+    """Where the transcript of these wav bytes is cached. The language code is part of the
+    request, so it is part of the key too."""
+    key = hashlib.sha256(audio + repr(sorted(request_form(language).items())).encode("utf-8")).hexdigest()
+    return os.path.join(CACHE_DIR, f"{key}.json")
+
+
+def transcribe(wav_path, language="hi"):
     """Prisma transcript for a wav; calls Gnani only on a cache miss."""
-    form = {"language_code": LANGUAGE, "format": "verbatim"}
+    form = request_form(language)
     with open(wav_path, "rb") as f:
         audio = f.read()
-    key = hashlib.sha256(audio + repr(sorted(form.items())).encode("utf-8")).hexdigest()
-    path = os.path.join(CACHE_DIR, f"{key}.json")
+    path = cache_path(audio, language)
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
             return json.load(f)["transcript"]
