@@ -5,9 +5,10 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+import requests
 from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 import db
 import matcher
@@ -24,6 +25,14 @@ CORS_ORIGIN_REGEX = r"https?://(localhost|127\.0\.0\.1|10(\.\d+){3}|192\.168(\.\
 db.init()
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origin_regex=CORS_ORIGIN_REGEX, allow_methods=["*"], allow_headers=["*"])
+
+
+# Prisma/Timbre failures (network, HTTP error, unsuccessful response) come back as 502 with
+# source "gnani", so the app can tell them apart from its own server being unreachable.
+@app.exception_handler(requests.RequestException)
+@app.exception_handler(RuntimeError)
+def gnani_failed(request, exc):
+    return JSONResponse({"detail": str(exc), "source": "gnani"}, status_code=502)
 
 
 def now():
