@@ -83,8 +83,11 @@ def create_user(name: str = Body(), language: str = Body(), consent: Any = Body(
 
 @app.get("/users/{user_id}/phrases")
 def list_phrases(user_id: int):
+    """Every phrase with its number of enrollment recordings, so enrollment can resume."""
     get_user(user_id)
-    return db.rows("SELECT id, text FROM phrases WHERE user_id = ? ORDER BY id", (user_id,))
+    return db.rows("SELECT p.id, p.text, COUNT(s.id) AS enrolled FROM phrases p"
+                   " LEFT JOIN samples s ON s.phrase_id = p.id AND s.source = 'enroll'"
+                   " WHERE p.user_id = ? GROUP BY p.id ORDER BY p.id", (user_id,))
 
 
 @app.post("/users/{user_id}/phrases")
