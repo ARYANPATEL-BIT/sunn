@@ -10,7 +10,7 @@ import Progress from './Progress.jsx'
 import SeaLight from './SeaLight.jsx'
 import Speak from './Speak.jsx'
 
-// Background per page (DESIGN.md): light intensity, and the abyss veil over it.
+// Background per page (DESIGN.md): light intensity, and the sky veil over it.
 // The veils keep text at WCAG AA over the brightest pixel the light can reach (README: contrast).
 const SEA = { '/': [1, 0], '/login': [0.8, 0.25], '/signup': [0.8, 0.25], '/app/speak': [0.45, 0.35] }
 const SEA_DEFAULT = [0.55, 0.45]
