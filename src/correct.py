@@ -1,20 +1,12 @@
 import argparse
 import csv
 import sys
-import unicodedata
 from collections import defaultdict
 
-from rapidfuzz.distance import Levenshtein
+from matcher import normalize, recognize
 
 PREDICTIONS = "results/prisma_predictions.csv"
 BANK_SIZE = 2  # repetitions per prompt used for enrollment; the rest are held out
-
-
-def normalize(text):
-    # Script-agnostic: drop Unicode punctuation (incl. Devanagari danda) but keep
-    # letters and combining marks (matras, virama), so Hindi survives intact.
-    text = "".join(" " if unicodedata.category(c).startswith("P") else c for c in text.lower())
-    return " ".join(text.split())
 
 
 def load_predictions(speaker=None):
@@ -42,16 +34,6 @@ def enroll(speaker):
     return split_repetitions(load_predictions(speaker))[0]
 
 
-def recognize(hypothesis, bank, k=3):
-    """Top k phrases as (phrase, distance), lower distance = closer match."""
-    hyp = normalize(hypothesis)
-    best = {}
-    for entry in bank:
-        dist = Levenshtein.normalized_distance(hyp, entry["prisma_hypothesis"])
-        best[entry["phrase"]] = min(dist, best.get(entry["phrase"], 1.0))
-    return sorted(best.items(), key=lambda item: item[1])[:k]
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--speaker", required=True)
@@ -65,5 +47,5 @@ if __name__ == "__main__":
             print(f"{entry['phrase']!r:30} <- {entry['prisma_hypothesis']!r}")
         print(f"{len(bank)} bank entries, {len({e['phrase'] for e in bank})} phrases")
     else:
-        for phrase, dist in recognize(args.hypothesis, bank):
-            print(f"{dist:.3f}  {phrase}")
+        for phrase, score in recognize(args.hypothesis, bank):
+            print(f"{score:5.1f}  {phrase}")
