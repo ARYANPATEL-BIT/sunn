@@ -3,11 +3,16 @@ name = "sunn"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.143.3",
+    "imageio-ffmpeg>=0.6.0",
+    "indic-transliteration>=2.3.82",
     "jiwer>=4.0.0",
     "librosa>=1.0.0",
     "matplotlib>=3.11.2",
     "python-dotenv>=1.2.4",
+    "python-multipart>=0.0.32",
     "rapidfuzz>=3.14.6",
     "requests>=2.34.2",
     "soundfile>=0.14.0",
+    "uvicorn>=0.54.0",
 ]
