@@ -1,12 +1,26 @@
 const BASE = import.meta.env.VITE_API_URL || '/api'
 
+// Every failure becomes an Error with a kind the screens turn into a direction:
+// offline (our server can't be reached), gnani (Prisma/Timbre failed), server (anything else).
+function apiError(kind, detail, status) {
+  const error = new Error(detail || kind)
+  error.kind = kind
+  error.status = status
+  return error
+}
+
 async function request(path, options) {
-  const res = await fetch(BASE + path, options)
+  let res
+  try {
+    res = await fetch(BASE + path, options)
+  } catch {
+    throw apiError('offline')
+  }
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    const error = new Error(body.detail || `HTTP ${res.status}`)
-    error.status = res.status
-    throw error
+    const body = await res.json().catch(() => null)
+    // The dev proxy answers 502 with an empty body when the API isn't running.
+    if (!body) throw apiError(res.status >= 502 ? 'offline' : 'server', null, res.status)
+    throw apiError(body.source === 'gnani' ? 'gnani' : 'server', body.detail, res.status)
   }
   return res
 }
@@ -21,11 +35,11 @@ function upload(path, blob, fields = {}) {
   return request(path, { method: 'POST', body: form })
 }
 
-export const createUser = (name) =>
-  post('/users', { name, language: 'hi-IN', consent: true }).then((r) => r.json())
+export const createUser = (name) => post('/users', { name, language: 'hi', consent: true }).then((r) => r.json())
 
 export const loadDefaultPhrases = (userId) => post(`/users/${userId}/phrases/default`).then((r) => r.json())
 
+// [{ id, text, enrolled }]: enrolled is the number of saved enrollment recordings
 export const listPhrases = (userId) => request(`/users/${userId}/phrases`).then((r) => r.json())
 
 export const enroll = (userId, phraseId, blob) =>
@@ -38,7 +52,7 @@ export const confirm = (userId, body) => post(`/users/${userId}/confirm`, body).
 
 export const stats = (userId) => request(`/users/${userId}/stats`).then((r) => r.json())
 
-// Speak text aloud with the API's text-to-speech.
+// Speak text aloud with Gnani Timbre (through the API).
 export async function say(text) {
   const blob = await post('/speak', { text }).then((r) => r.blob())
   await play(blob)
@@ -47,10 +61,14 @@ export async function say(text) {
 let player = null
 
 // Play an audio blob, stopping whatever was playing before.
-export function play(blob) {
+export async function play(blob) {
   player?.pause()
   const url = URL.createObjectURL(blob)
   player = new Audio(url)
   player.onended = () => URL.revokeObjectURL(url)
-  return player.play()
+  try {
+    await player.play()
+  } catch {
+    throw apiError('playback')
+  }
 }
