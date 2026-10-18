@@ -1,11 +1,15 @@
 /* Tokens from DESIGN.md. No other colors are used. */
 :root {
-  --night: #030a18; /* the base: deep navy, almost black */
-  --navy: #0a1a33; /* lifted navy, the body of the glow */
+  --night: #030a18; /* text on the white pill, the gap in focus rings */
   --haze: #8fb0d8; /* the soft blue of the glow's core; focus rings */
   --mist: #b4c3d8; /* secondary text */
   --foam: #f2f6fb; /* primary text, the white pill (night text on it) */
-  --genda: #f2a93b; /* ONLY the app's sun and the recording state */
+  --saffron: #f39a2b; /* the app's sun and the recording state; the dusk in the background */
+  /* Aurora dusk, the background (SeaLight.jsx). Never on UI elements. */
+  --sky: #07071a; /* its base */
+  --teal: #0f5e73;
+  --violet: #5b3fd1;
+  --magenta: #c2306b;
   --line: rgb(242 246 251 / 0.14); /* thin dividers */
   --line-strong: rgb(242 246 251 / 0.4); /* outline pills */
 
@@ -28,7 +32,7 @@
   font-size: 18px;
   line-height: 1.6;
   color: var(--foam);
-  background: var(--night);
+  background: var(--sky);
   color-scheme: dark;
   -webkit-font-smoothing: antialiased;
 }
@@ -44,7 +48,7 @@
 
 body {
   margin: 0;
-  background: var(--night);
+  background: var(--sky);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -123,16 +127,18 @@ svg {
   height: 100%;
 }
 
-/* Without WebGL: a still approximation of the same glow */
+/* Without WebGL: a still version of the same sky */
 .sea-fallback {
   background:
-    radial-gradient(ellipse 40% 34% at 50% 40%, rgb(143 176 216 / 0.22), transparent),
-    radial-gradient(ellipse 80% 70% at 50% 45%, var(--navy), transparent);
+    radial-gradient(ellipse 45% 30% at 50% 112%, rgb(243 154 43 / 0.2), transparent),
+    radial-gradient(ellipse 60% 30% at 60% 84%, rgb(194 48 107 / 0.3), transparent),
+    radial-gradient(ellipse 70% 30% at 40% 40%, rgb(91 63 209 / 0.3), transparent),
+    radial-gradient(ellipse 90% 40% at 50% 14%, rgb(15 94 115 / 0.6), transparent);
   transition: opacity 800ms ease;
 }
 
 .sea-veil {
-  background: var(--night);
+  background: var(--sky);
   transition: opacity 800ms ease;
 }
 
@@ -1303,14 +1309,14 @@ legend + * {
 }
 
 .disc {
-  background: var(--genda);
+  background: var(--saffron);
   transition: transform 150ms ease;
 }
 
 /* The glow. --level (0..1) is the real mic volume, set by useRecorder while recording. */
 .corona {
-  background: rgb(242 169 59 / 0.3);
-  box-shadow: 0 0 48px 16px rgb(242 169 59 / 0.4);
+  background: rgb(243 154 43 / 0.3);
+  box-shadow: 0 0 48px 16px rgb(243 154 43 / 0.4);
   opacity: calc(0.4 + var(--level, 0) * 0.6);
   transform: scale(calc(1 + var(--level, 0) * 0.5));
   transition:
@@ -1752,7 +1758,7 @@ legend + * {
   .sun.recording .disc {
     box-shadow:
       0 0 0 8px var(--night),
-      0 0 0 12px var(--genda);
+      0 0 0 12px var(--saffron);
   }
 
   .listening {
