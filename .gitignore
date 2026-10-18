@@ -5,3 +5,6 @@ data/torgo/
 data/app.db
 data/users/
 data/cache/
+web/node_modules/
+web/dist/
+web/.env
