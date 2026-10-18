@@ -18,7 +18,7 @@ These scripts make no Gnani calls; they only reuse Prisma hypotheses already in 
 # enrollment: show a speaker's phrase bank (first 2 repetitions of each prompt said 3+ times)
 uv run src/correct.py --speaker F01
 
-# recognize: top 3 bank phrases for a new Prisma hypothesis (lower distance = closer)
+# recognize: top 3 bank phrases for a new Prisma hypothesis (score 0-100, higher = closer)
 uv run src/correct.py --speaker F01 --hypothesis "hell me"
 
 # evaluate on the held-out repetitions -> results/correction.csv, results/correction.png
@@ -34,3 +34,23 @@ Sends one Hindi text to Gnani Timbre v2.5 (voice Nalini, hi-IN). Audio is cached
 uv run src/speak.py                          # default text
 uv run src/speak.py --text "मुझे पानी चाहिए"  # -> results/tts_test.wav
 ```
+
+## Backend
+
+A user enrolls phrases by speaking them, then speaks freely and gets the top 3 enrolled
+phrases back; the chosen one is spoken with Timbre v2.5. Uploads (webm/ogg from the
+browser) are converted to 16 kHz mono WAV with the ffmpeg bundled in `imageio-ffmpeg`.
+Data lives in `data/app.db` and `data/users/<user_id>/`; every Prisma and Timbre response
+is cached under `data/cache/` by audio/text hash, so the same recording or text is never
+sent twice. Default phrases: `data/default_phrases_hi.txt`.
+
+```powershell
+# API on all interfaces so a phone on the same Wi-Fi can reach it; docs at http://localhost:8000/docs
+uv run uvicorn api:app --app-dir src --host 0.0.0.0 --port 8000
+
+# in a second terminal: create a user, add default phrases, enroll 2 of them, recognize the first
+uv run scripts/smoke_test.py first.wav second.wav
+```
+
+The smoke test makes 2 Prisma calls (one per enrollment); the recognize step reuses the
+first recording's cached transcript.

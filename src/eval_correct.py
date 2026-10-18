@@ -3,7 +3,8 @@ import os
 
 import matplotlib.pyplot as plt
 
-from correct import load_predictions, normalize, recognize, split_repetitions
+from correct import load_predictions, split_repetitions
+from matcher import normalize, recognize
 
 OUT_CSV = "results/correction.csv"
 OUT_PNG = "results/correction.png"
