@@ -1,130 +1,75 @@
-import { useEffect, useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
-import * as api from './api.js'
+import { useEffect, useRef } from 'react'
+import { createBrowserRouter, Navigate, Outlet, RouterProvider, ScrollRestoration, useLocation } from 'react-router-dom'
+import AppShell from './AppShell.jsx'
+import { AuthProvider, RequireAuth } from './auth.jsx'
+import { LoginPage, SignupPage } from './AuthPages.jsx'
 import Enroll from './Enroll.jsx'
+import { LanguageProvider } from './i18n/index.jsx'
 import Landing from './Landing.jsx'
 import Progress from './Progress.jsx'
 import SeaLight from './SeaLight.jsx'
-import Setup from './Setup.jsx'
 import Speak from './Speak.jsx'
-import { reducedMotion, T } from './ui.jsx'
 
-const USER_KEY = 'sunn.userId'
-
-function loadUserId() {
-  try {
-    return Number(localStorage.getItem(USER_KEY)) || null
-  } catch {
-    return null
-  }
-}
-
-function saveUserId(id) {
-  try {
-    if (id) localStorage.setItem(USER_KEY, id)
-    else localStorage.removeItem(USER_KEY)
-  } catch {
-    // storage blocked (e.g. private mode): the user just has to set up again next time
-  }
-}
-
-const SCREENS = { '/': Landing, '/setup': Setup, '/learn': Enroll, '/speak': Speak, '/progress': Progress }
-
-// Background per screen (DESIGN.md): light intensity, and the abyss veil over it.
+// Background per page (DESIGN.md): light intensity, and the abyss veil over it.
 // The veils keep text at WCAG AA over the brightest pixel the light can reach (README: contrast).
-const SEA = { '/': [1, 0.2], '/speak': [0.4, 0.4] }
-const SEA_DEFAULT = [0.55, 0.5]
+const SEA = { '/': [1, 0], '/login': [0.8, 0.25], '/signup': [0.8, 0.25], '/app/speak': [0.45, 0.35] }
+const SEA_DEFAULT = [0.55, 0.45]
 
-const TABS = [
-  { path: '/learn', hi: 'सीखें', en: 'learn' },
-  { path: '/speak', hi: 'बोलें', en: 'speak' },
-  { path: '/progress', hi: 'प्रगति', en: 'progress' },
-]
-
-// Swap screens with a quick crossfade where the view transitions api exists.
-function transition(update) {
-  if (!document.startViewTransition || reducedMotion()) update()
-  else document.startViewTransition(() => flushSync(update))
-}
-
-export default function App() {
-  const [userId, setUserId] = useState(loadUserId)
-  const [path, setPath] = useState(location.pathname)
+function Root() {
+  const { pathname } = useLocation()
   const main = useRef(null)
   const first = useRef(true)
+  const [intensity, veil] = SEA[pathname] || SEA_DEFAULT
 
-  // Unknown paths show the landing page; app screens need a user, so they go to setup first.
-  let screen = path in SCREENS ? path : '/'
-  if (!userId && screen !== '/') screen = '/setup'
-
-  function navigate(to) {
-    if (to === location.pathname) return
-    history.pushState(null, '', to)
-    transition(() => setPath(to))
-  }
-
-  function changeUser(id) {
-    saveUserId(id)
-    setUserId(id)
-  }
-
-  useEffect(() => {
-    const back = () => transition(() => setPath(location.pathname))
-    addEventListener('popstate', back)
-    return () => removeEventListener('popstate', back)
-  }, [])
-
-  useEffect(() => {
-    if (screen !== location.pathname) history.replaceState(null, '', screen)
-  }, [screen])
-
-  // After a screen change: start at the top, and move focus there for screen reader users.
+  // After a page change, move focus to the content for screen reader users.
   useEffect(() => {
     if (first.current) return void (first.current = false)
-    scrollTo(0, 0)
-    main.current.focus({ preventScroll: true })
-  }, [screen])
-
-  // A stored user the server no longer knows (e.g. the database was reset) goes back to setup.
-  useEffect(() => {
-    if (userId) api.stats(userId).catch((e) => e.status === 404 && changeUser(null))
-  }, [userId])
-
-  const Screen = SCREENS[screen]
-  const [intensity, veil] = SEA[screen] || SEA_DEFAULT
-  const tabs = TABS.some((t) => t.path === screen)
+    main.current?.focus({ preventScroll: true })
+  }, [pathname])
 
   return (
     <>
       <SeaLight intensity={intensity} veil={veil} />
-      <main ref={main} tabIndex={-1} className={tabs ? 'with-tabs' : ''}>
-        <Screen
-          userId={userId}
-          navigate={navigate}
-          onStart={() => navigate(userId ? '/speak' : '/setup')}
-          onDone={(id) => {
-            changeUser(id)
-            navigate('/learn')
-          }}
-        />
-      </main>
-      {tabs && (
-        <nav className="tabs">
-          {TABS.map((t) => (
-            <a
-              key={t.path}
-              href={t.path}
-              aria-current={screen === t.path ? 'page' : undefined}
-              onClick={(e) => {
-                e.preventDefault()
-                navigate(t.path)
-              }}
-            >
-              <T hi={t.hi} en={t.en} />
-            </a>
-          ))}
-        </nav>
-      )}
+      <div ref={main} tabIndex={-1} className="page">
+        <Outlet />
+      </div>
+      <ScrollRestoration />
     </>
+  )
+}
+
+const router = createBrowserRouter([
+  {
+    element: <Root />,
+    children: [
+      { path: '/', element: <Landing /> },
+      { path: '/login', element: <LoginPage /> },
+      { path: '/signup', element: <SignupPage /> },
+      {
+        path: '/app',
+        element: (
+          <RequireAuth>
+            <AppShell />
+          </RequireAuth>
+        ),
+        children: [
+          { index: true, element: <Navigate replace to="/app/speak" /> },
+          { path: 'enroll', element: <Enroll /> },
+          { path: 'speak', element: <Speak /> },
+          { path: 'progress', element: <Progress /> },
+        ],
+      },
+      { path: '*', element: <Navigate replace to="/" /> },
+    ],
+  },
+])
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </LanguageProvider>
   )
 }
