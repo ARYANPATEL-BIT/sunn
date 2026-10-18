@@ -1,24 +1,76 @@
+import { Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import * as api from './api.js'
-import { Alert, T } from './ui.jsx'
+import { useAuth } from './auth.jsx'
+import { useLang } from './i18n/index.jsx'
+import { Alert, useGo } from './ui.jsx'
 
-export default function Progress({ userId }) {
+// Delete the account: one tap opens a plain confirmation, a second one deletes.
+function DeleteAccount() {
+  const { t } = useLang()
+  const { logout } = useAuth()
+  const go = useGo()
+  const [asking, setAsking] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function remove() {
+    setBusy(true)
+    setError(null)
+    try {
+      await api.deleteAccount()
+      await logout()
+      go('/', { replace: true })
+    } catch (e) {
+      setError(e)
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="danger" aria-labelledby="your-data">
+      <h2 id="your-data">{t('progress.deleteTitle')}</h2>
+      {asking ? (
+        <div className="stack" role="group" aria-labelledby="delete-warning">
+          <p id="delete-warning">{t('progress.deleteConfirm')}</p>
+          <Alert error={error} />
+          <div className="actions">
+            <button type="button" className="pill-outline" onClick={() => setAsking(false)} disabled={busy} autoFocus>
+              {t('progress.deleteNo')}
+            </button>
+            <button type="button" className="pill-outline destructive" onClick={remove} disabled={busy}>
+              <Trash2 aria-hidden="true" strokeWidth={1.5} />
+              <span>{t(busy ? 'progress.deleting' : 'progress.deleteYes')}</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button type="button" className="link" onClick={() => setAsking(true)}>
+          {t('progress.delete')}
+        </button>
+      )}
+    </section>
+  )
+}
+
+export default function Progress() {
+  const { t } = useLang()
   const [stats, setStats] = useState(null)
   const [error, setError] = useState(null)
 
   const load = () => {
     setError(null)
-    api.stats(userId).then(setStats, setError)
+    api.stats().then(setStats, setError)
   }
-  useEffect(load, [userId])
+  useEffect(load, [])
 
   if (!stats) {
     return (
       <section className="screen narrow">
         <Alert error={error} />
         {error && (
-          <button type="button" className="secondary" onClick={load}>
-            <T hi="फिर से कोशिश करें" en="try again" />
+          <button type="button" className="pill-outline" onClick={load}>
+            {t('error.retry')}
           </button>
         )}
       </section>
@@ -27,35 +79,25 @@ export default function Progress({ userId }) {
 
   const hitRate = stats.top1_hit_rate === null ? '–' : `${Math.round(stats.top1_hit_rate * 100)}%`
   const numbers = [
-    { value: stats.phrases, hi: 'वाक्य', en: 'phrases' },
-    { value: stats.enroll_samples, hi: 'सिखाने की रिकॉर्डिंग', en: 'teaching recordings' },
-    { value: stats.recognitions, hi: 'बार बोला', en: 'times spoken' },
-    { value: hitRate, hi: 'पहला अनुमान सही', en: 'first guess right' },
+    { value: stats.phrases, key: 'progress.phrases' },
+    { value: stats.enroll_samples, key: 'progress.teaching' },
+    { value: stats.recognitions, key: 'progress.spoken' },
+    { value: hitRate, key: 'progress.firstRight' },
   ]
 
   return (
     <section className="screen">
-      <h1>
-        <T hi="प्रगति" en="progress" />
-      </h1>
+      <h1>{t('progress.title')}</h1>
       <dl className="numbers">
         {numbers.map((n) => (
-          <div key={n.en}>
-            <dt>
-              <T hi={n.hi} en={n.en} />
-            </dt>
-            <dd lang="en">{n.value}</dd>
+          <div key={n.key}>
+            <dt>{t(n.key)}</dt>
+            <dd>{n.value}</dd>
           </div>
         ))}
       </dl>
-      {stats.recognitions === 0 && (
-        <p className="hint">
-          <T
-            hi="अभी तक कुछ नहीं बोला गया। बोलें में सूरज दबाकर शुरू करें।"
-            en="nothing spoken yet. tap the sun in speak to start."
-          />
-        </p>
-      )}
+      {stats.recognitions === 0 && <p className="muted">{t('progress.nothing')}</p>}
+      <DeleteAccount />
     </section>
   )
 }
