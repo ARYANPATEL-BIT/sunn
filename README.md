@@ -57,9 +57,12 @@ first recording's cached transcript.
 
 ## Frontend
 
-Vite + React app in `web/` for patients and caregivers: setup with consent, enrollment
-(each phrase recorded 3 times; leave any time and it resumes at the first unfinished
-phrase), the speak screen, and progress numbers from `/stats`.
+Vite + React app in `web/`, plain CSS, no UI libraries. The design system is
+`web/DESIGN.md`. Routes: `/` landing, `/setup` (name and consent, then the default
+phrases), `/learn` (each phrase recorded 3 times, resumes at the first unfinished phrase),
+`/speak` (tap the sun, tap again to stop, then choose the phrase to say it aloud) and
+`/progress`. The background is one WebGL shader (`web/src/SeaLight.jsx`). It drops to a
+still CSS version without WebGL, and to a single frozen frame with reduced motion.
 
 ```powershell
 cd web
@@ -71,12 +74,31 @@ npm run dev                   # serves https://localhost:5173 and https://<your-
 Run the API (see Backend) at the same time. The dev server proxies `/api` to
 `http://localhost:8000`, so only port 5173 needs to be reachable from the phone.
 
+### The certificate warning
+
+The dev server uses a self-signed certificate (`@vitejs/plugin-basic-ssl`). The page has
+to be https because browsers only allow the microphone on secure pages. So the first
+visit shows a warning, which is expected:
+
+- Chrome / Edge: **Advanced** → **Proceed to … (unsafe)**
+- Firefox: **Advanced…** → **Accept the Risk and Continue**
+- Safari (iPhone): **Show Details** → **visit this website** → **Visit Website**
+
 ### On a phone
 
 1. Connect the phone to the same Wi-Fi as the computer.
 2. Open the `Network:` address that `npm run dev` prints, e.g. `https://192.168.1.20:5173`.
-3. The certificate is self-signed, so the browser warns once: choose Advanced → Proceed.
-   The page has to be https, because phones only allow the microphone on secure pages.
+3. Click through the certificate warning (above).
 4. Allow the microphone when asked.
 
 If the phone can't connect, allow Node.js through Windows Firewall on private networks.
+
+### Contrast
+
+Text must pass WCAG AA against the brightest pixel the light can put behind it, not the
+average. Each screen sets the light intensity and an abyss veil over it in `web/src/App.jsx`
+(`SEA`). The landing page also puts a soft radial darkening (`.scrim`) behind its text.
+These values were checked by replaying the shader on the CPU to find its brightest pixel
+(grain at +3%), then testing every text box on every screen at 360px and 1280px wide.
+Worst case per screen: landing 5.2:1 (footer line), setup, learn and progress 4.9:1,
+speak 5.0:1. Raising an intensity or lowering a veil needs that check again.
