@@ -140,8 +140,9 @@ server while it runs, so stop the tunnel (Ctrl+C) when you're done.
 ### Contrast
 
 Text must pass WCAG AA against the brightest pixel the light can put behind it, not the
-average. Each page sets the light intensity and a night veil over it in `web/src/App.jsx`
-(`SEA`). Checked by computing the shader's brightest possible pixel (all three lights on top
-of each other, grain at +1.5%) for each page: secondary text (mist) is at worst 6.0:1 on the
-landing, 7.9:1 on login/signup, 9.3:1 in the app; primary text is 9.9:1 or more everywhere.
-Raising an intensity or a light's weight needs that check again.
+average. The shader tone-maps the sky's luminance under a ceiling (`CEILING` in
+`web/src/SeaLight.jsx`), and each page sets the light intensity and a sky veil over it in
+`web/src/App.jsx` (`SEA`). Checked by computing the brightest possible pixel (any field color
+at the ceiling, grain at +3%) for each page: secondary text (mist) is at worst 4.6:1 on the
+landing, 6.0:1 on login/signup, 6.7:1 or more in the app; primary text is 7.5:1 or more
+everywhere. Raising the ceiling or the grain needs that check again.

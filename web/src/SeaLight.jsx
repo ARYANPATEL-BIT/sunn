@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { reducedMotion } from './ui.jsx'
 
-// The night sky behind every page: a soft navy glow drifting slowly over near-black, drawn by
-// one fragment shader. Colors are the DESIGN.md tokens; nothing else is drawn.
+// Aurora dusk, behind every page: aurora colors drift through the upper sky, a dusk glow rises
+// from the bottom, violet bridges the two. One fragment shader; colors are the DESIGN.md tokens.
 const FRAGMENT = `
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
@@ -13,17 +13,34 @@ uniform vec2 res;
 uniform float time;      // seconds of drift (only advances while drawing)
 uniform float intensity; // 0..1, per screen
 
-const vec3 NIGHT = vec3(3.0, 10.0, 24.0) / 255.0;   // --night
-const vec3 LIFT = vec3(6.0, 18.0, 40.0) / 255.0;    // night, lifted a touch
-const vec3 NAVY = vec3(10.0, 26.0, 51.0) / 255.0;   // --navy: the wide outer halo
-const vec3 BLUE = vec3(36.0, 66.0, 118.0) / 255.0;  // between navy and haze: the glow's body
-const vec3 HAZE = vec3(143.0, 176.0, 216.0) / 255.0; // --haze: the soft core
+const vec3 SKY = vec3(7.0, 7.0, 26.0) / 255.0;        // --sky: the base
+const vec3 TEAL = vec3(15.0, 94.0, 115.0) / 255.0;    // --teal
+const vec3 VIOLET = vec3(91.0, 63.0, 209.0) / 255.0;  // --violet
+const vec3 MAGENTA = vec3(194.0, 48.0, 107.0) / 255.0; // --magenta
+const vec3 SAFFRON = vec3(243.0, 154.0, 43.0) / 255.0; // --saffron
+const vec3 LUMA = vec3(0.2126, 0.7152, 0.0722);
+// The brightest the sky may get (relative luminance). Mist text (DESIGN.md) keeps 4.5:1 up to
+// 0.079; this leaves room for the grain on top.
+const float CEILING = 0.06;
 const float TAU = 6.2831853;
 
-// A soft round light: 1 at its center, gaussian falloff with radius r.
-float glow(vec2 p, vec2 center, float r) {
-  vec2 d = p - center;
-  return exp(-dot(d, d) / (r * r));
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+// Smooth value noise, 0..1.
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+             mix(hash(i + vec2(0.0, 1.0)), hash(i + 1.0), f.x), f.y);
+}
+
+// A soft color area: 1 at its center, gaussian falloff, wider than tall (radius r).
+float field(vec2 p, vec2 center, vec2 r) {
+  vec2 d = (p - center) / r;
+  return exp(-dot(d, d));
 }
 
 // A lissajous path: each axis is a sine with its own period (seconds) and phase.
@@ -31,35 +48,39 @@ vec2 path(vec2 amp, vec2 period, vec2 phase) {
   return amp * sin(TAU * time / period + phase);
 }
 
-float hash(vec2 p) {
-  return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
-}
-
 void main() {
   vec2 uv = gl_FragCoord.xy / res;
   float aspect = res.x / res.y;
-  vec2 p = (uv - 0.5) * vec2(aspect, 1.0); // centered, 1 unit = screen height, so lights stay round
+  vec2 p = (uv - 0.5) * vec2(aspect, 1.0); // centered, 1 unit = screen height; y is up
 
-  // The base: night, lifted a little toward the top.
-  vec3 sky = mix(LIFT, NIGHT, clamp(length(uv - vec2(0.5, 1.1)) * 0.85, 0.0, 1.0));
+  // Domain warp: slow, low-frequency noise bends the space before the fields are sampled,
+  // so the edges between colors swirl like aurora curtains.
+  vec2 warp = vec2(noise(p * 1.4 + vec2(0.0, time * 0.031)),
+                   noise(p * 1.4 + vec2(5.2, -time * 0.023))) - 0.5;
+  vec2 q = p + warp * 0.35;
 
-  // The glow stays near the middle and drifts on slow paths whose periods share no beat.
-  vec2 swing = vec2(0.16 * aspect + 0.06, 0.14);
-  vec2 body = vec2(0.0, 0.06) + path(swing, vec2(47.0, 37.0), vec2(0.0, 1.3));
-  vec2 halo = vec2(0.0, 0.02) + path(swing * 0.7, vec2(53.0, 41.0), vec2(2.1, 0.4));
-  // The core leans to one side of the body, circling it slowly.
-  vec2 core = body + 0.1 * vec2(cos(TAU * time / 43.0 + 0.7), sin(TAU * time / 31.0));
+  // Each field drifts on its own path (20-40s periods) and stays in its band:
+  // cool on top, warm at the bottom, violet in between.
+  float w = 0.5 * aspect;
+  vec2 teal = vec2(0.0, 0.34) + path(vec2(w * 0.5, 0.05), vec2(37.0, 29.0), vec2(0.0, 1.1));
+  vec2 violet = vec2(0.0, 0.12) + path(vec2(w * 0.6, 0.06), vec2(31.0, 23.0), vec2(2.0, 0.3));
+  vec2 magenta = vec2(0.0, -0.24) + path(vec2(w * 0.55, 0.04), vec2(27.0, 34.0), vec2(4.1, 2.2));
+  vec2 saffron = vec2(0.0, -0.6) + path(vec2(w * 0.3, 0.04), vec2(39.0, 21.0), vec2(1.3, 0.0));
 
-  // Wide, overlapping falloffs, so no edge of any light is ever visible.
-  vec3 light = NAVY * 0.6 * glow(p, halo, 1.25)
-             + BLUE * 0.25 * glow(p, body, 0.62)
-             + HAZE * 0.06 * glow(p, core, 0.34);
+  vec3 light = TEAL * 1.3 * field(q, teal, vec2(w + 0.35, 0.34))
+             + VIOLET * 0.6 * field(q, violet, vec2(w * 0.8 + 0.2, 0.26))
+             + MAGENTA * 0.55 * field(q, magenta, vec2(w * 0.6 + 0.2, 0.22))
+             + SAFFRON * 1.1 * field(q, saffron, vec2(w * 0.45 + 0.15, 0.22));
 
-  // Soft tone-map: bright overlaps saturate instead of clipping to white.
-  vec3 color = sky + (1.0 - exp(-light * intensity));
+  // Soft blend: overlaps saturate per channel instead of clipping.
+  vec3 color = SKY + (1.0 - exp(-light * intensity));
 
-  // Film grain, about +-1.5% luminance, new every frame.
-  color += (hash(gl_FragCoord.xy + fract(time * 7.13) * vec2(97.0, 41.0)) - 0.5) * 0.03;
+  // Tone-map the luminance under the ceiling, keeping the hue, so text stays readable everywhere.
+  float lum = dot(pow(color, vec3(2.2)), LUMA);
+  color *= pow(CEILING * (1.0 - exp(-lum / CEILING)) / lum, 1.0 / 2.2);
+
+  // Film grain, about +-3%, new every frame.
+  color += (hash(gl_FragCoord.xy + fract(time * 7.13) * vec2(97.0, 41.0)) - 0.5) * 0.06;
   gl_FragColor = vec4(color, 1.0);
 }`
 
@@ -83,7 +104,7 @@ function createProgram(gl) {
 }
 
 // Fixed, full-viewport background. Mounted once at the app root, so it never restarts.
-// `veil` (0..0.5) is the abyss layer between the light and the content.
+// `veil` (0..0.5) is a layer of the sky base between the light and the content.
 export default function SeaLight({ intensity, veil }) {
   const canvas = useRef(null)
   const target = useRef(intensity)
