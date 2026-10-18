@@ -3,20 +3,21 @@
 ## Direction
 Reference-led: the landing hero follows `web/reference/landing.png` (kept out of git) for layout,
 spacing, type and feel, with Sunn's own copy. Everything else (sections below the hero, login,
-signup, the app) uses the same visual language: a dark navy sky with one soft glow, a huge
-glowing wordmark, white pill buttons, outline pills, thin dividers and thin line icons.
+signup, the app) uses the same visual language: an aurora dusk sky, a huge glowing wordmark, white pill buttons, outline pills, thin dividers and thin line icons.
 
-Sunn = hindi "sun" (listen). The app's record button is still a sun, the only warm thing on
-screen, and the recognized phrase still resolves from blurry to sharp, because unclear speech
+Sunn = hindi "sun" (listen). The app's record button is still a sun, in the same saffron as
+the dusk glowing up from the bottom of the sky, and the recognized phrase still resolves from blurry to sharp, because unclear speech
 becomes clear. Accessibility is never traded for looks.
 
 ## Colors (the only colors allowed)
-- night #030A18: the base, darkest areas, the veil, text on the white pill
-- navy #0A1A33: the wide outer halo of the glow
-- haze #8FB0D8: the glow's soft core; focus rings
+- night #030A18: text on the white pill, the gap in focus rings
+- haze #8FB0D8: focus rings, the wordmark's glow
 - mist #B4C3D8: secondary text, inactive controls
 - foam #F2F6FB: primary text, the white pill, outline pill borders (at 40%), dividers (at 14%)
-- genda #F2A93B: ONLY the app's sun and the recording state. Never on the landing or auth pages
+- saffron #F39A2B: in the UI, ONLY the app's sun and the recording state (never on the landing
+  or auth pages). Also the dusk glow in the background
+- Background only (aurora dusk, never on UI elements): sky #07071A (the base, the veil),
+  teal #0F5E73, violet #5B3FD1, magenta #C2306B, and saffron above
 Text must pass WCAG AA (4.5:1) against the BRIGHTEST background pixel that can pass behind it,
 not the average.
 
@@ -56,11 +57,21 @@ not the average.
   self-contained unit (the example panel, the pipeline steps)
 
 ## Background
-- One `<SeaLight>` behind every page: fixed, full viewport, a WebGL shader of a soft navy glow
-  drifting slowly near the middle over night, with ±1.5% grain
+- One `<SeaLight>` behind every page: fixed, full viewport, a raw WebGL shader called aurora
+  dusk. Over the sky base, soft color fields drift like a liquid gradient: teal (large, slow)
+  in the upper sky, violet across the upper middle bridging the halves, magenta in the lower
+  sky, and saffron rising from the bottom edge like a sun coming up (it never reaches the
+  headline). Cool on top, warm at the bottom, always
+- The space is domain-warped by slow, low-frequency noise, so the edges between colors swirl
+  like aurora curtains. Each field moves on its own 20–40s path inside its band, so the pattern
+  never visibly repeats
+- Soft blend, then a luminance ceiling (0.06 relative luminance, hue kept): nothing clips or
+  goes neon, and mist text keeps 4.5:1 over the brightest pixel anywhere on screen, grain
+  included, with no vignette or box behind text. ±3% film grain on top
+- Half-resolution render, capped at 30fps, paused while the tab is hidden
 - Intensity / veil per page (`src/App.jsx`, `SEA`): landing 1.0 / 0, login and signup 0.8 /
   0.25, speak 0.45 / 0.35, other app screens 0.55 / 0.45
-- No WebGL: a still CSS gradient of the same glow. Reduced motion: one frozen frame
+- No WebGL: a still CSS gradient of the same fields. Reduced motion: one frozen frame
 
 ## Interaction
 - Touch targets: 44px minimum on the landing, 64px in the app (enlarged hit areas where the
@@ -71,7 +82,7 @@ not the average.
 - Anything that loops for more than 5 seconds (the example panel) has a pause button
 
 ## Motion
-- Background: slow drift, never fast or flashy
+- Background: slow drift and swirl, never fast or flashy
 - Sun at rest: slow 6s breathing. Recording: corona driven by real mic volume. Waiting: dims
   and brightens
 - Resolve: the top phrase goes from blur(14px) + transparent to sharp in ~600ms; the example
@@ -87,8 +98,8 @@ Example content is labelled "Example" / "उदाहरण". Features that aren
 
 ## Banned
 Glassmorphism or frosted panels, gradients as decoration on UI elements, ALL CAPS labels,
-emoji, filled icons, colors outside the tokens, genda outside the app's sun and recording
-state, a second animated thing competing with the sun inside the app.
+emoji, filled icons, colors outside the tokens, saffron in the UI outside the app's sun and
+recording state, the background colors on UI elements, a second animated thing competing with the sun inside the app.
 
 ## Pages
 - `/` landing: nav (wordmark · How it works · Who it's for · Privacy · EN/हिं · Sign in), hero
