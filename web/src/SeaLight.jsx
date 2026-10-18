@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { reducedMotion } from './ui.jsx'
 
-// The night sea: three soft lights drifting through dark water, drawn by one fragment shader.
-// Colors are the DESIGN.md tokens; nothing else is drawn.
+// The night sky behind every page: a soft navy glow drifting slowly over near-black, drawn by
+// one fragment shader. Colors are the DESIGN.md tokens; nothing else is drawn.
 const FRAGMENT = `
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
@@ -13,11 +13,11 @@ uniform vec2 res;
 uniform float time;      // seconds of drift (only advances while drawing)
 uniform float intensity; // 0..1, per screen
 
-const vec3 ABYSS = vec3(0.0, 10.0, 20.0) / 255.0;
-const vec3 LIFT = vec3(2.0, 22.0, 36.0) / 255.0;
-const vec3 DEEP = vec3(6.0, 65.0, 90.0) / 255.0;
-const vec3 TIDE = vec3(68.0, 165.0, 187.0) / 255.0;
-const vec3 MIST = vec3(181.0, 218.0, 226.0) / 255.0;
+const vec3 NIGHT = vec3(3.0, 10.0, 24.0) / 255.0;   // --night
+const vec3 LIFT = vec3(6.0, 18.0, 40.0) / 255.0;    // night, lifted a touch
+const vec3 NAVY = vec3(10.0, 26.0, 51.0) / 255.0;   // --navy: the wide outer halo
+const vec3 BLUE = vec3(36.0, 66.0, 118.0) / 255.0;  // between navy and haze: the glow's body
+const vec3 HAZE = vec3(143.0, 176.0, 216.0) / 255.0; // --haze: the soft core
 const float TAU = 6.2831853;
 
 // A soft round light: 1 at its center, gaussian falloff with radius r.
@@ -40,26 +40,26 @@ void main() {
   float aspect = res.x / res.y;
   vec2 p = (uv - 0.5) * vec2(aspect, 1.0); // centered, 1 unit = screen height, so lights stay round
 
-  // The sea itself: abyss, lifted a little toward the top-left corner.
-  vec3 sea = mix(LIFT, ABYSS, clamp(length(uv - vec2(0.0, 1.0)) * 0.9, 0.0, 1.0));
+  // The base: night, lifted a little toward the top.
+  vec3 sky = mix(LIFT, NIGHT, clamp(length(uv - vec2(0.5, 1.1)) * 0.85, 0.0, 1.0));
 
-  // Each light sweeps the screen on its own slow path; the periods share no common beat.
-  vec2 swing = vec2(0.36 * aspect + 0.12, 0.34);
-  vec2 tide = path(swing, vec2(37.0, 29.0), vec2(0.0, 1.3));
-  vec2 deep = path(swing * 0.8, vec2(43.0, 31.0), vec2(2.1, 0.4));
-  // The bright core leans to one edge of the cyan body, circling it slowly.
-  vec2 lean = 0.14 * vec2(cos(TAU * time / 41.0 + 0.7), sin(TAU * time / 26.0));
-  vec2 mist = tide + lean;
+  // The glow stays near the middle and drifts on slow paths whose periods share no beat.
+  vec2 swing = vec2(0.16 * aspect + 0.06, 0.14);
+  vec2 body = vec2(0.0, 0.06) + path(swing, vec2(47.0, 37.0), vec2(0.0, 1.3));
+  vec2 halo = vec2(0.0, 0.02) + path(swing * 0.7, vec2(53.0, 41.0), vec2(2.1, 0.4));
+  // The core leans to one side of the body, circling it slowly.
+  vec2 core = body + 0.1 * vec2(cos(TAU * time / 43.0 + 0.7), sin(TAU * time / 31.0));
 
-  vec3 light = DEEP * 0.8 * glow(p, deep, 0.95)
-             + TIDE * 1.0 * glow(p, tide, 0.40)
-             + MIST * 0.8 * glow(p, mist, 0.16);
+  // Wide, overlapping falloffs, so no edge of any light is ever visible.
+  vec3 light = NAVY * 0.6 * glow(p, halo, 1.25)
+             + BLUE * 0.25 * glow(p, body, 0.62)
+             + HAZE * 0.06 * glow(p, core, 0.34);
 
-  // Soft tone-map: bright overlaps saturate toward mist instead of clipping to white.
-  vec3 color = sea + (1.0 - exp(-light * intensity));
+  // Soft tone-map: bright overlaps saturate instead of clipping to white.
+  vec3 color = sky + (1.0 - exp(-light * intensity));
 
-  // Film grain, about +-3% luminance, new every frame.
-  color += (hash(gl_FragCoord.xy + fract(time * 7.13) * vec2(97.0, 41.0)) - 0.5) * 0.06;
+  // Film grain, about +-1.5% luminance, new every frame.
+  color += (hash(gl_FragCoord.xy + fract(time * 7.13) * vec2(97.0, 41.0)) - 0.5) * 0.03;
   gl_FragColor = vec4(color, 1.0);
 }`
 
