@@ -54,3 +54,29 @@ uv run scripts/smoke_test.py first.wav second.wav
 
 The smoke test makes 2 Prisma calls (one per enrollment); the recognize step reuses the
 first recording's cached transcript.
+
+## Frontend
+
+Vite + React app in `web/` for patients and caregivers: setup with consent, enrollment
+(each phrase recorded 3 times; leave any time and it resumes at the first unfinished
+phrase), the speak screen, and progress numbers from `/stats`.
+
+```powershell
+cd web
+npm install
+Copy-Item .env.example .env   # VITE_API_URL=/api
+npm run dev                   # serves https://localhost:5173 and https://<your-lan-ip>:5173
+```
+
+Run the API (see Backend) at the same time. The dev server proxies `/api` to
+`http://localhost:8000`, so only port 5173 needs to be reachable from the phone.
+
+### On a phone
+
+1. Connect the phone to the same Wi-Fi as the computer.
+2. Open the `Network:` address that `npm run dev` prints, e.g. `https://192.168.1.20:5173`.
+3. The certificate is self-signed, so the browser warns once: choose Advanced → Proceed.
+   The page has to be https, because phones only allow the microphone on secure pages.
+4. Allow the microphone when asked.
+
+If the phone can't connect, allow Node.js through Windows Firewall on private networks.
