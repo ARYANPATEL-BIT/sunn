@@ -9,3 +9,5 @@ web/node_modules/
 web/dist/
 web/.env
 web/reference/
+data/app.backup.db
+web/certs/
