@@ -1,51 +1,100 @@
 # Sunn design system
 
-## Concept
-Sunn = hindi "sun" (listen) + english "sun". The app lives in a night sea: a soft cold light drifts slowly through dark water behind every screen. The record button is the sun, the only warm thing in that sea. Speaking makes the sun respond to the real voice volume. The recognized phrase resolves from blurry to sharp, because unclear speech becomes clear. That resolve is the ONE bold moment. Everything else is quiet, spacious and disciplined. Accessibility is never sacrificed for looks.
+## Direction
+Reference-led: the landing hero follows `web/reference/landing.png` (kept out of git) for layout,
+spacing, type and feel, with Sunn's own copy. Everything else (sections below the hero, login,
+signup, the app) uses the same visual language: a dark navy sky with one soft glow, a huge
+glowing wordmark, white pill buttons, outline pills, thin dividers and thin line icons.
+
+Sunn = hindi "sun" (listen). The app's record button is still a sun, the only warm thing on
+screen, and the recognized phrase still resolves from blurry to sharp, because unclear speech
+becomes clear. Accessibility is never traded for looks.
 
 ## Colors (the only colors allowed)
-- abyss #000A14: base of the sea, darkest areas, veil color
-- deep #06415A: deep teal in the light's outer halo
-- tide #44A5BB: cyan body of the light; focus rings
-- mist #B5DAE2: the bright core of the light; secondary text
-- foam #EEF6F8: primary text, solid primary buttons (abyss text on them)
-- genda #F2A93B: ONLY the sun, the active recording state, the active-tab dot
-Text must pass WCAG AA (4.5:1) against the BRIGHTEST background pixel that can pass behind it, not the average.
+- night #030A18: the base, darkest areas, the veil, text on the white pill
+- navy #0A1A33: the wide outer halo of the glow
+- haze #8FB0D8: the glow's soft core; focus rings
+- mist #B4C3D8: secondary text, inactive controls
+- foam #F2F6FB: primary text, the white pill, outline pill borders (at 40%), dividers (at 14%)
+- genda #F2A93B: ONLY the app's sun and the recording state. Never on the landing or auth pages
+Text must pass WCAG AA (4.5:1) against the BRIGHTEST background pixel that can pass behind it,
+not the average.
 
 ## Type
-- Tiro Devanagari Hindi: phrases only (what the user says). Recognized phrase 44px+, enroll phrase 40px+
-- Anek Devanagari + Anek Latin: everything else. Body 20px, small english lines 15px in mist
-- Devanagari line height 1.5+
+- Anek Latin + Anek Devanagari everywhere, including the user's phrases (Tiro is gone). The
+  stack is `'Anek Latin', 'Anek Devanagari'`, so each script gets its own cut of the same design
+- Wordmark "Sunn": always Latin, in both languages (it is the name). Hero 96–208px, weight 500,
+  tight tracking, a soft white glow (layered text-shadows in foam and haze)
+- Headline 30–52px / 500. Section titles 32–48px / 500. Body 18px; secondary lines in mist
+- Phrases: enroll 44px, top candidate 48px, other candidates 30px, all 500
+- Devanagari line height 1.7 (`:lang(hi)`)
+
+## Language
+- One language on screen at a time, never stacked. EN / हिं toggle in the landing nav (between
+  the links and Sign in), on login/signup, and in the app header
+- Default hindi if the browser language starts with "hi", else english; remembered in
+  localStorage; `<html lang>` follows it
+- Every UI string goes through `t()` (`src/i18n/en.js`, `hi.js`, same keys). Hindi is written
+  the way an educated person in UP writes: polite "-इए" forms in sentences, "-ें" on buttons,
+  common English loanwords where people actually use them (ईमेल, पासवर्ड, साइन इन)
+- The user's own phrases are data: shown exactly as stored, tagged with the user's language
+
+## Components
+- White pill (primary): foam, night text, fully rounded, 56px (64px in the app). The start
+  button is [mic | label →]: lucide Mic, a thin vertical divider, the label, lucide ArrowRight,
+  and a soft glow (`.pill-glow`). Form submits are [label →]
+- Outline pill (secondary): transparent, 1px foam at 40%, fully rounded, 44px (64px hit area in
+  the app). Used for Sign in / Open app, the language toggle, Log out, Play back, Cancel
+- Text link: underlined, no box, for low-emphasis actions
+- Thin dividers: 1px foam at 14%, vertical between columns (hero feature strip, who it's for,
+  privacy) and horizontal between rows (steps, FAQ)
+- Icons: lucide-react, line only, stroke 1.25–1.5. Arrows are allowed (ArrowRight on pills,
+  arrows in the pipeline). No filled icons, no emoji
+- Inputs: big (60px), a visible label above (never placeholder-only), hint and error under the
+  field, the field with an error gets focus. Show/hide on passwords. Correct autocomplete
+- Panels: a 1px divider-colored border and a dark translucent fill, only where content is a
+  self-contained unit (the example panel, the pipeline steps)
 
 ## Background
-- One <SeaLight> component behind every screen, fixed, full viewport
-- intensity: landing 1.0, setup/enroll/progress 0.55, speak 0.4
-- a veil of abyss at 0-50% opacity sits between the light and the content, plus a soft radial darkening behind the main text block, so text always passes contrast
-
-## Banned
-Cards with borders or shadows, glassmorphism or frosted panels, gradients used as decoration on ui elements, ALL CAPS labels, eyebrow labels above headings, emoji, "→" in buttons, identical rounded boxes everywhere, decorative icons, colors outside the tokens, a second animated thing competing with the sun.
+- One `<SeaLight>` behind every page: fixed, full viewport, a WebGL shader of a soft navy glow
+  drifting slowly near the middle over night, with ±1.5% grain
+- Intensity / veil per page (`src/App.jsx`, `SEA`): landing 1.0 / 0, login and signup 0.8 /
+  0.25, speak 0.45 / 0.35, other app screens 0.55 / 0.45
+- No WebGL: a still CSS gradient of the same glow. Reduced motion: one frozen frame
 
 ## Interaction
-- Buttons min 64px tall. Primary = solid foam with abyss text. Secondary = foam text with a thin underline, no box
-- Visible focus ring (tide, 3px) on everything interactive
-- Recording: tap to start, tap to stop, never press-and-hold. Auto-stop at 8s. Show seconds while recording
-- Hindi first, small english underneath. Plain verbs. Errors say what happened and what to do
+- Touch targets: 44px minimum on the landing, 64px in the app (enlarged hit areas where the
+  visual pill is smaller)
+- Visible focus everywhere: a 2px haze ring with a night gap
+- Recording: tap to start, tap to stop, never press-and-hold. Auto-stop at 8s. Show seconds
+- Errors say what happened and what to do, in the current language
+- Anything that loops for more than 5 seconds (the example panel) has a pause button
 
 ## Motion
-- Background light: slow drift, never fast or flashy
-- Sun at rest: genda disc ~55% of screen width on mobile, slow 6s breathing scale
-- Sun while recording: corona/glow driven by real mic volume (Web Audio AnalyserNode). Never fake
-- Waiting for recognition: the sun slowly dims and brightens
-- Resolve: top phrase from blur(14px) + opacity 0 to sharp in ~600ms; the other 2 candidates fade in after
-- Screen changes: quick crossfade via the view transitions api
-- prefers-reduced-motion: background frozen on one frame, no breathing, no blur, instant fades, static ring only while recording
+- Background: slow drift, never fast or flashy
+- Sun at rest: slow 6s breathing. Recording: corona driven by real mic volume. Waiting: dims
+  and brightens
+- Resolve: the top phrase goes from blur(14px) + transparent to sharp in ~600ms; the example
+  panel on the landing uses the same resolve
+- Page changes: a quick crossfade via the view transitions API
+- prefers-reduced-motion: frozen background, no breathing, no blur, instant changes, a static
+  ring while recording, the example panel paused on a finished example
 
-## Screens (all dark, over the sea)
-Landing (/): full-strength light
-  [ Sunn (huge, Anek Latin) ] / [ जो आप कहना चाहते हैं, वो सब समझें ] / [ speech that's hard to understand, made clear ] / [ शुरू करें · get started ]
-  below: how it works (3 numbered steps: record a few phrases / speak / be heard clearly, in your own voice), one privacy line, footer: built with Gnani Prisma and Gnani Timbre
-Setup: name field, consent checkbox + short hindi explanation, continue, load default phrases
-Enroll: hairline progress at top / phrase huge in Tiro / 3 dots for 3 recordings / record, play, re-record, save
-Speak: शायद (only if low confidence) / top phrase resolves huge / 2 more candidates as large rows / इनमें से कोई नहीं / the SUN in the lower half, in thumb reach
-Progress: big numerals with a short label under each, on the sea, no boxes. A link to the own-voice screen.
-Bottom bar: सीखें / बोलें / प्रगति with english under, active = small genda dot
+## Honesty
+No invented statistics, testimonials or logos, no medical claims, no "real-time translation".
+Example content is labelled "Example" / "उदाहरण". Features that aren't built yet say so
+("Coming next" on own voice). Promises on the privacy section must stay true in the code.
+
+## Banned
+Glassmorphism or frosted panels, gradients as decoration on UI elements, ALL CAPS labels,
+emoji, filled icons, colors outside the tokens, genda outside the app's sun and recording
+state, a second animated thing competing with the sun inside the app.
+
+## Pages
+- `/` landing: nav (wordmark · How it works · Who it's for · Privacy · EN/हिं · Sign in), hero
+  (wordmark, headline, two lines, start pill, feature strip), how it works (+ example panel),
+  your own voice, who it's for, under the hood (speech → Gnani Prisma → personal correction
+  layer → Gnani Timbre), privacy, FAQ, closing line + start pill, footer
+- `/login`, `/signup`: centered column, wordmark on top, labelled fields, white pill submit
+- `/app/enroll`, `/app/speak`, `/app/progress`: header (wordmark → `/`, EN/हिं, user name,
+  log out), bottom tabs with line icons, the sun
