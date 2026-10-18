@@ -36,19 +36,19 @@ export default function Setup({ onDone }) {
 
   if (user) {
     return (
-      <section>
+      <section className="screen narrow">
         <h1>
-          <T hi={`नमस्ते, ${user.name}`} en={`Hello, ${user.name}`} />
+          <T hi={`नमस्ते, ${user.name}`} en={`hello, ${user.name}`} />
         </h1>
         <p>
           <T
-            hi="अब रोज़ बोले जाने वाले वाक्य लोड करें। फिर आप हर वाक्य 3 बार बोलकर ऐप को सिखाएँगे।"
-            en="Now load everyday phrases. Then you will teach the app by saying each phrase 3 times."
+            hi="अब रोज़ के वाक्य जोड़ें। फिर हर वाक्य तीन बार बोलकर Sunn को अपनी बोली सिखाएँ।"
+            en="now add everyday phrases. then say each one three times to teach Sunn your speech."
           />
         </p>
         <Alert error={error} />
         <button type="button" className="primary" onClick={loadPhrases} disabled={busy}>
-          <T hi="वाक्य लोड करें" en="Load default phrases" />
+          {busy ? <T hi="जोड़ रहे हैं…" en="adding…" /> : <T hi="रोज़ के वाक्य जोड़ें" en="add everyday phrases" />}
         </button>
       </section>
     )
@@ -56,39 +56,37 @@ export default function Setup({ onDone }) {
 
   const canContinue = name.trim() && consent && !busy
   return (
-    <form onSubmit={createUser}>
+    <form className="screen narrow" onSubmit={createUser}>
       <h1>
-        <T hi="सुन" en="Sunn" />
+        <T hi="नमस्ते" en="hello" />
       </h1>
       <label className="field">
-        <T hi="नाम" en="Name" />
+        <T hi="नाम" en="name" />
         <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
       </label>
 
-      <div className="consent">
-        <p>
-          <T
-            hi="यह ऐप आपकी आवाज़ रिकॉर्ड करता है ताकि वह आपकी बोली समझना सीख सके। रिकॉर्डिंग इसी कंप्यूटर पर रखी जाती हैं और पहचान के लिए Gnani की सेवा को भेजी जाती हैं।"
-            en="The app records your voice so it can learn to understand your speech. Recordings are kept on this computer and sent to Gnani's service for recognition."
-          />
-        </p>
-        <label className="check">
-          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-          <span>
-            <T hi="मैं सहमत हूँ" en="I agree" />
-          </span>
-        </label>
-      </div>
+      <p>
+        <T
+          hi="Sunn आपकी आवाज़ रिकॉर्ड करता है ताकि आपकी बोली समझना सीख सके। रिकॉर्डिंग इसी कंप्यूटर पर रहती हैं और पहचान के लिए Gnani को भेजी जाती हैं।"
+          en="Sunn records your voice to learn how you speak. recordings stay on this computer and are sent to Gnani for recognition."
+        />
+      </p>
+      <label className="check">
+        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+        <span>
+          <T hi="मैं सहमत हूँ" en="i agree" />
+        </span>
+      </label>
 
       <Alert error={error} />
-      {!consent && (
-        <p className="hint">
-          <T hi="आगे बढ़ने के लिए सहमति ज़रूरी है।" en="Consent is needed to continue." />
+      <button type="submit" className="primary" disabled={!canContinue} aria-describedby="setup-hint">
+        {busy ? <T hi="बना रहे हैं…" en="creating…" /> : <T hi="आगे बढ़ें" en="continue" />}
+      </button>
+      {!canContinue && !busy && (
+        <p className="hint" id="setup-hint">
+          <T hi="आगे बढ़ने के लिए नाम लिखें और सहमति दें।" en="write a name and agree to continue." />
         </p>
       )}
-      <button type="submit" className="primary" disabled={!canContinue}>
-        <T hi="आगे बढ़ें" en="Continue" />
-      </button>
     </form>
   )
 }
