@@ -50,12 +50,14 @@ export default function Speak() {
     recorder.toggle()
   }
 
-  // Say the phrase aloud. Choosing a phrase also tells the bank what this recording was.
+  // Say the phrase aloud. Choosing a phrase also tells the bank what this recording was; a
+  // composed one (template + slot word) has no phrase_id yet, and confirming it makes one.
   function choose(candidate) {
     run('playing', async () => {
-      const confirmed =
-        spoken?.phrase_id !== candidate.phrase_id &&
-        api.confirm({ sample_id: result.sample_id, phrase_id: candidate.phrase_id })
+      const answer = candidate.composed
+        ? { template_id: candidate.template_id, slot_word_id: candidate.slot_word_id }
+        : { phrase_id: candidate.phrase_id }
+      const confirmed = spoken?.text !== candidate.text && api.confirm({ sample_id: result.sample_id, ...answer })
       setSpoken(candidate)
       await Promise.all([api.say(candidate.text), confirmed])
     })
