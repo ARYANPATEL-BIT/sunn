@@ -1,18 +1,25 @@
+import json
+import logging
 import os
 import re
 import shutil
 import sqlite3
 import subprocess
+import time
+import traceback
 import uuid
-from datetime import datetime, timezone
+from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
 
-import requests
-from fastapi import Body, Cookie, Depends, FastAPI, File, Form, HTTPException, Response, UploadFile
+from fastapi import Body, Cookie, Depends, FastAPI, File, Form, Request, Response, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
+import audio
 import auth
 import db
+import gnani
+import log
 import matcher
 import prisma
 import speak
@@ -20,19 +27,28 @@ import speak
 DEFAULT_PHRASES = "data/default_phrases_{language}.txt"
 USERS_DIR = "data/users"
 EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
+PHONE = re.compile(r"[1-9]\d{7,14}")  # E.164: country code first, at most 15 digits
+
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+PHRASE_SECONDS = (0.3, 15)  # a phrase, slot word or fixed part recording
+VOICE_SECONDS = (5, 30)  # reference audio for cloning, from the voice clone embeddings docs
+
+# The group comments in data/default_phrases_*.txt -> contexts for the phrases under them.
+GROUP_CONTEXTS = {"help": "any", "basic needs": "home,hospital", "pain and health": "hospital",
+                  "food and drink": "home", "family": "home", "greetings and politeness": "any"}
+URGENT_PHRASES = {"मदद चाहिए", "दर्द हो रहा है", "I need help", "I'm in pain"}
+# Building blocks every new user starts with. बेटे, not बेटा: the only person template takes को.
+DEFAULT_SLOT_WORDS = {
+    "hi": {"item": ["पानी", "दवाई", "खाना", "चाय", "कंबल"], "person": ["बेटे", "बेटी", "डॉक्टर", "नर्स"]},
+    "en": {"item": ["water", "my medicine", "food", "tea", "a blanket"],
+           "person": ["my son", "my daughter", "the doctor", "the nurse"]},
+}
+DEFAULT_TEMPLATES = {"hi": ["{item} चाहिए", "{person} को बुलाओ"], "en": ["I need {item}", "Call {person}"]}
 
 # No CORS: the browser only talks to the Vite dev server, which proxies /api here, so the
 # session cookie stays on one https origin.
 db.init()
 app = FastAPI()
-
-
-# Prisma/Timbre failures (network, HTTP error, unsuccessful response) come back as 502 with
-# source "gnani", so the app can tell them apart from its own server being unreachable.
-@app.exception_handler(requests.RequestException)
-@app.exception_handler(RuntimeError)
-def gnani_failed(request, exc):
-    return JSONResponse({"detail": str(exc), "source": "gnani"}, status_code=502)
 
 
 class Refused(Exception):
@@ -44,7 +60,30 @@ class Refused(Exception):
 
 @app.exception_handler(Refused)
 def refused(request, exc):
+    log.event("refused", path=request.url.path, status=exc.status, code=exc.body["code"])
     return JSONResponse(exc.body, status_code=exc.status)
+
+
+# Prisma/Timbre failures come back with source "gnani", so the app can tell them apart from
+# its own server being unreachable.
+@app.exception_handler(gnani.GnaniError)
+def gnani_failed(request, exc):
+    log.event("gnani_failed", level=logging.WARNING, path=request.url.path, code=exc.code)
+    return JSONResponse({"detail": exc.detail, "code": exc.code, "source": "gnani"}, status_code=exc.status)
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    started = time.monotonic()
+    try:
+        response = await call_next(request)
+    except Exception:
+        log.event("error", level=logging.ERROR, method=request.method, path=request.url.path,
+                  traceback=traceback.format_exc())
+        raise
+    log.event("request", method=request.method, path=request.url.path, status=response.status_code,
+              ms=round(1000 * (time.monotonic() - started)))
+    return response
 
 
 def now():
@@ -52,52 +91,159 @@ def now():
 
 
 def public(user):
-    return {key: user[key] for key in ("id", "name", "email", "language", "consent_given_at")}
+    """The user as the app sees it. The voice embedding itself never leaves the server."""
+    return {**{key: user[key] for key in ("id", "name", "email", "language", "consent_given_at",
+                                          "caregiver_name", "caregiver_phone")},
+            "has_own_voice": user["voice_embedding"] is not None, "use_own_voice": bool(user["use_own_voice"])}
+
+
+def get_user(user_id):
+    return db.row("SELECT * FROM users WHERE id = ?", (user_id,))
 
 
 def current_user(sunn_session: str | None = Cookie(None)):
     """The signed-in user from the session cookie. Every per-user route depends on this, so
     nobody can reach another person's data by changing an id."""
     user_id = auth.user_id_from_token(sunn_session) if sunn_session else None
-    user = db.row("SELECT * FROM users WHERE id = ?", (user_id,)) if user_id else None
+    user = get_user(user_id) if user_id else None
     if user is None:
         raise Refused(401, "no_session", "not signed in")
     return user
 
 
-def get_phrase(user_id, phrase_id):
-    phrase = db.row("SELECT id, text FROM phrases WHERE id = ? AND user_id = ?", (phrase_id, user_id))
-    if phrase is None:
-        raise HTTPException(404, "phrase not found")
-    return phrase
+def owned(table, row_id, user_id):
+    """A row of table that belongs to user_id, else 404, whether it is missing or someone else's."""
+    found = db.row(f"SELECT * FROM {table} WHERE id = ? AND user_id = ?", (row_id, user_id))
+    if found is None:
+        raise Refused(404, "not_found", f"{table.rstrip('s').replace('_', ' ')} not found")
+    return found
 
 
-def find_or_add_phrase(user_id, text):
-    """Phrase id for text, reusing an identical phrase so one phrase never splits the bank."""
-    text = text.strip()
+def clean_text(text):
+    text = " ".join(str(text).split())
     if not text:
-        raise HTTPException(400, "text is empty")
+        raise Refused(400, "empty_text", "text is empty")
+    return text
+
+
+def contexts_column(contexts):
+    """["home", "market"] -> "home,market"; an empty list means any."""
+    if not isinstance(contexts, list) or not all(c in matcher.CONTEXTS for c in contexts):
+        raise Refused(400, "bad_contexts", f"contexts is a list of {', '.join(matcher.CONTEXTS)}")
+    return ",".join(dict.fromkeys(contexts)) or "any"
+
+
+def phrase_out(phrase):
+    return {**phrase, "contexts": phrase["contexts"].split(","), "urgent": bool(phrase["urgent"])}
+
+
+def get_phrase(user_id, phrase_id):
+    return phrase_out({key: owned("phrases", phrase_id, user_id)[key] for key in ("id", "text", "contexts", "urgent")})
+
+
+def find_or_add_phrase(user_id, text, contexts="any", urgent=False):
+    """Phrase id for text, reusing an identical phrase so one phrase never splits the bank."""
+    text = clean_text(text)
     phrase = db.row("SELECT id FROM phrases WHERE user_id = ? AND text = ?", (user_id, text))
     if phrase:
         return phrase["id"]
-    return db.execute("INSERT INTO phrases (user_id, text) VALUES (?, ?)", (user_id, text))
+    return db.execute("INSERT INTO phrases (user_id, text, contexts, urgent) VALUES (?, ?, ?, ?)",
+                      (user_id, text, contexts, int(urgent)))
+
+
+def user_folder(user):
+    return f"{USERS_DIR}/{user['id']}"
+
+
+def voice_folder(user):
+    """The cloned voice's cache: Gnani's embedding for the reference audio, and every phrase
+    spoken in that voice. Deleted with the voice."""
+    return f"{user_folder(user)}/voice"
+
+
+def save_wav(upload, folder, limits, rate=16000):
+    """Store the upload in folder as a wav (see audio.to_wav) and return its path. Refuses a
+    file over MAX_UPLOAD_BYTES or a recording outside limits, (min, max) seconds."""
+    data = upload.file.read(MAX_UPLOAD_BYTES + 1)
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise Refused(413, "file_too_large", f"the audio file is over {MAX_UPLOAD_BYTES // 2**20} MB")
+    os.makedirs(folder, exist_ok=True)
+    name = uuid.uuid4().hex
+    raw, wav = f"{folder}/{name}.upload", f"{folder}/{name}.wav"
+    with open(raw, "wb") as f:
+        f.write(data)
+    try:
+        audio.to_wav(raw, wav, rate)
+    except subprocess.CalledProcessError:
+        raise Refused(400, "bad_audio", "could not read the audio file")
+    finally:
+        os.remove(raw)
+    seconds, (low, high) = audio.seconds(wav) or 0.0, limits
+    if not low <= seconds <= high:
+        os.remove(wav)
+        raise Refused(400, "audio_too_short" if seconds < low else "audio_too_long",
+                      f"the recording is {seconds:.1f} s; it needs {low} to {high} s", seconds=round(seconds, 1))
+    return wav
 
 
 def save_and_transcribe(user, upload):
-    """Store the upload as data/users/<id>/<uuid>.wav in Prisma's format; returns (path, hypothesis)."""
-    folder = f"{USERS_DIR}/{user['id']}"
-    name = uuid.uuid4().hex
-    raw, wav = f"{folder}/{name}.upload", f"{folder}/{name}.wav"
-    os.makedirs(folder, exist_ok=True)
-    with open(raw, "wb") as f:
-        shutil.copyfileobj(upload.file, f)
+    """Store a phrase-length upload under data/users/<id>/; returns (path, Prisma hypothesis).
+    Nothing is kept when Prisma fails or hears no speech."""
+    wav = save_wav(upload, user_folder(user), PHRASE_SECONDS)
     try:
-        prisma.to_wav(raw, wav)
-    except subprocess.CalledProcessError:
-        raise HTTPException(400, "could not read the audio file")
-    finally:
-        os.remove(raw)
-    return wav, prisma.transcribe(wav, user["language"])
+        hypothesis = prisma.transcribe(wav, user["language"])
+    except gnani.GnaniError:
+        os.remove(wav)
+        raise
+    if not hypothesis.strip():
+        os.remove(wav)
+        raise Refused(422, "no_speech", "no speech was heard in the recording")
+    return wav, hypothesis
+
+
+def remove_audio(paths, language):
+    """Delete recordings and their cached Prisma transcripts."""
+    for path in paths:
+        if os.path.exists(path):
+            with open(path, "rb") as f:
+                cached = prisma.cache_path(f.read(), language)
+            if os.path.exists(cached):
+                os.remove(cached)
+            os.remove(path)
+
+
+def audio_paths(user, column, value):
+    return [s["audio_path"] for s in db.rows(f"SELECT audio_path FROM samples WHERE user_id = ? AND {column} = ?",
+                                             (user["id"], value))]
+
+
+def enroll_sample(user, upload, column, value):
+    """Record an enrollment sample for a phrase, slot word or template fixed part."""
+    path, hypothesis = save_and_transcribe(user, upload)
+    sample_id = db.execute(
+        f"INSERT INTO samples (user_id, {column}, audio_path, prisma_hypothesis, source, created_at)"
+        " VALUES (?, ?, ?, ?, 'enroll', ?)", (user["id"], value, path, hypothesis, now()))
+    return {"sample_id": sample_id, column: value, "hypothesis": hypothesis}
+
+
+def add_template(user_id, text):
+    text = " ".join(text.split())
+    parsed = matcher.parse_template(text)
+    if parsed is None:
+        raise Refused(400, "bad_template", "a template has one {item}, {person} or {place}, at its start or end,"
+                                           " and at least one other word")
+    found = db.row("SELECT id FROM templates WHERE user_id = ? AND text = ?", (user_id, text))
+    if found:
+        return found["id"]
+    return db.execute("INSERT INTO templates (user_id, text, fixed_part) VALUES (?, ?, ?)", (user_id, text, parsed[1]))
+
+
+def add_slot_word(user_id, slot, text):
+    text = clean_text(text)
+    found = db.row("SELECT id FROM slot_words WHERE user_id = ? AND slot = ? AND text = ?", (user_id, slot, text))
+    if found:
+        return found["id"]
+    return db.execute("INSERT INTO slot_words (user_id, slot, text) VALUES (?, ?, ?)", (user_id, slot, text))
 
 
 @app.post("/auth/signup")
@@ -118,8 +264,14 @@ def signup(response: Response, name: str = Body(), email: str = Body(), password
             (name, email, auth.hash_password(password), language, now()))
     except sqlite3.IntegrityError:
         raise Refused(409, "email_taken", "an account with this email already exists")
+    for slot, words in DEFAULT_SLOT_WORDS[language].items():
+        for word in words:
+            add_slot_word(user_id, slot, word)
+    for template in DEFAULT_TEMPLATES[language]:
+        add_template(user_id, template)
     auth.set_session(response, user_id)
-    return public(db.row("SELECT * FROM users WHERE id = ?", (user_id,)))
+    log.event("signup", user_id=user_id)
+    return public(get_user(user_id))
 
 
 @app.post("/auth/login")
@@ -135,6 +287,7 @@ def login(response: Response, email: str = Body(), password: str = Body()):
         raise Refused(401, "bad_login", "wrong email or password")
     auth.clear_failures(email)
     auth.set_session(response, user["id"])
+    log.event("login", user_id=user["id"])
     return public(user)
 
 
@@ -149,28 +302,92 @@ def me(user=Depends(current_user)):
     return public(user)
 
 
+@app.patch("/me")
+def update_me(changes: dict = Body(), user=Depends(current_user)):
+    """Change any of use_own_voice (needs a recorded voice), caregiver_name and caregiver_phone
+    (digits with the country code, like 919876543210; spaces, dashes and + are dropped).
+    null or "" clears a caregiver field."""
+    updates = {}
+    for field, value in changes.items():
+        if field == "use_own_voice":
+            if not isinstance(value, bool):
+                raise Refused(400, "bad_field", "use_own_voice is true or false")
+            if value and user["voice_embedding"] is None:
+                raise Refused(409, "no_voice", "record your voice first")
+            updates[field] = int(value)
+        elif field in ("caregiver_name", "caregiver_phone"):
+            if value is not None and not isinstance(value, str):
+                raise Refused(400, "bad_field", f"{field} is text")
+            value = " ".join((value or "").split()) or None
+            if field == "caregiver_phone" and value:
+                value = re.sub(r"[\s\-()+]", "", value)
+                if not PHONE.fullmatch(value):
+                    raise Refused(400, "bad_phone", "caregiver_phone is digits with the country code, like 919876543210")
+            updates[field] = value
+        else:
+            raise Refused(400, "bad_field", f"{field} can't be changed here")
+    if updates:
+        db.execute(f"UPDATE users SET {', '.join(f'{field} = ?' for field in updates)} WHERE id = ?",
+                   (*updates.values(), user["id"]))
+    return public(get_user(user["id"]))
+
+
 @app.delete("/me")
 def delete_me(response: Response, user=Depends(current_user)):
-    """Delete the account, its phrases and recordings, and their cached Prisma transcripts.
-    Timbre's cache is left alone: it holds spoken phrase text, shared by everyone who says it."""
-    for sample in db.rows("SELECT audio_path FROM samples WHERE user_id = ?", (user["id"],)):
-        if os.path.exists(sample["audio_path"]):
-            with open(sample["audio_path"], "rb") as f:
-                cached = prisma.cache_path(f.read(), user["language"])
-            if os.path.exists(cached):
-                os.remove(cached)
+    """Delete the account and everything it made: phrases, slot words, templates, samples, uses,
+    every recording and its cached Prisma transcript, and the cloned voice with everything
+    spoken in it. Files go first, so a failure leaves the account in place to try again.
+    Kept: the stock-voice Timbre cache (phrase text spoken by Nalini or Kaveri, shared by
+    everyone who says it, not tied to anyone) and api_calls (counts only)."""
+    remove_audio([s["audio_path"] for s in db.rows("SELECT audio_path FROM samples WHERE user_id = ?", (user["id"],))],
+                 user["language"])
+    if os.path.exists(user_folder(user)):
+        shutil.rmtree(user_folder(user))
     db.delete_user(user["id"])
-    shutil.rmtree(f"{USERS_DIR}/{user['id']}", ignore_errors=True)
     auth.clear_session(response)
+    log.event("account_deleted", user_id=user["id"])
     return {"ok": True}
+
+
+@app.post("/me/voice")
+def set_voice(audio_file: UploadFile = File(alias="audio"), consent: str = Form(""), user=Depends(current_user)):
+    """Clone the user's voice from 5-30 s of their speech (the docs' range). Needs consent=true.
+    Only Gnani's embedding is kept; the recording is deleted once it is made."""
+    if consent.strip().lower() != "true":
+        raise Refused(400, "no_voice_consent", "consent must be true to clone your voice")
+    # The docs ask only for WAV or MP3; 44.1 kHz keeps more of the voice than Prisma's 16 kHz.
+    wav = save_wav(audio_file, voice_folder(user), VOICE_SECONDS, rate=44100)
+    try:
+        embedding = speak.clone_voice(wav, voice_folder(user))
+    finally:
+        os.remove(wav)
+    db.execute("UPDATE users SET voice_embedding = ?, voice_consent_given_at = ? WHERE id = ?",
+               (json.dumps(embedding), now(), user["id"]))
+    log.event("voice_cloned", user_id=user["id"])
+    return public(get_user(user["id"]))
+
+
+@app.delete("/me/voice")
+def delete_voice(user=Depends(current_user)):
+    """Forget the cloned voice: its embedding, its cache and every phrase spoken in it."""
+    if os.path.exists(voice_folder(user)):
+        shutil.rmtree(voice_folder(user))
+    db.execute("UPDATE users SET voice_embedding = NULL, voice_consent_given_at = NULL, use_own_voice = 0"
+               " WHERE id = ?", (user["id"],))
+    log.event("voice_deleted", user_id=user["id"])
+    return public(get_user(user["id"]))
 
 
 @app.get("/me/phrases")
 def list_phrases(user=Depends(current_user)):
-    """Every phrase with its number of enrollment recordings, so enrollment can resume."""
-    return db.rows("SELECT p.id, p.text, COUNT(s.id) AS enrolled FROM phrases p"
-                   " LEFT JOIN samples s ON s.phrase_id = p.id AND s.source = 'enroll'"
-                   " WHERE p.user_id = ? GROUP BY p.id ORDER BY p.id", (user["id"],))
+    """Every phrase with its enrollment recordings (enrolled, so enrollment can resume), all its
+    samples (sample_count, confirmed recognitions included) and when it was last used."""
+    return [phrase_out(p) for p in db.rows("""
+        SELECT p.id, p.text, p.contexts, p.urgent,
+            (SELECT COUNT(*) FROM samples s WHERE s.phrase_id = p.id AND s.source = 'enroll') AS enrolled,
+            (SELECT COUNT(*) FROM samples s WHERE s.phrase_id = p.id) AS sample_count,
+            (SELECT MAX(created_at) FROM uses u WHERE u.phrase_id = p.id) AS last_used_at
+        FROM phrases p WHERE p.user_id = ? ORDER BY p.id""", (user["id"],))]
 
 
 @app.post("/me/phrases")
@@ -180,75 +397,247 @@ def add_phrase(text: str = Body(embed=True), user=Depends(current_user)):
 
 @app.post("/me/phrases/default")
 def add_default_phrases(user=Depends(current_user)):
-    """Add the everyday phrases in the user's language (data/default_phrases_<hi|en>.txt)."""
+    """Add the everyday phrases in the user's language (data/default_phrases_<hi|en>.txt), with
+    contexts from their group comment (GROUP_CONTEXTS; a group not listed there is any)."""
+    contexts = "any"
     with open(DEFAULT_PHRASES.format(language=user["language"]), encoding="utf-8") as f:
         for line in f:
-            if line.strip() and not line.startswith("#"):
-                find_or_add_phrase(user["id"], line)
+            if line.startswith("#"):
+                contexts = GROUP_CONTEXTS.get(line.strip("# \n"), "any")
+            elif line.strip():
+                find_or_add_phrase(user["id"], line, contexts, line.strip() in URGENT_PHRASES)
     return list_phrases(user)
 
 
-@app.post("/me/enroll")
-def enroll(phrase_id: int = Form(), audio: UploadFile = File(), user=Depends(current_user)):
+@app.patch("/me/phrases/{phrase_id}")
+def update_phrase(phrase_id: int, changes: dict = Body(), user=Depends(current_user)):
+    """Change any of text, contexts (a list) and urgent (true or false)."""
     get_phrase(user["id"], phrase_id)
-    path, hypothesis = save_and_transcribe(user, audio)
-    sample_id = db.execute(
-        "INSERT INTO samples (user_id, phrase_id, audio_path, prisma_hypothesis, source, created_at)"
-        " VALUES (?, ?, ?, ?, 'enroll', ?)", (user["id"], phrase_id, path, hypothesis, now()))
-    return {"sample_id": sample_id, "phrase_id": phrase_id, "hypothesis": hypothesis}
+    updates = {}
+    for field, value in changes.items():
+        if field == "text":
+            updates[field] = clean_text(value)
+            taken = db.row("SELECT id FROM phrases WHERE user_id = ? AND text = ? AND id != ?",
+                           (user["id"], updates[field], phrase_id))
+            if taken:
+                raise Refused(409, "phrase_exists", "another phrase already has this text", phrase_id=taken["id"])
+        elif field == "contexts":
+            updates[field] = contexts_column(value)
+        elif field == "urgent":
+            if not isinstance(value, bool):
+                raise Refused(400, "bad_field", "urgent is true or false")
+            updates[field] = int(value)
+        else:
+            raise Refused(400, "bad_field", f"{field} can't be changed here")
+    if updates:
+        db.execute(f"UPDATE phrases SET {', '.join(f'{field} = ?' for field in updates)} WHERE id = ?",
+                   (*updates.values(), phrase_id))
+    return get_phrase(user["id"], phrase_id)
+
+
+@app.delete("/me/phrases/{phrase_id}")
+def delete_phrase(phrase_id: int, user=Depends(current_user)):
+    """Delete a phrase, its samples with their recordings, and its uses."""
+    get_phrase(user["id"], phrase_id)
+    paths = audio_paths(user, "phrase_id", phrase_id)
+    db.transaction(("DELETE FROM samples WHERE phrase_id = ?", (phrase_id,)),
+                   ("UPDATE samples SET top1_phrase_id = NULL WHERE top1_phrase_id = ?", (phrase_id,)),
+                   ("DELETE FROM uses WHERE phrase_id = ?", (phrase_id,)),
+                   ("DELETE FROM phrases WHERE id = ?", (phrase_id,)))
+    remove_audio(paths, user["language"])
+    return {"ok": True}
+
+
+@app.delete("/me/samples/{sample_id}")
+def delete_sample(sample_id: int, user=Depends(current_user)):
+    sample = owned("samples", sample_id, user["id"])
+    db.execute("DELETE FROM samples WHERE id = ?", (sample_id,))
+    remove_audio([sample["audio_path"]], user["language"])
+    return {"ok": True}
+
+
+@app.post("/me/enroll")
+def enroll(phrase_id: int = Form(), audio_file: UploadFile = File(alias="audio"), user=Depends(current_user)):
+    get_phrase(user["id"], phrase_id)
+    return enroll_sample(user, audio_file, "phrase_id", phrase_id)
+
+
+@app.get("/me/slot-words")
+def list_slot_words(user=Depends(current_user)):
+    return db.rows("SELECT w.id, w.slot, w.text, COUNT(s.id) AS enrolled FROM slot_words w"
+                   " LEFT JOIN samples s ON s.slot_word_id = w.id"
+                   " WHERE w.user_id = ? GROUP BY w.id ORDER BY w.id", (user["id"],))
+
+
+@app.post("/me/slot-words")
+def create_slot_word(slot: Literal["item", "person", "place"] = Body(), text: str = Body(),
+                     user=Depends(current_user)):
+    slot_word_id = add_slot_word(user["id"], slot, text)
+    return next(w for w in list_slot_words(user) if w["id"] == slot_word_id)
+
+
+@app.delete("/me/slot-words/{slot_word_id}")
+def delete_slot_word(slot_word_id: int, user=Depends(current_user)):
+    owned("slot_words", slot_word_id, user["id"])
+    paths = audio_paths(user, "slot_word_id", slot_word_id)
+    db.transaction(("DELETE FROM samples WHERE slot_word_id = ?", (slot_word_id,)),
+                   ("DELETE FROM slot_words WHERE id = ?", (slot_word_id,)))
+    remove_audio(paths, user["language"])
+    return {"ok": True}
+
+
+@app.post("/me/slot-words/{slot_word_id}/enroll")
+def enroll_slot_word(slot_word_id: int, audio_file: UploadFile = File(alias="audio"), user=Depends(current_user)):
+    owned("slot_words", slot_word_id, user["id"])
+    return enroll_sample(user, audio_file, "slot_word_id", slot_word_id)
+
+
+@app.get("/me/templates")
+def list_templates(user=Depends(current_user)):
+    """Each template with its slot and fixed_part: the words recorded on their own."""
+    templates = db.rows("SELECT t.id, t.text, t.fixed_part, COUNT(s.id) AS enrolled FROM templates t"
+                        " LEFT JOIN samples s ON s.template_id = t.id"
+                        " WHERE t.user_id = ? GROUP BY t.id ORDER BY t.id", (user["id"],))
+    return [{**t, "slot": matcher.parse_template(t["text"])[0]} for t in templates]
+
+
+@app.post("/me/templates")
+def create_template(text: str = Body(embed=True), user=Depends(current_user)):
+    template_id = add_template(user["id"], text)
+    return next(t for t in list_templates(user) if t["id"] == template_id)
+
+
+@app.delete("/me/templates/{template_id}")
+def delete_template(template_id: int, user=Depends(current_user)):
+    owned("templates", template_id, user["id"])
+    paths = audio_paths(user, "template_id", template_id)
+    db.transaction(("DELETE FROM samples WHERE template_id = ?", (template_id,)),
+                   ("DELETE FROM templates WHERE id = ?", (template_id,)))
+    remove_audio(paths, user["language"])
+    return {"ok": True}
+
+
+@app.post("/me/templates/{template_id}/enroll")
+def enroll_template(template_id: int, audio_file: UploadFile = File(alias="audio"), user=Depends(current_user)):
+    """A recording of the template's fixed part alone, like "चाहिए" for "{item} चाहिए"."""
+    owned("templates", template_id, user["id"])
+    return enroll_sample(user, audio_file, "template_id", template_id)
+
+
+def candidates_for(user_id):
+    """What a recording can be matched to: every phrase, and every template × slot word of its
+    slot. A composition's fingerprints are each slot word hypothesis joined to each fixed part
+    hypothesis, in the template's word order. A composition whose text is already a phrase adds
+    its fingerprints to that phrase instead of standing on its own."""
+    heard = defaultdict(list)
+    for s in db.rows("SELECT phrase_id, slot_word_id, template_id, prisma_hypothesis FROM samples"
+                     " WHERE user_id = ? AND source IS NOT NULL", (user_id,)):
+        for column in ("phrase_id", "slot_word_id", "template_id"):
+            if s[column] is not None:
+                heard[column, s[column]].append(s["prisma_hypothesis"])
+
+    candidates = {}
+    for p in db.rows("SELECT id, text, contexts, urgent FROM phrases WHERE user_id = ?", (user_id,)):
+        candidates[p["text"]] = {"key": p["id"], "phrase_id": p["id"], "text": p["text"], "composed": False,
+                                 "contexts": p["contexts"].split(","), "urgent": bool(p["urgent"]),
+                                 "fingerprints": heard["phrase_id", p["id"]]}
+    words = db.rows("SELECT id, slot, text FROM slot_words WHERE user_id = ?", (user_id,))
+    for t in db.rows("SELECT id, text, fixed_part FROM templates WHERE user_id = ?", (user_id,)):
+        slot, _, slot_first = matcher.parse_template(t["text"])
+        for w in (w for w in words if w["slot"] == slot):
+            fingerprints = [matcher.compose(slot_first, word, fixed)
+                            for word in heard["slot_word_id", w["id"]] for fixed in heard["template_id", t["id"]]]
+            text = matcher.compose(slot_first, w["text"], t["fixed_part"])
+            if text in candidates:
+                candidates[text]["fingerprints"] = candidates[text]["fingerprints"] + fingerprints
+            else:
+                candidates[text] = {"key": None, "phrase_id": None, "text": text, "composed": True,
+                                    "template_id": t["id"], "slot_word_id": w["id"], "contexts": [],
+                                    "urgent": False, "fingerprints": fingerprints}
+    return list(candidates.values())
+
+
+def priors_for(user_id):
+    uses = [(u["phrase_id"], datetime.fromisoformat(u["created_at"]))
+            for u in db.rows("SELECT phrase_id, created_at FROM uses WHERE user_id = ?", (user_id,))]
+    return matcher.usage_priors(uses, matcher.time_bucket(datetime.now(timezone.utc)))
 
 
 @app.post("/me/recognize")
-def recognize(audio: UploadFile = File(), user=Depends(current_user)):
-    path, hypothesis = save_and_transcribe(user, audio)
-
-    # The bank: every labelled sample, from enrollment and from confirmed corrections.
-    bank = db.rows("SELECT phrase_id AS phrase, prisma_hypothesis FROM samples"
-                   " WHERE user_id = ? AND phrase_id IS NOT NULL", (user["id"],))
-    texts = {p["id"]: p["text"] for p in list_phrases(user)}
-    candidates = [{"phrase_id": phrase_id, "text": texts[phrase_id], "score": round(score, 1)}
-                  for phrase_id, score in matcher.recognize(hypothesis, bank)]
-    top1 = candidates[0]["phrase_id"] if candidates else None
-
+def recognize(audio_file: UploadFile = File(alias="audio"), context: str | None = Form(None),
+              user=Depends(current_user)):
+    """Top 3 candidates for a recording. Each has score = similarity + context + freq + time
+    (see matcher.py) with those parts, urgent, and composed: a composed one is a template ×
+    slot word that isn't a phrase yet, with its template_id and slot_word_id."""
+    if context is not None and context not in matcher.CONTEXTS:
+        raise Refused(400, "bad_context", f"context is one of {', '.join(matcher.CONTEXTS)}")
+    path, hypothesis = save_and_transcribe(user, audio_file)
+    ranked = matcher.rank(hypothesis, candidates_for(user["id"]), context, priors_for(user["id"]))
+    candidates = [{key: c[key] for key in ("phrase_id", "text", "score", "parts", "urgent", "composed",
+                                           "template_id", "slot_word_id") if key in c} for c in ranked]
     sample_id = db.execute(
         "INSERT INTO samples (user_id, audio_path, prisma_hypothesis, top1_phrase_id, created_at)"
-        " VALUES (?, ?, ?, ?, ?)", (user["id"], path, hypothesis, top1, now()))
+        " VALUES (?, ?, ?, ?, ?)", (user["id"], path, hypothesis, candidates[0]["phrase_id"] if candidates else None,
+                                    now()))
     return {
         "sample_id": sample_id,
         "hypothesis": hypothesis,
+        "context": context,
         "candidates": candidates,
-        "low_confidence": not candidates or candidates[0]["score"] < matcher.LOW_CONFIDENCE,
+        "low_confidence": not candidates or candidates[0]["parts"]["similarity"] < matcher.LOW_CONFIDENCE,
     }
 
 
 @app.post("/me/confirm")
 def confirm(sample_id: int = Body(), phrase_id: int | None = Body(None), new_text: str | None = Body(None),
+            template_id: int | None = Body(None), slot_word_id: int | None = Body(None),
             user=Depends(current_user)):
+    """Say what a recognition was: a phrase_id, a new_text, or a composed candidate's
+    template_id and slot_word_id (which makes it a real phrase). Logs one use."""
     user_id = user["id"]
-    if (phrase_id is None) == (new_text is None):
-        raise HTTPException(400, "send exactly one of phrase_id or new_text")
-    sample = db.row("SELECT id FROM samples WHERE id = ? AND user_id = ? AND source IS NOT 'enroll'",
-                    (sample_id, user_id))
-    if sample is None:
-        raise HTTPException(404, "recognition sample not found")
+    composed = template_id is not None or slot_word_id is not None
+    if [phrase_id is not None, new_text is not None, composed].count(True) != 1 or \
+            composed and (template_id is None or slot_word_id is None):
+        raise Refused(400, "bad_confirm", "send one of phrase_id, new_text, or template_id with slot_word_id")
+    if owned("samples", sample_id, user_id)["source"] == "enroll":
+        raise Refused(404, "not_found", "recognition sample not found")
 
+    if composed:
+        template, word = owned("templates", template_id, user_id), owned("slot_words", slot_word_id, user_id)
+        slot, fixed, slot_first = matcher.parse_template(template["text"])
+        if word["slot"] != slot:
+            raise Refused(400, "bad_confirm", f"that template takes a {slot}")
+        new_text = matcher.compose(slot_first, word["text"], fixed)
     phrase = get_phrase(user_id, find_or_add_phrase(user_id, new_text) if new_text is not None else phrase_id)
-    db.execute("UPDATE samples SET phrase_id = ?, source = 'correction' WHERE id = ?", (phrase["id"], sample_id))
-    return {"sample_id": sample_id, "phrase_id": phrase["id"], "text": phrase["text"]}
+    db.transaction(("UPDATE samples SET phrase_id = ?, source = 'correction' WHERE id = ?", (phrase["id"], sample_id)),
+                   ("INSERT INTO uses (user_id, phrase_id, created_at) VALUES (?, ?, ?)", (user_id, phrase["id"], now())))
+    return {"sample_id": sample_id, "phrase_id": phrase["id"], "text": phrase["text"], "urgent": phrase["urgent"]}
 
 
 @app.post("/speak")
 def speak_text(text: str = Body(embed=True), user=Depends(current_user)):
-    if not text.strip():
-        raise HTTPException(400, "text is empty")
-    return FileResponse(speak.synthesize(text.strip(), user["language"]), media_type="audio/wav")
+    """Say text in the user's cloned voice when use_own_voice is on, else in the stock voice
+    for their language."""
+    text = clean_text(text)
+    if user["use_own_voice"] and user["voice_embedding"]:
+        path = speak.synthesize(text, user["language"], json.loads(user["voice_embedding"]),
+                                cache_dir=f"{voice_folder(user)}/tts")
+    else:
+        path = speak.synthesize(text, user["language"])
+    return FileResponse(path, media_type="audio/wav")
 
 
 @app.get("/me/stats")
 def stats(user=Depends(current_user)):
+    """Counts (samples are enrollments plus confirmed recognitions), the top 5 phrases by use,
+    and clear_without_help_rate: for each of the last 8 weeks (Monday first, oldest first), the
+    share of confirmed recognitions whose raw Prisma hypothesis was already within
+    CLEAR_SIMILARITY (90 of 100) of the phrase. A rough trend of how often the speech service
+    understood without the personal layer, not a medical measure of speech."""
     counts = db.row("""
         SELECT
             (SELECT COUNT(*) FROM phrases WHERE user_id = :u) AS phrases,
+            COUNT(*) FILTER (WHERE source IS NOT NULL) AS samples,
             COUNT(*) FILTER (WHERE source = 'enroll') AS enroll_samples,
             COUNT(*) FILTER (WHERE source IS NOT 'enroll') AS recognitions,
             COUNT(*) FILTER (WHERE source = 'correction') AS confirmed,
@@ -256,4 +645,36 @@ def stats(user=Depends(current_user)):
         FROM samples WHERE user_id = :u""", {"u": user["id"]})
     confirmed = counts["confirmed"]
     counts["top1_hit_rate"] = round(counts["top1_hits"] / confirmed, 3) if confirmed else None
+
+    today = datetime.now().astimezone().date()
+    this_week = today - timedelta(days=today.weekday())
+    weeks = {this_week - timedelta(weeks=n): [0, 0] for n in range(7, -1, -1)}  # start -> [confirmed, clear]
+    for s in db.rows("SELECT s.prisma_hypothesis, s.created_at, p.text FROM samples s JOIN phrases p"
+                     " ON p.id = s.phrase_id WHERE s.user_id = ? AND s.source = 'correction'", (user["id"],)):
+        day = datetime.fromisoformat(s["created_at"]).astimezone().date()
+        week = weeks.get(day - timedelta(days=day.weekday()))
+        if week:
+            week[0] += 1
+            week[1] += matcher.similarity(s["prisma_hypothesis"], s["text"]) >= matcher.CLEAR_SIMILARITY
+    counts["clear_without_help_rate"] = [
+        {"week_start": start.isoformat(), "confirmed": n, "clear": clear, "rate": round(clear / n, 3) if n else None}
+        for start, (n, clear) in weeks.items()]
+    counts["top_phrases"] = db.rows(
+        "SELECT p.id AS phrase_id, p.text, COUNT(*) AS uses FROM uses u JOIN phrases p ON p.id = u.phrase_id"
+        " WHERE u.user_id = ? GROUP BY p.id ORDER BY uses DESC, MAX(u.created_at) DESC LIMIT 5", (user["id"],))
     return counts
+
+
+@app.get("/me/usage")
+def usage(user=Depends(current_user)):
+    """Gnani calls by everyone, against GNANI_CALL_LIMIT. Only for the owner: the account whose
+    email is OWNER_EMAIL in .env."""
+    owner = os.environ.get("OWNER_EMAIL", "").strip().lower()
+    if not owner or user["email"] != owner:
+        raise Refused(403, "not_owner", "only the owner (OWNER_EMAIL in .env) can see usage")
+    by_kind = {r.pop("kind"): r for r in db.rows(
+        "SELECT kind, SUM(cached = 0) AS sent, SUM(cached) AS cached,"
+        " ROUND(TOTAL(CASE WHEN cached = 0 THEN audio_seconds END), 1) AS sent_audio_seconds"
+        " FROM api_calls GROUP BY kind")}
+    sent, limit = sum(r["sent"] for r in by_kind.values()), gnani.call_limit()
+    return {"limit": limit, "sent": sent, "remaining": max(0, limit - sent), "by_kind": by_kind}
