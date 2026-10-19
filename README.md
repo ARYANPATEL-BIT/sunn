@@ -51,7 +51,7 @@ never sent twice.
 Each user speaks Hindi or English (`language` is `hi` or `en`, chosen at sign-up). Prisma gets
 `hi-IN` or `en-IN` (Indian English), Timbre gets `hi-IN` + Nalini or `en-IN` + Kaveri, and the
 default phrases come from `data/default_phrases_hi.txt` or `data/default_phrases_en.txt` (the
-same 50 everyday phrases, same groups).
+same 51 everyday phrases, same groups).
 
 ### Accounts
 
@@ -64,21 +64,148 @@ signed with `JWT_SECRET`, in an httpOnly, Secure, SameSite=Lax cookie that lasts
 - `GET /auth/me`: the signed-in user, or 401
 
 Every per-user route is under `/me/...` and takes the user from the session cookie, never
-from the URL, so nobody can reach another person's recordings by changing an id:
-`/me/phrases`, `/me/phrases/default`, `/me/enroll`, `/me/recognize`, `/me/confirm`,
-`/me/stats`. `/speak` also needs a session. `DELETE /me` deletes the account, its phrases, its
-recordings and their cached Prisma transcripts.
+from the URL or the body, so nobody can reach another person's data by changing an id: an id
+that isn't yours answers 404, the same as one that doesn't exist. `/speak` also needs a session.
+
+### Endpoints
+
+Recordings are form uploads in a field named `audio`; everything else is JSON. A refusal is
+`{detail, code}` with a `code` the app can word (`no_speech`, `bad_phone`, `not_found`…).
+
+**Account**
+
+- `PATCH /me` `{use_own_voice, caregiver_name, caregiver_phone}`, any of them. `caregiver_phone`
+  is digits with the country code (`919876543210`; spaces, dashes and `+` are dropped), ready
+  for a `https://wa.me/<phone>` link. `use_own_voice` needs a recorded voice
+- `DELETE /me`: deletes the account and everything it made (see Privacy), and clears the cookie
+- `POST /me/voice` (form: `audio`, `consent=true`): clones the user's voice with Gnani's voice
+  clone embeddings. Refused without consent. The docs ask for 5–30 s of clear speech, so a
+  recording outside that is refused (`audio_too_short` / `audio_too_long`). Only the embedding
+  is kept; `use_own_voice` stays off until `PATCH /me` turns it on
+- `DELETE /me/voice`: forgets the embedding and everything spoken in it; `use_own_voice` goes off
+- `/auth/me` and the account routes return `has_own_voice` and `use_own_voice`, never the embedding
+
+**Phrases**
+
+- `GET /me/phrases`: each with `contexts`, `urgent`, `enrolled` (enrollment recordings),
+  `sample_count` (enrollments and confirmed recognitions) and `last_used_at`
+- `POST /me/phrases` `{text}`, `POST /me/phrases/default`
+- `PATCH /me/phrases/{id}` `{text, contexts, urgent}`, any of them. `contexts` is a list of
+  `home`, `hospital`, `market`, `any`
+- `DELETE /me/phrases/{id}`: with its samples, their recordings and its uses
+- `POST /me/enroll` (form: `phrase_id`, `audio`), `DELETE /me/samples/{id}`
+
+Default phrases get contexts from their group in the phrase file: basic needs → home and
+hospital, pain and health → hospital, food and drink and family → home, the rest → any.
+मदद चाहिए / I need help and दर्द हो रहा है / I'm in pain are marked urgent.
+
+**Building blocks**: a template like `{item} चाहिए` or `Call {person}` has one slot
+(`item`, `person` or `place`) at its start or end. Its fixed part (`चाहिए`, `Call`) and each
+slot word (`पानी`, `the nurse`) are recorded on their own, 3 times like phrases.
+
+- `GET` / `POST {slot, text}` / `DELETE /me/slot-words[/{id}]`, `POST /me/slot-words/{id}/enroll` (form: `audio`)
+- `GET` / `POST {text}` / `DELETE /me/templates[/{id}]`, `POST /me/templates/{id}/enroll` (form: `audio`)
+
+New users start with items पानी, दवाई, खाना, चाय, कंबल, people बेटे, बेटी, डॉक्टर, नर्स and
+the templates `{item} चाहिए`, `{person} को बुलाओ`. English users get water, my medicine, food,
+tea, a blanket, my son, my daughter, the doctor, the nurse, `I need {item}` and `Call {person}`.
+
+**Speaking**
+
+- `POST /me/recognize` (form: `audio`, optional `context`): the top 3 candidates. Each has
+  `score` and its `parts`, `urgent` and `composed`, explained below
+- `POST /me/confirm` `{sample_id}` plus one of `phrase_id`, `new_text`, or a composed
+  candidate's `template_id` and `slot_word_id`. Adds the recording to that phrase's samples and
+  logs one use. Confirming a composed candidate makes it a real phrase
+- `POST /speak` `{text}`: the user's cloned voice when `use_own_voice` is on, else Nalini or Kaveri
+
+A candidate's score is `similarity + context + freq + time`, all in `parts`:
+
+- `similarity`: 0–100, the closest of the phrase's samples to what Prisma heard
+- `context`: `CONTEXT_BOOST` (6) if the phrase is tagged with the `context` sent
+- `freq`: `FREQ_BOOST` (4) × the phrase's uses as a share of the most used phrase's
+- `time`: `TIME_BOOST` (3) × the same, counting only uses in this time of day (morning 5–12h,
+  afternoon 12–17h, evening 17–21h, night; the server's local time)
+
+The boosts are at the top of `src/matcher.py`. They add at most 13, so they settle near ties
+and never beat a clearly closer match. `low_confidence` looks at the best similarity only.
+
+Composed candidates: every template × slot word of its slot. Their fingerprints are each slot
+word recording's Prisma hypothesis joined to each fixed part recording's, in the template's
+word order, matched like a phrase's samples. They come back with `composed: true`,
+`phrase_id: null`, `template_id` and `slot_word_id`. When the composed text is already a phrase
+(पानी + चाहिए = पानी चाहिए), the fingerprints count for that phrase instead and it comes back
+as the phrase.
+
+**Progress**
+
+- `GET /me/stats`: totals (`phrases`, `samples`, `recognitions`, `confirmed`, top-1 hit rate),
+  `top_phrases` (the 5 most used) and `clear_without_help_rate`: for each of the last 8 weeks,
+  the share of confirmed recognitions whose raw Prisma hypothesis was already within 90 of 100
+  of the phrase. A rough trend of how often Prisma understood without the personal layer, not a
+  medical measure
+- `GET /me/usage`: Gnani calls sent and cached by kind, against the limit. Only for the
+  account whose email is `OWNER_EMAIL` in `.env`
+
+### Gnani calls, limits and errors
+
+Every Prisma, Timbre and clone call goes through `src/gnani.py`: a 15 s timeout and one retry
+after a timeout, a lost connection or a 5xx. Each call, sent or answered from the cache, is a row
+in `api_calls` (kind, cached, audio seconds). Once `GNANI_CALL_LIMIT` (in `.env`, default 4000)
+calls have been sent, new ones are refused; cached answers still work. Uploads are refused over
+10 MB, and phrase recordings outside 0.3–15 s.
+
+| code | status | meaning |
+| - | - | - |
+| `gnani_unreachable` | 502 | Gnani didn't answer, or failed twice |
+| `gnani_rejected` | 502 | Gnani refused the request |
+| `gnani_limit_reached` | 429 | `GNANI_CALL_LIMIT` is used up |
+| `audio_too_short`, `audio_too_long` | 400 | outside the length limits; the body has `seconds` |
+| `file_too_large` | 413 | over 10 MB |
+| `bad_audio` | 400 | ffmpeg couldn't read the file |
+| `no_speech` | 422 | Prisma heard nothing; nothing is stored |
+
+Gnani errors also carry `"source": "gnani"`.
+
+### Privacy
+
+`DELETE /me` removes the user's phrases, slot words, templates, samples, uses, every
+recording with its cached Prisma transcript, and the cloned voice with everything spoken in it
+(all in `data/users/<id>/`). Files go first, so if one can't be removed the account is still
+there to try again. Two things are kept because they aren't anyone's data: the stock-voice
+Timbre cache (`data/cache/tts/`, phrase text spoken by Nalini or Kaveri, shared by everyone who
+says it) and `api_calls` (counts with no user).
+
+`logs/app.log` is one JSON line per request, Gnani call and refusal: ids, paths, status codes,
+error codes and timings. Never audio, phrase text, transcripts, emails, passwords or tokens.
+
+### Running
 
 ```powershell
 # API on this machine; the web app reaches it through Vite's proxy. Docs at http://localhost:8000/docs
 uv run uvicorn api:app --app-dir src --port 8000
 
-# in a second terminal: sign up, add default phrases, enroll 2 of them, recognize the first
+# in a second terminal: sign up, enroll phrases and building blocks, recognize, confirm, edit,
+# read the stats, then delete the account
 uv run scripts/smoke_test.py first.wav second.wav            # --language en for an English user
+uv run scripts/smoke_test.py first.wav second.wav --voice me.wav   # also clone a voice (5-30 s)
 ```
 
-The smoke test makes 2 Prisma calls (one per enrollment); the recognize step reuses the
-first recording's cached transcript.
+The smoke test makes 2 Prisma calls (one per wav); every later step reuses those cached
+transcripts. `--voice` adds one clone call and one Timbre call.
+
+An existing `data/app.db` gains the new columns and tables when the API starts. Phrases that
+already existed get contexts `any` and aren't urgent, and older accounts have no building blocks
+(they're added at sign-up).
+
+### Tests
+
+```powershell
+uv run pytest
+```
+
+Each test runs the API in its own temporary folder (its own database, recordings and caches),
+and every Gnani call is faked, so the tests never use credits or touch `data/`.
 
 ## Frontend
 
