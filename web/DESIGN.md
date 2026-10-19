@@ -58,20 +58,27 @@ not the average.
 
 ## Background
 - One `<SeaLight>` behind every page: fixed, full viewport, a raw WebGL shader called aurora
-  dusk. Over the sky base, soft color fields drift like a liquid gradient: teal (large, slow)
-  in the upper sky, violet across the upper middle bridging the halves, magenta in the lower
-  sky, and saffron rising from the bottom edge like a sun coming up (it never reaches the
-  headline). Cool on top, warm at the bottom, always
+  dusk. Over the sky base, large, soft color fields drift like a liquid gradient: teal in the
+  upper sky, violet across the upper middle bridging the halves, magenta in the lower sky, and
+  saffron as a thin horizon glow on the bottom edge (it never climbs behind the feature row,
+  let alone the headline). Cool on top, warm at the bottom, always; 2–3 colors clearly visible
+  at a time, never all of them
 - The space is domain-warped by slow, low-frequency noise, so the edges between colors swirl
-  like aurora curtains. Each field moves on its own 20–40s path inside its band, so the pattern
-  never visibly repeats
-- Soft blend, then a luminance ceiling (0.06 relative luminance, hue kept): nothing clips or
+  like aurora curtains (saffron ignores the vertical warp, so the horizon stays level). Each
+  field moves on its own 30–60s path inside its band, so the pattern never visibly repeats
+- Colors are mixed in OKLab, not RGB, so overlaps pass through clean hues (saffron + violet
+  gives rose, magenta + teal gives violet-grey), never brown or olive. Slightly less color
+  across the middle of the screen, where the headline sits
+- Soft blend, then a luminance ceiling (0.05 relative luminance, hue kept): nothing clips or
   goes neon, and mist text keeps 4.5:1 over the brightest pixel anywhere on screen, grain
-  included, with no vignette or box behind text. ±3% film grain on top
-- Half-resolution render, capped at 30fps, paused while the tab is hidden
+  included, with no vignette or box behind text
+- Grain: about ±1%, static, one noise pixel per device pixel (a 256px tile drawn once and
+  repeated by CSS, separate from the light), so it reads as a matte surface, not moving noise
+- Half-resolution light, capped at 30fps, paused while the tab is hidden
 - Intensity / veil per page (`src/App.jsx`, `SEA`): landing 1.0 / 0, login and signup 0.8 /
   0.25, speak 0.45 / 0.35, other app screens 0.55 / 0.45
-- No WebGL: a still CSS gradient of the same fields. Reduced motion: one frozen frame
+- No WebGL: a still CSS gradient of the same fields, under the same grain. Reduced motion: one
+  frozen frame
 
 ## Interaction
 - Touch targets: 44px minimum on the landing, 64px in the app (enlarged hit areas where the
