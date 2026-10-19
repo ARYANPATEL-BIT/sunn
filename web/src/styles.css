@@ -119,6 +119,7 @@ svg {
 
 .sea canvas,
 .sea-fallback,
+.sea-grain,
 .sea-veil {
   position: absolute;
   inset: 0;
@@ -127,13 +128,18 @@ svg {
   height: 100%;
 }
 
+/* One CSS pixel of the tile per device pixel: keep it crisp */
+.sea-grain {
+  image-rendering: pixelated;
+}
+
 /* Without WebGL: a still version of the same sky */
 .sea-fallback {
   background:
-    radial-gradient(ellipse 45% 30% at 50% 112%, rgb(243 154 43 / 0.2), transparent),
-    radial-gradient(ellipse 60% 30% at 60% 84%, rgb(194 48 107 / 0.3), transparent),
-    radial-gradient(ellipse 70% 30% at 40% 40%, rgb(91 63 209 / 0.3), transparent),
-    radial-gradient(ellipse 90% 40% at 50% 14%, rgb(15 94 115 / 0.6), transparent);
+    radial-gradient(ellipse 70% 5% at 50% 100%, rgb(243 154 43 / 0.3), transparent),
+    radial-gradient(ellipse 80% 40% at 55% 82%, rgb(194 48 107 / 0.3), transparent),
+    radial-gradient(ellipse 100% 45% at 45% 45%, rgb(91 63 209 / 0.35), transparent),
+    radial-gradient(ellipse 120% 55% at 50% 12%, rgb(15 94 115 / 0.65), transparent);
   transition: opacity 800ms ease;
 }
 
