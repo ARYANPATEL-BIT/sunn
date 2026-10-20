@@ -146,6 +146,8 @@ export default {
   'error.noMic': 'कोई माइक नहीं मिला। माइक जोड़िए, फिर सूरज दबाइए।',
   'error.insecure': 'माइक के लिए https वाला पता खोलिए।',
   'error.playback': 'आवाज़ नहीं चल पाई। वाक्य को फिर से दबाइए।',
+  'error.unsupported': 'आपका ब्राउज़र ऑडियो रिकॉर्डिंग का समर्थन नहीं करता है।',
+  'error.confirm_failed': 'वाक्य की पुष्टि नहीं हो सकी। कृपया पुनः प्रयास करें।',
   'error.server': 'कुछ गड़बड़ हो गई। फिर से कोशिश कीजिए।',
   'error.retry': 'फिर से कोशिश करें',
 
@@ -202,6 +204,10 @@ export default {
   'speak.stopPlaying': 'आवाज़ रोकें',
   'speak.retry': 'फिर कोशिश करें',
   'speak.confirmed': 'पक्का किया',
+  'speak.statusRecording': 'रिकॉर्डिंग जारी है। अपना वाक्य बोलें।',
+  'speak.statusListening': 'आपकी आवाज़ पहचानी जा रही है। कृपया प्रतीक्षा करें।',
+  'speak.statusPlaying': 'आवाज़ सुनाई जा रही है: {text}',
+  'speak.statusSpoke': 'बोला गया वाक्य: {text}',
 
   'phrases.title': 'वाक्य संग्रह',
   'phrases.subtitle': 'अपने सहेजे गए वाक्य, संदर्भ और ज़रूरी निशान देखें, जोड़ें या बदलें।',
