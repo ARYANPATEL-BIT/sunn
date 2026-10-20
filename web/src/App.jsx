@@ -6,6 +6,7 @@ import { LoginPage, SignupPage } from './AuthPages.jsx'
 import Enroll from './Enroll.jsx'
 import { LanguageProvider } from './i18n/index.jsx'
 import Landing from './Landing.jsx'
+import Onboarding from './Onboarding.jsx'
 import Phrases from './Phrases.jsx'
 import { applyPreferences } from './prefs.js'
 import Progress from './Progress.jsx'
@@ -63,6 +64,7 @@ const router = createBrowserRouter([
           { path: 'phrases', element: <Phrases /> },
           { path: 'progress', element: <Progress /> },
           { path: 'settings', element: <Settings /> },
+          { path: 'onboarding', element: <Onboarding /> },
         ],
       },
       { path: '*', element: <Navigate replace to="/" /> },
