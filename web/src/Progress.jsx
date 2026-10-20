@@ -152,6 +152,33 @@ export default function Progress() {
         </div>
       </section>
 
+      {/* Section 2: Suggestion Match Rate */}
+      {Boolean(stats?.confirmed) && (
+        <article className="match-rate-card" aria-labelledby="heading-match-rate">
+          <div className="match-rate-header">
+            <h2 id="heading-match-rate">{t('progress.matchRateHeading')}</h2>
+            <span className="match-rate-percent">{hitRate}</span>
+          </div>
+          <p className="muted">{t('progress.matchRateExplanation')}</p>
+          <div
+            className="match-rate-bar"
+            role="progressbar"
+            aria-valuenow={Math.round((stats?.top1_hit_rate ?? 0) * 100)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={t('progress.matchRateHeading')}
+          >
+            <div
+              className="match-rate-fill"
+              style={{ width: `${Math.round((stats?.top1_hit_rate ?? 0) * 100)}%` }}
+            />
+          </div>
+          <small className="muted hit-detail">
+            {stats?.top1_hits ?? 0} / {stats?.confirmed ?? 0} {t('progress.confirmed').toLowerCase()}
+          </small>
+        </article>
+      )}
+
       {stats?.recognitions === 0 && (
         <article className="progress-empty-card" aria-labelledby="empty-progress-title">
           <h2 id="empty-progress-title">{t('progress.nothing')}</h2>
