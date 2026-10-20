@@ -1,4 +1,4 @@
-import { BookOpen, Mic, RotateCcw, Trash2 } from 'lucide-react'
+import { BookOpen, Mic, RotateCcw, Square, Trash2, Volume2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
@@ -61,7 +61,24 @@ export default function Progress() {
   const [phrases, setPhrases] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [playingPhrase, setPlayingPhrase] = useState(null)
   const isMounted = useRef(true)
+
+  const handlePlayPhrase = async (text) => {
+    if (playingPhrase === text) {
+      api.stopAudio()
+      setPlayingPhrase(null)
+      return
+    }
+    setPlayingPhrase(text)
+    try {
+      await api.say(text)
+    } catch {
+      // Audio errors non-blocking on progress screen
+    } finally {
+      if (isMounted.current) setPlayingPhrase(null)
+    }
+  }
 
   const loadData = async () => {
     setLoading(true)
@@ -91,6 +108,7 @@ export default function Progress() {
     loadData()
     return () => {
       isMounted.current = false
+      api.stopAudio()
     }
   }, [])
 
@@ -183,6 +201,47 @@ export default function Progress() {
           </small>
         </article>
       )}
+
+      {/* Section 3: Frequently Used Phrases */}
+      <section className="progress-section" aria-labelledby="heading-top-phrases">
+        <h2 id="heading-top-phrases">{t('progress.topPhrasesHeading')}</h2>
+        {stats?.top_phrases && stats.top_phrases.length > 0 ? (
+          <ul className="top-phrases-list" aria-label={t('progress.topPhrasesHeading')}>
+            {stats.top_phrases.map((phrase, idx) => {
+              const isPlaying = playingPhrase === phrase.text
+              return (
+                <li key={phrase.phrase_id} className="top-phrase-item">
+                  <div className="top-phrase-main">
+                    <span className="rank-badge" aria-hidden="true">
+                      {idx + 1}
+                    </span>
+                    <span className="phrase-text">{phrase.text}</span>
+                  </div>
+                  <div className="top-phrase-meta">
+                    <span className="uses-badge">
+                      {t('progress.usesCount', { count: phrase.uses })}
+                    </span>
+                    <button
+                      type="button"
+                      className="icon-pill-btn"
+                      onClick={() => handlePlayPhrase(phrase.text)}
+                      aria-label={`${t(isPlaying ? 'phrases.stopPlaying' : 'phrases.listen')}: ${phrase.text}`}
+                    >
+                      {isPlaying ? (
+                        <Square size={15} fill="currentColor" aria-hidden="true" />
+                      ) : (
+                        <Volume2 size={15} aria-hidden="true" strokeWidth={1.5} />
+                      )}
+                    </button>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="muted empty-note">{t('progress.topPhrasesEmpty')}</p>
+        )}
+      </section>
 
       {stats?.recognitions === 0 && (
         <article className="progress-empty-card" aria-labelledby="empty-progress-title">
