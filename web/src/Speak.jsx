@@ -38,6 +38,7 @@ export default function Speak() {
   const [busy, setBusy] = useState(null) // 'listening' while Prisma works, 'playing' while Timbre speaks
   const [error, setError] = useState(null)
   const confirmedSampleRef = useRef(null)
+  const confirmingSampleRef = useRef(null)
   const isMountedRef = useRef(true)
   const activeRecordIdRef = useRef(0)
 
@@ -49,6 +50,7 @@ export default function Speak() {
       if (!response.hypothesis?.trim()) throw failure('silent')
       setResult(response)
       confirmedSampleRef.current = null
+      confirmingSampleRef.current = null
     })
   })
 
@@ -90,6 +92,7 @@ export default function Speak() {
       setNewText('')
       setError(null)
       confirmedSampleRef.current = null
+      confirmingSampleRef.current = null
     }
     recorder.toggle()
   }
@@ -105,15 +108,25 @@ export default function Speak() {
 
     run('playing', async () => {
       setSpoken(candidate)
+      const sampleId = result?.sample_id
       let confirmPromise = Promise.resolve()
-      if (confirmedSampleRef.current !== result.sample_id) {
+
+      if (sampleId && confirmedSampleRef.current !== sampleId && confirmingSampleRef.current !== sampleId) {
+        confirmingSampleRef.current = sampleId
         const answer = candidate.composed
           ? { template_id: candidate.template_id, slot_word_id: candidate.slot_word_id }
           : { phrase_id: candidate.phrase_id }
-        confirmPromise = api.confirm({ sample_id: result.sample_id, ...answer }).then(() => {
-          confirmedSampleRef.current = result.sample_id
-        })
+        confirmPromise = api
+          .confirm({ sample_id: sampleId, ...answer })
+          .then((res) => {
+            confirmedSampleRef.current = sampleId
+            return res
+          })
+          .finally(() => {
+            confirmingSampleRef.current = null
+          })
       }
+
       try {
         await Promise.all([api.say(candidate.text), confirmPromise])
       } catch (e) {
@@ -126,19 +139,26 @@ export default function Speak() {
     e.preventDefault()
     const text = newText.trim()
     if (!text) return
+    const sampleId = result?.sample_id
     run('playing', async () => {
       let confirmed = null
-      try {
-        confirmed = await api.confirm({ sample_id: result.sample_id, new_text: text })
-        confirmedSampleRef.current = result.sample_id
-      } catch (e) {
-        setError(e)
-        return
+      if (sampleId && confirmedSampleRef.current !== sampleId && confirmingSampleRef.current !== sampleId) {
+        confirmingSampleRef.current = sampleId
+        try {
+          confirmed = await api.confirm({ sample_id: sampleId, new_text: text })
+          confirmedSampleRef.current = sampleId
+        } catch (e) {
+          setError(e)
+          return
+        } finally {
+          confirmingSampleRef.current = null
+        }
       }
-      setSpoken(confirmed)
+      const targetPhrase = confirmed || { text }
+      setSpoken(targetPhrase)
       setTyping(false)
       try {
-        await api.say(confirmed.text)
+        await api.say(targetPhrase.text)
       } catch (e) {
         setError(e)
       }
