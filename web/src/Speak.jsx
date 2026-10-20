@@ -107,8 +107,8 @@ export default function Speak() {
     }
 
     run('playing', async () => {
-      setSpoken(candidate)
       const sampleId = result?.sample_id
+      let confirmed = false
       let confirmPromise = Promise.resolve()
 
       if (sampleId && confirmedSampleRef.current !== sampleId && confirmingSampleRef.current !== sampleId) {
@@ -120,17 +120,24 @@ export default function Speak() {
           .confirm({ sample_id: sampleId, ...answer })
           .then((res) => {
             confirmedSampleRef.current = sampleId
+            confirmed = true
             return res
           })
           .finally(() => {
             confirmingSampleRef.current = null
           })
+      } else {
+        confirmed = true
       }
 
       try {
         await Promise.all([api.say(candidate.text), confirmPromise])
+        setSpoken(candidate)
       } catch (e) {
         setError(e)
+        if (!confirmed && confirmedSampleRef.current !== sampleId) {
+          setSpoken(null)
+        }
       }
     })
   }
@@ -172,6 +179,7 @@ export default function Speak() {
 
   function retry() {
     setError(null)
+    recorder.reset?.()
   }
 
   if (learned === 0) {
