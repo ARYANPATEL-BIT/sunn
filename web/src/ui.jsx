@@ -10,7 +10,9 @@ const MIN_RECORDING_MS = 700
 // Kept low on purpose: weak voices must never be thrown away as silence.
 const SILENCE_RMS = 0.008
 
-export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches
+export const reducedMotion = () =>
+  matchMedia('(prefers-reduced-motion: reduce)').matches ||
+  (typeof document !== 'undefined' && document.documentElement.classList.contains('reduced-motion'))
 
 // A tiny tap on phones that support it (Android); nothing elsewhere.
 function haptic() {

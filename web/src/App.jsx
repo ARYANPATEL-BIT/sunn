@@ -7,8 +7,10 @@ import Enroll from './Enroll.jsx'
 import { LanguageProvider } from './i18n/index.jsx'
 import Landing from './Landing.jsx'
 import Phrases from './Phrases.jsx'
+import { applyPreferences } from './prefs.js'
 import Progress from './Progress.jsx'
 import SeaLight from './SeaLight.jsx'
+import Settings from './Settings.jsx'
 import Speak from './Speak.jsx'
 
 // Background per page (DESIGN.md): light intensity, and the sky veil over it.
@@ -24,6 +26,7 @@ function Root() {
 
   // After a page change, move focus to the content for screen reader users.
   useEffect(() => {
+    applyPreferences()
     if (first.current) return void (first.current = false)
     main.current?.focus({ preventScroll: true })
   }, [pathname])
@@ -59,6 +62,7 @@ const router = createBrowserRouter([
           { path: 'speak', element: <Speak /> },
           { path: 'phrases', element: <Phrases /> },
           { path: 'progress', element: <Progress /> },
+          { path: 'settings', element: <Settings /> },
         ],
       },
       { path: '*', element: <Navigate replace to="/" /> },

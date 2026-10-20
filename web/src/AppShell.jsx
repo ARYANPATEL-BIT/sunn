@@ -1,4 +1,4 @@
-import { AudioLines, BookOpen, ChartNoAxesColumn, LogOut, Mic } from 'lucide-react'
+import { AudioLines, BookOpen, ChartNoAxesColumn, LogOut, Mic, Settings as SettingsIcon } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
@@ -9,6 +9,7 @@ const TABS = [
   { to: '/app/speak', key: 'tab.speak', Icon: Mic },
   { to: '/app/phrases', key: 'tab.phrases', Icon: BookOpen },
   { to: '/app/progress', key: 'tab.progress', Icon: ChartNoAxesColumn },
+  { to: '/app/settings', key: 'tab.settings', Icon: SettingsIcon },
 ]
 
 // Every /app screen: a header (home, language, who is signed in, log out) and the bottom tabs.
@@ -28,6 +29,16 @@ export default function AppShell() {
         <Wordmark />
         <div className="app-header-end">
           <LangToggle />
+          <NavLink
+            to="/app/settings"
+            className="pill-outline settings-nav-btn"
+            title={t('tab.settings')}
+            aria-label={t('tab.settings')}
+            viewTransition={!reducedMotion()}
+          >
+            <SettingsIcon size={18} aria-hidden="true" strokeWidth={1.5} />
+            <span className="settings-nav-text">{t('tab.settings')}</span>
+          </NavLink>
           <span className="who" title={t('app.signedIn', { name: user.name })}>
             <span className="visually-hidden">{t('app.signedIn', { name: user.name })}</span>
             <span aria-hidden="true">{user.name}</span>
