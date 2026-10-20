@@ -26,15 +26,15 @@ def test_signup_login_logout(env):
     client = env.client()
     email = f"{uuid.uuid4().hex[:8]}@example.com"
     body = {"name": "Asha", "email": email, "password": "password123", "language": "hi"}
-    assert client.post("/auth/signup", json=body).json()["code"] == "no_consent"
+    assert client.post("/auth/signup", json=body).json()["error"] == "consent_required"
     user = client.post("/auth/signup", json={**body, "consent": True}).json()
     assert user["email"] == email and user["use_own_voice"] is False and "voice_embedding" not in user
-    assert env.client().post("/auth/signup", json={**body, "consent": True}).json()["code"] == "email_taken"
+    assert env.client().post("/auth/signup", json={**body, "consent": True}).json()["error"] == "email_taken"
     assert client.get("/auth/me").json()["id"] == user["id"]
 
     client.post("/auth/logout")
     assert client.get("/auth/me").status_code == 401
-    assert client.post("/auth/login", json={"email": email, "password": "wrong-password"}).json()["code"] == "bad_login"
+    assert client.post("/auth/login", json={"email": email, "password": "wrong-password"}).json()["error"] == "bad_login"
     assert client.post("/auth/login", json={"email": email.upper(), "password": "password123"}).status_code == 200
     assert client.get("/auth/me").json()["id"] == user["id"]
 
@@ -105,7 +105,7 @@ def test_recognize_returns_score_parts_urgency_and_context_boost(env):
     assert top["parts"]["context"] == 6 and top["parts"]["freq"] == 0 and top["parts"]["time"] == 0
     assert top["score"] == round(sum(top["parts"].values()), 1)
     assert result["context"] == "hospital" and result["low_confidence"] is False
-    assert client.post("/me/recognize", data={"context": "office"}, files=env.recording()).json()["code"] == "bad_context"
+    assert client.post("/me/recognize", data={"context": "office"}, files=env.recording()).json()["error"] == "invalid_input"
 
 
 def test_confirmed_uses_add_frequency_and_time_boosts(env):
@@ -163,11 +163,11 @@ def test_confirm_needs_exactly_one_answer(env):
     client = env.signup()
     heard = env.recognize(client, "पानी")
     for body in ({}, {"phrase_id": 1, "new_text": "x"}, {"template_id": 1}, {"phrase_id": 1, "slot_word_id": 1}):
-        assert client.post("/me/confirm", json={"sample_id": heard["sample_id"], **body}).json()["code"] == "bad_confirm"
+        assert client.post("/me/confirm", json={"sample_id": heard["sample_id"], **body}).json()["error"] == "invalid_input"
     word = block_id(client, "/me/slot-words", "बेटी")  # a person, but this template takes an item
     template = block_id(client, "/me/templates", "{item} चाहिए")
     assert client.post("/me/confirm", json={"sample_id": heard["sample_id"], "template_id": template,
-                                            "slot_word_id": word}).json()["code"] == "bad_confirm"
+                                            "slot_word_id": word}).json()["error"] == "invalid_input"
 
 
 # --- uploads and Gnani ---
@@ -176,12 +176,12 @@ def test_upload_limits_and_no_speech(env):
     client = env.signup()
     pid = phrase_id(client, "पानी चाहिए")
     enroll = lambda files: client.post("/me/enroll", data={"phrase_id": pid}, files=files).json()  # noqa: E731
-    assert enroll(env.recording(16))["code"] == "audio_too_long"
-    assert enroll(env.recording(0.1))["code"] == "audio_too_short"
-    assert enroll({"audio": ("big.wav", b"\0" * (10 * 2**20 + 1), "audio/wav")})["code"] == "file_too_large"
-    assert enroll({"audio": ("junk.wav", b"not audio", "audio/wav")})["code"] == "bad_audio"
+    assert enroll(env.recording(16))["error"] == "audio_too_long"
+    assert enroll(env.recording(0.1))["error"] == "audio_too_short"
+    assert enroll({"audio": ("big.wav", b"\0" * (10 * 2**20 + 1), "audio/wav")})["error"] == "file_too_large"
+    assert enroll({"audio": ("junk.wav", b"not audio", "audio/wav")})["error"] == "bad_audio"
     env.fake.transcripts.append("  ")
-    assert enroll(env.recording())["code"] == "no_speech"
+    assert enroll(env.recording())["error"] == "no_speech"
     assert len(env.fake.sent("stt")) == 1  # only the recording that passed the checks was sent
     assert db.row("SELECT COUNT(*) AS n FROM samples")["n"] == 0
     assert files_under("data/users") == []  # nothing left behind
@@ -198,11 +198,11 @@ def test_gnani_retries_once_then_gives_a_clear_code(env):
     env.fake.failures = [requests.Timeout(), requests.ConnectionError()]
     response = enroll()
     assert response.status_code == 502
-    assert response.json() | {"detail": ""} == {"code": "gnani_unreachable", "source": "gnani", "detail": ""}
+    assert response.json() | {"message": ""} == {"error": "gnani_unreachable", "message": ""}
     assert len(env.fake.sent("stt")) == 4
 
     env.fake.failures = [400]
-    assert enroll().json()["code"] == "gnani_rejected" and len(env.fake.sent("stt")) == 5  # no retry on 4xx
+    assert enroll().json()["error"] == "gnani_rejected" and len(env.fake.sent("stt")) == 5  # no retry on 4xx
     assert db.row("SELECT COUNT(*) AS n FROM api_calls WHERE kind = 'stt' AND cached = 0")["n"] == 5
 
 
@@ -215,8 +215,8 @@ def test_credit_limit_refuses_new_calls_but_not_cached_ones(env, monkeypatch):
     assert client.post("/me/enroll", data={"phrase_id": pid}, files=first).status_code == 200
 
     refused = client.post("/me/enroll", data={"phrase_id": pid}, files=env.recording())
-    assert refused.status_code == 429 and refused.json()["code"] == "gnani_limit_reached"
-    assert client.post("/speak", json={"text": "नमस्ते"}).json()["code"] == "gnani_limit_reached"
+    assert refused.status_code == 429 and refused.json()["error"] == "credit_limit_reached"
+    assert client.post("/speak", json={"text": "नमस्ते"}).json()["error"] == "credit_limit_reached"
     assert client.post("/me/enroll", data={"phrase_id": pid}, files=first).status_code == 200  # cached
     assert len(env.fake.requests) == 1
     assert db.row("SELECT SUM(cached = 0) AS sent, SUM(cached) AS cached FROM api_calls") == {"sent": 1, "cached": 1}
@@ -224,7 +224,7 @@ def test_credit_limit_refuses_new_calls_but_not_cached_ones(env, monkeypatch):
 
 def test_usage_is_for_the_owner_only(env, monkeypatch):
     client = env.signup()
-    assert client.get("/me/usage").json()["code"] == "not_owner"
+    assert client.get("/me/usage").json()["error"] == "not_owner"
     monkeypatch.setenv("OWNER_EMAIL", client.get("/auth/me").json()["email"].upper())
     env.enroll_phrase(client, "पानी चाहिए")
     usage = client.get("/me/usage").json()
@@ -239,10 +239,10 @@ def test_own_voice(env):
     client = env.signup()
     voice = lambda seconds, consent="true": client.post(  # noqa: E731
         "/me/voice", data={"consent": consent}, files={"audio": ("me.wav", wav(seconds, 330), "audio/wav")})
-    assert voice(6, consent="").json()["code"] == "no_voice_consent"
-    assert voice(4).json()["code"] == "audio_too_short"
-    assert voice(31).json()["code"] == "audio_too_long"
-    assert client.patch("/me", json={"use_own_voice": True}).json()["code"] == "no_voice"
+    assert voice(6, consent="").json()["error"] == "consent_required"
+    assert voice(4).json()["error"] == "audio_too_short"
+    assert voice(31).json()["error"] == "audio_too_long"
+    assert client.patch("/me", json={"use_own_voice": True}).json()["error"] == "no_voice"
 
     assert voice(6).json()["has_own_voice"] is True
     sent = env.fake.sent("clone")
@@ -274,8 +274,8 @@ def test_caregiver_details(env):
     client = env.signup()
     me = client.patch("/me", json={"caregiver_name": " Ravi ", "caregiver_phone": "+91 98765-43210"}).json()
     assert me["caregiver_name"] == "Ravi" and me["caregiver_phone"] == "919876543210"
-    assert client.patch("/me", json={"caregiver_phone": "12345"}).json()["code"] == "bad_phone"
-    assert client.patch("/me", json={"email": "x@example.com"}).json()["code"] == "bad_field"
+    assert client.patch("/me", json={"caregiver_phone": "12345"}).json()["error"] == "invalid_input"
+    assert client.patch("/me", json={"email": "x@example.com"}).json()["error"] == "invalid_input"
     assert client.patch("/me", json={"caregiver_phone": None}).json()["caregiver_phone"] is None
 
 
@@ -287,8 +287,8 @@ def test_edit_and_delete_phrases_and_samples(env):
     edited = client.patch(f"/me/phrases/{phrase['id']}", json={
         "text": "ठंडा पानी चाहिए", "contexts": ["home", "market"], "urgent": True}).json()
     assert edited == {"id": phrase["id"], "text": "ठंडा पानी चाहिए", "contexts": ["home", "market"], "urgent": True}
-    assert client.patch(f"/me/phrases/{phrase['id']}", json={"contexts": ["office"]}).json()["code"] == "bad_contexts"
-    assert client.patch(f"/me/phrases/{phrase['id']}", json={"text": "नमस्ते"}).json()["code"] == "phrase_exists"
+    assert client.patch(f"/me/phrases/{phrase['id']}", json={"contexts": ["office"]}).json()["error"] == "invalid_input"
+    assert client.patch(f"/me/phrases/{phrase['id']}", json={"text": "नमस्ते"}).json()["error"] == "phrase_exists"
 
     heard = env.recognize(client, "ठंडा पानी")
     client.post("/me/confirm", json={"sample_id": heard["sample_id"], "phrase_id": phrase["id"]})
@@ -311,7 +311,7 @@ def test_delete_slot_words_and_templates_with_their_recordings(env):
     word, template = block_id(client, "/me/slot-words", "चाय"), block_id(client, "/me/templates", "{item} चाहिए")
     env.enroll(client, f"/me/slot-words/{word}/enroll", "चाय")
     env.enroll(client, f"/me/templates/{template}/enroll", "चाहिए")
-    assert client.post("/me/templates", json={"text": "मुझे {item} दो"}).json()["code"] == "bad_template"
+    assert client.post("/me/templates", json={"text": "मुझे {item} दो"}).json()["error"] == "invalid_input"
     assert client.post("/me/templates", json={"text": "{place} जाना है"}).json()["fixed_part"] == "जाना है"
     assert client.post("/me/slot-words", json={"slot": "place", "text": "बाज़ार"}).json()["enrolled"] == 0
     client.delete(f"/me/slot-words/{word}")
@@ -331,7 +331,7 @@ def test_stats(env):
 
     stats = client.get("/me/stats").json()
     assert (stats["phrases"], stats["samples"], stats["recognitions"], stats["confirmed"]) == (51, 5, 4, 3)
-    weeks = stats["clear_without_help_rate"]
+    weeks = stats["clear_without_help_by_week"]
     assert len(weeks) == 8 and weeks[0]["week_start"] < weeks[-1]["week_start"]
     assert weeks[-1] | {"week_start": None} == {"week_start": None, "confirmed": 3, "clear": 2, "rate": 0.667}
     assert all(w["rate"] is None for w in weeks[:-1])
