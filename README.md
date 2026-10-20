@@ -69,8 +69,10 @@ that isn't yours answers 404, the same as one that doesn't exist. `/speak` also 
 
 ### Endpoints
 
-Recordings are form uploads in a field named `audio`; everything else is JSON. A refusal is
-`{detail, code}` with a `code` the app can word (`no_speech`, `bad_phone`, `not_found`…).
+Every request and response body is a model in `src/schemas.py`, so `/docs` is the live contract;
+`docs/API.md` is the short version, grouped by screen. Recordings are form uploads in a field
+named `audio`; everything else is JSON. Every error is `{error, message}`, where `error` is a
+code the app can word (`no_speech`, `invalid_input`, `not_found`…).
 
 **Account**
 
@@ -140,7 +142,7 @@ as the phrase.
 **Progress**
 
 - `GET /me/stats`: totals (`phrases`, `samples`, `recognitions`, `confirmed`, top-1 hit rate),
-  `top_phrases` (the 5 most used) and `clear_without_help_rate`: for each of the last 8 weeks,
+  `top_phrases` (the 5 most used) and `clear_without_help_by_week`: for each of the last 8 weeks,
   the share of confirmed recognitions whose raw Prisma hypothesis was already within 90 of 100
   of the phrase. A rough trend of how often Prisma understood without the personal layer, not a
   medical measure
@@ -159,13 +161,13 @@ calls have been sent, new ones are refused; cached answers still work. Uploads a
 | - | - | - |
 | `gnani_unreachable` | 502 | Gnani didn't answer, or failed twice |
 | `gnani_rejected` | 502 | Gnani refused the request |
-| `gnani_limit_reached` | 429 | `GNANI_CALL_LIMIT` is used up |
+| `credit_limit_reached` | 429 | `GNANI_CALL_LIMIT` is used up |
 | `audio_too_short`, `audio_too_long` | 400 | outside the length limits; the body has `seconds` |
 | `file_too_large` | 413 | over 10 MB |
 | `bad_audio` | 400 | ffmpeg couldn't read the file |
 | `no_speech` | 422 | Prisma heard nothing; nothing is stored |
 
-Gnani errors also carry `"source": "gnani"`.
+All the codes are in `docs/API.md`.
 
 ### Privacy
 
