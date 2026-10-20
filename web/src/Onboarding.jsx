@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, BookOpen, Check, Sparkles, Volume2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, AudioLines, BookOpen, Check, Mic, Sparkles, Volume2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
@@ -139,6 +139,42 @@ export default function Onboarding() {
                   </button>
                 )
               })}
+            </div>
+          </article>
+        )}
+
+        {step === 3 && (
+          <article className="step-card" aria-labelledby="step3-title">
+            <h1 id="step3-title">{t('onboarding.howHeading')}</h1>
+            <p className="step-desc">{t('onboarding.howDesc')}</p>
+
+            <div className="workflow-steps">
+              <div className="workflow-item">
+                <span className="step-number" aria-hidden="true">
+                  1
+                </span>
+                <div className="workflow-content">
+                  <p>{t('onboarding.howStep1')}</p>
+                </div>
+              </div>
+
+              <div className="workflow-item">
+                <span className="step-number" aria-hidden="true">
+                  2
+                </span>
+                <div className="workflow-content">
+                  <p>{t('onboarding.howStep2')}</p>
+                </div>
+              </div>
+
+              <div className="workflow-item">
+                <span className="step-number" aria-hidden="true">
+                  3
+                </span>
+                <div className="workflow-content">
+                  <p>{t('onboarding.howStep3')}</p>
+                </div>
+              </div>
             </div>
           </article>
         )}
