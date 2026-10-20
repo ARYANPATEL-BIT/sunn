@@ -17,10 +17,24 @@ export default function Onboarding() {
   const [phrases, setPhrases] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [seeding, setSeeding] = useState(false)
 
   const hasPhrases = phrases && phrases.length > 0
   const enrolledCount = phrases ? phrases.filter((p) => (p.enrolled ?? 0) >= 3).length : 0
   const needCount = phrases ? phrases.filter((p) => (p.enrolled ?? 0) < 3).length : 0
+
+  const handleLoadDefaults = async () => {
+    setSeeding(true)
+    setError(null)
+    try {
+      const data = await api.loadDefaultPhrases()
+      setPhrases(data)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setSeeding(false)
+    }
+  }
 
   const handleLanguageSelect = async (code) => {
     if (code === lang) return
@@ -213,6 +227,14 @@ export default function Onboarding() {
                 <BookOpen className="readiness-icon" size={32} aria-hidden="true" strokeWidth={1.5} />
                 <h2>{t('onboarding.setupEmptyTitle')}</h2>
                 <p className="muted">{t('onboarding.setupEmptyDesc')}</p>
+                <div className="readiness-actions">
+                  <Pill onClick={handleLoadDefaults} disabled={seeding} icon={null} arrow={false}>
+                    {t(seeding ? 'onboarding.addingDefaults' : 'onboarding.addDefaults')}
+                  </Pill>
+                  <button type="button" className="pill-outline" onClick={() => handleFinish('/app/phrases')}>
+                    <span>{t('onboarding.goLibrary')}</span>
+                  </button>
+                </div>
               </div>
             )}
           </article>
