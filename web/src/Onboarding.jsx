@@ -71,11 +71,25 @@ export default function Onboarding() {
     go(targetPath, { replace: true })
   }
 
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        handleFinish('/app/speak')
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [user?.id])
+
   const handleNext = () => {
     if (step < TOTAL_STEPS) {
       setStep((s) => s + 1)
     } else {
-      handleFinish('/app/speak')
+      if (hasPhrases && enrolledCount === 0) {
+        handleFinish('/app/enroll')
+      } else {
+        handleFinish('/app/speak')
+      }
     }
   }
 
@@ -92,6 +106,14 @@ export default function Onboarding() {
           className="onboarding-step-indicator"
           aria-label={t('onboarding.stepProgress', { current: step, total: TOTAL_STEPS })}
         >
+          <div className="step-dots" aria-hidden="true">
+            {Array.from({ length: TOTAL_STEPS }, (_, i) => (
+              <span
+                key={i}
+                className={`step-dot ${i + 1 === step ? 'active' : i + 1 < step ? 'done' : ''}`}
+              />
+            ))}
+          </div>
           <span className="step-pill">
             {t('onboarding.stepProgress', { current: step, total: TOTAL_STEPS })}
           </span>
@@ -102,6 +124,11 @@ export default function Onboarding() {
       </header>
 
       <Alert error={error} />
+
+      {/* Screen reader step announcement */}
+      <div className="visually-hidden" aria-live="polite">
+        {t('onboarding.stepProgress', { current: step, total: TOTAL_STEPS })}
+      </div>
 
       <div className="onboarding-step-container">
         {step === 1 && (
