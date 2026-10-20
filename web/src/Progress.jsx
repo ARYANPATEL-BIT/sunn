@@ -5,6 +5,18 @@ import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { Alert, useGo } from './ui.jsx'
 
+function formatWeekStart(isoDate, currentLang) {
+  try {
+    const d = new Date(isoDate)
+    return d.toLocaleDateString(currentLang === 'hi' ? 'hi-IN' : 'en-US', {
+      day: 'numeric',
+      month: 'short',
+    })
+  } catch {
+    return isoDate
+  }
+}
+
 // Delete account shortcut retained for safety and account control
 function DeleteAccount() {
   const { t } = useLang()
@@ -138,6 +150,8 @@ export default function Progress() {
 
   const hitRate = stats?.top1_hit_rate == null ? '-' : `${Math.round(stats.top1_hit_rate * 100)}%`
   const urgentCount = phrases?.filter((p) => p.urgent).length ?? 0
+  const weeks = stats?.clear_without_help_by_week ?? []
+  const maxWeekly = Math.max(1, ...weeks.map((w) => w.confirmed))
 
   return (
     <section className="screen progress-screen">
@@ -240,6 +254,91 @@ export default function Progress() {
           </ul>
         ) : (
           <p className="muted empty-note">{t('progress.topPhrasesEmpty')}</p>
+        )}
+      </section>
+
+      {/* Section 4: Weekly Activity Trend Chart */}
+      <section className="progress-section" aria-labelledby="heading-weekly">
+        <div className="section-header-row">
+          <div>
+            <h2 id="heading-weekly">{t('progress.weeklyHeading')}</h2>
+            <p className="muted">{t('progress.weeklyDesc')}</p>
+          </div>
+        </div>
+
+        {weeks.some((w) => w.confirmed > 0) ? (
+          <div className="weekly-chart-card">
+            <div className="chart-legend" aria-hidden="true">
+              <span className="legend-item">
+                <span className="legend-dot assisted" />
+                <span>{t('progress.weeklyAssistedLabel')}</span>
+              </span>
+              <span className="legend-item">
+                <span className="legend-dot clear" />
+                <span>{t('progress.weeklyClearLabel')}</span>
+              </span>
+            </div>
+
+            <div className="svg-chart-container" role="img" aria-label={t('progress.weeklyDesc')}>
+              <svg viewBox="0 0 400 160" className="activity-svg" preserveAspectRatio="none">
+                <line x1="10" y1="130" x2="390" y2="130" stroke="var(--line)" strokeWidth="1" />
+                {weeks.map((w, idx) => {
+                  const x = 20 + idx * 46
+                  const barWidth = 28
+                  const maxH = 100
+                  const total = w.confirmed
+                  const h = total > 0 ? Math.max(8, (total / maxWeekly) * maxH) : 0
+                  const y = 130 - h
+                  const clearH = total > 0 ? (w.clear / total) * h : 0
+                  const assistedH = h - clearH
+
+                  return (
+                    <g key={w.week_start} className="chart-bar-group">
+                      {total > 0 ? (
+                        <>
+                          {assistedH > 0 && (
+                            <rect
+                              x={x}
+                              y={y}
+                              width={barWidth}
+                              height={assistedH}
+                              rx="3"
+                              fill="var(--saffron)"
+                              opacity="0.9"
+                            />
+                          )}
+                          {clearH > 0 && (
+                            <rect
+                              x={x}
+                              y={y + assistedH}
+                              width={barWidth}
+                              height={clearH}
+                              rx="3"
+                              fill="var(--haze)"
+                              opacity="0.8"
+                            />
+                          )}
+                        </>
+                      ) : (
+                        <circle cx={x + barWidth / 2} cy={130} r="2" fill="var(--line-strong)" />
+                      )}
+                      <text
+                        x={x + barWidth / 2}
+                        y="148"
+                        textAnchor="middle"
+                        fontSize="10"
+                        fill="var(--mist)"
+                      >
+                        {formatWeekStart(w.week_start, lang)}
+                      </text>
+                    </g>
+                  )
+                })}
+              </svg>
+            </div>
+          </div>
+        ) : (
+          <p className="muted empty-note">{t('progress.noActivity')}</p>
         )}
       </section>
 
