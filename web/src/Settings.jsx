@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   Check,
   CheckCircle2,
   ExternalLink,
@@ -528,7 +529,26 @@ export default function Settings() {
         </form>
       </article>
 
-      {/* Section 5: Account and Privacy */}
+      {/* Section 5: Welcome Guide */}
+      <article className="settings-card" aria-labelledby="heading-guide">
+        <div className="card-header">
+          <BookOpen className="card-icon" size={20} aria-hidden="true" strokeWidth={1.5} />
+          <h2 id="heading-guide">{t('onboarding.revisitTitle')}</h2>
+        </div>
+        <p className="muted">{t('onboarding.revisitDesc')}</p>
+        <div className="guide-actions">
+          <button
+            type="button"
+            className="pill-outline"
+            onClick={() => go('/app/onboarding')}
+          >
+            <BookOpen size={16} aria-hidden="true" strokeWidth={1.5} />
+            <span>{t('onboarding.revisitTitle')}</span>
+          </button>
+        </div>
+      </article>
+
+      {/* Section 6: Account and Privacy */}
       <article className="settings-card" aria-labelledby="heading-account">
         <div className="card-header">
           <Shield className="card-icon" size={20} aria-hidden="true" strokeWidth={1.5} />
