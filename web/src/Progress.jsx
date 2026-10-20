@@ -119,6 +119,7 @@ export default function Progress() {
   }
 
   const hitRate = stats?.top1_hit_rate == null ? '-' : `${Math.round(stats.top1_hit_rate * 100)}%`
+  const urgentCount = phrases?.filter((p) => p.urgent).length ?? 0
 
   return (
     <section className="screen progress-screen">
@@ -148,6 +149,10 @@ export default function Progress() {
           <div className="metric-card">
             <span className="metric-label">{t('progress.confirmed')}</span>
             <span className="metric-value">{stats?.confirmed ?? 0}</span>
+          </div>
+          <div className="metric-card urgent-metric">
+            <span className="metric-label">{t('progress.urgentPhrases')}</span>
+            <span className="metric-value">{urgentCount}</span>
           </div>
         </div>
       </section>
