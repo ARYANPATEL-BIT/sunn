@@ -1437,12 +1437,75 @@ legend + * {
   min-height: calc(100svh - 80px - var(--tabs) - var(--s2) - var(--s4) - env(safe-area-inset-bottom));
 }
 
+.context-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s1);
+  padding: 0 0 var(--s2);
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.context-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 var(--s2);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--mist);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+
+.context-pill:hover:not(:disabled) {
+  color: var(--foam);
+  border-color: var(--line-strong);
+}
+
+.context-pill.active {
+  color: var(--foam);
+  border-color: var(--line-strong);
+  background: rgb(242 246 251 / 0.08);
+}
+
+.context-pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.context-pill::after {
+  content: '';
+  position: absolute;
+  inset: -12px -4px;
+}
+
 .results {
   flex: 1;
 }
 
 .results .stack {
   gap: var(--s2);
+}
+
+.heard-raw {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s1);
+  font-size: 15px;
+  color: var(--mist);
+}
+
+.raw-text {
+  font-style: italic;
+  color: var(--foam);
 }
 
 .maybe {
@@ -1458,6 +1521,7 @@ legend + * {
   line-height: 1.4;
   text-align: left;
   border-top: 1px solid var(--line);
+  cursor: pointer;
 }
 
 .candidate.top {
@@ -1466,12 +1530,67 @@ legend + * {
   border-top: 0;
 }
 
+.candidate-text-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+
+.urgent-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 var(--s1);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--saffron);
+  border: 1px solid rgb(243 154 43 / 0.4);
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
 .said {
   display: block;
   margin-top: var(--s1);
   font-size: 16px;
   font-weight: 400;
   color: var(--mist);
+}
+
+.playback-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s1) var(--s2);
+  background: rgb(242 246 251 / 0.06);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 14px;
+  color: var(--mist);
+}
+
+.stop-playback-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  height: 36px;
+  padding: 0 var(--s2);
+  font-size: 14px;
+}
+
+.error-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--s2);
+}
+
+.error-actions .pill-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
 }
 
 /* The one bold moment: the recognized phrase resolves from blurry to sharp */
