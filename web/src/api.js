@@ -184,31 +184,54 @@ export const synthesize = speak
 
 // Speak text aloud using the browser Audio player
 export async function say(text) {
+  const playId = ++currentPlayId
   const blob = await speak(text)
-  await play(blob)
+  if (playId !== currentPlayId) return blob
+  await play(blob, playId)
   return blob
 }
 
 let player = null
+let currentUrl = null
+let currentPlayId = 0
 
 // Play an audio blob, stopping whatever was playing before
-export async function play(blob) {
-  player?.pause()
+export async function play(blob, playId = null) {
+  if (playId !== null && playId !== currentPlayId) return
+  stopAudio()
   const url = URL.createObjectURL(blob)
+  currentUrl = url
   player = new Audio(url)
-  player.onended = () => URL.revokeObjectURL(url)
+  const cleanup = () => {
+    if (currentUrl === url) {
+      URL.revokeObjectURL(url)
+      currentUrl = null
+    }
+  }
+  player.onended = cleanup
+  player.onerror = cleanup
   try {
     await player.play()
-  } catch {
+  } catch (err) {
+    cleanup()
+    if (err?.name === 'AbortError') return
     throw apiError('playback')
   }
 }
 
-// Stop currently playing audio if any
+// Stop currently playing audio and cancel pending playback
 export function stopAudio() {
+  currentPlayId++
   if (player) {
     player.pause()
     player.currentTime = 0
+    player.onended = null
+    player.onerror = null
+    player = null
+  }
+  if (currentUrl) {
+    URL.revokeObjectURL(currentUrl)
+    currentUrl = null
   }
 }
 
