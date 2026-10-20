@@ -204,6 +204,19 @@ export default function Speak() {
     <section className="screen speak">
       <h1 className="visually-hidden">{t('speak.title')}</h1>
 
+      {/* Screen reader live announcements for speech states */}
+      <div className="visually-hidden" aria-live="polite">
+        {recorder.recording
+          ? t('speak.statusRecording')
+          : busy === 'listening'
+            ? t('speak.statusListening')
+            : spoken && busy === 'playing'
+              ? t('speak.statusPlaying', { text: spoken.text })
+              : spoken
+                ? t('speak.statusSpoke', { text: spoken.text })
+                : null}
+      </div>
+
       <div className="context-bar" role="radiogroup" aria-label={t('speak.context')}>
         {CONTEXT_LIST.map((ctx) => (
           <button
