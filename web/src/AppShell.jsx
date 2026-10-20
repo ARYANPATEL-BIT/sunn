@@ -1,4 +1,4 @@
-import { AudioLines, ChartNoAxesColumn, LogOut, Mic } from 'lucide-react'
+import { AudioLines, BookOpen, ChartNoAxesColumn, LogOut, Mic } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
@@ -7,6 +7,7 @@ import { LangToggle, reducedMotion, useGo, Wordmark } from './ui.jsx'
 const TABS = [
   { to: '/app/enroll', key: 'tab.enroll', Icon: AudioLines },
   { to: '/app/speak', key: 'tab.speak', Icon: Mic },
+  { to: '/app/phrases', key: 'tab.phrases', Icon: BookOpen },
   { to: '/app/progress', key: 'tab.progress', Icon: ChartNoAxesColumn },
 ]
 
