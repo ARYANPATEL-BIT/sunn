@@ -1,59 +1,4 @@
-import { Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import * as api from './api.js'
-import { useAuth } from './auth.jsx'
-import { useLang } from './i18n/index.jsx'
-import { Alert, useGo } from './ui.jsx'
-
-// Delete the account: one tap opens a plain confirmation, a second one deletes.
-function DeleteAccount() {
-  const { t } = useLang()
-  const { logout } = useAuth()
-  const go = useGo()
-  const [asking, setAsking] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(null)
-
-  async function remove() {
-    setBusy(true)
-    setError(null)
-    try {
-      await api.deleteAccount()
-      await logout()
-      go('/', { replace: true })
-    } catch (e) {
-      setError(e)
-      setBusy(false)
-    }
-  }
-
-  return (
-    <section className="danger" aria-labelledby="your-data">
-      <h2 id="your-data">{t('progress.deleteTitle')}</h2>
-      {asking ? (
-        <div className="stack" role="group" aria-labelledby="delete-warning">
-          <p id="delete-warning">{t('progress.deleteConfirm')}</p>
-          <Alert error={error} />
-          <div className="actions">
-            <button type="button" className="pill-outline" onClick={() => setAsking(false)} disabled={busy} autoFocus>
-              {t('progress.deleteNo')}
-            </button>
-            <button type="button" className="pill-outline destructive" onClick={remove} disabled={busy}>
-              <Trash2 aria-hidden="true" strokeWidth={1.5} />
-              <span>{t(busy ? 'progress.deleting' : 'progress.deleteYes')}</span>
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button type="button" className="link" onClick={() => setAsking(true)}>
-          {t('progress.delete')}
-        </button>
-      )}
-    </section>
-  )
-}
-
-import { RotateCcw, Trash2 } from 'lucide-react'
+import { BookOpen, Mic, RotateCcw, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
@@ -199,7 +144,30 @@ export default function Progress() {
         ))}
       </dl>
 
-      {stats?.recognitions === 0 && <p className="muted">{t('progress.nothing')}</p>}
+      {stats?.recognitions === 0 && (
+        <article className="progress-empty-card" aria-labelledby="empty-progress-title">
+          <h2 id="empty-progress-title">{t('progress.nothing')}</h2>
+          <p className="muted">{t('progress.guidancePhrases')}</p>
+          <div className="empty-actions">
+            <button
+              type="button"
+              className="pill-outline"
+              onClick={() => go('/app/speak')}
+            >
+              <Mic size={16} aria-hidden="true" strokeWidth={1.5} />
+              <span>{t('progress.goSpeak')}</span>
+            </button>
+            <button
+              type="button"
+              className="pill-outline"
+              onClick={() => go('/app/phrases')}
+            >
+              <BookOpen size={16} aria-hidden="true" strokeWidth={1.5} />
+              <span>{t('progress.goPhrases')}</span>
+            </button>
+          </div>
+        </article>
+      )}
 
       <DeleteAccount />
     </section>
