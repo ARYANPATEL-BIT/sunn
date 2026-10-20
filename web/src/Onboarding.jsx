@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Check, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BookOpen, Check, Sparkles, Volume2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
@@ -76,7 +76,30 @@ export default function Onboarding() {
       <Alert error={error} />
 
       <div className="onboarding-step-container">
-        {/* Steps will be rendered here */}
+        {step === 1 && (
+          <article className="step-card" aria-labelledby="step1-title">
+            <h1 id="step1-title">{t('onboarding.welcomeHeading')}</h1>
+            <p className="step-desc">{t('onboarding.welcomeBody')}</p>
+
+            <div className="features-grid">
+              <div className="feature-item">
+                <BookOpen className="feature-icon" size={24} aria-hidden="true" strokeWidth={1.5} />
+                <div className="feature-text">
+                  <strong>{t('onboarding.featurePhrasesTitle')}</strong>
+                  <p className="muted">{t('onboarding.featurePhrasesDesc')}</p>
+                </div>
+              </div>
+
+              <div className="feature-item">
+                <Volume2 className="feature-icon" size={24} aria-hidden="true" strokeWidth={1.5} />
+                <div className="feature-text">
+                  <strong>{t('onboarding.featureVoiceTitle')}</strong>
+                  <p className="muted">{t('onboarding.featureVoiceDesc')}</p>
+                </div>
+              </div>
+            </div>
+          </article>
+        )}
       </div>
 
       <footer className="onboarding-footer">
