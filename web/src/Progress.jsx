@@ -194,7 +194,7 @@ export default function Progress() {
       {Boolean(stats?.confirmed) && (
         <article className="match-rate-card" aria-labelledby="heading-match-rate">
           <div className="match-rate-header">
-            <h2 id="heading-match-rate">{t('progress.matchRateHeading')}</h2>
+            <h2 id="heading-match-rate">{t('progress.firstRight')}</h2>
             <span className="match-rate-percent">{hitRate}</span>
           </div>
           <p className="muted">{t('progress.matchRateExplanation')}</p>
@@ -204,7 +204,7 @@ export default function Progress() {
             aria-valuenow={Math.round((stats?.top1_hit_rate ?? 0) * 100)}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label={t('progress.matchRateHeading')}
+            aria-label={t('progress.firstRight')}
           >
             <div
               className="match-rate-fill"
