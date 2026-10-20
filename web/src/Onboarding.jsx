@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, AudioLines, BookOpen, Check, Mic, Sparkles, Volume2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, AudioLines, BookOpen, Check, CheckCircle2, Mic, Sparkles, Volume2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
@@ -17,6 +17,10 @@ export default function Onboarding() {
   const [phrases, setPhrases] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  const hasPhrases = phrases && phrases.length > 0
+  const enrolledCount = phrases ? phrases.filter((p) => (p.enrolled ?? 0) >= 3).length : 0
+  const needCount = phrases ? phrases.filter((p) => (p.enrolled ?? 0) < 3).length : 0
 
   const handleLanguageSelect = async (code) => {
     if (code === lang) return
@@ -176,6 +180,41 @@ export default function Onboarding() {
                 </div>
               </div>
             </div>
+          </article>
+        )}
+
+        {step === 4 && (
+          <article className="step-card setup-readiness-card" aria-labelledby="step4-title">
+            <h1 id="step4-title">{t('onboarding.setupHeading')}</h1>
+
+            {enrolledCount > 0 ? (
+              <div className="readiness-state ready">
+                <CheckCircle2 className="readiness-icon" size={32} aria-hidden="true" strokeWidth={1.5} />
+                <h2>{t('onboarding.setupReadyTitle')}</h2>
+                <p className="muted">{t('onboarding.setupReadyDesc')}</p>
+                <div className="readiness-meta">
+                  <span className="summary-pill">{t('phrases.total', { count: phrases.length })}</span>
+                </div>
+              </div>
+            ) : hasPhrases ? (
+              <div className="readiness-state need-teaching">
+                <Mic className="readiness-icon" size={32} aria-hidden="true" strokeWidth={1.5} />
+                <h2>{t('onboarding.setupNeedTitle')}</h2>
+                <p className="muted">{t('onboarding.setupNeedDesc')}</p>
+                <div className="readiness-actions">
+                  <button type="button" className="pill-outline" onClick={() => handleFinish('/app/enroll')}>
+                    <Mic size={16} aria-hidden="true" strokeWidth={1.5} />
+                    <span>{t('onboarding.goTeach')}</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="readiness-state empty">
+                <BookOpen className="readiness-icon" size={32} aria-hidden="true" strokeWidth={1.5} />
+                <h2>{t('onboarding.setupEmptyTitle')}</h2>
+                <p className="muted">{t('onboarding.setupEmptyDesc')}</p>
+              </div>
+            )}
           </article>
         )}
       </div>
