@@ -78,7 +78,9 @@ export default function Speak() {
   }
 
   function record() {
+    if (busy !== null) return
     if (!recorder.recording) {
+      activeRecordIdRef.current++
       api.stopAudio()
       setResult(null)
       setSpoken(null)
@@ -297,7 +299,7 @@ export default function Speak() {
         recorder={recorder}
         onClick={record}
         waiting={busy === 'listening'}
-        disabled={busy === 'playing'}
+        disabled={busy !== null}
         compact={!!result}
         label={result ? t('sun.again') : undefined}
       />
