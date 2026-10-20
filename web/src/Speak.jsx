@@ -7,20 +7,22 @@ import { Alert, failure, Pill, Sun, useGo, useRecorder } from './ui.jsx'
 
 const CONTEXT_LIST = ['any', 'home', 'hospital', 'market']
 
-function candidateKey(c) {
-  if (c.composed) return `composed-${c.template_id}-${c.slot_word_id}`
-  return `phrase-${c.phrase_id || c.text}`
+function candidateKey(c, index = 0) {
+  if (!c) return `candidate-empty-${index}`
+  if (c.composed) return `composed-${c.template_id ?? 't'}-${c.slot_word_id ?? 'w'}-${index}`
+  if (c.phrase_id != null) return `phrase-${c.phrase_id}-${index}`
+  return `text-${c.text ?? ''}-${index}`
 }
 
 function isSameCandidate(a, b) {
   if (!a || !b) return false
   if (a.composed || b.composed) {
-    return a.template_id === b.template_id && a.slot_word_id === b.slot_word_id
+    return Boolean(a.composed && b.composed && a.template_id === b.template_id && a.slot_word_id === b.slot_word_id)
   }
-  if (a.phrase_id && b.phrase_id) {
-    return a.phrase_id === b.phrase_id
+  if (a.phrase_id != null || b.phrase_id != null) {
+    return a.phrase_id != null && b.phrase_id != null && a.phrase_id === b.phrase_id
   }
-  return a.text === b.text
+  return Boolean(a.text && b.text && a.text.trim() === b.text.trim())
 }
 
 export default function Speak() {
@@ -164,7 +166,9 @@ export default function Speak() {
     )
   }
 
-  const candidates = result?.candidates ?? []
+  const candidates = Array.isArray(result?.candidates)
+    ? result.candidates.filter((c) => c && typeof c.text === 'string' && c.text.trim())
+    : []
   const typed = spoken && !candidates.some((c) => isSameCandidate(c, spoken))
   const shown = typed ? [spoken] : candidates
 
@@ -209,7 +213,7 @@ export default function Speak() {
               const isSelected = isSameCandidate(spoken, c)
               return (
                 <button
-                  key={candidateKey(c)}
+                  key={candidateKey(c, i)}
                   type="button"
                   className={isTop ? 'candidate top' : 'candidate'}
                   onClick={() => choose(c)}
