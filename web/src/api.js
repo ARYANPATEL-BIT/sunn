@@ -7,12 +7,15 @@ export const SIGNED_OUT = 'sunn:signed-out'
 
 // Every failure becomes an Error with a kind the screens turn into a direction:
 // offline (our server can't be reached), gnani (Prisma/Timbre failed), server (anything else).
-// code is the API's reason for a refusal (bad_login, email_taken, no_session…), when it gives one.
-function apiError(kind, detail, status, body) {
-  const error = new Error(detail || kind)
+// code is the API's reason for a refusal (bad_login, email_taken, not_logged_in…), when it gives one.
+// Every API error is { error: code, message } (docs/API.md).
+const GNANI_CODES = ['gnani_unreachable', 'gnani_rejected', 'credit_limit_reached']
+
+function apiError(kind, message, status, body) {
+  const error = new Error(message || kind)
   error.kind = kind
   error.status = status
-  error.code = body?.code
+  error.code = body?.error
   error.retryAfter = body?.retry_after
   return error
 }
@@ -28,8 +31,8 @@ async function request(path, options) {
     const body = await res.json().catch(() => null)
     // The dev proxy answers 502 with an empty body when the API isn't running.
     if (!body) throw apiError(res.status >= 502 ? 'offline' : 'server', null, res.status)
-    if (body.code === 'no_session') dispatchEvent(new Event(SIGNED_OUT))
-    throw apiError(body.source === 'gnani' ? 'gnani' : 'server', body.detail, res.status, body)
+    if (body.error === 'not_logged_in') dispatchEvent(new Event(SIGNED_OUT))
+    throw apiError(GNANI_CODES.includes(body.error) ? 'gnani' : 'server', body.message, res.status, body)
   }
   return res
 }
