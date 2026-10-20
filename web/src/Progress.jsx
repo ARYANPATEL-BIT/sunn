@@ -74,6 +74,7 @@ export default function Progress() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [playingPhrase, setPlayingPhrase] = useState(null)
+  const [showTableView, setShowTableView] = useState(false)
   const isMounted = useRef(true)
 
   const handlePlayPhrase = async (text) => {
@@ -264,78 +265,116 @@ export default function Progress() {
             <h2 id="heading-weekly">{t('progress.weeklyHeading')}</h2>
             <p className="muted">{t('progress.weeklyDesc')}</p>
           </div>
+          {weeks.some((w) => w.confirmed > 0) && (
+            <button
+              type="button"
+              className="pill-outline table-toggle-btn"
+              onClick={() => setShowTableView(!showTableView)}
+              aria-expanded={showTableView}
+            >
+              <span>{t(showTableView ? 'progress.weeklyChartToggle' : 'progress.weeklyTableToggle')}</span>
+            </button>
+          )}
         </div>
 
         {weeks.some((w) => w.confirmed > 0) ? (
           <div className="weekly-chart-card">
-            <div className="chart-legend" aria-hidden="true">
-              <span className="legend-item">
-                <span className="legend-dot assisted" />
-                <span>{t('progress.weeklyAssistedLabel')}</span>
-              </span>
-              <span className="legend-item">
-                <span className="legend-dot clear" />
-                <span>{t('progress.weeklyClearLabel')}</span>
-              </span>
-            </div>
+            {showTableView ? (
+              <div className="chart-table-container">
+                <table className="accessible-chart-table">
+                  <caption className="visually-hidden">{t('progress.weeklyDesc')}</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">{t('progress.weekLabel', { date: '' }).replace('{date}', '').trim()}</th>
+                      <th scope="col">{t('progress.confirmed')}</th>
+                      <th scope="col">{t('progress.weeklyClearLabel')}</th>
+                      <th scope="col">{t('progress.weeklyAssistedLabel')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {weeks.map((w) => (
+                      <tr key={w.week_start}>
+                        <th scope="row">{formatWeekStart(w.week_start, lang)}</th>
+                        <td>{w.confirmed}</td>
+                        <td>{w.clear}</td>
+                        <td>{Math.max(0, w.confirmed - w.clear)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <>
+                <div className="chart-legend" aria-hidden="true">
+                  <span className="legend-item">
+                    <span className="legend-dot assisted" />
+                    <span>{t('progress.weeklyAssistedLabel')}</span>
+                  </span>
+                  <span className="legend-item">
+                    <span className="legend-dot clear" />
+                    <span>{t('progress.weeklyClearLabel')}</span>
+                  </span>
+                </div>
 
-            <div className="svg-chart-container" role="img" aria-label={t('progress.weeklyDesc')}>
-              <svg viewBox="0 0 400 160" className="activity-svg" preserveAspectRatio="none">
-                <line x1="10" y1="130" x2="390" y2="130" stroke="var(--line)" strokeWidth="1" />
-                {weeks.map((w, idx) => {
-                  const x = 20 + idx * 46
-                  const barWidth = 28
-                  const maxH = 100
-                  const total = w.confirmed
-                  const h = total > 0 ? Math.max(8, (total / maxWeekly) * maxH) : 0
-                  const y = 130 - h
-                  const clearH = total > 0 ? (w.clear / total) * h : 0
-                  const assistedH = h - clearH
+                <div className="svg-chart-container" role="img" aria-label={t('progress.weeklyDesc')}>
+                  <svg viewBox="0 0 400 160" className="activity-svg" preserveAspectRatio="none">
+                    <line x1="10" y1="130" x2="390" y2="130" stroke="var(--line)" strokeWidth="1" />
+                    {weeks.map((w, idx) => {
+                      const x = 20 + idx * 46
+                      const barWidth = 28
+                      const maxH = 100
+                      const total = w.confirmed
+                      const h = total > 0 ? Math.max(8, (total / maxWeekly) * maxH) : 0
+                      const y = 130 - h
+                      const clearH = total > 0 ? (w.clear / total) * h : 0
+                      const assistedH = h - clearH
 
-                  return (
-                    <g key={w.week_start} className="chart-bar-group">
-                      {total > 0 ? (
-                        <>
-                          {assistedH > 0 && (
-                            <rect
-                              x={x}
-                              y={y}
-                              width={barWidth}
-                              height={assistedH}
-                              rx="3"
-                              fill="var(--saffron)"
-                              opacity="0.9"
-                            />
+                      return (
+                        <g key={w.week_start} className="chart-bar-group">
+                          {total > 0 ? (
+                            <>
+                              {assistedH > 0 && (
+                                <rect
+                                  x={x}
+                                  y={y}
+                                  width={barWidth}
+                                  height={assistedH}
+                                  rx="3"
+                                  fill="var(--saffron)"
+                                  opacity="0.9"
+                                />
+                              )}
+                              {clearH > 0 && (
+                                <rect
+                                  x={x}
+                                  y={y + assistedH}
+                                  width={barWidth}
+                                  height={clearH}
+                                  rx="3"
+                                  fill="var(--haze)"
+                                  opacity="0.8"
+                                />
+                              )}
+                            </>
+                          ) : (
+                            <circle cx={x + barWidth / 2} cy={130} r="2" fill="var(--line-strong)" />
                           )}
-                          {clearH > 0 && (
-                            <rect
-                              x={x}
-                              y={y + assistedH}
-                              width={barWidth}
-                              height={clearH}
-                              rx="3"
-                              fill="var(--haze)"
-                              opacity="0.8"
-                            />
-                          )}
-                        </>
-                      ) : (
-                        <circle cx={x + barWidth / 2} cy={130} r="2" fill="var(--line-strong)" />
-                      )}
-                      <text
-                        x={x + barWidth / 2}
-                        y="148"
-                        textAnchor="middle"
-                        fontSize="10"
-                        fill="var(--mist)"
-                      >
-                        {formatWeekStart(w.week_start, lang)}
-                      </text>
-                    </g>
-                  )
-                })}
-              </svg>
-            </div>
+                          <text
+                            x={x + barWidth / 2}
+                            y="148"
+                            textAnchor="middle"
+                            fontSize="10"
+                            fill="var(--mist)"
+                          >
+                            {formatWeekStart(w.week_start, lang)}
+                          </text>
+                        </g>
+                      )
+                    })}
+                  </svg>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <p className="muted empty-note">{t('progress.noActivity')}</p>
