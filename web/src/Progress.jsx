@@ -119,12 +119,6 @@ export default function Progress() {
   }
 
   const hitRate = stats?.top1_hit_rate == null ? '-' : `${Math.round(stats.top1_hit_rate * 100)}%`
-  const numbers = [
-    { value: stats?.phrases ?? 0, key: 'progress.phrases' },
-    { value: stats?.enroll_samples ?? 0, key: 'progress.teaching' },
-    { value: stats?.recognitions ?? 0, key: 'progress.spoken' },
-    { value: hitRate, key: 'progress.firstRight' },
-  ]
 
   return (
     <section className="screen progress-screen">
@@ -135,14 +129,28 @@ export default function Progress() {
 
       <Alert error={error} />
 
-      <dl className="numbers">
-        {numbers.map((n) => (
-          <div key={n.key}>
-            <dt>{t(n.key)}</dt>
-            <dd>{n.value}</dd>
+      {/* Section 1: Overview Metrics */}
+      <section className="progress-section" aria-labelledby="heading-overview">
+        <h2 id="heading-overview">{t('progress.overviewHeading')}</h2>
+        <div className="metrics-grid">
+          <div className="metric-card">
+            <span className="metric-label">{t('progress.phrases')}</span>
+            <span className="metric-value">{stats?.phrases ?? 0}</span>
           </div>
-        ))}
-      </dl>
+          <div className="metric-card">
+            <span className="metric-label">{t('progress.teaching')}</span>
+            <span className="metric-value">{stats?.enroll_samples ?? 0}</span>
+          </div>
+          <div className="metric-card">
+            <span className="metric-label">{t('progress.spoken')}</span>
+            <span className="metric-value">{stats?.recognitions ?? 0}</span>
+          </div>
+          <div className="metric-card">
+            <span className="metric-label">{t('progress.confirmed')}</span>
+            <span className="metric-value">{stats?.confirmed ?? 0}</span>
+          </div>
+        </div>
+      </section>
 
       {stats?.recognitions === 0 && (
         <article className="progress-empty-card" aria-labelledby="empty-progress-title">
