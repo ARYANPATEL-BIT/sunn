@@ -17,7 +17,7 @@ DEFAULT_CALL_LIMIT = 4000  # sent (not cached) calls, unless GNANI_CALL_LIMIT in
 class GnaniError(Exception):
     """A Gnani call that didn't give a result. code is what the frontend words:
     gnani_unreachable (no answer, or a server error twice), gnani_rejected (Gnani refused the
-    request) or gnani_limit_reached (GNANI_CALL_LIMIT is used up)."""
+    request) or credit_limit_reached (GNANI_CALL_LIMIT is used up)."""
 
     def __init__(self, code, detail, status=502):
         super().__init__(detail)
@@ -52,7 +52,7 @@ def post(kind, url, audio_seconds=None, **request):
     limit = call_limit()
     if db.row("SELECT COUNT(*) AS n FROM api_calls WHERE cached = 0")["n"] >= limit:
         log.event("gnani_limit_reached", level=logging.WARNING, kind=kind, limit=limit)
-        raise GnaniError("gnani_limit_reached", f"the Gnani call limit ({limit}) is used up", status=429)
+        raise GnaniError("credit_limit_reached", f"the Gnani call limit ({limit}) is used up", status=429)
 
     load_dotenv()
     headers = {"X-API-Key-ID": os.environ["GNANI_API_KEY"]}
