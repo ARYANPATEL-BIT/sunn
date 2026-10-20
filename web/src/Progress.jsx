@@ -406,6 +406,41 @@ export default function Progress() {
         </article>
       )}
 
+      {/* Section 5: Supportive Suggestions and Quick Links */}
+      <section className="progress-section" aria-labelledby="heading-guidance">
+        <h2 id="heading-guidance">{t('progress.guidanceHeading')}</h2>
+        <div className="guidance-grid">
+          <div className="guidance-item">
+            <p>{t('progress.guidancePhrases')}</p>
+            <button
+              type="button"
+              className="pill-outline"
+              onClick={() => go('/app/phrases')}
+            >
+              <BookOpen size={16} aria-hidden="true" strokeWidth={1.5} />
+              <span>{t('progress.goPhrases')}</span>
+            </button>
+          </div>
+          <div className="guidance-item">
+            <p>{t('progress.guidanceEnroll')}</p>
+            <button
+              type="button"
+              className="pill-outline"
+              onClick={() => go('/app/enroll')}
+            >
+              <Mic size={16} aria-hidden="true" strokeWidth={1.5} />
+              <span>{t('progress.goTeach')}</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 6: Statistical Disclaimer and Transparency */}
+      <aside className="disclaimer-card" aria-labelledby="heading-disclaimer">
+        <h3 id="heading-disclaimer">{t('progress.disclaimerHeading')}</h3>
+        <p className="muted">{t('progress.disclaimerText')}</p>
+      </aside>
+
       <DeleteAccount />
     </section>
   )
