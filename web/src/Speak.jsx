@@ -36,32 +36,44 @@ export default function Speak() {
   const [busy, setBusy] = useState(null) // 'listening' while Prisma works, 'playing' while Timbre speaks
   const [error, setError] = useState(null)
   const confirmedSampleRef = useRef(null)
+  const isMountedRef = useRef(true)
+  const activeRecordIdRef = useRef(0)
 
-  const recorder = useRecorder((blob) =>
+  const recorder = useRecorder((blob) => {
+    const recordId = ++activeRecordIdRef.current
     run('listening', async () => {
       const response = await api.recognize(blob, context)
+      if (!isMountedRef.current || recordId !== activeRecordIdRef.current) return
       if (!response.hypothesis?.trim()) throw failure('silent')
       setResult(response)
       confirmedSampleRef.current = null
-    }),
-  )
+    })
+  })
 
   useEffect(() => {
-    api.listPhrases().then((phrases) => setLearned(phrases.filter((p) => p.enrolled > 0).length), setError)
+    isMountedRef.current = true
+    api.listPhrases().then((phrases) => {
+      if (isMountedRef.current) setLearned(phrases.filter((p) => p.enrolled > 0).length)
+    }, (err) => {
+      if (isMountedRef.current) setError(err)
+    })
     return () => {
+      isMountedRef.current = false
+      activeRecordIdRef.current++
       api.stopAudio()
     }
   }, [])
 
   async function run(kind, action) {
+    if (!isMountedRef.current) return
     setBusy(kind)
     setError(null)
     try {
       await action()
     } catch (e) {
-      setError(e)
+      if (isMountedRef.current) setError(e)
     } finally {
-      setBusy(null)
+      if (isMountedRef.current) setBusy(null)
     }
   }
 
