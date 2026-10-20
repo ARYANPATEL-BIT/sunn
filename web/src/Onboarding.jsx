@@ -18,6 +18,16 @@ export default function Onboarding() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  const handleLanguageSelect = async (code) => {
+    if (code === lang) return
+    setLang(code)
+    try {
+      await api.updateMe({ language: code })
+    } catch {
+      // Non-blocking
+    }
+  }
+
   useEffect(() => {
     let active = true
     api
@@ -97,6 +107,38 @@ export default function Onboarding() {
                   <p className="muted">{t('onboarding.featureVoiceDesc')}</p>
                 </div>
               </div>
+            </div>
+          </article>
+        )}
+
+        {step === 2 && (
+          <article className="step-card" aria-labelledby="step2-title">
+            <h1 id="step2-title">{t('onboarding.langHeading')}</h1>
+            <p className="step-desc">{t('onboarding.langDesc')}</p>
+
+            <div className="choice-cards-grid" role="radiogroup" aria-label={t('onboarding.langHeading')}>
+              {[
+                ['hi', 'onboarding.langHindi', 'नमस्ते'],
+                ['en', 'onboarding.langEnglish', 'Hello'],
+              ].map(([code, labelKey, sampleGreeting]) => {
+                const isSelected = lang === code
+                return (
+                  <button
+                    key={code}
+                    type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    className={`choice-card ${isSelected ? 'active' : ''}`}
+                    onClick={() => handleLanguageSelect(code)}
+                  >
+                    <div className="choice-card-content">
+                      <span className="choice-greeting">{sampleGreeting}</span>
+                      <strong className="choice-label">{t(labelKey)}</strong>
+                    </div>
+                    {isSelected && <Check className="choice-check" size={20} aria-hidden="true" strokeWidth={2} />}
+                  </button>
+                )
+              })}
             </div>
           </article>
         )}
