@@ -13,7 +13,7 @@ uv run uvicorn api:app --app-dir src --port 8000
 - Bodies are JSON. Recordings are form uploads with the file in a field named `audio`.
 - **real** means the route works now. **stub** means it answers a realistic example
   and has no real logic yet (`# TODO(v2): stub` in `src/api.py`). Its URL and shape won't change
-  when the real logic replaces it.
+  when the real logic replaces it. Every route is real now.
 
 ## Errors
 
@@ -41,9 +41,9 @@ add one field: `seconds` (`audio_too_short`, `audio_too_long`), `retry_after` in
 | `gnani_rejected` | 502 | the speech service refused the request |
 | `credit_limit_reached` | 429 | the speech service credits for this server are used up |
 | `daily_cap_reached` | 429 | planned for v2, not sent yet: this user's calls for today are used up |
-| `invite_required` | 403 | planned for v2, not sent yet: sign-up needs an invite (see `GET /config`) |
+| `invite_required` | 403 | sign-up needs the invite code, and `invite_code` was missing or wrong (see `GET /config`) |
 | `bad_login` | 401 | wrong email or password |
-| `too_many_attempts` | 429 | 5 failed logins for this email: wait `retry_after` seconds |
+| `too_many_attempts` | 429 | 5 failed logins for this email, or 5 wrong invite codes from this IP, in 15 minutes: wait `retry_after` seconds |
 | `email_taken` | 409 | an account with this email exists |
 | `no_name`, `bad_email`, `short_password` | 400 | sign-up fields (password needs 8+ characters) |
 | `phrase_exists` | 409 | another phrase already has this text |
@@ -53,9 +53,10 @@ add one field: `seconds` (`audio_too_short`, `audio_too_long`), `retry_after` in
 
 ## Onboarding
 
-### `GET /config` · stub
+### `GET /config` · real
 
-No session needed. Whether sign-up needs an invite.
+No session needed. Whether sign-up needs an invite code: true when the server sets
+`DEMO_INVITE_CODE` in `.env`. Ask for the code on the sign-up screen only when it is true.
 
 ```json
 {"invite_required": false}
@@ -66,8 +67,12 @@ Errors: none.
 ### `POST /auth/signup` · real
 
 `{"name": "सुनीता", "email": "sunita@example.com", "password": "8 or more", "language": "hi", "consent": true}`.
-`language` is the language the person speaks, `hi` or `en`. Sets the session cookie and gives
-the account the default slot words and templates.
+`language` is the language the person speaks, `hi` or `en`. Add `"invite_code": "..."` when
+`GET /config` says `invite_required`; otherwise it can be left out and is ignored. Sets the
+session cookie and gives the account the default slot words and templates.
+
+After 5 wrong invite codes from one IP in 15 minutes, sign-up from that IP answers
+`too_many_attempts` until `retry_after` passes, even with the right code.
 
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
@@ -75,7 +80,8 @@ the account the default slot words and templates.
  "has_own_voice": false, "use_own_voice": false}
 ```
 
-Errors: `consent_required`, `no_name`, `bad_email`, `short_password`, `email_taken`, `invalid_input`.
+Errors: `invite_required`, `too_many_attempts`, `consent_required`, `no_name`, `bad_email`,
+`short_password`, `email_taken`, `invalid_input`.
 
 ### `POST /auth/login` · real
 
@@ -114,7 +120,8 @@ Errors: `not_logged_in`.
 ### `POST /me/phrases/default` · real
 
 No inputs. Adds the 51 everyday phrases in the user's language and returns the whole list, as
-`GET /me/phrases` does.
+`GET /me/phrases` does. Text the user already has is skipped, so after a language change this
+adds the new language's phrases next to the old ones.
 
 ```json
 [{"id": 1, "text": "मदद चाहिए", "contexts": ["any"], "urgent": true, "enrolled": 0, "sample_count": 0, "last_used_at": null},
@@ -184,8 +191,11 @@ Errors: `not_logged_in`, `invalid_input`, `gnani_unreachable`, `gnani_rejected`,
 
 ### `GET /me/phrases` · real
 
-Every phrase. `enrolled` counts enrollment recordings; `sample_count` adds confirmed
-recognitions. `contexts` holds `home`, `hospital`, `market` or `any`.
+Every phrase. `enrolled` counts enrollment recordings, in any language; `sample_count` counts
+enrollments and confirmed recognitions **in the user's current language only**, the ones the
+matcher uses. After a language change, a phrase recorded only in the old language has
+`sample_count` 0: it needs recording again to be recognized. `contexts` holds `home`,
+`hospital`, `market` or `any`.
 
 ```json
 [{"id": 2, "text": "दर्द हो रहा है", "contexts": ["hospital"], "urgent": true, "enrolled": 3, "sample_count": 5, "last_used_at": "2026-10-18T07:40:00Z"},
@@ -367,10 +377,16 @@ Errors: `not_logged_in`, `not_owner`.
 Any of `{"use_own_voice": true, "caregiver_name": "राहुल", "caregiver_phone": "+91 98765 43210", "language": "en"}`.
 `null` or `""` clears a caregiver field. `caregiver_phone` comes back as digits with the
 country code, ready for `https://wa.me/<phone>`. `use_own_voice: true` needs a recorded voice.
-**`language` is a stub:** it is echoed back but not saved yet.
+
+`language` (`hi` or `en`; anything else is `invalid_input`, and Hinglish is `hi`) is the
+language the person speaks, not the app's display language. It is saved, and every new
+recognition and stock-voice `/speak` uses it. Nothing is deleted: phrases, recordings, slot
+words and templates all stay, but recordings in the old language stop counting for
+recognition (see `sample_count` in `GET /me/phrases`) until the language is switched back. Call
+`POST /me/phrases/default` afterwards to add the new language's everyday phrases.
 
 ```json
-{"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
+{"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "en",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
  "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true}
 ```

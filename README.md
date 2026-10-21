@@ -48,7 +48,9 @@ Data lives in `data/app.db` and `data/users/<user_id>/`; every Prisma and Timbre
 is cached under `data/cache/` by audio/text hash (language included), so the same request is
 never sent twice.
 
-Each user speaks Hindi or English (`language` is `hi` or `en`, chosen at sign-up). Prisma gets
+Each user speaks Hindi or English (`language` is `hi` or `en`, chosen at sign-up and changed
+with `PATCH /me`; each recording keeps the language it was transcribed in, and only recordings
+in the current language are matched). Prisma gets
 `hi-IN` or `en-IN` (Indian English), Timbre gets `hi-IN` + Nalini or `en-IN` + Kaveri, and the
 default phrases come from `data/default_phrases_hi.txt` or `data/default_phrases_en.txt` (the
 same 51 everyday phrases, same groups).
@@ -58,7 +60,7 @@ same 51 everyday phrases, same groups).
 No third-party auth. Passwords (8+ characters) are hashed with argon2. A session is a JWT
 signed with `JWT_SECRET`, in an httpOnly, Secure, SameSite=Lax cookie that lasts 30 days.
 
-- `POST /auth/signup` `{name, email, password, language, consent: true}`: refused without consent; sets the cookie
+- `POST /auth/signup` `{name, email, password, language, consent: true, invite_code}`: refused without consent; sets the cookie. `invite_code` must match `DEMO_INVITE_CODE` when `.env` sets one (`GET /config` says so); 5 wrong codes from one IP lock sign-up there for 15 minutes
 - `POST /auth/login` `{email, password}`: sets the cookie. A wrong email and a wrong password get the same answer; after 5 failures for one email within 15 minutes, that email is locked out for the rest of the window (in memory, so a restart clears it)
 - `POST /auth/logout`: clears the cookie
 - `GET /auth/me`: the signed-in user, or 401
@@ -229,7 +231,7 @@ The design system is `web/DESIGN.md`.
 - `/app/*` needs a session: without one it goes to `/login?next=<that page>`, and signing in
   comes back to it. Signing up loads the default phrases and goes to `/app/enroll`
 - The interface is in English or Hindi (`web/src/i18n/`), toggled with EN / हिं. That is
-  separate from the language a user speaks, which is set at sign-up
+  separate from the language a user speaks, which is set at sign-up (and by `PATCH /me`)
 
 The background is one WebGL shader (`web/src/SeaLight.jsx`). It drops to a still CSS version
 without WebGL, and to a single frozen frame with reduced motion.

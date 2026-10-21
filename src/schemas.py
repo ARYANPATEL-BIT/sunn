@@ -55,6 +55,7 @@ class Signup(Request):
     password: str  # 8 or more characters
     language: Language
     consent: bool = False  # must be true
+    invite_code: str | None = None  # needed when GET /config says invite_required
 
 
 class Login(Request):
@@ -82,7 +83,7 @@ class UserUpdate(Request):
     use_own_voice: bool | None = None  # true needs a recorded voice
     caregiver_name: str | None = None
     caregiver_phone: str | None = None  # spaces, dashes, brackets and + are dropped
-    language: Language | None = None  # TODO(v2): stub, echoed back but not saved
+    language: Language | None = None  # Prisma and Timbre follow it; nothing is deleted
 
 
 class Config(BaseModel):
@@ -104,7 +105,7 @@ class PhraseDetail(Phrase):
     model_config = example(id=12, text="पानी चाहिए", contexts=["home", "hospital"], urgent=False,
                            enrolled=3, sample_count=9, last_used_at="2026-10-20T18:05:00Z")
     enrolled: int  # enrollment recordings
-    sample_count: int  # enrollments and confirmed recognitions
+    sample_count: int  # enrollments and confirmed recognitions in the user's current language
     last_used_at: datetime | None
 
 
