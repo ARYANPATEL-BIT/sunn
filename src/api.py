@@ -1,3 +1,4 @@
+import hmac
 import json
 import logging
 import os
@@ -224,28 +225,29 @@ def save_and_transcribe(user, upload):
     return wav, hypothesis
 
 
-def remove_audio(paths, language):
-    """Delete recordings and their cached Prisma transcripts."""
-    for path in paths:
+def remove_audio(samples):
+    """Delete samples' recordings and their cached Prisma transcripts, each cached under the
+    language it was transcribed in."""
+    for sample in samples:
+        path = sample["audio_path"]
         if os.path.exists(path):
             with open(path, "rb") as f:
-                cached = prisma.cache_path(f.read(), language)
+                cached = prisma.cache_path(f.read(), sample["language"])
             if os.path.exists(cached):
                 os.remove(cached)
             os.remove(path)
 
 
-def audio_paths(user, column, value):
-    return [s["audio_path"] for s in db.rows(f"SELECT audio_path FROM samples WHERE user_id = ? AND {column} = ?",
-                                             (user["id"], value))]
+def audio_samples(user, column, value):
+    return db.rows(f"SELECT audio_path, language FROM samples WHERE user_id = ? AND {column} = ?", (user["id"], value))
 
 
 def enroll_sample(user, upload, column, value):
     """Record an enrollment sample for a phrase, slot word or template fixed part."""
     path, hypothesis = save_and_transcribe(user, upload)
     sample_id = db.execute(
-        f"INSERT INTO samples (user_id, {column}, audio_path, prisma_hypothesis, source, created_at)"
-        " VALUES (?, ?, ?, ?, 'enroll', ?)", (user["id"], value, path, hypothesis, now()))
+        f"INSERT INTO samples (user_id, {column}, audio_path, prisma_hypothesis, source, created_at, language)"
+        " VALUES (?, ?, ?, ?, 'enroll', ?, ?)", (user["id"], value, path, hypothesis, now(), user["language"]))
     return {"sample_id": sample_id, column: value, "hypothesis": hypothesis}
 
 
@@ -269,9 +271,30 @@ def add_slot_word(user_id, slot, text):
     return db.execute("INSERT INTO slot_words (user_id, slot, text) VALUES (?, ?, ?)", (user_id, slot, text))
 
 
+def invite_code():
+    """DEMO_INVITE_CODE from .env; sign-up is open when it is unset or empty."""
+    return os.environ.get("DEMO_INVITE_CODE", "").strip()
+
+
+def check_invite(request, given):
+    """Refuse a sign-up without the invite code, when there is one. Wrong codes count per IP, like
+    failed logins per email, so the code can't be guessed."""
+    code = invite_code()
+    if not code:
+        return
+    attempts = ("signup", request.client.host if request.client else None)
+    wait = auth.seconds_locked(attempts)
+    if wait:
+        raise Refused(429, "too_many_attempts", "too many wrong invite codes, try again later", retry_after=wait)
+    if not hmac.compare_digest((given or "").strip().encode("utf-8"), code.encode("utf-8")):
+        auth.record_failure(attempts)
+        raise Refused(403, "invite_required", "sign-up needs a valid invite code")
+
+
 @app.post("/auth/signup", response_model=schemas.User)
-def signup(body: schemas.Signup, response: Response):
+def signup(body: schemas.Signup, request: Request, response: Response):
     name, email, password, language = body.name.strip(), body.email.strip().lower(), body.password, body.language
+    check_invite(request, body.invite_code)
     if not body.consent:
         raise Refused(400, "consent_required", "consent must be true")
     if not name:
@@ -328,10 +351,13 @@ def me(user=Depends(current_user)):
 def update_me(changes: schemas.UserUpdate, user=Depends(current_user)):
     """Change any of use_own_voice (needs a recorded voice), caregiver_name and caregiver_phone
     (digits with the country code, like 919876543210; spaces, dashes and + are dropped).
-    null or "" clears a caregiver field."""
+    null or "" clears a caregiver field. language ("hi" or "en") is what new Prisma and Timbre
+    calls use; nothing is deleted, but the matcher only uses samples in the current language."""
     updates = {}
     for field, value in changes.model_dump(exclude_unset=True).items():
-        if field == "use_own_voice" and value is not None:
+        if field == "language" and value is not None:
+            updates[field] = value
+        elif field == "use_own_voice" and value is not None:
             if value and user["voice_embedding"] is None:
                 raise Refused(409, "no_voice", "record your voice first")
             updates[field] = int(value)
@@ -345,9 +371,9 @@ def update_me(changes: schemas.UserUpdate, user=Depends(current_user)):
     if updates:
         db.execute(f"UPDATE users SET {', '.join(f'{field} = ?' for field in updates)} WHERE id = ?",
                    (*updates.values(), user["id"]))
-    # TODO(v2): stub. language is echoed back but not saved: switching it also needs the phrase
-    # bank and the Prisma and Timbre language to follow.
-    return {**public(get_user(user["id"])), **({"language": changes.language} if changes.language else {})}
+    if "language" in updates and updates["language"] != user["language"]:
+        log.event("language_changed", user_id=user["id"], language=updates["language"])
+    return public(get_user(user["id"]))
 
 
 @app.delete("/me", response_model=schemas.Ok)
@@ -357,8 +383,7 @@ def delete_me(response: Response, user=Depends(current_user)):
     spoken in it. Files go first, so a failure leaves the account in place to try again.
     Kept: the stock-voice Timbre cache (phrase text spoken by Nalini or Kaveri, shared by
     everyone who says it, not tied to anyone) and api_calls (counts only)."""
-    remove_audio([s["audio_path"] for s in db.rows("SELECT audio_path FROM samples WHERE user_id = ?", (user["id"],))],
-                 user["language"])
+    remove_audio(db.rows("SELECT audio_path, language FROM samples WHERE user_id = ?", (user["id"],)))
     if os.path.exists(user_folder(user)):
         shutil.rmtree(user_folder(user))
     db.delete_user(user["id"])
@@ -398,14 +423,15 @@ def delete_voice(user=Depends(current_user)):
 
 @app.get("/me/phrases", response_model=list[schemas.PhraseDetail])
 def list_phrases(user=Depends(current_user)):
-    """Every phrase with its enrollment recordings (enrolled, so enrollment can resume), all its
-    samples (sample_count, confirmed recognitions included) and when it was last used."""
+    """Every phrase with its enrollment recordings (enrolled, so enrollment can resume), its
+    samples in the user's current language (sample_count, confirmed recognitions included; the
+    matcher ignores the rest) and when it was last used."""
     return [phrase_out(p) for p in db.rows("""
         SELECT p.id, p.text, p.contexts, p.urgent,
             (SELECT COUNT(*) FROM samples s WHERE s.phrase_id = p.id AND s.source = 'enroll') AS enrolled,
-            (SELECT COUNT(*) FROM samples s WHERE s.phrase_id = p.id) AS sample_count,
+            (SELECT COUNT(*) FROM samples s WHERE s.phrase_id = p.id AND s.language = :language) AS sample_count,
             (SELECT MAX(created_at) FROM uses u WHERE u.phrase_id = p.id) AS last_used_at
-        FROM phrases p WHERE p.user_id = ? ORDER BY p.id""", (user["id"],))]
+        FROM phrases p WHERE p.user_id = :u ORDER BY p.id""", {"u": user["id"], "language": user["language"]})]
 
 
 @app.post("/me/phrases", response_model=schemas.Phrase)
@@ -416,7 +442,8 @@ def add_phrase(body: schemas.NewPhrase, user=Depends(current_user)):
 @app.post("/me/phrases/default", response_model=list[schemas.PhraseDetail])
 def add_default_phrases(user=Depends(current_user)):
     """Add the everyday phrases in the user's language (data/default_phrases_<hi|en>.txt), with
-    contexts from their group comment (GROUP_CONTEXTS; a group not listed there is any)."""
+    contexts from their group comment (GROUP_CONTEXTS; a group not listed there is any). Text the
+    user already has is skipped, so after a language change this adds the new language's."""
     contexts = "any"
     with open(DEFAULT_PHRASES.format(language=user["language"]), encoding="utf-8") as f:
         for line in f:
@@ -453,12 +480,12 @@ def update_phrase(phrase_id: int, changes: schemas.PhraseUpdate, user=Depends(cu
 def delete_phrase(phrase_id: int, user=Depends(current_user)):
     """Delete a phrase, its samples with their recordings, and its uses."""
     get_phrase(user["id"], phrase_id)
-    paths = audio_paths(user, "phrase_id", phrase_id)
+    samples = audio_samples(user, "phrase_id", phrase_id)
     db.transaction(("DELETE FROM samples WHERE phrase_id = ? AND user_id = ?", (phrase_id, user["id"])),
                    ("UPDATE samples SET top1_phrase_id = NULL WHERE top1_phrase_id = ? AND user_id = ?", (phrase_id, user["id"])),
                    ("DELETE FROM uses WHERE phrase_id = ? AND user_id = ?", (phrase_id, user["id"])),
                    ("DELETE FROM phrases WHERE id = ? AND user_id = ?", (phrase_id, user["id"])))
-    remove_audio(paths, user["language"])
+    remove_audio(samples)
     return {"ok": True}
 
 
@@ -466,7 +493,7 @@ def delete_phrase(phrase_id: int, user=Depends(current_user)):
 def delete_sample(sample_id: int, user=Depends(current_user)):
     sample = owned("samples", sample_id, user["id"])
     db.execute("DELETE FROM samples WHERE id = ? AND user_id = ?", (sample_id, user["id"]))
-    remove_audio([sample["audio_path"]], user["language"])
+    remove_audio([sample])
     return {"ok": True}
 
 
@@ -492,10 +519,10 @@ def create_slot_word(body: schemas.NewSlotWord, user=Depends(current_user)):
 @app.delete("/me/slot-words/{slot_word_id}", response_model=schemas.Ok)
 def delete_slot_word(slot_word_id: int, user=Depends(current_user)):
     owned("slot_words", slot_word_id, user["id"])
-    paths = audio_paths(user, "slot_word_id", slot_word_id)
+    samples = audio_samples(user, "slot_word_id", slot_word_id)
     db.transaction(("DELETE FROM samples WHERE slot_word_id = ? AND user_id = ?", (slot_word_id, user["id"])),
                    ("DELETE FROM slot_words WHERE id = ? AND user_id = ?", (slot_word_id, user["id"])))
-    remove_audio(paths, user["language"])
+    remove_audio(samples)
     return {"ok": True}
 
 
@@ -523,10 +550,10 @@ def create_template(body: schemas.NewTemplate, user=Depends(current_user)):
 @app.delete("/me/templates/{template_id}", response_model=schemas.Ok)
 def delete_template(template_id: int, user=Depends(current_user)):
     owned("templates", template_id, user["id"])
-    paths = audio_paths(user, "template_id", template_id)
+    samples = audio_samples(user, "template_id", template_id)
     db.transaction(("DELETE FROM samples WHERE template_id = ? AND user_id = ?", (template_id, user["id"])),
                    ("DELETE FROM templates WHERE id = ? AND user_id = ?", (template_id, user["id"])))
-    remove_audio(paths, user["language"])
+    remove_audio(samples)
     return {"ok": True}
 
 
@@ -537,14 +564,15 @@ def enroll_template(template_id: int, audio_file: UploadFile = File(alias="audio
     return enroll_sample(user, audio_file, "template_id", template_id)
 
 
-def candidates_for(user_id):
+def candidates_for(user):
     """What a recording can be matched to: every phrase, and every template × slot word of its
-    slot. A composition's fingerprints are each slot word hypothesis joined to each fixed part
+    slot. Only samples in the user's current language are fingerprints: Prisma's hi-IN and
+    en-IN hypotheses of the same speech aren't comparable. A composition's fingerprints are each slot word hypothesis joined to each fixed part
     hypothesis, in the template's word order. A composition whose text is already a phrase adds
     its fingerprints to that phrase instead of standing on its own."""
-    heard = defaultdict(list)
+    user_id, heard = user["id"], defaultdict(list)
     for s in db.rows("SELECT phrase_id, slot_word_id, template_id, prisma_hypothesis FROM samples"
-                     " WHERE user_id = ? AND source IS NOT NULL", (user_id,)):
+                     " WHERE user_id = ? AND source IS NOT NULL AND language = ?", (user_id, user["language"])):
         for column in ("phrase_id", "slot_word_id", "template_id"):
             if s[column] is not None:
                 heard[column, s[column]].append(s["prisma_hypothesis"])
@@ -583,13 +611,13 @@ def recognize(audio_file: UploadFile = File(alias="audio"), context: schemas.Con
     (see matcher.py) with those parts, urgent, and composed: a composed one is a template ×
     slot word that isn't a phrase yet, with its template_id and slot_word_id."""
     path, hypothesis = save_and_transcribe(user, audio_file)
-    ranked = matcher.rank(hypothesis, candidates_for(user["id"]), context, priors_for(user["id"]))
+    ranked = matcher.rank(hypothesis, candidates_for(user), context, priors_for(user["id"]))
     candidates = [{key: c[key] for key in ("phrase_id", "text", "score", "parts", "urgent", "composed",
                                            "template_id", "slot_word_id") if key in c} for c in ranked]
     sample_id = db.execute(
-        "INSERT INTO samples (user_id, audio_path, prisma_hypothesis, top1_phrase_id, created_at)"
-        " VALUES (?, ?, ?, ?, ?)", (user["id"], path, hypothesis, candidates[0]["phrase_id"] if candidates else None,
-                                    now()))
+        "INSERT INTO samples (user_id, audio_path, prisma_hypothesis, top1_phrase_id, created_at, language)"
+        " VALUES (?, ?, ?, ?, ?, ?)", (user["id"], path, hypothesis, candidates[0]["phrase_id"] if candidates else None,
+                                       now(), user["language"]))
     return {
         "sample_id": sample_id,
         "hypothesis": hypothesis,
@@ -693,5 +721,4 @@ def usage(user=Depends(current_user)):
 @app.get("/config", response_model=schemas.Config)
 def config():
     """What the app needs to know before anyone signs in."""
-    # TODO(v2): stub. Invite-only sign-up isn't built yet, so anyone can sign up.
-    return {"invite_required": False}
+    return {"invite_required": bool(invite_code())}
