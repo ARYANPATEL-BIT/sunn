@@ -221,7 +221,7 @@ export function SignupPage() {
     )
     leaving.current = true
     signedIn(me)
-    go('/app/enroll', { replace: true, state: { phrasesFailed } })
+    go('/app/onboarding', { replace: true, state: { phrasesFailed } })
   }
 
   const loginLink = next ? `/login?next=${encodeURIComponent(next)}` : '/login'

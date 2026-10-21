@@ -76,3 +76,21 @@ export function setPreference(key, value) {
   }
   applyPreferences()
 }
+
+export function isOnboarded(userId) {
+  if (!userId) return false
+  try {
+    return localStorage.getItem(`sunn.onboarded.${userId}`) === 'true'
+  } catch {
+    return false
+  }
+}
+
+export function setOnboarded(userId, value = true) {
+  if (!userId) return
+  try {
+    localStorage.setItem(`sunn.onboarded.${userId}`, String(Boolean(value)))
+  } catch {
+    // Storage unavailable
+  }
+}
