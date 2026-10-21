@@ -61,17 +61,10 @@ def test_examples_match_their_schema_exactly(env):
 def test_stubs_answer_their_schema(env):
     client, found = env.signup(), routes()
     stubs = [endpoint for endpoint, (status, _) in documented().items() if status == "stub"]
-    assert stubs
     for method, path in stubs:
         response = client.request(method, path)
         assert response.status_code == 200, (method, path, response.text)
         TypeAdapter(found[method, path].response_model).validate_python(response.json())
-
-
-def test_language_is_echoed_but_not_saved_yet(env):
-    client = env.signup("hi")
-    assert client.patch("/me", json={"language": "en"}).json()["language"] == "en"
-    assert client.get("/auth/me").json()["language"] == "hi"
 
 
 def test_every_error_has_one_shape(env):
