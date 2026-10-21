@@ -36,6 +36,9 @@ export default function Enroll() {
   const load = () => run(async () => setPhrases(await api.listPhrases()))
   useEffect(() => {
     load()
+    return () => {
+      api.stopAudio()
+    }
   }, [])
 
   if (!phrases) {
