@@ -55,7 +55,10 @@ def post(kind, url, audio_seconds=None, **request):
         raise GnaniError("credit_limit_reached", f"the Gnani call limit ({limit}) is used up", status=429)
 
     load_dotenv()
-    headers = {"X-API-Key-ID": os.environ["GNANI_API_KEY"]}
+    api_key = os.environ.get("GNANI_API_KEY")
+    if not api_key or api_key == "your-key-here":
+        raise GnaniError("gnani_unreachable", "GNANI_API_KEY is not configured in .env", status=502)
+    headers = {"X-API-Key-ID": api_key}
     for attempt in (1, 2):
         started = time.monotonic()
         try:
