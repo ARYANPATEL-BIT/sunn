@@ -182,3 +182,30 @@ def test_voice_deletion_and_consent_revocation(env):
     assert row_after["voice_embedding"] is None
     assert row_after["voice_consent_given_at"] is None
     assert row_after["use_own_voice"] == 0
+
+
+def test_administrative_usage_endpoint_access_control(env, monkeypatch):
+    """Only the owner configured in OWNER_EMAIL can access administrative usage metrics."""
+    client_unauth = env.client()
+    unauth_resp = client_unauth.get("/me/usage")
+    assert unauth_resp.status_code == 401
+
+    client_user = env.signup(language="en")
+    user_resp = client_user.get("/me/usage")
+    assert user_resp.status_code == 403
+    assert user_resp.json()["error"] == "not_owner"
+
+    # When owner email is matched
+    owner_email = "owner@example.com"
+    monkeypatch.setenv("OWNER_EMAIL", owner_email)
+    client_owner = env.client()
+    client_owner.post("/auth/signup", json={
+        "name": "Owner", "email": owner_email, "password": "password123",
+        "language": "en", "consent": True
+    })
+    owner_resp = client_owner.get("/me/usage")
+    assert owner_resp.status_code == 200
+    usage_data = owner_resp.json()
+    assert "limit" in usage_data
+    assert "sent" in usage_data
+    assert "remaining" in usage_data
