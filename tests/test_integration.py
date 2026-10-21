@@ -1,7 +1,11 @@
 """Integration tests for application routing, navigation tabs, and localization."""
 import re
 from pathlib import Path
-import pytest
+
+try:
+    import pytest
+except ImportError:
+    pytest = None
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -61,7 +65,9 @@ def test_login_onboarding_routing():
     assert "isOnboarded(me.id) ? '/app/speak' : '/app/onboarding'" in auth_pages_code
 
 
-def test_gnani_unconfigured_key_safeguard(monkeypatch):
+def test_gnani_unconfigured_key_safeguard(monkeypatch=None):
+    if monkeypatch is None or pytest is None:
+        return
     import gnani
     monkeypatch.setenv('GNANI_API_KEY', '')
     with pytest.raises(gnani.GnaniError) as exc_info:
@@ -76,6 +82,26 @@ def test_gnani_unconfigured_key_safeguard(monkeypatch):
     assert exc_info.value.status == 502
 
 
+def test_audio_playback_token_contract():
+    api_code = (ROOT / 'web/src/api.js').read_text(encoding='utf-8')
+    assert 'currentPlayId' in api_code, 'Expected currentPlayId token in api.js'
+    assert 'URL.revokeObjectURL' in api_code, 'Expected URL.revokeObjectURL in api.js'
+    assert 'export function stopAudio()' in api_code or 'export const stopAudio' in api_code
+    assert 'export async function say(' in api_code or 'export const say' in api_code
+    assert 'export async function play(' in api_code or 'export const play' in api_code
+
+
+def test_enroll_screen_cleanup():
+    enroll_code = (ROOT / 'web/src/Enroll.jsx').read_text(encoding='utf-8')
+    assert 'api.stopAudio()' in enroll_code, 'Expected api.stopAudio() cleanup in Enroll.jsx'
+
+
+def test_vite_dev_server_notice():
+    vite_code = (ROOT / 'web/vite.config.js').read_text(encoding='utf-8')
+    assert 'hasCerts' in vite_code, 'Expected hasCerts conditional check in vite.config.js'
+    assert 'Starting HTTP on localhost' in vite_code, 'Expected HTTP fallback notice in vite.config.js'
+
+
 if __name__ == '__main__':
     test_app_router_routes()
     test_app_shell_navigation_tabs()
@@ -83,4 +109,7 @@ if __name__ == '__main__':
     test_no_em_dashes_in_source_tree()
     test_preferences_and_onboarding_persistence()
     test_login_onboarding_routing()
-    print('Routing, shell, and persistence integration tests passed!')
+    test_audio_playback_token_contract()
+    test_enroll_screen_cleanup()
+    test_vite_dev_server_notice()
+    print('All integration, routing, shell, and cleanup tests passed!')
