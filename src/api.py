@@ -27,8 +27,10 @@ import prisma
 import schemas
 import speak
 
-DEFAULT_PHRASES = "data/default_phrases_{language}.txt"
-USERS_DIR = "data/users"
+# Part of the code, so read from the repo whatever DATA_DIR is.
+DEFAULT_PHRASES = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                               "data", "default_phrases_{language}.txt")
+USERS_DIR = os.path.join(db.DATA_DIR, "users")
 EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 PHONE = re.compile(r"[1-9]\d{7,14}")  # E.164: country code first, at most 15 digits
 
@@ -48,8 +50,9 @@ DEFAULT_SLOT_WORDS = {
 }
 DEFAULT_TEMPLATES = {"hi": ["{item} चाहिए", "{person} को बुलाओ"], "en": ["I need {item}", "Call {person}"]}
 
-# No CORS: the browser only talks to the Vite dev server, which proxies /api here, so the
-# session cookie stays on one https origin.
+# No CORS: the browser only ever talks to one origin, which serves this API under /api (the Vite
+# dev server proxies it here; in production src/server.py mounts it), so the session cookie
+# just works.
 db.init()
 # Every error is schemas.Error, so /docs shows that one shape for any 4xx or 5xx.
 app = FastAPI(responses={"4XX": {"model": schemas.Error}, "5XX": {"model": schemas.Error}})
@@ -215,7 +218,7 @@ def save_and_transcribe(user, upload):
     Nothing is kept when Prisma fails or hears no speech."""
     wav = save_wav(upload, user_folder(user), PHRASE_SECONDS)
     try:
-        hypothesis = prisma.transcribe(wav, user["language"])
+        hypothesis = prisma.transcribe(wav, user["language"], user["id"])
     except gnani.GnaniError:
         os.remove(wav)
         raise
@@ -242,13 +245,15 @@ def audio_samples(user, column, value):
     return db.rows(f"SELECT audio_path, language FROM samples WHERE user_id = ? AND {column} = ?", (user["id"], value))
 
 
-def enroll_sample(user, upload, column, value):
-    """Record an enrollment sample for a phrase, slot word or template fixed part."""
+def enroll_sample(user, upload, column, value, source=None):
+    """Record an enrollment sample for a phrase, slot word or template fixed part. source says
+    where a demo recording came from (pilot, torgo, simulated); None for one made in the app."""
     path, hypothesis = save_and_transcribe(user, upload)
     sample_id = db.execute(
-        f"INSERT INTO samples (user_id, {column}, audio_path, prisma_hypothesis, source, created_at, language)"
-        " VALUES (?, ?, ?, ?, 'enroll', ?, ?)", (user["id"], value, path, hypothesis, now(), user["language"]))
-    return {"sample_id": sample_id, column: value, "hypothesis": hypothesis}
+        f"INSERT INTO samples (user_id, {column}, audio_path, prisma_hypothesis, source, created_at, language,"
+        " speech_source) VALUES (?, ?, ?, ?, 'enroll', ?, ?, ?)",
+        (user["id"], value, path, hypothesis, now(), user["language"], source))
+    return {"sample_id": sample_id, column: value, "hypothesis": hypothesis, "source": source}
 
 
 def add_template(user_id, text):
@@ -271,6 +276,31 @@ def add_slot_word(user_id, slot, text):
     return db.execute("INSERT INTO slot_words (user_id, slot, text) VALUES (?, ?, ?)", (user_id, slot, text))
 
 
+def add_default_building_blocks(user_id, language):
+    """The default slot words and templates for language; ones the user already has are skipped."""
+    for slot, words in DEFAULT_SLOT_WORDS[language].items():
+        for word in words:
+            add_slot_word(user_id, slot, word)
+    for template in DEFAULT_TEMPLATES[language]:
+        add_template(user_id, template)
+
+
+def trust_proxy():
+    """TRUST_PROXY: on when the app runs behind a proxy that sets X-Forwarded-For (docs/DEPLOY.md)."""
+    return os.environ.get("TRUST_PROXY", "").strip().lower() in ("1", "true", "yes", "on")
+
+
+def client_ip(request):
+    """The address sign-up attempts are counted by. Behind a proxy every request arrives from the
+    proxy, so with TRUST_PROXY on it is the left-most X-Forwarded-For entry, the client as the
+    proxy saw it; otherwise the socket's own peer."""
+    if trust_proxy():
+        forwarded = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        if forwarded:
+            return forwarded
+    return request.client.host if request.client else None
+
+
 def invite_code():
     """DEMO_INVITE_CODE from .env; sign-up is open when it is unset or empty."""
     return os.environ.get("DEMO_INVITE_CODE", "").strip()
@@ -282,7 +312,7 @@ def check_invite(request, given):
     code = invite_code()
     if not code:
         return
-    attempts = ("signup", request.client.host if request.client else None)
+    attempts = ("signup", client_ip(request))
     wait = auth.seconds_locked(attempts)
     if wait:
         raise Refused(429, "too_many_attempts", "too many wrong invite codes, try again later", retry_after=wait)
@@ -309,11 +339,7 @@ def signup(body: schemas.Signup, request: Request, response: Response):
             (name, email, auth.hash_password(password), language, now()))
     except sqlite3.IntegrityError:
         raise Refused(409, "email_taken", "an account with this email already exists")
-    for slot, words in DEFAULT_SLOT_WORDS[language].items():
-        for word in words:
-            add_slot_word(user_id, slot, word)
-    for template in DEFAULT_TEMPLATES[language]:
-        add_template(user_id, template)
+    add_default_building_blocks(user_id, language)
     auth.set_session(response, user_id)
     log.event("signup", user_id=user_id)
     return public(get_user(user_id))
@@ -401,7 +427,7 @@ def set_voice(audio_file: UploadFile = File(alias="audio"), consent: str = Form(
     # The docs ask only for WAV or MP3; 44.1 kHz keeps more of the voice than Prisma's 16 kHz.
     wav = save_wav(audio_file, voice_folder(user), VOICE_SECONDS, rate=44100)
     try:
-        embedding = speak.clone_voice(wav, voice_folder(user))
+        embedding = speak.clone_voice(wav, voice_folder(user), user["id"])
     finally:
         os.remove(wav)
     db.execute("UPDATE users SET voice_embedding = ?, voice_consent_given_at = ? WHERE id = ?",
@@ -425,12 +451,15 @@ def delete_voice(user=Depends(current_user)):
 def list_phrases(user=Depends(current_user)):
     """Every phrase with its enrollment recordings (enrolled, so enrollment can resume), its
     samples in the user's current language (sample_count, confirmed recognitions included; the
-    matcher ignores the rest) and when it was last used."""
-    return [phrase_out(p) for p in db.rows("""
+    matcher ignores the rest), when it was last used, and sources: where its demo recordings came
+    from (pilot, torgo, simulated; empty when every recording was made in the app)."""
+    return [{**phrase_out(p), "sources": sorted(p["sources"].split(",")) if p["sources"] else []}
+            for p in db.rows("""
         SELECT p.id, p.text, p.contexts, p.urgent,
             (SELECT COUNT(*) FROM samples s WHERE s.phrase_id = p.id AND s.source = 'enroll') AS enrolled,
             (SELECT COUNT(*) FROM samples s WHERE s.phrase_id = p.id AND s.language = :language) AS sample_count,
-            (SELECT MAX(created_at) FROM uses u WHERE u.phrase_id = p.id) AS last_used_at
+            (SELECT MAX(created_at) FROM uses u WHERE u.phrase_id = p.id) AS last_used_at,
+            (SELECT GROUP_CONCAT(DISTINCT s.speech_source) FROM samples s WHERE s.phrase_id = p.id) AS sources
         FROM phrases p WHERE p.user_id = :u ORDER BY p.id""", {"u": user["id"], "language": user["language"]})]
 
 
@@ -442,8 +471,10 @@ def add_phrase(body: schemas.NewPhrase, user=Depends(current_user)):
 @app.post("/me/phrases/default", response_model=list[schemas.PhraseDetail])
 def add_default_phrases(user=Depends(current_user)):
     """Add the everyday phrases in the user's language (data/default_phrases_<hi|en>.txt), with
-    contexts from their group comment (GROUP_CONTEXTS; a group not listed there is any). Text the
-    user already has is skipped, so after a language change this adds the new language's."""
+    contexts from their group comment (GROUP_CONTEXTS; a group not listed there is any), and the
+    default slot words and templates for it. Text the user already has is skipped, so after a
+    language change this adds the new language's."""
+    add_default_building_blocks(user["id"], user["language"])
     contexts = "any"
     with open(DEFAULT_PHRASES.format(language=user["language"]), encoding="utf-8") as f:
         for line in f:
@@ -498,9 +529,11 @@ def delete_sample(sample_id: int, user=Depends(current_user)):
 
 
 @app.post("/me/enroll", response_model=schemas.Enrolled)
-def enroll(phrase_id: int = Form(), audio_file: UploadFile = File(alias="audio"), user=Depends(current_user)):
+def enroll(phrase_id: int = Form(), audio_file: UploadFile = File(alias="audio"),
+           source: schemas.SpeechSource | None = Form(None), user=Depends(current_user)):
+    """source is only for demo recordings (scripts/load_demo.py); the app leaves it out."""
     get_phrase(user["id"], phrase_id)
-    return enroll_sample(user, audio_file, "phrase_id", phrase_id)
+    return enroll_sample(user, audio_file, "phrase_id", phrase_id, source)
 
 
 @app.get("/me/slot-words", response_model=list[schemas.SlotWord])
@@ -527,9 +560,10 @@ def delete_slot_word(slot_word_id: int, user=Depends(current_user)):
 
 
 @app.post("/me/slot-words/{slot_word_id}/enroll", response_model=schemas.Enrolled)
-def enroll_slot_word(slot_word_id: int, audio_file: UploadFile = File(alias="audio"), user=Depends(current_user)):
+def enroll_slot_word(slot_word_id: int, audio_file: UploadFile = File(alias="audio"),
+                     source: schemas.SpeechSource | None = Form(None), user=Depends(current_user)):
     owned("slot_words", slot_word_id, user["id"])
-    return enroll_sample(user, audio_file, "slot_word_id", slot_word_id)
+    return enroll_sample(user, audio_file, "slot_word_id", slot_word_id, source)
 
 
 @app.get("/me/templates", response_model=list[schemas.Template])
@@ -558,10 +592,11 @@ def delete_template(template_id: int, user=Depends(current_user)):
 
 
 @app.post("/me/templates/{template_id}/enroll", response_model=schemas.Enrolled)
-def enroll_template(template_id: int, audio_file: UploadFile = File(alias="audio"), user=Depends(current_user)):
+def enroll_template(template_id: int, audio_file: UploadFile = File(alias="audio"),
+                    source: schemas.SpeechSource | None = Form(None), user=Depends(current_user)):
     """A recording of the template's fixed part alone, like "चाहिए" for "{item} चाहिए"."""
     owned("templates", template_id, user["id"])
-    return enroll_sample(user, audio_file, "template_id", template_id)
+    return enroll_sample(user, audio_file, "template_id", template_id, source)
 
 
 def candidates_for(user):
@@ -659,9 +694,9 @@ def speak_text(body: schemas.Speak, user=Depends(current_user)):
     text = clean_text(body.text)
     if user["use_own_voice"] and user["voice_embedding"]:
         path = speak.synthesize(text, user["language"], json.loads(user["voice_embedding"]),
-                                cache_dir=f"{voice_folder(user)}/tts")
+                                cache_dir=f"{voice_folder(user)}/tts", user_id=user["id"])
     else:
-        path = speak.synthesize(text, user["language"])
+        path = speak.synthesize(text, user["language"], user_id=user["id"])
     return FileResponse(path, media_type="audio/wav")
 
 
