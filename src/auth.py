@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 COOKIE = "sunn_session"
 SESSION_SECONDS = 30 * 24 * 3600
 MIN_PASSWORD = 8
-MAX_FAILURES = 5  # failed logins per email ...
+MAX_FAILURES = 5  # failed logins per email, or sign-ups with a wrong invite code per IP ...
 FAILURE_WINDOW = 15 * 60  # ... within this many seconds
 
 load_dotenv()
@@ -60,31 +60,32 @@ def clear_session(response):
     response.delete_cookie(COOKIE, httponly=True, secure=True, samesite="lax", path="/")
 
 
-# In memory, so it resets when the server restarts; enough for one dev server.
+# In memory, so it resets when the server restarts; enough for one dev server. Keyed by the
+# email for a login and by ("signup", ip) for a sign-up, so the two never share a count.
 _failures = defaultdict(deque)
 _lock = threading.Lock()
 
 
-def _recent(email, now):
-    attempts = _failures[email]
+def _recent(key, now):
+    attempts = _failures[key]
     while attempts and attempts[0] <= now - FAILURE_WINDOW:
         attempts.popleft()
     return attempts
 
 
-def seconds_locked(email):
-    """Seconds until email may try again, or 0 if it has failed fewer than MAX_FAILURES times."""
+def seconds_locked(key):
+    """Seconds until key may try again, or 0 if it has failed fewer than MAX_FAILURES times."""
     now = time.time()
     with _lock:
-        attempts = _recent(email, now)
+        attempts = _recent(key, now)
         return int(attempts[0] + FAILURE_WINDOW - now) + 1 if len(attempts) >= MAX_FAILURES else 0
 
 
-def record_failure(email):
+def record_failure(key):
     with _lock:
-        _recent(email, time.time()).append(time.time())
+        _recent(key, time.time()).append(time.time())
 
 
-def clear_failures(email):
+def clear_failures(key):
     with _lock:
-        _failures.pop(email, None)
+        _failures.pop(key, None)
