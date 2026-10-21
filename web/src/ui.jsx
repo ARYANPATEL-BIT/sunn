@@ -134,14 +134,29 @@ export function useRecorder(onDone) {
     }
     if (!done.current) return stream.getTracks().forEach((track) => track.stop()) // left the screen meanwhile
 
+    if (typeof window !== 'undefined' && typeof window.MediaRecorder === 'undefined') {
+      stream.getTracks().forEach((track) => track.stop())
+      return setError(failure('unsupported'))
+    }
+
     const rec = new MediaRecorder(stream)
     const chunks = []
-    const audio = new AudioContext()
-    const analyser = audio.createAnalyser()
-    analyser.fftSize = 1024
-    audio.createMediaStreamSource(stream).connect(analyser)
-    audio.resume()
-    const wave = new Float32Array(analyser.fftSize)
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    let audio = null
+    let analyser = null
+    if (AudioCtx) {
+      try {
+        audio = new AudioCtx()
+        analyser = audio.createAnalyser()
+        analyser.fftSize = 1024
+        audio.createMediaStreamSource(stream).connect(analyser)
+        audio.resume()
+      } catch {
+        audio = null
+        analyser = null
+      }
+    }
+    const wave = analyser ? new Float32Array(analyser.fftSize) : null
     const animate = !reducedMotion()
     let peak = 0
     let level = 0
@@ -149,12 +164,14 @@ export function useRecorder(onDone) {
 
     // Every frame: the loudness of the last ~20ms, for the sun's corona and for silence detection.
     function listen() {
-      analyser.getFloatTimeDomainData(wave)
-      const rms = Math.sqrt(wave.reduce((sum, s) => sum + s * s, 0) / wave.length)
-      const target = Math.min(1, rms * 8)
-      peak = Math.max(peak, rms)
-      level += (target - level) * (target > level ? 0.5 : 0.08) // rise fast, fall slowly
-      if (animate) meter.current?.style.setProperty('--level', level.toFixed(3))
+      if (analyser && wave) {
+        analyser.getFloatTimeDomainData(wave)
+        const rms = Math.sqrt(wave.reduce((sum, s) => sum + s * s, 0) / wave.length)
+        const target = Math.min(1, rms * 8)
+        peak = Math.max(peak, rms)
+        level += (target - level) * (target > level ? 0.5 : 0.08) // rise fast, fall slowly
+        if (animate) meter.current?.style.setProperty('--level', level.toFixed(3))
+      }
       frame = requestAnimationFrame(listen)
     }
 
@@ -168,12 +185,18 @@ export function useRecorder(onDone) {
       cancelAnimationFrame(frame)
       clearInterval(timer)
       stream.getTracks().forEach((track) => track.stop())
-      audio.close()
+      try {
+        audio?.close()
+      } catch {
+        // Non-blocking cleanup
+      }
       meter.current?.style.removeProperty('--level')
       haptic()
       setRecording(false)
       if (!done.current) return
-      if (peak < SILENCE_RMS) return setError(failure('silent'))
+      if (!chunks.length || chunks.every((c) => c.size === 0) || peak < SILENCE_RMS) {
+        return setError(failure('silent'))
+      }
       done.current(new Blob(chunks, { type: rec.mimeType }))
     }
     recorder.current = rec
@@ -191,7 +214,7 @@ export function useRecorder(onDone) {
     else if (Date.now() - startedAt.current >= MIN_RECORDING_MS) stop()
   }
 
-  return { recording, seconds, error, toggle, meter }
+  return { recording, seconds, error, toggle, meter, reset: () => setError(null) }
 }
 
 // The record button. Breathes at rest, its corona follows the voice while recording,

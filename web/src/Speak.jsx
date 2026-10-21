@@ -7,20 +7,22 @@ import { Alert, failure, Pill, Sun, useGo, useRecorder } from './ui.jsx'
 
 const CONTEXT_LIST = ['any', 'home', 'hospital', 'market']
 
-function candidateKey(c) {
-  if (c.composed) return `composed-${c.template_id}-${c.slot_word_id}`
-  return `phrase-${c.phrase_id || c.text}`
+function candidateKey(c, index = 0) {
+  if (!c) return `candidate-empty-${index}`
+  if (c.composed) return `composed-${c.template_id ?? 't'}-${c.slot_word_id ?? 'w'}-${index}`
+  if (c.phrase_id != null) return `phrase-${c.phrase_id}-${index}`
+  return `text-${c.text ?? ''}-${index}`
 }
 
 function isSameCandidate(a, b) {
   if (!a || !b) return false
   if (a.composed || b.composed) {
-    return a.template_id === b.template_id && a.slot_word_id === b.slot_word_id
+    return Boolean(a.composed && b.composed && a.template_id === b.template_id && a.slot_word_id === b.slot_word_id)
   }
-  if (a.phrase_id && b.phrase_id) {
-    return a.phrase_id === b.phrase_id
+  if (a.phrase_id != null || b.phrase_id != null) {
+    return a.phrase_id != null && b.phrase_id != null && a.phrase_id === b.phrase_id
   }
-  return a.text === b.text
+  return Boolean(a.text && b.text && a.text.trim() === b.text.trim())
 }
 
 export default function Speak() {
@@ -36,37 +38,53 @@ export default function Speak() {
   const [busy, setBusy] = useState(null) // 'listening' while Prisma works, 'playing' while Timbre speaks
   const [error, setError] = useState(null)
   const confirmedSampleRef = useRef(null)
+  const confirmingSampleRef = useRef(null)
+  const isMountedRef = useRef(true)
+  const activeRecordIdRef = useRef(0)
 
-  const recorder = useRecorder((blob) =>
+  const recorder = useRecorder((blob) => {
+    const recordId = ++activeRecordIdRef.current
     run('listening', async () => {
       const response = await api.recognize(blob, context)
+      if (!isMountedRef.current || recordId !== activeRecordIdRef.current) return
       if (!response.hypothesis?.trim()) throw failure('silent')
       setResult(response)
       confirmedSampleRef.current = null
-    }),
-  )
+      confirmingSampleRef.current = null
+    })
+  })
 
   useEffect(() => {
-    api.listPhrases().then((phrases) => setLearned(phrases.filter((p) => p.enrolled > 0).length), setError)
+    isMountedRef.current = true
+    api.listPhrases().then((phrases) => {
+      if (isMountedRef.current) setLearned(phrases.filter((p) => p.enrolled > 0).length)
+    }, (err) => {
+      if (isMountedRef.current) setError(err)
+    })
     return () => {
+      isMountedRef.current = false
+      activeRecordIdRef.current++
       api.stopAudio()
     }
   }, [])
 
   async function run(kind, action) {
+    if (!isMountedRef.current) return
     setBusy(kind)
     setError(null)
     try {
       await action()
     } catch (e) {
-      setError(e)
+      if (isMountedRef.current) setError(e)
     } finally {
-      setBusy(null)
+      if (isMountedRef.current) setBusy(null)
     }
   }
 
   function record() {
+    if (busy !== null) return
     if (!recorder.recording) {
+      activeRecordIdRef.current++
       api.stopAudio()
       setResult(null)
       setSpoken(null)
@@ -74,6 +92,7 @@ export default function Speak() {
       setNewText('')
       setError(null)
       confirmedSampleRef.current = null
+      confirmingSampleRef.current = null
     }
     recorder.toggle()
   }
@@ -88,20 +107,37 @@ export default function Speak() {
     }
 
     run('playing', async () => {
-      setSpoken(candidate)
+      const sampleId = result?.sample_id
+      let confirmed = false
       let confirmPromise = Promise.resolve()
-      if (confirmedSampleRef.current !== result.sample_id) {
+
+      if (sampleId && confirmedSampleRef.current !== sampleId && confirmingSampleRef.current !== sampleId) {
+        confirmingSampleRef.current = sampleId
         const answer = candidate.composed
           ? { template_id: candidate.template_id, slot_word_id: candidate.slot_word_id }
           : { phrase_id: candidate.phrase_id }
-        confirmPromise = api.confirm({ sample_id: result.sample_id, ...answer }).then(() => {
-          confirmedSampleRef.current = result.sample_id
-        })
+        confirmPromise = api
+          .confirm({ sample_id: sampleId, ...answer })
+          .then((res) => {
+            confirmedSampleRef.current = sampleId
+            confirmed = true
+            return res
+          })
+          .finally(() => {
+            confirmingSampleRef.current = null
+          })
+      } else {
+        confirmed = true
       }
+
       try {
         await Promise.all([api.say(candidate.text), confirmPromise])
+        setSpoken(candidate)
       } catch (e) {
         setError(e)
+        if (!confirmed && confirmedSampleRef.current !== sampleId) {
+          setSpoken(null)
+        }
       }
     })
   }
@@ -110,19 +146,26 @@ export default function Speak() {
     e.preventDefault()
     const text = newText.trim()
     if (!text) return
+    const sampleId = result?.sample_id
     run('playing', async () => {
       let confirmed = null
-      try {
-        confirmed = await api.confirm({ sample_id: result.sample_id, new_text: text })
-        confirmedSampleRef.current = result.sample_id
-      } catch (e) {
-        setError(e)
-        return
+      if (sampleId && confirmedSampleRef.current !== sampleId && confirmingSampleRef.current !== sampleId) {
+        confirmingSampleRef.current = sampleId
+        try {
+          confirmed = await api.confirm({ sample_id: sampleId, new_text: text })
+          confirmedSampleRef.current = sampleId
+        } catch (e) {
+          setError(e)
+          return
+        } finally {
+          confirmingSampleRef.current = null
+        }
       }
-      setSpoken(confirmed)
+      const targetPhrase = confirmed || { text }
+      setSpoken(targetPhrase)
       setTyping(false)
       try {
-        await api.say(confirmed.text)
+        await api.say(targetPhrase.text)
       } catch (e) {
         setError(e)
       }
@@ -136,6 +179,7 @@ export default function Speak() {
 
   function retry() {
     setError(null)
+    recorder.reset?.()
   }
 
   if (learned === 0) {
@@ -150,13 +194,28 @@ export default function Speak() {
     )
   }
 
-  const candidates = result?.candidates ?? []
+  const candidates = Array.isArray(result?.candidates)
+    ? result.candidates.filter((c) => c && typeof c.text === 'string' && c.text.trim())
+    : []
   const typed = spoken && !candidates.some((c) => isSameCandidate(c, spoken))
   const shown = typed ? [spoken] : candidates
 
   return (
     <section className="screen speak">
       <h1 className="visually-hidden">{t('speak.title')}</h1>
+
+      {/* Screen reader live announcements for speech states */}
+      <div className="visually-hidden" aria-live="polite">
+        {recorder.recording
+          ? t('speak.statusRecording')
+          : busy === 'listening'
+            ? t('speak.statusListening')
+            : spoken && busy === 'playing'
+              ? t('speak.statusPlaying', { text: spoken.text })
+              : spoken
+                ? t('speak.statusSpoke', { text: spoken.text })
+                : null}
+      </div>
 
       <div className="context-bar" role="radiogroup" aria-label={t('speak.context')}>
         {CONTEXT_LIST.map((ctx) => (
@@ -195,7 +254,7 @@ export default function Speak() {
               const isSelected = isSameCandidate(spoken, c)
               return (
                 <button
-                  key={candidateKey(c)}
+                  key={candidateKey(c, i)}
                   type="button"
                   className={isTop ? 'candidate top' : 'candidate'}
                   onClick={() => choose(c)}
@@ -285,7 +344,7 @@ export default function Speak() {
         recorder={recorder}
         onClick={record}
         waiting={busy === 'listening'}
-        disabled={busy === 'playing'}
+        disabled={busy !== null}
         compact={!!result}
         label={result ? t('sun.again') : undefined}
       />

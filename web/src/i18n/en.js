@@ -140,6 +140,8 @@ export default {
   'error.noMic': 'No microphone was found. Connect one, then tap the sun.',
   'error.insecure': 'Open the https address to use the microphone.',
   'error.playback': "The sound didn't play. Tap the phrase again.",
+  'error.unsupported': 'Your browser does not support audio recording.',
+  'error.confirm_failed': 'Could not confirm phrase. Please try again.',
   'error.server': 'Something went wrong. Please try again.',
   'error.retry': 'Try again',
 
@@ -196,6 +198,10 @@ export default {
   'speak.stopPlaying': 'Stop audio',
   'speak.retry': 'Try again',
   'speak.confirmed': 'Confirmed',
+  'speak.statusRecording': 'Recording in progress. Speak your phrase.',
+  'speak.statusListening': 'Recognizing your speech. Please wait.',
+  'speak.statusPlaying': 'Playing audio: {text}',
+  'speak.statusSpoke': 'Spoke phrase: {text}',
 
   'phrases.title': 'Phrase library',
   'phrases.subtitle': 'Manage your saved everyday phrases, contexts, and urgency tags.',
