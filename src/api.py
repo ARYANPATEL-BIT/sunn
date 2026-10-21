@@ -444,8 +444,8 @@ def update_phrase(phrase_id: int, changes: schemas.PhraseUpdate, user=Depends(cu
         elif field == "urgent":
             updates[field] = int(value)
     if updates:
-        db.execute(f"UPDATE phrases SET {', '.join(f'{field} = ?' for field in updates)} WHERE id = ?",
-                   (*updates.values(), phrase_id))
+        db.execute(f"UPDATE phrases SET {', '.join(f'{field} = ?' for field in updates)} WHERE id = ? AND user_id = ?",
+                   (*updates.values(), phrase_id, user["id"]))
     return get_phrase(user["id"], phrase_id)
 
 
@@ -454,10 +454,10 @@ def delete_phrase(phrase_id: int, user=Depends(current_user)):
     """Delete a phrase, its samples with their recordings, and its uses."""
     get_phrase(user["id"], phrase_id)
     paths = audio_paths(user, "phrase_id", phrase_id)
-    db.transaction(("DELETE FROM samples WHERE phrase_id = ?", (phrase_id,)),
-                   ("UPDATE samples SET top1_phrase_id = NULL WHERE top1_phrase_id = ?", (phrase_id,)),
-                   ("DELETE FROM uses WHERE phrase_id = ?", (phrase_id,)),
-                   ("DELETE FROM phrases WHERE id = ?", (phrase_id,)))
+    db.transaction(("DELETE FROM samples WHERE phrase_id = ? AND user_id = ?", (phrase_id, user["id"])),
+                   ("UPDATE samples SET top1_phrase_id = NULL WHERE top1_phrase_id = ? AND user_id = ?", (phrase_id, user["id"])),
+                   ("DELETE FROM uses WHERE phrase_id = ? AND user_id = ?", (phrase_id, user["id"])),
+                   ("DELETE FROM phrases WHERE id = ? AND user_id = ?", (phrase_id, user["id"])))
     remove_audio(paths, user["language"])
     return {"ok": True}
 
