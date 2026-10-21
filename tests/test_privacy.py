@@ -209,3 +209,48 @@ def test_administrative_usage_endpoint_access_control(env, monkeypatch):
     assert "limit" in usage_data
     assert "sent" in usage_data
     assert "remaining" in usage_data
+
+
+def test_log_sanitization_and_auth_hygiene(env):
+    """Logging masks sensitive fields and auth error responses do not leak user existence."""
+    import log
+
+    # Log sanitization defense-in-depth
+    dirty_fields = {
+        "user_id": 42,
+        "password": "secret_password",
+        "token": "secret_jwt_token",
+        "email": "user@example.com",
+        "audio_path": "/path/to/private.wav",
+        "transcript": "confidential spoken words",
+        "hypothesis": "guess transcript",
+        "text": "my phrase text",
+        "caregiver_phone": "919999999999",
+        "status": 200,
+        "safe_code": "ok"
+    }
+    cleaned = log.sanitize_fields(dirty_fields)
+    assert cleaned["user_id"] == 42
+    assert cleaned["status"] == 200
+    assert cleaned["safe_code"] == "ok"
+    assert cleaned["password"] == "[REDACTED]"
+    assert cleaned["token"] == "[REDACTED]"
+    assert cleaned["email"] == "[REDACTED]"
+    assert cleaned["audio_path"] == "[REDACTED]"
+    assert cleaned["transcript"] == "[REDACTED]"
+    assert cleaned["hypothesis"] == "[REDACTED]"
+    assert cleaned["text"] == "[REDACTED]"
+    assert cleaned["caregiver_phone"] == "[REDACTED]"
+
+    # Timing-safe and enumeration-safe login responses
+    client = env.client()
+    env.signup(language="en")
+
+    resp_unknown_email = client.post("/auth/login", json={"email": "nonexistent@example.com", "password": "password123"})
+    assert resp_unknown_email.status_code == 401
+    assert resp_unknown_email.json() == {"error": "bad_login", "message": "wrong email or password"}
+
+    user_row = db.row("SELECT email FROM users LIMIT 1")
+    resp_wrong_password = client.post("/auth/login", json={"email": user_row["email"], "password": "wrongpassword"})
+    assert resp_wrong_password.status_code == 401
+    assert resp_wrong_password.json() == {"error": "bad_login", "message": "wrong email or password"}
