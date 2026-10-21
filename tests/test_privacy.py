@@ -110,3 +110,43 @@ def test_consent_enforcement_for_signup_and_voice_cloning(env):
 
     user_row = db.row("SELECT voice_consent_given_at FROM users WHERE email = 'consented@example.com'")
     assert user_row["voice_consent_given_at"] is not None
+
+
+def test_account_deletion_cleans_up_all_user_data(env):
+    """Deleting an account purges user directory, audio files, and database records."""
+    client_a = env.signup(language="en")
+    client_b = env.signup(language="en")
+
+    me_a = client_a.get("/auth/me").json()
+    user_a_id = me_a["id"]
+    me_b = client_b.get("/auth/me").json()
+    user_b_id = me_b["id"]
+
+    # User A records an enrollment sample and clones voice
+    phrase_a = client_a.post("/me/phrases", json={"text": "Clean me up"}).json()
+    env.fake.transcripts.append("clean me up")
+    client_a.post("/me/enroll", data={"phrase_id": phrase_a["id"]}, files=env.recording())
+    client_a.post("/me/voice", data={"consent": "true"}, files={"audio": ("voice.wav", wav(6.0), "audio/wav")})
+
+    folder_a = f"data/users/{user_a_id}"
+    folder_b = f"data/users/{user_b_id}"
+    assert os.path.exists(folder_a)
+
+    # User A calls DELETE /me
+    del_resp = client_a.delete("/me")
+    assert del_resp.status_code == 200
+    assert del_resp.json() == {"ok": True}
+
+    # User A files on disk are completely removed
+    assert not os.path.exists(folder_a)
+
+    # User A database records are deleted
+    assert db.row("SELECT id FROM users WHERE id = ?", (user_a_id,)) is None
+    assert db.row("SELECT id FROM phrases WHERE user_id = ?", (user_a_id,)) is None
+    assert db.row("SELECT id FROM samples WHERE user_id = ?", (user_a_id,)) is None
+    assert db.row("SELECT id FROM slot_words WHERE user_id = ?", (user_a_id,)) is None
+    assert db.row("SELECT id FROM templates WHERE user_id = ?", (user_a_id,)) is None
+
+    # User B remains intact
+    assert db.row("SELECT id FROM users WHERE id = ?", (user_b_id,)) is not None
+    assert client_b.get("/auth/me").status_code == 200
