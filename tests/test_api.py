@@ -222,6 +222,52 @@ def test_credit_limit_refuses_new_calls_but_not_cached_ones(env, monkeypatch):
     assert db.row("SELECT SUM(cached = 0) AS sent, SUM(cached) AS cached FROM api_calls") == {"sent": 1, "cached": 1}
 
 
+def test_daily_cap_is_per_user_and_per_day(env, monkeypatch):
+    client = env.signup()
+    pid = phrase_id(client, "पानी चाहिए")
+    monkeypatch.setenv("DAILY_CALL_CAP_PER_USER", "1")
+    first = env.recording()
+    env.fake.transcripts.append("पानी चाहिए")
+    assert client.post("/me/enroll", data={"phrase_id": pid}, files=first).status_code == 200
+
+    refused = client.post("/me/enroll", data={"phrase_id": pid}, files=env.recording())
+    assert refused.status_code == 429 and refused.json()["error"] == "daily_cap_reached"
+    assert client.post("/speak", json={"text": "नमस्ते"}).json()["error"] == "daily_cap_reached"
+    assert client.post("/me/enroll", data={"phrase_id": pid}, files=first).status_code == 200  # cached
+    env.enroll_phrase(env.signup(), "पानी चाहिए")  # someone else has a cap of their own
+
+    db.execute("UPDATE api_calls SET created_at = '2026-01-01T23:59:59+00:00'")  # those were yesterday
+    env.enroll_phrase(client, "पानी चाहिए")
+    assert len(env.fake.sent("stt")) == 3
+
+
+def test_deleting_an_account_unties_its_calls(env):
+    client = env.signup()
+    env.enroll_phrase(client, "पानी चाहिए")
+    assert db.row("SELECT user_id FROM api_calls")["user_id"] == client.get("/auth/me").json()["id"]
+    client.delete("/me").raise_for_status()
+    assert db.rows("SELECT user_id, cached FROM api_calls") == [{"user_id": None, "cached": 0}]
+
+
+def test_demo_recordings_keep_their_source(env):
+    client = env.signup()
+    pid = phrase_id(client, "पानी चाहिए")
+    env.fake.transcripts += ["पानी चाहिए", "पानी चाहिए", "पानी"]
+    simulated = client.post("/me/enroll", data={"phrase_id": pid, "source": "simulated"}, files=env.recording())
+    assert simulated.json()["source"] == "simulated"
+    assert client.post("/me/enroll", data={"phrase_id": pid}, files=env.recording()).json()["source"] is None
+    word = client.get("/me/slot-words").json()[0]
+    assert client.post(f"/me/slot-words/{word['id']}/enroll", data={"source": "pilot"},
+                       files=env.recording()).json()["source"] == "pilot"
+
+    phrases = client.get("/me/phrases").json()
+    assert [p["sources"] for p in phrases if p["id"] == pid] == [["simulated"]]
+    assert all(p["sources"] == [] for p in phrases if p["id"] != pid)
+    refused = client.post("/me/enroll", data={"phrase_id": pid, "source": "real"}, files=env.recording())
+    assert refused.status_code == 422 and refused.json()["error"] == "invalid_input"
+    assert len(env.fake.sent("stt")) == 3  # refused before Prisma
+
+
 def test_usage_is_for_the_owner_only(env, monkeypatch):
     client = env.signup()
     assert client.get("/me/usage").json()["error"] == "not_owner"
