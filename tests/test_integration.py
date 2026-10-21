@@ -1,6 +1,7 @@
 """Integration tests for application routing, navigation tabs, and localization."""
 import re
 from pathlib import Path
+import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -58,6 +59,21 @@ def test_login_onboarding_routing():
     assert 'isOnboarded' in auth_pages_code, 'Expected isOnboarded import in AuthPages.jsx'
     assert "isOnboarded(user.id) ? '/app/speak' : '/app/onboarding'" in auth_pages_code
     assert "isOnboarded(me.id) ? '/app/speak' : '/app/onboarding'" in auth_pages_code
+
+
+def test_gnani_unconfigured_key_safeguard(monkeypatch):
+    import gnani
+    monkeypatch.setenv('GNANI_API_KEY', '')
+    with pytest.raises(gnani.GnaniError) as exc_info:
+        gnani.post('stt', 'http://example.com')
+    assert exc_info.value.code == 'gnani_unreachable'
+    assert exc_info.value.status == 502
+
+    monkeypatch.setenv('GNANI_API_KEY', 'your-key-here')
+    with pytest.raises(gnani.GnaniError) as exc_info:
+        gnani.post('stt', 'http://example.com')
+    assert exc_info.value.code == 'gnani_unreachable'
+    assert exc_info.value.status == 502
 
 
 if __name__ == '__main__':
