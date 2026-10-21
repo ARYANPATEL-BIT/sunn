@@ -1,14 +1,13 @@
 .env
 .venv/
 __pycache__/
-data/torgo/
-data/app.db
-data/users/
-data/cache/
+# Everything the app writes (database, recordings, caches, demo audio). Only the default
+# phrase lists in data/ are part of the code.
+data/*
+!data/default_phrases_*.txt
+logs/
 web/node_modules/
 web/dist/
 web/.env
 web/reference/
-data/app.backup.db
 web/certs/
-logs/
