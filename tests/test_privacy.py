@@ -72,3 +72,41 @@ def test_cross_user_sample_and_entity_isolation(env):
     b_confirm = client_b.post("/me/confirm", json={"sample_id": rec_a["sample_id"], "new_text": "Water please"})
     assert b_confirm.status_code == 404
     assert b_confirm.json()["error"] == "not_found"
+
+
+def test_consent_enforcement_for_signup_and_voice_cloning(env):
+    """Explicit consent is required for signup and voice cloning."""
+    client = env.client()
+
+    # Signup without consent is rejected
+    signup_fail = client.post("/auth/signup", json={
+        "name": "NoConsent", "email": "noconsent@example.com", "password": "password123",
+        "language": "en", "consent": False
+    })
+    assert signup_fail.status_code == 400
+    assert signup_fail.json()["error"] == "consent_required"
+
+    # Signup with consent succeeds
+    signup_ok = client.post("/auth/signup", json={
+        "name": "Consented", "email": "consented@example.com", "password": "password123",
+        "language": "en", "consent": True
+    })
+    assert signup_ok.status_code == 200
+
+    # Voice clone without consent is rejected
+    voice_fail = client.post("/me/voice", data={"consent": "false"}, files={"audio": ("voice.wav", wav(6.0), "audio/wav")})
+    assert voice_fail.status_code == 400
+    assert voice_fail.json()["error"] == "consent_required"
+
+    voice_no_consent = client.post("/me/voice", data={"consent": ""}, files={"audio": ("voice.wav", wav(6.0), "audio/wav")})
+    assert voice_no_consent.status_code == 400
+    assert voice_no_consent.json()["error"] == "consent_required"
+
+    # Voice clone with consent succeeds and records consent timestamp
+    voice_ok = client.post("/me/voice", data={"consent": "true"}, files={"audio": ("voice.wav", wav(6.0), "audio/wav")})
+    assert voice_ok.status_code == 200
+    me = client.get("/auth/me").json()
+    assert me["has_own_voice"] is True
+
+    user_row = db.row("SELECT voice_consent_given_at FROM users WHERE email = 'consented@example.com'")
+    assert user_row["voice_consent_given_at"] is not None
