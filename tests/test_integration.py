@@ -43,9 +43,28 @@ def test_no_em_dashes_in_source_tree():
             assert em_dash not in content, f'Em dash found in {path}'
 
 
+def test_preferences_and_onboarding_persistence():
+    prefs_code = (ROOT / 'web/src/prefs.js').read_text(encoding='utf-8')
+    assert 'sunn.large_text' in prefs_code, 'Missing large_text key in prefs.js'
+    assert 'sunn.reduced_motion' in prefs_code, 'Missing reduced_motion key in prefs.js'
+    assert 'sunn.enhanced_focus' in prefs_code, 'Missing enhanced_focus key in prefs.js'
+    assert 'sunn.onboarded.' in prefs_code, 'Missing per-user onboarding key prefix in prefs.js'
+    assert 'isOnboarded' in prefs_code, 'Missing isOnboarded in prefs.js'
+    assert 'setOnboarded' in prefs_code, 'Missing setOnboarded in prefs.js'
+
+
+def test_login_onboarding_routing():
+    auth_pages_code = (ROOT / 'web/src/AuthPages.jsx').read_text(encoding='utf-8')
+    assert 'isOnboarded' in auth_pages_code, 'Expected isOnboarded import in AuthPages.jsx'
+    assert "isOnboarded(user.id) ? '/app/speak' : '/app/onboarding'" in auth_pages_code
+    assert "isOnboarded(me.id) ? '/app/speak' : '/app/onboarding'" in auth_pages_code
+
+
 if __name__ == '__main__':
     test_app_router_routes()
     test_app_shell_navigation_tabs()
     test_i18n_total_parity_and_coverage()
     test_no_em_dashes_in_source_tree()
-    print('Routing and shell integration tests passed!')
+    test_preferences_and_onboarding_persistence()
+    test_login_onboarding_routing()
+    print('Routing, shell, and persistence integration tests passed!')
