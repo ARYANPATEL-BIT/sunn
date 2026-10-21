@@ -1,3 +1,11 @@
+---
+title: Sunn
+sdk: docker
+app_port: 7860
+pinned: false
+short_description: Speech aid for dysarthric speech, Hindi and Indian English
+---
+
 # Sunn
 
 Sunn is a speech aid for people whose speech is hard for others, and for speech recognition,
@@ -214,7 +222,8 @@ How to record and organize the folder, and the consent it needs, is in docs/DEMO
 
 One Docker image (`Dockerfile`) serves the API under `/api` and the web app everywhere else
 on port 7860. docs/DEPLOY.md has the exact steps for a free Hugging Face Docker Space: the
-secrets to add (including `TRUST_PROXY=1` and `DEMO_INVITE_CODE`), how to push, and what to
+secrets to add (including `TRUST_PROXY=1` and `DEMO_INVITE_CODE`), how to push with
+`scripts/deploy_space.py`, and what to
 expect (it sleeps when idle and loses its data on restart).
 
 ## Tests
