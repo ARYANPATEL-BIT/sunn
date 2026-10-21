@@ -169,17 +169,25 @@ calls have been sent, new ones are refused; cached answers still work. Uploads a
 
 All the codes are in `docs/API.md`.
 
-### Privacy
+### Privacy, Consent, and Data Safety
 
-`DELETE /me` removes the user's phrases, slot words, templates, samples, uses, every
-recording with its cached Prisma transcript, and the cloned voice with everything spoken in it
-(all in `data/users/<id>/`). Files go first, so if one can't be removed the account is still
-there to try again. Two things are kept because they aren't anyone's data: the stock-voice
-Timbre cache (`data/cache/tts/`, phrase text spoken by Nalini or Kaveri, shared by everyone who
-says it) and `api_calls` (counts with no user).
-
-`logs/app.log` is one JSON line per request, Gnani call and refusal: ids, paths, status codes,
-error codes and timings. Never audio, phrase text, transcripts, emails, passwords or tokens.
+- **Explicit consent lifecycle**:
+  - `POST /auth/signup` requires `consent: true`. Timestamp recorded in `consent_given_at`.
+  - `POST /me/voice` requires explicit form parameter `consent: "true"`. Timestamp recorded in `voice_consent_given_at`.
+  - Consent revocation is immediate: `DELETE /me/voice` wipes voice data, and `DELETE /me` wipes the full account.
+- **Resource isolation and defense-in-depth**:
+  - Every resource access is strictly bound to the authenticated user ID extracted from the secure HTTP-only session cookie.
+  - Resource lookups (`phrases`, `samples`, `slot_words`, `templates`) enforce server-side ownership. Attempting to query, update, or delete another user's resource yields a 404 response to prevent user and resource enumeration.
+  - SQL mutations (`UPDATE` and `DELETE`) include explicit `AND user_id = ?` clauses for multi-tenant isolation.
+  - Administrative usage metrics (`GET /me/usage`) are restricted to `OWNER_EMAIL`.
+- **Destruction and forget-me mechanics**:
+  - `DELETE /me` purges the user directory `data/users/<id>/`, raw audio recordings, cached Prisma transcripts, and cascades all database records in a single atomic transaction.
+  - `DELETE /me/voice` removes the cloned voice directory `data/users/<id>/voice/`, nullifies `voice_embedding` and `voice_consent_given_at`, and resets `use_own_voice` to false.
+  - Retained: stock Timbre TTS cache (`data/cache/tts/`, shared system voices Nalini and Kaveri, containing no personal data) and aggregate `api_calls` counts.
+- **Logging and sanitization hygiene**:
+  - Application logs (`logs/app.log`) capture structured operational events: timestamps, event names, status codes, and non-sensitive identifiers.
+  - All log entries pass through automated sanitization that redacts passwords, tokens, session cookies, emails, audio paths, and transcript hypotheses.
+  - Authentication errors use constant-time dummy verification and uniform error payloads (`bad_login`) to prevent account enumeration.
 
 ### Running
 
