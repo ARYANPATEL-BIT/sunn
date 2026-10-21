@@ -46,7 +46,8 @@ CREATE TABLE IF NOT EXISTS templates (
 -- A recognition is stored with phrase_id and source NULL; confirming it sets both,
 -- which adds it to the phrase bank. top1_phrase_id is the best candidate at
 -- recognition time, kept for the top-1 hit rate. An enrollment belongs to exactly one
--- of phrase_id, slot_word_id or template_id.
+-- of phrase_id, slot_word_id or template_id. language is the user's language when Prisma
+-- transcribed it ("hi" or "en"); only samples in the user's current language are matched.
 CREATE TABLE IF NOT EXISTS samples (
     id INTEGER PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id),
@@ -57,7 +58,8 @@ CREATE TABLE IF NOT EXISTS samples (
     top1_phrase_id INTEGER REFERENCES phrases(id),
     created_at TEXT NOT NULL,
     slot_word_id INTEGER REFERENCES slot_words(id),
-    template_id INTEGER REFERENCES templates(id)
+    template_id INTEGER REFERENCES templates(id),
+    language TEXT CHECK (language IN ('hi', 'en'))
 );
 -- One row per confirmed recognition, for the usage priors.
 CREATE TABLE IF NOT EXISTS uses (
@@ -87,6 +89,7 @@ ADDED_COLUMNS = [
     ("phrases", "urgent", "INTEGER NOT NULL DEFAULT 0"),
     ("samples", "slot_word_id", "INTEGER REFERENCES slot_words(id)"),
     ("samples", "template_id", "INTEGER REFERENCES templates(id)"),
+    ("samples", "language", "TEXT CHECK (language IN ('hi', 'en'))"),
 ]
 
 
@@ -97,6 +100,10 @@ def init():
         for table, column, declaration in ADDED_COLUMNS:
             if column not in {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}:
                 conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {declaration}")
+        # Samples from before samples.language were all transcribed in their user's language,
+        # which could not change then.
+        conn.execute("UPDATE samples SET language = (SELECT language FROM users WHERE users.id = samples.user_id)"
+                     " WHERE language IS NULL")
 
 
 def rows(sql, params=()):
