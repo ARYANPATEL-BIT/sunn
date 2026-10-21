@@ -10,6 +10,7 @@ Language = Literal["hi", "en"]  # the language the user speaks
 Context = Literal["home", "hospital", "market"]  # where the user is, for POST /me/recognize
 PhraseContext = Literal["home", "hospital", "market", "any"]  # where a phrase is used
 Slot = Literal["item", "person", "place"]
+SpeechSource = Literal["pilot", "torgo", "simulated"]  # where a demo recording came from
 
 ErrorCode = Literal[
     "not_logged_in", "not_found", "consent_required", "invalid_input",
@@ -103,10 +104,11 @@ class Phrase(BaseModel):
 
 class PhraseDetail(Phrase):
     model_config = example(id=12, text="पानी चाहिए", contexts=["home", "hospital"], urgent=False,
-                           enrolled=3, sample_count=9, last_used_at="2026-10-20T18:05:00Z")
+                           enrolled=3, sample_count=9, last_used_at="2026-10-20T18:05:00Z", sources=[])
     enrolled: int  # enrollment recordings
     sample_count: int  # enrollments and confirmed recognitions in the user's current language
     last_used_at: datetime | None
+    sources: list[SpeechSource]  # where its demo recordings came from; [] when all were made in the app
 
 
 class NewPhrase(Request):
@@ -122,12 +124,13 @@ class PhraseUpdate(Request):
 class Enrolled(BaseModel):
     """One enrollment recording. Exactly one of phrase_id, slot_word_id, template_id is set."""
     model_config = example(sample_id=301, hypothesis="paani chahiye", phrase_id=12, slot_word_id=None,
-                           template_id=None)
+                           template_id=None, source=None)
     sample_id: int
     hypothesis: str  # what Prisma heard
     phrase_id: int | None = None
     slot_word_id: int | None = None
     template_id: int | None = None
+    source: SpeechSource | None = None  # set only for a demo recording (scripts/load_demo.py)
 
 
 class SlotWord(BaseModel):

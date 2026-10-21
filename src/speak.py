@@ -16,7 +16,7 @@ CLONE_URL = "https://api.vachana.ai/api/v1/tts/voice-clone/embeddings"
 # A user's language ("hi" or "en") -> (Timbre language, voice). The docs list no default voice;
 # Nalini is their Hindi example and Kaveri their English one, both timbre-v2.5.
 VOICES = {"hi": ("hi-IN", "Nalini"), "en": ("en-IN", "Kaveri")}
-CACHE_DIR = "data/cache/tts"
+CACHE_DIR = os.path.join(db.DATA_DIR, "cache", "tts")
 OUT = "results/tts_test.wav"
 
 
@@ -38,25 +38,25 @@ def request_body(text, language, embedding=None):
     }
 
 
-def synthesize(text, language="hi", embedding=None, cache_dir=CACHE_DIR):
+def synthesize(text, language="hi", embedding=None, cache_dir=CACHE_DIR, user_id=None):
     """Return the path of a cached wav for text; calls Gnani only on a cache miss. The cache
     key covers the whole request body, so the language and the voice (stock or cloned) are
-    part of it."""
+    part of it. user_id is who the call is for (see gnani.post)."""
     body = request_body(text, language, embedding)
     key = hashlib.sha256(repr(sorted(body.items())).encode("utf-8")).hexdigest()
     path = os.path.join(cache_dir, f"{key}.wav")
     if os.path.exists(path):
-        gnani.record("tts", True, audio.seconds(path))
+        gnani.record("tts", True, audio.seconds(path), user_id)
         return path
 
-    response = gnani.post("tts", URL, json=body)
+    response = gnani.post("tts", URL, user_id=user_id, json=body)
     os.makedirs(cache_dir, exist_ok=True)
     with open(path, "wb") as f:
         f.write(response.content)
     return path
 
 
-def clone_voice(wav_path, cache_dir):
+def clone_voice(wav_path, cache_dir, user_id=None):
     """Gnani's speaker_embedding ({embedding, shape, dtype}) for a reference recording; calls
     Gnani only on a cache miss. The cache holds a voiceprint, so it lives in cache_dir, inside
     the user's own folder, and goes when they remove their voice."""
@@ -65,11 +65,11 @@ def clone_voice(wav_path, cache_dir):
     seconds = audio.seconds(audio_bytes)
     path = os.path.join(cache_dir, f"{hashlib.sha256(audio_bytes).hexdigest()}.json")
     if os.path.exists(path):
-        gnani.record("clone", True, seconds)
+        gnani.record("clone", True, seconds, user_id)
         with open(path, encoding="utf-8") as f:
             return json.load(f)
 
-    response = gnani.post("clone", CLONE_URL, audio_seconds=seconds,
+    response = gnani.post("clone", CLONE_URL, audio_seconds=seconds, user_id=user_id,
                           files={"audio_file": ("voice.wav", audio_bytes, "audio/wav")})
     result = response.json()
     # The endpoint's schema nests it under data.voice_clone_embedding; the quick start shows

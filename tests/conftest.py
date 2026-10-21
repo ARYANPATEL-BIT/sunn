@@ -1,23 +1,20 @@
 import io
 import json
 import os
-import shutil
 import uuid
 from collections import defaultdict, deque
 from itertools import count
-from pathlib import Path
 
 import numpy as np
 import pytest
 import requests
 import soundfile
 
-ROOT = Path(__file__).resolve().parent.parent
-
 # Set before the app is imported: auth refuses to start without a JWT secret, and load_dotenv
 # never overrides a variable that is already set, so the real key in .env is never used here.
 os.environ["JWT_SECRET"] = "a-test-secret-long-enough-for-hs256-keys"
 os.environ["GNANI_API_KEY"] = "test-key"
+os.environ["DATA_DIR"] = "data"  # relative, so each test's data lands in its own folder
 
 import auth  # noqa: E402
 import db  # noqa: E402
@@ -118,12 +115,11 @@ class Env:
 def env(tmp_path, monkeypatch):
     """The API in an empty folder of its own: its own data/app.db, recordings and caches."""
     monkeypatch.chdir(tmp_path)
-    (tmp_path / "data").mkdir()
-    for path in ROOT.glob("data/default_phrases_*.txt"):
-        shutil.copy(path, tmp_path / "data")
     monkeypatch.setenv("GNANI_CALL_LIMIT", "4000")
+    monkeypatch.setenv("DAILY_CALL_CAP_PER_USER", "60")
     monkeypatch.delenv("OWNER_EMAIL", raising=False)
     monkeypatch.delenv("DEMO_INVITE_CODE", raising=False)  # open sign-up, whatever .env says
+    monkeypatch.delenv("TRUST_PROXY", raising=False)
     monkeypatch.setattr(auth, "_failures", defaultdict(deque))  # no lockouts left by another test
     db.init()
     fake = FakeGnani()

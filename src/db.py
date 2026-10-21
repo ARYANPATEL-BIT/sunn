@@ -2,7 +2,12 @@ import os
 import sqlite3
 from contextlib import closing
 
-DB_PATH = "data/app.db"
+from dotenv import load_dotenv
+
+load_dotenv()
+# Everything the app writes: the database, recordings and the Gnani caches.
+DATA_DIR = os.environ.get("DATA_DIR", "data")
+DB_PATH = os.path.join(DATA_DIR, "app.db")
 
 SCHEMA = """
 -- email is stored lowercased; password_hash is argon2. language is "hi" or "en".
@@ -48,6 +53,8 @@ CREATE TABLE IF NOT EXISTS templates (
 -- recognition time, kept for the top-1 hit rate. An enrollment belongs to exactly one
 -- of phrase_id, slot_word_id or template_id. language is the user's language when Prisma
 -- transcribed it ("hi" or "en"); only samples in the user's current language are matched.
+-- speech_source is where a demo recording came from (pilot, torgo or simulated, see
+-- scripts/load_demo.py); NULL for one recorded in the app.
 CREATE TABLE IF NOT EXISTS samples (
     id INTEGER PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id),
@@ -59,7 +66,8 @@ CREATE TABLE IF NOT EXISTS samples (
     created_at TEXT NOT NULL,
     slot_word_id INTEGER REFERENCES slot_words(id),
     template_id INTEGER REFERENCES templates(id),
-    language TEXT CHECK (language IN ('hi', 'en'))
+    language TEXT CHECK (language IN ('hi', 'en')),
+    speech_source TEXT CHECK (speech_source IN ('pilot', 'torgo', 'simulated'))
 );
 -- One row per confirmed recognition, for the usage priors.
 CREATE TABLE IF NOT EXISTS uses (
@@ -68,13 +76,15 @@ CREATE TABLE IF NOT EXISTS uses (
     phrase_id INTEGER NOT NULL REFERENCES phrases(id),
     created_at TEXT NOT NULL
 );
--- One row per Gnani request, sent or answered from the cache. Not tied to a user.
+-- One row per Gnani request, sent or answered from the cache. user_id is who it was for, for
+-- the daily cap; NULL for a script, and set to NULL when the account is deleted.
 CREATE TABLE IF NOT EXISTS api_calls (
     id INTEGER PRIMARY KEY,
     kind TEXT NOT NULL CHECK (kind IN ('stt', 'tts', 'clone')),
     cached INTEGER NOT NULL,
     audio_seconds REAL,
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    user_id INTEGER
 );
 """
 
@@ -90,6 +100,8 @@ ADDED_COLUMNS = [
     ("samples", "slot_word_id", "INTEGER REFERENCES slot_words(id)"),
     ("samples", "template_id", "INTEGER REFERENCES templates(id)"),
     ("samples", "language", "TEXT CHECK (language IN ('hi', 'en'))"),
+    ("samples", "speech_source", "TEXT CHECK (speech_source IN ('pilot', 'torgo', 'simulated'))"),
+    ("api_calls", "user_id", "INTEGER"),
 ]
 
 
@@ -132,7 +144,9 @@ def transaction(*statements):
 
 
 def delete_user(user_id):
-    """Remove a user and everything that references them, in one transaction."""
-    transaction(*[(f"DELETE FROM {table} WHERE {column} = ?", (user_id,)) for table, column in [
-        ("uses", "user_id"), ("samples", "user_id"), ("phrases", "user_id"), ("slot_words", "user_id"),
-        ("templates", "user_id"), ("users", "id")]])
+    """Remove a user and everything that references them, in one transaction. Their api_calls
+    stay as counts, no longer tied to anyone."""
+    transaction(("UPDATE api_calls SET user_id = NULL WHERE user_id = ?", (user_id,)),
+                *[(f"DELETE FROM {table} WHERE {column} = ?", (user_id,)) for table, column in [
+                    ("uses", "user_id"), ("samples", "user_id"), ("phrases", "user_id"), ("slot_words", "user_id"),
+                    ("templates", "user_id"), ("users", "id")]])

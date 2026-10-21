@@ -1,0 +1,17 @@
+# The image gets the code and the default phrases, never secrets or local data.
+.git
+.env
+.venv
+**/__pycache__
+.pytest_cache
+.ruff_cache
+data/*
+!data/default_phrases_*.txt
+logs
+results
+tests
+web/node_modules
+web/dist
+web/.env
+web/certs
+web/reference

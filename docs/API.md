@@ -1,13 +1,12 @@
 # Sunn API
 
-The short version of the contract, for building the app. The live, complete one is
-`http://localhost:8000/docs` (generated from `src/schemas.py`) while the API runs:
+The short version of the contract, for building the app. The live, complete one is `/api/docs`
+(generated from `src/schemas.py`) wherever the app runs, like `http://127.0.0.1:7860/api/docs`
+after `uv run src/server.py`.
 
-```powershell
-uv run uvicorn api:app --app-dir src --port 8000
-```
-
-- The web app calls relative `/api/...`; Vite proxies that to the API, so `/api/me/phrases` here is `/me/phrases`.
+- The web app calls relative `/api/...`, so `/me/phrases` here is `/api/me/phrases` in the
+  browser. In production `src/server.py` serves the API under `/api`; in development Vite
+  proxies `/api` to the API on port 8000.
 - The session is an httpOnly cookie set by sign-up and login. The browser sends it by itself.
   Every route under `/me` and `/speak` needs it.
 - Bodies are JSON. Recordings are form uploads with the file in a field named `audio`.
@@ -40,7 +39,7 @@ add one field: `seconds` (`audio_too_short`, `audio_too_long`), `retry_after` in
 | `gnani_unreachable` | 502 | the speech service didn't answer: try again shortly |
 | `gnani_rejected` | 502 | the speech service refused the request |
 | `credit_limit_reached` | 429 | the speech service credits for this server are used up |
-| `daily_cap_reached` | 429 | planned for v2, not sent yet: this user's calls for today are used up |
+| `daily_cap_reached` | 429 | this account's speech service calls for today (`DAILY_CALL_CAP_PER_USER`, default 60) are used up; cached ones still work, and it resets at midnight UTC |
 | `invite_required` | 403 | sign-up needs the invite code, and `invite_code` was missing or wrong (see `GET /config`) |
 | `bad_login` | 401 | wrong email or password |
 | `too_many_attempts` | 429 | 5 failed logins for this email, or 5 wrong invite codes from this IP, in 15 minutes: wait `retry_after` seconds |
@@ -72,7 +71,8 @@ Errors: none.
 session cookie and gives the account the default slot words and templates.
 
 After 5 wrong invite codes from one IP in 15 minutes, sign-up from that IP answers
-`too_many_attempts` until `retry_after` passes, even with the right code.
+`too_many_attempts` until `retry_after` passes, even with the right code. Behind a proxy (like
+Hugging Face's) the IP is the client's own when the server sets `TRUST_PROXY` (docs/DEPLOY.md).
 
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
@@ -119,13 +119,14 @@ Errors: `not_logged_in`.
 
 ### `POST /me/phrases/default` · real
 
-No inputs. Adds the 51 everyday phrases in the user's language and returns the whole list, as
-`GET /me/phrases` does. Text the user already has is skipped, so after a language change this
-adds the new language's phrases next to the old ones.
+No inputs. Adds the 51 everyday phrases in the user's language, and the default slot words and
+templates for it, and returns the whole phrase list, as `GET /me/phrases` does. Text the user
+already has is skipped, so after a language change this adds the new language's phrases and
+building blocks next to the old ones.
 
 ```json
-[{"id": 1, "text": "मदद चाहिए", "contexts": ["any"], "urgent": true, "enrolled": 0, "sample_count": 0, "last_used_at": null},
- {"id": 12, "text": "पानी चाहिए", "contexts": ["home", "hospital"], "urgent": false, "enrolled": 0, "sample_count": 0, "last_used_at": null}]
+[{"id": 1, "text": "मदद चाहिए", "contexts": ["any"], "urgent": true, "enrolled": 0, "sample_count": 0, "last_used_at": null, "sources": []},
+ {"id": 12, "text": "पानी चाहिए", "contexts": ["home", "hospital"], "urgent": false, "enrolled": 0, "sample_count": 0, "last_used_at": null, "sources": []}]
 ```
 
 Errors: `not_logged_in`.
@@ -133,15 +134,17 @@ Errors: `not_logged_in`.
 ### `POST /me/enroll` · real
 
 Form: `phrase_id`, `audio` (0.3–15 s). One enrollment recording of a phrase; 3 per phrase is
-the goal. `hypothesis` is what Prisma heard.
+the goal. `hypothesis` is what Prisma heard. `source` is only for demo recordings loaded by
+`scripts/load_demo.py` (`pilot`, `torgo` or `simulated`); the app leaves it out, and it comes
+back `null`.
 
 ```json
-{"sample_id": 301, "hypothesis": "paani chahiye", "phrase_id": 12, "slot_word_id": null, "template_id": null}
+{"sample_id": 301, "hypothesis": "paani chahiye", "phrase_id": 12, "slot_word_id": null, "template_id": null, "source": null}
 ```
 
 Errors: `not_logged_in`, `not_found`, `invalid_input`, `file_too_large`, `bad_audio`,
 `audio_too_short`, `audio_too_long`, `no_speech`, `gnani_unreachable`, `gnani_rejected`,
-`credit_limit_reached`.
+`credit_limit_reached`, `daily_cap_reached`.
 
 ## Speak
 
@@ -166,7 +169,8 @@ the best similarity is under 60.
 ```
 
 Errors: `not_logged_in`, `invalid_input`, `file_too_large`, `bad_audio`, `audio_too_short`,
-`audio_too_long`, `no_speech`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`.
+`audio_too_long`, `no_speech`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`,
+`daily_cap_reached`.
 
 ### `POST /me/confirm` · real
 
@@ -185,7 +189,8 @@ Errors: `not_logged_in`, `not_found`, `invalid_input`.
 `{"text": "दवाई चाहिए"}`. Answers `audio/wav`: the user's own voice when `use_own_voice` is on,
 else the stock voice for their language.
 
-Errors: `not_logged_in`, `invalid_input`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`.
+Errors: `not_logged_in`, `invalid_input`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`,
+`daily_cap_reached`.
 
 ## Phrases
 
@@ -197,10 +202,16 @@ matcher uses. After a language change, a phrase recorded only in the old languag
 `sample_count` 0: it needs recording again to be recognized. `contexts` holds `home`,
 `hospital`, `market` or `any`.
 
+`sources` says where the phrase's demo recordings came from: `pilot` (a real person who
+consented), `torgo` (the TORGO dysarthric speech corpus) or `simulated` (someone imitating
+unclear speech). It is `[]` when every recording was made in the app, which is the case for
+every normal account. Label a phrase with `simulated` in it, so nobody mistakes it for real
+dysarthric speech.
+
 ```json
-[{"id": 2, "text": "दर्द हो रहा है", "contexts": ["hospital"], "urgent": true, "enrolled": 3, "sample_count": 5, "last_used_at": "2026-10-18T07:40:00Z"},
- {"id": 12, "text": "पानी चाहिए", "contexts": ["home", "hospital"], "urgent": false, "enrolled": 3, "sample_count": 9, "last_used_at": "2026-10-20T18:05:00Z"},
- {"id": 40, "text": "बेटे को बुलाओ", "contexts": ["any"], "urgent": false, "enrolled": 0, "sample_count": 1, "last_used_at": null}]
+[{"id": 2, "text": "दर्द हो रहा है", "contexts": ["hospital"], "urgent": true, "enrolled": 3, "sample_count": 5, "last_used_at": "2026-10-18T07:40:00Z", "sources": []},
+ {"id": 12, "text": "पानी चाहिए", "contexts": ["home", "hospital"], "urgent": false, "enrolled": 3, "sample_count": 9, "last_used_at": "2026-10-20T18:05:00Z", "sources": ["simulated"]},
+ {"id": 40, "text": "बेटे को बुलाओ", "contexts": ["any"], "urgent": false, "enrolled": 0, "sample_count": 1, "last_used_at": null, "sources": []}]
 ```
 
 Errors: `not_logged_in`.
@@ -278,14 +289,15 @@ Errors: `not_logged_in`, `not_found`.
 
 ### `POST /me/slot-words/{slot_word_id}/enroll` · real
 
-Form: `audio` (0.3–15 s), the word said on its own.
+Form: `audio` (0.3–15 s), the word said on its own. Optional `source`, as for `POST /me/enroll`.
 
 ```json
-{"sample_id": 302, "hypothesis": "dawai", "phrase_id": null, "slot_word_id": 2, "template_id": null}
+{"sample_id": 302, "hypothesis": "dawai", "phrase_id": null, "slot_word_id": 2, "template_id": null, "source": null}
 ```
 
-Errors: `not_logged_in`, `not_found`, `file_too_large`, `bad_audio`, `audio_too_short`,
-`audio_too_long`, `no_speech`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`.
+Errors: `not_logged_in`, `not_found`, `invalid_input`, `file_too_large`, `bad_audio`, `audio_too_short`,
+`audio_too_long`, `no_speech`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`,
+`daily_cap_reached`.
 
 ### `GET /me/templates` · real
 
@@ -319,14 +331,16 @@ Errors: `not_logged_in`, `not_found`.
 
 ### `POST /me/templates/{template_id}/enroll` · real
 
-Form: `audio` (0.3–15 s), the fixed part alone, like "चाहिए" for `{item} चाहिए`.
+Form: `audio` (0.3–15 s), the fixed part alone, like "चाहिए" for `{item} चाहिए`. Optional
+`source`, as for `POST /me/enroll`.
 
 ```json
-{"sample_id": 303, "hypothesis": "chahiye", "phrase_id": null, "slot_word_id": null, "template_id": 1}
+{"sample_id": 303, "hypothesis": "chahiye", "phrase_id": null, "slot_word_id": null, "template_id": 1, "source": null}
 ```
 
-Errors: `not_logged_in`, `not_found`, `file_too_large`, `bad_audio`, `audio_too_short`,
-`audio_too_long`, `no_speech`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`.
+Errors: `not_logged_in`, `not_found`, `invalid_input`, `file_too_large`, `bad_audio`, `audio_too_short`,
+`audio_too_long`, `no_speech`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`,
+`daily_cap_reached`.
 
 ## Progress
 
@@ -358,7 +372,8 @@ Errors: `not_logged_in`.
 
 ### `GET /me/usage` · real
 
-Speech service calls by everyone, against the server's limit. Only for the owner
+Speech service calls by everyone, against the server's limit (`GNANI_CALL_LIMIT`). Each
+account also has a daily cap of its own; this doesn't show it. Only for the owner
 (`OWNER_EMAIL` in `.env`), so most screens won't need it.
 
 ```json
@@ -406,7 +421,8 @@ turns it on.
 ```
 
 Errors: `not_logged_in`, `consent_required`, `invalid_input`, `file_too_large`, `bad_audio`,
-`audio_too_short`, `audio_too_long`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`.
+`audio_too_short`, `audio_too_long`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`,
+`daily_cap_reached`.
 
 ### `DELETE /me/voice` · real
 
