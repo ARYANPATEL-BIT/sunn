@@ -271,3 +271,39 @@ average. The shader tone-maps the sky's luminance under a ceiling (`CEILING` in
 at the ceiling, grain at +3%) for each page: secondary text (mist) is at worst 4.6:1 on the
 landing, 6.0:1 on login/signup, 6.7:1 or more in the app; primary text is 7.5:1 or more
 everywhere. Raising the ceiling or the grain needs that check again.
+
+## Demonstration Sequence
+
+Follow this sequence to demonstrate Sunn end to end:
+
+1. **Sign Up & First-Time Onboarding:**
+   - Open `http://localhost:5173/signup`.
+   - Create an account with name, email, password, and preferred language (Hindi or English).
+   - Review the 4-step onboarding wizard introducing everyday phrases, pronunciation learning, and communication workflow.
+   - Click "Add everyday phrases" to seed starter vocabulary, then proceed.
+
+2. **Teach Phrases (Enrollment):**
+   - On `/app/enroll`, record 3 spoken samples for a phrase using the sun button.
+   - Listen to recorded audio playback before saving.
+   - Once at least one phrase has 3 samples, proceed to `/app/speak`.
+
+3. **Speak & Recognition:**
+   - On `/app/speak`, select a context (Home, Hospital, Market, or Any).
+   - Tap the sun, speak, and tap again to finish.
+   - View the recognized hypothesis and ranked phrase candidates.
+   - Tap a candidate to confirm and speak it aloud via speech synthesis.
+
+4. **Phrase Library Management:**
+   - On `/app/phrases`, search saved phrases and filter by context or urgency.
+   - Add a custom phrase, edit existing phrase contexts, or toggle urgency tags.
+
+5. **Settings, Accessibility & Progress:**
+   - On `/app/settings`, toggle large text, reduced motion, or enhanced focus indicators.
+   - Configure caregiver contact information for quick WhatsApp messaging.
+   - On `/app/progress`, review communication usage trends and top phrases.
+
+## External Services and Offline Boundaries
+
+- **Gnani Prisma STT & Timbre TTS:** Required for live speech-to-text transcription and text-to-speech audio synthesis. All successful responses are cached under `data/cache/` by audio and text hash, allowing repeated demonstration of cached phrases without consuming external API credits.
+- **Offline Fallback:** If `GNANI_API_KEY` is not configured, the application surfaces clear localized errors (`error.gnani`) instead of crashing.
+- **Medical Disclaimer:** Sunn is a communication assistance tool and does not provide medical diagnosis, clinical speech therapy, or health claims.
