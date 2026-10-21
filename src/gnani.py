@@ -49,13 +49,17 @@ def post(kind, url, audio_seconds=None, **request):
     """POST to Gnani (kind is stt, tts or clone) and return the 2xx response. Waits TIMEOUT
     seconds and retries once after a timeout, a lost connection or a 5xx. Every attempt is a
     sent call in api_calls; a TTS call's audio_seconds is the length of the audio it returned."""
+    load_dotenv()
+    api_key = os.environ.get("GNANI_API_KEY")
+    if not api_key or api_key == "your-key-here":
+        raise GnaniError("gnani_unreachable", "GNANI_API_KEY is not configured in .env", status=502)
+
     limit = call_limit()
     if db.row("SELECT COUNT(*) AS n FROM api_calls WHERE cached = 0")["n"] >= limit:
         log.event("gnani_limit_reached", level=logging.WARNING, kind=kind, limit=limit)
         raise GnaniError("credit_limit_reached", f"the Gnani call limit ({limit}) is used up", status=429)
 
-    load_dotenv()
-    headers = {"X-API-Key-ID": os.environ["GNANI_API_KEY"]}
+    headers = {"X-API-Key-ID": api_key}
     for attempt in (1, 2):
         started = time.monotonic()
         try:

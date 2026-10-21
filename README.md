@@ -226,31 +226,27 @@ The design system is `web/DESIGN.md`.
 The background is one WebGL shader (`web/src/SeaLight.jsx`). It drops to a still CSS version
 without WebGL, and to a single frozen frame with reduced motion.
 
-### https, without warnings
+### Local development and HTTPS
 
-Browsers only allow the microphone on https pages, so the dev server uses a certificate from
-[mkcert](https://github.com/FiloSottile/mkcert), whose local CA your machine trusts. Once per
-machine, then whenever your LAN address changes:
+Desktop browsers treat `http://localhost` as a secure context, so microphone input works out of the box without certificates:
 
-```powershell
-winget install FiloSottile.mkcert
-mkcert -install                       # trust mkcert's local CA (once)
-cd web
-mkdir certs
-mkcert -cert-file certs/cert.pem -key-file certs/key.pem localhost 127.0.0.1 ::1 <your-lan-ip>
-```
-
-`web/certs/` is gitignored. `npm run dev` refuses to start without it.
-
-```powershell
+```bash
 cd web
 npm install
-npm run dev        # https://localhost:5173 and https://<your-lan-ip>:5173
+npm run dev        # http://localhost:5173
 ```
 
-Run the API (see Backend) at the same time. The app only calls relative `/api/*`, which Vite
-proxies to `http://localhost:8000`, so the browser talks to one https origin and the login
-cookie just works.
+Run the backend API at the same time (`uv run uvicorn api:app --app-dir src --port 8000`). The web app calls `/api/*`, which Vite proxies to `http://localhost:8000`, so the browser stays on one origin and cookies work seamlessly.
+
+For physical mobile testing on local Wi-Fi without cloud tunnels, create trusted local certificates with [mkcert](https://github.com/FiloSottile/mkcert):
+
+```bash
+mkcert -install                       # trust mkcert local CA (once per machine)
+cd web
+mkdir -p certs
+mkcert -cert-file certs/cert.pem -key-file certs/key.pem localhost 127.0.0.1 ::1 <your-lan-ip>
+npm run dev        # https://localhost:5173 and https://<your-lan-ip>:5173
+```
 
 ### On a phone
 
@@ -275,3 +271,39 @@ average. The shader tone-maps the sky's luminance under a ceiling (`CEILING` in
 at the ceiling, grain at +3%) for each page: secondary text (mist) is at worst 4.6:1 on the
 landing, 6.0:1 on login/signup, 6.7:1 or more in the app; primary text is 7.5:1 or more
 everywhere. Raising the ceiling or the grain needs that check again.
+
+## Demonstration Sequence
+
+Follow this sequence to demonstrate Sunn end to end:
+
+1. **Sign Up & First-Time Onboarding:**
+   - Open `http://localhost:5173/signup`.
+   - Create an account with name, email, password, and preferred language (Hindi or English).
+   - Review the 4-step onboarding wizard introducing everyday phrases, pronunciation learning, and communication workflow.
+   - Click "Add everyday phrases" to seed starter vocabulary, then proceed.
+
+2. **Teach Phrases (Enrollment):**
+   - On `/app/enroll`, record 3 spoken samples for a phrase using the sun button.
+   - Listen to recorded audio playback before saving.
+   - Once at least one phrase has 3 samples, proceed to `/app/speak`.
+
+3. **Speak & Recognition:**
+   - On `/app/speak`, select a context (Home, Hospital, Market, or Any).
+   - Tap the sun, speak, and tap again to finish.
+   - View the recognized hypothesis and ranked phrase candidates.
+   - Tap a candidate to confirm and speak it aloud via speech synthesis.
+
+4. **Phrase Library Management:**
+   - On `/app/phrases`, search saved phrases and filter by context or urgency.
+   - Add a custom phrase, edit existing phrase contexts, or toggle urgency tags.
+
+5. **Settings, Accessibility & Progress:**
+   - On `/app/settings`, toggle large text, reduced motion, or enhanced focus indicators.
+   - Configure caregiver contact information for quick WhatsApp messaging.
+   - On `/app/progress`, review communication usage trends and top phrases.
+
+## External Services and Offline Boundaries
+
+- **Gnani Prisma STT & Timbre TTS:** Required for live speech-to-text transcription and text-to-speech audio synthesis. All successful responses are cached under `data/cache/` by audio and text hash, allowing repeated demonstration of cached phrases without consuming external API credits.
+- **Offline Fallback:** If `GNANI_API_KEY` is not configured, the application surfaces clear localized errors (`error.gnani`) instead of crashing.
+- **Medical Disclaimer:** Sunn is a communication assistance tool and does not provide medical diagnosis, clinical speech therapy, or health claims.
