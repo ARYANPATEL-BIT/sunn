@@ -9,9 +9,13 @@ deletes the account.
 Gnani is called twice (one Prisma call per wav); every later step reuses those cached
 transcripts. --voice ref.wav (5-30 s of speech) also clones that voice and speaks one phrase
 in it: one clone call and one Timbre call, both cached for the next run.
+
+--url is the API's base: http://127.0.0.1:7860/api for src/server.py or the Docker image,
+https://<space>.hf.space/api for the deployed Space, http://127.0.0.1:8000 for uvicorn api:app.
 """
 import argparse
 import json
+import os
 import sys
 import uuid
 
@@ -38,8 +42,10 @@ if __name__ == "__main__":
     parser.add_argument("wav1")
     parser.add_argument("wav2")
     parser.add_argument("--voice", help="5-30 s of speech to clone; omit to skip the cloned voice")
-    parser.add_argument("--url", default="http://127.0.0.1:8000")
+    parser.add_argument("--url", default="http://127.0.0.1:7860/api")
     parser.add_argument("--language", choices=["hi", "en"], default="hi")
+    parser.add_argument("--invite", default=os.environ.get("DEMO_INVITE_CODE"),
+                        help="the server's DEMO_INVITE_CODE, if it has one (default: $env:DEMO_INVITE_CODE)")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")  # Windows consoles default to cp1252, which can't print Devanagari
 
@@ -47,10 +53,10 @@ if __name__ == "__main__":
     email = f"smoke-{uuid.uuid4().hex[:8]}@example.com"
     signup = session.post(f"{args.url}/auth/signup", json={
         "name": "smoke test", "email": email, "password": "smoke-test-password",
-        "language": args.language, "consent": True})
+        "language": args.language, "consent": True, "invite_code": args.invite})
     show(f"sign up {email}", signup)
-    # The server marks the cookie Secure (browsers reach it over https through Vite). This
-    # script talks plain http to the API, so it keeps the cookie without that flag.
+    # The server marks the cookie Secure (browsers reach it over https). This script may talk
+    # plain http to a local server, so it keeps the cookie without that flag.
     session.cookies.set("sunn_session", signup.cookies["sunn_session"])
     show("who am I", session.get(f"{args.url}/auth/me"))
 
