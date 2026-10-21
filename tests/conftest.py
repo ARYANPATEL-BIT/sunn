@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import uuid
+from collections import defaultdict, deque
 from itertools import count
 from pathlib import Path
 
@@ -18,6 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent
 os.environ["JWT_SECRET"] = "a-test-secret-long-enough-for-hs256-keys"
 os.environ["GNANI_API_KEY"] = "test-key"
 
+import auth  # noqa: E402
 import db  # noqa: E402
 import gnani  # noqa: E402
 import prisma  # noqa: E402
@@ -121,6 +123,8 @@ def env(tmp_path, monkeypatch):
         shutil.copy(path, tmp_path / "data")
     monkeypatch.setenv("GNANI_CALL_LIMIT", "4000")
     monkeypatch.delenv("OWNER_EMAIL", raising=False)
+    monkeypatch.delenv("DEMO_INVITE_CODE", raising=False)  # open sign-up, whatever .env says
+    monkeypatch.setattr(auth, "_failures", defaultdict(deque))  # no lockouts left by another test
     db.init()
     fake = FakeGnani()
     monkeypatch.setattr(gnani.requests, "post", fake)
