@@ -42,48 +42,68 @@ front and dodge the 5-tries limit. That's why the invite code should be long and
 then guessing it is hopeless even without the limit. Logins are limited per email, not per
 address, so the proxy doesn't affect them.
 
-## Create the Space
+## First deploy
 
-1. Sign in at https://huggingface.co and open https://huggingface.co/new-space.
-2. Pick a name (say `sunn`), choose **Docker** as the SDK with the **Blank** template, and the
-   free **CPU basic** hardware. Make it **Public**, so judges can open it without an account.
-   Create it. Hugging Face writes the Space's own `README.md` with `sdk: docker`; keep that
-   file, since it is what makes it a Docker Space on port 7860.
+1. Make a free **write** token at https://huggingface.co/settings/tokens and sign in with it
+   once. The token is saved on this machine, so later deploys don't ask again:
+
+   ```powershell
+   uv run hf auth login
+   ```
+2. Open https://huggingface.co/new-space. Pick a name (say `sunn`), choose **Docker** as the
+   SDK with the **Blank** template, and the free **CPU basic** hardware. Make it **Public**, so
+   judges can open it without an account. Create it.
 3. In the Space, open **Settings → Variables and secrets** and add:
    - **New secret**: `GNANI_API_KEY`, `JWT_SECRET`, `DEMO_INVITE_CODE`
-   - **New variable**: `TRUST_PROXY` = `1`, and optionally `GNANI_CALL_LIMIT`,
-     `DAILY_CALL_CAP_PER_USER`, `OWNER_EMAIL`
+   - **New variable**: `TRUST_PROXY` = `1`, `GNANI_CALL_LIMIT`, `DAILY_CALL_CAP_PER_USER`, and
+     optionally `OWNER_EMAIL`
 
    Secrets and variables reach the container as environment variables when it runs. Nothing
    secret is needed while the image builds.
-4. Make a write token at https://huggingface.co/settings/tokens and sign in with it once:
+4. Deploy (replace `<you>` with your Hugging Face username):
 
    ```powershell
-   uvx --from huggingface_hub hf auth login
+   uv run scripts/deploy_space.py --space <you>/sunn
    ```
 
-## Push
+## Every later deploy
 
-The upload goes through the `hf` CLI instead of `git push`. Hugging Face rejects git pushes
-that contain binary files anywhere in their history (the chart PNGs in `results/` are
-binary), and the CLI handles that for you. Upload a clean export of the last commit, so
-only committed files can reach the Space: never `.env`, `data/` or anything else that's
-ignored.
+Commit what you want deployed, then run the script again:
 
 ```powershell
-# after committing what you want to deploy; replace <you> with your Hugging Face username
-$out = Join-Path $env:TEMP "sunn-space"
-if (Test-Path $out) { Remove-Item -Recurse -Force $out }
-git archive --format=zip -o "$out.zip" HEAD
-Expand-Archive "$out.zip" $out
-uvx --from huggingface_hub hf upload <you>/sunn $out . --repo-type space `
-    --exclude "README.md" --exclude "results/*" --commit-message "Deploy $(git rev-parse --short HEAD)"
+uv run scripts/deploy_space.py --space <you>/sunn
 ```
 
-`README.md` is left out so the Space keeps its own (step 2), and `results/` because the app
-doesn't need it. The Space rebuilds on every upload; follow it in the **Logs** tab. It is
-ready when the log shows `Uvicorn running on http://0.0.0.0:7860`. Files deleted from the repo
-stay on the Space until you delete them in its **Files** tab.
+A new file only goes up once it's committed; the script doesn't warn about untracked files.
+
+### What the script does
+
+It uploads the last commit's tracked files (`git ls-tree HEAD`), as they are in git, through
+the Hugging Face API, with the commit message `deploy <short sha>`. Nothing else goes up: no
+history, nothing untracked or ignored. It goes through the API instead of `git push` because
+Hugging Face rejects git pushes that have binary files anywhere in their history.
+
+It refuses to deploy, and lists the offending paths, when:
+
+- the working tree has uncommitted changes to tracked files, so the Space always runs
+  exactly a commit;
+- a tracked file matches `.env*`, `data/`, `logs/`, `web/certs/`, `web/reference/` or
+  `*.db`. The two exceptions are tracked on purpose, as in `.gitignore`: `.env.example`
+  (placeholders only) and `data/default_phrases_*.txt` (the image needs them);
+- a file contains the `GNANI_API_KEY` or `JWT_SECRET` value from your local `.env` (or, if
+  it's not there, from the environment).
+
+To see what would be uploaded without uploading anything:
+
+```powershell
+uv run scripts/deploy_space.py --check-only
+```
+
+The front matter at the top of `README.md` (`sdk: docker`, `app_port: 7860`) is what Hugging
+Face reads as the Space's settings, so the Space's `README.md` is replaced by the repo's on
+every deploy. The Space rebuilds on every upload; follow it in the **Logs** tab. It is ready
+when the log shows `Uvicorn running on http://0.0.0.0:7860`. Files deleted from the repo stay
+on the Space until you delete them in its **Files** tab.
 
 ## Open it
 
