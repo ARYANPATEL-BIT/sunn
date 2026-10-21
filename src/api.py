@@ -444,8 +444,8 @@ def update_phrase(phrase_id: int, changes: schemas.PhraseUpdate, user=Depends(cu
         elif field == "urgent":
             updates[field] = int(value)
     if updates:
-        db.execute(f"UPDATE phrases SET {', '.join(f'{field} = ?' for field in updates)} WHERE id = ?",
-                   (*updates.values(), phrase_id))
+        db.execute(f"UPDATE phrases SET {', '.join(f'{field} = ?' for field in updates)} WHERE id = ? AND user_id = ?",
+                   (*updates.values(), phrase_id, user["id"]))
     return get_phrase(user["id"], phrase_id)
 
 
@@ -454,10 +454,10 @@ def delete_phrase(phrase_id: int, user=Depends(current_user)):
     """Delete a phrase, its samples with their recordings, and its uses."""
     get_phrase(user["id"], phrase_id)
     paths = audio_paths(user, "phrase_id", phrase_id)
-    db.transaction(("DELETE FROM samples WHERE phrase_id = ?", (phrase_id,)),
-                   ("UPDATE samples SET top1_phrase_id = NULL WHERE top1_phrase_id = ?", (phrase_id,)),
-                   ("DELETE FROM uses WHERE phrase_id = ?", (phrase_id,)),
-                   ("DELETE FROM phrases WHERE id = ?", (phrase_id,)))
+    db.transaction(("DELETE FROM samples WHERE phrase_id = ? AND user_id = ?", (phrase_id, user["id"])),
+                   ("UPDATE samples SET top1_phrase_id = NULL WHERE top1_phrase_id = ? AND user_id = ?", (phrase_id, user["id"])),
+                   ("DELETE FROM uses WHERE phrase_id = ? AND user_id = ?", (phrase_id, user["id"])),
+                   ("DELETE FROM phrases WHERE id = ? AND user_id = ?", (phrase_id, user["id"])))
     remove_audio(paths, user["language"])
     return {"ok": True}
 
@@ -465,7 +465,7 @@ def delete_phrase(phrase_id: int, user=Depends(current_user)):
 @app.delete("/me/samples/{sample_id}", response_model=schemas.Ok)
 def delete_sample(sample_id: int, user=Depends(current_user)):
     sample = owned("samples", sample_id, user["id"])
-    db.execute("DELETE FROM samples WHERE id = ?", (sample_id,))
+    db.execute("DELETE FROM samples WHERE id = ? AND user_id = ?", (sample_id, user["id"]))
     remove_audio([sample["audio_path"]], user["language"])
     return {"ok": True}
 
@@ -493,8 +493,8 @@ def create_slot_word(body: schemas.NewSlotWord, user=Depends(current_user)):
 def delete_slot_word(slot_word_id: int, user=Depends(current_user)):
     owned("slot_words", slot_word_id, user["id"])
     paths = audio_paths(user, "slot_word_id", slot_word_id)
-    db.transaction(("DELETE FROM samples WHERE slot_word_id = ?", (slot_word_id,)),
-                   ("DELETE FROM slot_words WHERE id = ?", (slot_word_id,)))
+    db.transaction(("DELETE FROM samples WHERE slot_word_id = ? AND user_id = ?", (slot_word_id, user["id"])),
+                   ("DELETE FROM slot_words WHERE id = ? AND user_id = ?", (slot_word_id, user["id"])))
     remove_audio(paths, user["language"])
     return {"ok": True}
 
@@ -524,8 +524,8 @@ def create_template(body: schemas.NewTemplate, user=Depends(current_user)):
 def delete_template(template_id: int, user=Depends(current_user)):
     owned("templates", template_id, user["id"])
     paths = audio_paths(user, "template_id", template_id)
-    db.transaction(("DELETE FROM samples WHERE template_id = ?", (template_id,)),
-                   ("DELETE FROM templates WHERE id = ?", (template_id,)))
+    db.transaction(("DELETE FROM samples WHERE template_id = ? AND user_id = ?", (template_id, user["id"])),
+                   ("DELETE FROM templates WHERE id = ? AND user_id = ?", (template_id, user["id"])))
     remove_audio(paths, user["language"])
     return {"ok": True}
 
