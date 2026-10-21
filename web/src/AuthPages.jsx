@@ -4,6 +4,7 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import * as api from './api.js'
 import { safeNext, useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
+import { isOnboarded } from './prefs.js'
 import { Alert, errorText, LangToggle, Pill, reducedMotion, useGo, Wordmark } from './ui.jsx'
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
@@ -124,7 +125,10 @@ export function LoginPage() {
   const leaving = useRef(false)
 
   // Already signed in (e.g. the back button): straight on.
-  if (status === 'ready' && user && !leaving.current) return <Navigate replace to={next || '/app/speak'} />
+  if (status === 'ready' && user && !leaving.current) {
+    const target = next || (isOnboarded(user.id) ? '/app/speak' : '/app/onboarding')
+    return <Navigate replace to={target} />
+  }
 
   async function submit(e) {
     e.preventDefault()
@@ -138,7 +142,8 @@ export function LoginPage() {
       const me = await api.login(email.trim(), password)
       leaving.current = true
       signedIn(me)
-      go(next || '/app/speak', { replace: true })
+      const target = next || (isOnboarded(me.id) ? '/app/speak' : '/app/onboarding')
+      go(target, { replace: true })
     } catch (error) {
       // A wrong email and a wrong password get the same answer, so it isn't put under either.
       show({ form: error })
