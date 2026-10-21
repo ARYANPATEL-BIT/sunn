@@ -150,3 +150,35 @@ def test_account_deletion_cleans_up_all_user_data(env):
     # User B remains intact
     assert db.row("SELECT id FROM users WHERE id = ?", (user_b_id,)) is not None
     assert client_b.get("/auth/me").status_code == 200
+
+
+def test_voice_deletion_and_consent_revocation(env):
+    """Deleting a voice clears the embedding, consent timestamp, and voice cache folder."""
+    client = env.signup(language="en")
+    user_id = client.get("/auth/me").json()["id"]
+
+    # Clone voice and enable it
+    client.post("/me/voice", data={"consent": "true"}, files={"audio": ("voice.wav", wav(6.0), "audio/wav")})
+    client.patch("/me", json={"use_own_voice": True})
+
+    voice_dir = f"data/users/{user_id}/voice"
+    assert os.path.exists(voice_dir)
+
+    row = db.row("SELECT voice_embedding, voice_consent_given_at, use_own_voice FROM users WHERE id = ?", (user_id,))
+    assert row["voice_embedding"] is not None
+    assert row["voice_consent_given_at"] is not None
+    assert row["use_own_voice"] == 1
+
+    # Delete cloned voice
+    del_resp = client.delete("/me/voice")
+    assert del_resp.status_code == 200
+    user_data = del_resp.json()
+    assert user_data["has_own_voice"] is False
+    assert user_data["use_own_voice"] is False
+
+    # Directory and DB fields are cleared
+    assert not os.path.exists(voice_dir)
+    row_after = db.row("SELECT voice_embedding, voice_consent_given_at, use_own_voice FROM users WHERE id = ?", (user_id,))
+    assert row_after["voice_embedding"] is None
+    assert row_after["voice_consent_given_at"] is None
+    assert row_after["use_own_voice"] == 0
