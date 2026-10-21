@@ -465,7 +465,7 @@ def delete_phrase(phrase_id: int, user=Depends(current_user)):
 @app.delete("/me/samples/{sample_id}", response_model=schemas.Ok)
 def delete_sample(sample_id: int, user=Depends(current_user)):
     sample = owned("samples", sample_id, user["id"])
-    db.execute("DELETE FROM samples WHERE id = ?", (sample_id,))
+    db.execute("DELETE FROM samples WHERE id = ? AND user_id = ?", (sample_id, user["id"]))
     remove_audio([sample["audio_path"]], user["language"])
     return {"ok": True}
 
@@ -493,8 +493,8 @@ def create_slot_word(body: schemas.NewSlotWord, user=Depends(current_user)):
 def delete_slot_word(slot_word_id: int, user=Depends(current_user)):
     owned("slot_words", slot_word_id, user["id"])
     paths = audio_paths(user, "slot_word_id", slot_word_id)
-    db.transaction(("DELETE FROM samples WHERE slot_word_id = ?", (slot_word_id,)),
-                   ("DELETE FROM slot_words WHERE id = ?", (slot_word_id,)))
+    db.transaction(("DELETE FROM samples WHERE slot_word_id = ? AND user_id = ?", (slot_word_id, user["id"])),
+                   ("DELETE FROM slot_words WHERE id = ? AND user_id = ?", (slot_word_id, user["id"])))
     remove_audio(paths, user["language"])
     return {"ok": True}
 
@@ -524,8 +524,8 @@ def create_template(body: schemas.NewTemplate, user=Depends(current_user)):
 def delete_template(template_id: int, user=Depends(current_user)):
     owned("templates", template_id, user["id"])
     paths = audio_paths(user, "template_id", template_id)
-    db.transaction(("DELETE FROM samples WHERE template_id = ?", (template_id,)),
-                   ("DELETE FROM templates WHERE id = ?", (template_id,)))
+    db.transaction(("DELETE FROM samples WHERE template_id = ? AND user_id = ?", (template_id, user["id"])),
+                   ("DELETE FROM templates WHERE id = ? AND user_id = ?", (template_id, user["id"])))
     remove_audio(paths, user["language"])
     return {"ok": True}
 
