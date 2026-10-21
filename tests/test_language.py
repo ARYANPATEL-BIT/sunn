@@ -49,6 +49,31 @@ def test_switching_language_keeps_everything_and_new_calls_follow_it(env):
     assert env.fake.sent("tts")[-1]["json"]["language"] == "en-IN"
 
 
+def test_default_phrases_add_the_new_languages_building_blocks_too(env):
+    import api
+
+    client = env.signup("hi")
+    hindi_words, hindi_templates = client.get("/me/slot-words").json(), client.get("/me/templates").json()
+    client.patch("/me", json={"language": "en"}).raise_for_status()
+    tea = client.post("/me/slot-words", json={"slot": "item", "text": "tea"}).json()
+    call = client.post("/me/templates", json={"text": "Call {person}"}).json()
+
+    client.post("/me/phrases/default").raise_for_status()
+    words, templates = client.get("/me/slot-words").json(), client.get("/me/templates").json()
+    assert words[:len(hindi_words)] == hindi_words and templates[:len(hindi_templates)] == hindi_templates
+    english = [(slot, text) for slot, texts in api.DEFAULT_SLOT_WORDS["en"].items() for text in texts]
+    assert sorted((w["slot"], w["text"]) for w in words[len(hindi_words):]) == sorted(english)
+    assert [t["text"] for t in templates[len(hindi_templates):]] == ["Call {person}", "I need {item}"]
+    assert block_ids(words, "tea") == [tea["id"]] and block_ids(templates, "Call {person}") == [call["id"]]
+
+    client.post("/me/phrases/default").raise_for_status()  # again: nothing new
+    assert client.get("/me/slot-words").json() == words and client.get("/me/templates").json() == templates
+
+
+def block_ids(blocks, text):
+    return [b["id"] for b in blocks if b["text"] == text]
+
+
 def test_only_hi_and_en_are_languages(env):
     client = env.signup("hi")
     for language in ("hinglish", "hi-IN", "EN", ""):
