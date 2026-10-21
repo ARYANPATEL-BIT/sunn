@@ -226,31 +226,27 @@ The design system is `web/DESIGN.md`.
 The background is one WebGL shader (`web/src/SeaLight.jsx`). It drops to a still CSS version
 without WebGL, and to a single frozen frame with reduced motion.
 
-### https, without warnings
+### Local development and HTTPS
 
-Browsers only allow the microphone on https pages, so the dev server uses a certificate from
-[mkcert](https://github.com/FiloSottile/mkcert), whose local CA your machine trusts. Once per
-machine, then whenever your LAN address changes:
+Desktop browsers treat `http://localhost` as a secure context, so microphone input works out of the box without certificates:
 
-```powershell
-winget install FiloSottile.mkcert
-mkcert -install                       # trust mkcert's local CA (once)
-cd web
-mkdir certs
-mkcert -cert-file certs/cert.pem -key-file certs/key.pem localhost 127.0.0.1 ::1 <your-lan-ip>
-```
-
-`web/certs/` is gitignored. `npm run dev` refuses to start without it.
-
-```powershell
+```bash
 cd web
 npm install
-npm run dev        # https://localhost:5173 and https://<your-lan-ip>:5173
+npm run dev        # http://localhost:5173
 ```
 
-Run the API (see Backend) at the same time. The app only calls relative `/api/*`, which Vite
-proxies to `http://localhost:8000`, so the browser talks to one https origin and the login
-cookie just works.
+Run the backend API at the same time (`uv run uvicorn api:app --app-dir src --port 8000`). The web app calls `/api/*`, which Vite proxies to `http://localhost:8000`, so the browser stays on one origin and cookies work seamlessly.
+
+For physical mobile testing on local Wi-Fi without cloud tunnels, create trusted local certificates with [mkcert](https://github.com/FiloSottile/mkcert):
+
+```bash
+mkcert -install                       # trust mkcert local CA (once per machine)
+cd web
+mkdir -p certs
+mkcert -cert-file certs/cert.pem -key-file certs/key.pem localhost 127.0.0.1 ::1 <your-lan-ip>
+npm run dev        # https://localhost:5173 and https://<your-lan-ip>:5173
+```
 
 ### On a phone
 
