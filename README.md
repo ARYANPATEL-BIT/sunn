@@ -265,6 +265,13 @@ Open `http://localhost:5173` in a desktop browser (Chrome, Edge, or Firefox). De
 - **Speech service exhaustion / offline**: If Gnani Timbre reaches limits or network drops, playback automatically falls back to browser offline speech synthesis (`window.speechSynthesis`), clearly labeled as local browser fallback.
 - **Demo data transparency**: Every pre-enrolled phrase displays its origin badge so judges always know whether data is pilot-recorded or simulated.
 
+### Demo and Submission Resources
+- **Live Service Dependency Matrix**: `docs/DEMO_MATRIX.md` documents cloud services, cache behavior, and fallback mechanisms.
+- **Step-by-Step Demonstration Runbook**: `docs/DEMO_RUNBOOK.md` provides the exact presentation script and timing.
+- **Demo Video Recording Plan**: `docs/DEMO_VIDEO_PLAN.md` provides the 3-minute video storyboard and narration text.
+- **Challenge Submission Checklist**: `docs/SUBMISSION_CHECKLIST.md` tracks deliverables and manual team actions.
+- **Challenge Write-Up**: `docs/WRITEUP.md` provides the problem statement, solution architecture, and differentiators.
+
 ## Deploy
 
 One Docker image (`Dockerfile`) serves the API under `/api` and the web app everywhere else
