@@ -135,6 +135,39 @@ $env:DEMO_INVITE_CODE = "<the code>"
 uv run scripts/smoke_test.py first.wav second.wav --url https://<you>-sunn.hf.space/api
 ```
 
+## Health Checks and Operational Monitoring
+
+### 1. Liveness Health Probe
+
+Verify server process readiness and database connectivity:
+
+```powershell
+curl -s https://<you>-sunn.hf.space/api/health
+```
+
+Expected response:
+```json
+{"status": "ok"}
+```
+
+The health check executes a database query (`SELECT 1`) to ensure SQLite is readable and writable without leaking environment variables, secrets, or file paths.
+
+### 2. Operational Logging and Log Rotation
+
+All operational events are logged to `logs/app.log`:
+- **Format**: JSON Lines (`{"ts": "...", "level": "INFO", "event": "...", ...}`).
+- **Log Rotation**: Automatically rotates at 5 MB with up to 3 backup archives (`app.log.1`, `app.log.2`, `app.log.3`).
+- **Privacy Policy**: Passwords, tokens, emails, voice recordings, and speech transcripts are redacted before writing.
+
+### 3. API Usage and Budget Monitoring
+
+When `OWNER_EMAIL` is configured:
+1. Sign in with the owner email account.
+2. Query `GET /api/me/usage` to inspect live Gnani call counters:
+   - Breakdown by service: STT, TTS, and voice clone.
+   - Sent vs cached calls.
+   - Remaining calls before `GNANI_CALL_LIMIT` threshold is reached.
+
 ## What to expect from a free Space
 
 - **It sleeps.** A free CPU Space pauses after 48 hours without visitors. The next visitor
