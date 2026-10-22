@@ -410,4 +410,7 @@ export default {
   'demo.sourceDesc_simulated': 'Simulated unclear speech for pipeline verification, not real dysarthria',
   'speak.composedBadge': 'Composed',
   'speak.usingBrowserTts': 'Playing with browser speech synthesis fallback because the speech service is unavailable.',
+  'speak.micTroubleshootTitle': 'Microphone permission blocked',
+  'speak.micTroubleshootBody':
+    'To allow access: Click the lock or settings icon beside the URL in your browser address bar, set Microphone to "Allow", then tap Retry below.',
 }

@@ -349,6 +349,13 @@ export default function Speak() {
 
       <Alert error={error || recorder.error} />
 
+      {recorder.error?.kind === 'micDenied' && (
+        <div className="mic-troubleshoot-card" role="region" aria-label={t('speak.micTroubleshootTitle')}>
+          <p className="troubleshoot-title">{t('speak.micTroubleshootTitle')}</p>
+          <p className="troubleshoot-body muted">{t('speak.micTroubleshootBody')}</p>
+        </div>
+      )}
+
       {(error || recorder.error) && (
         <div className="error-actions">
           <button type="button" className="pill-outline" onClick={retry}>
