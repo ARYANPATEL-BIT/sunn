@@ -4,6 +4,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { usePresenterMode } from './prefs.js'
+import PresenterBar from './PresenterBar.jsx'
 import { LangToggle, reducedMotion, useGo, Wordmark } from './ui.jsx'
 
 const TABS = [
@@ -74,6 +75,8 @@ export default function AppShell() {
           </button>
         </div>
       </header>
+
+      {presenterMode && <PresenterBar onClose={togglePresenter} />}
 
       <main className="app-main">
         <Outlet />
