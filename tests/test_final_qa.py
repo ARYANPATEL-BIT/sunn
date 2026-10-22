@@ -132,3 +132,53 @@ def test_speech_synthesis_and_recognition_error_contracts(env):
     assert "speakBrowserFallback" in api_code
     assert "window.speechSynthesis" in api_code
     assert "options.fallback" in api_code
+
+
+def test_zero_em_dashes_in_codebase():
+    """Ensure no em dash characters (unicode 0x2014) exist in code, docs, or config files."""
+    extensions = {".py", ".js", ".jsx", ".json", ".md", ".html", ".css", ".toml", ".yml", ".yaml"}
+    skip_dirs = {".git", ".venv", "node_modules", "dist", ".pytest_cache", "__pycache__"}
+    em_dash = chr(0x2014)
+    violations = []
+
+    for path in ROOT.rglob("*"):
+        if not path.is_file() or path.suffix not in extensions:
+            continue
+        if path.resolve() == Path(__file__).resolve():
+            continue
+        if any(skip_part in path.parts for skip_part in skip_dirs):
+            continue
+
+        try:
+            content = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+
+        if em_dash in content:
+            violations.append(str(path.relative_to(ROOT)))
+
+    assert not violations, f"Found em dash characters in: {violations}"
+
+
+def test_no_unresolved_merge_conflicts():
+    """Ensure no git conflict markers remain anywhere in codebase."""
+    extensions = {".py", ".js", ".jsx", ".json", ".md", ".html", ".css", ".toml"}
+    skip_dirs = {".git", ".venv", "node_modules", "dist", ".pytest_cache", "__pycache__"}
+    conflict_violations = []
+
+    for path in ROOT.rglob("*"):
+        if not path.is_file() or path.suffix not in extensions:
+            continue
+        if any(skip_part in path.parts for skip_part in skip_dirs):
+            continue
+
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except UnicodeDecodeError:
+            continue
+
+        for idx, line in enumerate(lines, 1):
+            if line.startswith("<<<<<<< ") or line == "=======" or line.startswith(">>>>>>> "):
+                conflict_violations.append((str(path.relative_to(ROOT)), idx, line))
+
+    assert not conflict_violations, f"Found merge conflict markers: {conflict_violations}"
