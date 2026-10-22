@@ -414,4 +414,5 @@ export default {
   'demo.sourceBadge_simulated': 'डेमो (अनुकरण)',
   'demo.sourceDesc_simulated': 'पाइपलाइन जाँच के लिए बनाया गया अनुकरण, वास्तविक डिस्आर्थ्रिया नहीं',
   'speak.composedBadge': 'संयुक्त',
+  'speak.usingBrowserTts': 'ब्राउज़र की अपनी आवाज़ से सुनाया जा रहा है क्योंकि मुख्य आवाज़ सेवा उपलब्ध नहीं है।',
 }

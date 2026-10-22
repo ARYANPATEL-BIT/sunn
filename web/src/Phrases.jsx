@@ -81,7 +81,7 @@ export default function Phrases() {
     }
     setPlayingText(phraseText)
     try {
-      await api.say(phraseText)
+      await api.say(phraseText, { fallback: true, language: user?.language })
     } catch (e) {
       setError(e)
     } finally {

@@ -409,4 +409,5 @@ export default {
   'demo.sourceBadge_simulated': 'Demo (Simulated)',
   'demo.sourceDesc_simulated': 'Simulated unclear speech for pipeline verification, not real dysarthria',
   'speak.composedBadge': 'Composed',
+  'speak.usingBrowserTts': 'Playing with browser speech synthesis fallback because the speech service is unavailable.',
 }
