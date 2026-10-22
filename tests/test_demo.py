@@ -137,4 +137,3 @@ def test_demo_source_tagging_contract(env):
     updated = client.get("/me/phrases").json()
     updated_target = next(p for p in updated if p["id"] == target_phrase["id"])
     assert updated_target["sources"] == ["pilot"]
-
