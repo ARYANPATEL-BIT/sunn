@@ -218,6 +218,53 @@ uv run scripts/evaluate.py --email demo@example.com --folder data/demo
 
 How to record and organize the folder, and the consent it needs, is in docs/DEMO_DATA.md.
 
+## Presenter Demo Guide (3 to 5 Minutes)
+
+Sunn includes a built-in Presenter Mode to help demo the app reliably to judges, mentors, and partners.
+
+### 1. Starting the Application
+```powershell
+# Terminal 1: Backend API (port 8000)
+uv run uvicorn api:app --app-dir src --port 8000
+
+# Terminal 2: Web frontend (http://localhost:5173)
+cd web; npm run dev
+```
+Open `http://localhost:5173` in a desktop browser (Chrome, Edge, or Firefox). Desktop localhost is treated as a secure origin, so microphone permissions work without TLS certificates.
+
+### 2. Activating Presenter Mode
+- Click the **Demo** pill in the top header, or press **Alt + P** (**Option + P** on macOS).
+- The Presenter Cue Bar docks near the top of the screen with step-by-step cues, quick-jump pills, and progress indicators.
+- Presenter Mode can be collapsed with the chevron or exited anytime with the close button or **Alt + P**.
+
+### 3. Step-by-Step Demo Journey (Approx. 4 Minutes)
+1. **Step 1: Onboarding and Language Setup (0:00 to 0:45)**:
+   - Jump to Onboarding (`/app/onboarding`).
+   - Explain Sunn's core mission: an assistive communication aid for people whose speech is difficult to understand.
+   - Show English / Hindi language toggle and the 3-recording learning principle.
+2. **Step 2: Personal Phrase Library (0:45 to 1:30)**:
+   - Jump to Phrase Library (`/app/phrases`).
+   - Point out everyday phrases, context tags (home, hospital, market), and urgent tags.
+   - Point out the demo source badges: `Demo (Pilot)` indicates consented dysarthric speaker data, `Demo (Simulated)` indicates pipeline test data, and untagged phrases represent live user enrollments.
+3. **Step 3: Speak, Recognize, and Synthesis (1:30 to 3:00)**:
+   - Jump to Speak Screen (`/app/speak`).
+   - Select a context (e.g. `Hospital` or `Home`) to show contextual ranking.
+   - Tap the Sun to speak or record. Show top candidate ranking with similarity scores.
+   - Tap a candidate to confirm and hear clear speech output.
+4. **Step 4: Accessibility and Voice Cloning (3:00 to 3:45)**:
+   - Jump to Settings (`/app/settings`).
+   - Demonstrate accessibility controls: Large Text, Enhanced Focus rings, and Reduced Motion.
+   - Explain own-voice cloning with strict separate consent requirements (`voice_consent_given_at`).
+5. **Step 5: Transparent Metrics and Privacy (3:45 to 4:30)**:
+   - Jump to Progress (`/app/progress`).
+   - Clarify the metrics: Sunn measures speech recognition consistency against Gnani raw hypotheses, not clinical recovery.
+   - Highlight the atomic account deletion option (`DELETE /me`) that wipes all audio and database records immediately.
+
+### 4. Handling Failures and Fallbacks During Presentations
+- **Microphone permission blocked**: The screen displays an inline troubleshoot guide with instructions to allow access in the browser address bar.
+- **Speech service exhaustion / offline**: If Gnani Timbre reaches limits or network drops, playback automatically falls back to browser offline speech synthesis (`window.speechSynthesis`), clearly labeled as local browser fallback.
+- **Demo data transparency**: Every pre-enrolled phrase displays its origin badge so judges always know whether data is pilot-recorded or simulated.
+
 ## Deploy
 
 One Docker image (`Dockerfile`) serves the API under `/api` and the web app everywhere else
