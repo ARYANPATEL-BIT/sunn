@@ -63,6 +63,16 @@ No session needed. Whether sign-up needs an invite code: true when the server se
 
 Errors: none.
 
+### `GET /health` · real
+
+No session needed. Liveness health check confirming server responsiveness and database connectivity.
+
+```json
+{"status": "ok"}
+```
+
+Errors: none.
+
 ### `POST /auth/signup` · real
 
 `{"name": "सुनीता", "email": "sunita@example.com", "password": "8 or more", "language": "hi", "consent": true}`.

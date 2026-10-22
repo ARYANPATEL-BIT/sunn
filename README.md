@@ -189,7 +189,7 @@ Copy-Item .env.example .env   # then fill in GNANI_API_KEY and a JWT_SECRET:
 uv run python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 cd web; npm ci; npm run build; cd ..
-uv run src/server.py          # the app on http://127.0.0.1:7860, API docs at /api/docs
+uv run src/server.py          # the app on http://127.0.0.1:7860, API docs at /api/docs, health at /api/health
 ```
 
 Desktop browsers treat `localhost` as a secure context, so the microphone works on

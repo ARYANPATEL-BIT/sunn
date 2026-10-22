@@ -21,6 +21,20 @@ Everything comes from environment variables. Locally they live in `.env` (copy
 | `OWNER_EMAIL` | no | the account that may read `GET /api/me/usage` |
 | `DATA_DIR` | no (default `data`) | where the database, recordings and caches go |
 
+## Hosting Options Comparison
+
+| Option | Cost | HTTPS / Mic Support | Data Persistence | Best Used For |
+| - | - | - | - | - |
+| **Hugging Face Docker Space** | Free | Yes (Native HTTPS direct URL) | Ephemeral on free tier (resets on restart) | Public challenge submission and mentor review |
+| **Local Secure Tunnel** (`cloudflared`) | Free | Yes (`*.trycloudflare.com` HTTPS) | 100% persistent (`data/app.db` on host disk) | Live evaluator demos from developer laptop |
+| **Self-Hosted VPS** (Docker + Volume) | Low / Paid | Yes (via Caddy, Nginx, or Let's Encrypt) | 100% persistent (`-v data:/home/user/app/data`) | Long-running pilot programs and care centers |
+
+### Storage Persistence Trade-offs
+
+1. **Free Hugging Face Space**: The container filesystem is ephemeral. Reboots, idle sleep (after 48 hours), or redeployments wipe `data/` (SQLite database, user recordings, and cached TTS audio). To preserve demo accounts, run `scripts/load_demo.py` after a restart, or enable Hugging Face persistent disk in Space settings.
+2. **Local Tunnel**: All writes persist directly into your local `data/` directory. Zero data loss across reboots. Requires keeping your development computer awake and connected to the internet during demonstration.
+3. **Container Volumes**: When deploying to any Docker VPS or container host, always mount a persistent volume to `/home/user/app/data` to ensure user profiles and speech fingerprints survive container restarts.
+
 ### Why TRUST_PROXY is on for Hugging Face and off locally
 
 Sign-up allows 5 wrong invite codes per IP address per 15 minutes. On a Space, the app never
@@ -121,6 +135,39 @@ $env:DEMO_INVITE_CODE = "<the code>"
 uv run scripts/smoke_test.py first.wav second.wav --url https://<you>-sunn.hf.space/api
 ```
 
+## Health Checks and Operational Monitoring
+
+### 1. Liveness Health Probe
+
+Verify server process readiness and database connectivity:
+
+```powershell
+curl -s https://<you>-sunn.hf.space/api/health
+```
+
+Expected response:
+```json
+{"status": "ok"}
+```
+
+The health check executes a database query (`SELECT 1`) to ensure SQLite is readable and writable without leaking environment variables, secrets, or file paths.
+
+### 2. Operational Logging and Log Rotation
+
+All operational events are logged to `logs/app.log`:
+- **Format**: JSON Lines (`{"ts": "...", "level": "INFO", "event": "...", ...}`).
+- **Log Rotation**: Automatically rotates at 5 MB with up to 3 backup archives (`app.log.1`, `app.log.2`, `app.log.3`).
+- **Privacy Policy**: Passwords, tokens, emails, voice recordings, and speech transcripts are redacted before writing.
+
+### 3. API Usage and Budget Monitoring
+
+When `OWNER_EMAIL` is configured:
+1. Sign in with the owner email account.
+2. Query `GET /api/me/usage` to inspect live Gnani call counters:
+   - Breakdown by service: STT, TTS, and voice clone.
+   - Sent vs cached calls.
+   - Remaining calls before `GNANI_CALL_LIMIT` threshold is reached.
+
 ## What to expect from a free Space
 
 - **It sleeps.** A free CPU Space pauses after 48 hours without visitors. The next visitor
@@ -152,3 +199,38 @@ microphone and the Secure cookie both work), or run the smoke test against
 
 Without Docker: `cd web; npm ci; npm run build; cd ..` then `uv run src/server.py` serves the
 same thing on http://127.0.0.1:7860.
+
+## Live Demo Smoke Test and Failure Recovery Runbook
+
+### 1. Step-by-Step Live Smoke Test
+
+Run the automated smoke test script using two sample WAV files:
+
+```powershell
+$env:DEMO_INVITE_CODE = "<your-invite-code>"
+uv run scripts/smoke_test.py sample1.wav sample2.wav --url https://<you>-sunn.hf.space/api
+```
+
+This verifies:
+1. Connecting to the live deployment over HTTPS.
+2. Registering a test account with the invite code.
+3. Adding a starter phrase.
+4. Uploading an enrollment audio sample through Prisma STT.
+5. Performing recognition and asserting that candidate suggestions are returned.
+
+### 2. Failure Recovery Runbook
+
+| Symptom / HTTP Code | Root Cause | Recovery Action |
+| - | - | - |
+| **502 `gnani_unreachable`** | `GNANI_API_KEY` missing or invalid in Space secrets | Open Space Settings -> Variables and secrets, verify `GNANI_API_KEY`. Audio playback will fall back to browser speech synthesis. |
+| **429 `credit_limit_reached`** | Global `GNANI_CALL_LIMIT` reached | Previously cached phrases continue to play. To increase limit, update `GNANI_CALL_LIMIT` variable in Space settings. |
+| **403 `invite_required`** | Sign-up attempted without valid code | Verify `DEMO_INVITE_CODE` in Space secrets and ensure presenter enters the code on sign-up. |
+| **404 on page reload** | Reverse proxy misconfiguration | Use direct URL `https://<you>-sunn.hf.space`, not the framed Hugging Face preview page. |
+| **Slow initial response (30s+)** | Free Space waking from idle sleep | Wait 30 seconds for the container to boot, then refresh. The app runs smoothly once awake. |
+
+### 3. Teardown and Cleanup
+
+To stop or remove the live demo and avoid unnecessary resource usage:
+1. Open your Space at `https://huggingface.co/spaces/<you>/sunn`.
+2. Navigate to **Settings -> Delete this Space**.
+3. Confirm deletion to permanently erase all deployed files, secrets, and container instances.

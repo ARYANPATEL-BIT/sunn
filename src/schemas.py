@@ -277,3 +277,8 @@ class Usage(BaseModel):
     sent: int
     remaining: int
     by_kind: dict[Literal["stt", "tts", "clone"], KindUsage]
+
+
+class Health(BaseModel):
+    model_config = example(status="ok")
+    status: Literal["ok"]
