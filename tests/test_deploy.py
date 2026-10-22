@@ -147,3 +147,46 @@ def test_missing_or_placeholder_gnani_key_fails_safely(env, monkeypatch):
         gnani.post("tts", "https://api.vachana.ai/test", user_id=1, json={"text": "test"})
     assert exc_info2.value.status == 502
     assert exc_info2.value.code == "gnani_unreachable"
+
+
+def test_database_custom_data_dir_and_persistence_isolation(tmp_path, monkeypatch):
+    """Verify DATA_DIR configures database path, runs migrations, and handles user lifecycle."""
+    custom_dir = tmp_path / "custom_data"
+    monkeypatch.setenv("DATA_DIR", str(custom_dir))
+
+    import db
+    db.DATA_DIR = str(custom_dir)
+    db.DB_PATH = str(custom_dir / "app.db")
+    db.init()
+
+    # 1. DB file created inside custom data dir
+    assert (custom_dir / "app.db").exists()
+
+    # 2. Tables and columns exist
+    tables = [r["name"] for r in db.rows("SELECT name FROM sqlite_master WHERE type='table'")]
+    for t in ("users", "phrases", "slot_words", "templates", "samples", "uses", "api_calls"):
+        assert t in tables
+
+    # 3. Insert and verify single-user deletion cascade
+    uid = db.execute(
+        "INSERT INTO users (name, email, password_hash, language, consent_given_at) VALUES (?, ?, ?, ?, ?)",
+        ("Persist User", "persist@example.com", "hash", "en", "2026-10-22T00:00:00Z"),
+    )
+    pid = db.execute("INSERT INTO phrases (user_id, text) VALUES (?, ?)", (uid, "Help me"))
+    db.execute("INSERT INTO uses (user_id, phrase_id, created_at) VALUES (?, ?, ?)", (uid, pid, "2026-10-22T00:00:00Z"))
+    db.execute(
+        "INSERT INTO api_calls (kind, cached, audio_seconds, created_at, user_id) VALUES (?, ?, ?, ?, ?)",
+        ("tts", 0, 1.5, "2026-10-22T00:00:00Z", uid),
+    )
+
+    # Before deletion
+    assert db.row("SELECT COUNT(*) AS c FROM phrases WHERE user_id = ?", (uid,))["c"] == 1
+    assert db.row("SELECT user_id FROM api_calls WHERE user_id = ?", (uid,))["user_id"] == uid
+
+    # Run delete_user
+    db.delete_user(uid)
+    assert db.row("SELECT COUNT(*) AS c FROM users WHERE id = ?", (uid,))["c"] == 0
+    assert db.row("SELECT COUNT(*) AS c FROM phrases WHERE user_id = ?", (uid,))["c"] == 0
+    assert db.row("SELECT COUNT(*) AS c FROM uses WHERE user_id = ?", (uid,))["c"] == 0
+    # api_calls retained as anonymous counter with user_id NULL
+    assert db.row("SELECT user_id FROM api_calls")["user_id"] is None
