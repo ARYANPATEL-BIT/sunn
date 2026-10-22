@@ -126,3 +126,24 @@ def test_deploy_space_secret_and_blocked_path_validation(tmp_path):
     assert len(leaks) == 1
     assert "file_with_secret.py (GNANI_API_KEY)" in leaks
     assert "clean_file.py" not in leaks[0]
+
+
+def test_missing_or_placeholder_gnani_key_fails_safely(env, monkeypatch):
+    """When GNANI_API_KEY is unset or set to placeholder, API answers 502 gnani_unreachable safely."""
+    import gnani
+    import pytest
+
+    # 1. Test with default template placeholder
+    monkeypatch.setenv("GNANI_API_KEY", "your-key-here")
+    with pytest.raises(gnani.GnaniError) as exc_info:
+        gnani.post("tts", "https://api.vachana.ai/test", user_id=1, json={"text": "test"})
+    assert exc_info.value.status == 502
+    assert exc_info.value.code == "gnani_unreachable"
+    assert "GNANI_API_KEY is not configured" in exc_info.value.detail
+
+    # 2. Test with empty string
+    monkeypatch.setenv("GNANI_API_KEY", "")
+    with pytest.raises(gnani.GnaniError) as exc_info2:
+        gnani.post("tts", "https://api.vachana.ai/test", user_id=1, json={"text": "test"})
+    assert exc_info2.value.status == 502
+    assert exc_info2.value.code == "gnani_unreachable"
