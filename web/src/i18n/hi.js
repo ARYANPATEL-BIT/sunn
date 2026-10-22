@@ -406,6 +406,29 @@ export default {
   'presenter.shortLabel': 'डेमो',
   'presenter.enter': 'प्रस्तुतकर्ता डेमो मोड चालू करें (Alt+P)',
   'presenter.exit': 'प्रस्तुतकर्ता डेमो मोड से बाहर निकलें (Alt+P)',
+  'presenter.title': 'प्रस्तुतकर्ता डेमो मोड',
+  'presenter.stepIndicator': 'चरण {current} / {total}',
+  'presenter.expand': 'प्रस्तुतकर्ता पैनल खोलें',
+  'presenter.collapse': 'प्रस्तुतकर्ता पैनल समेटें',
+  'presenter.navAria': 'डेमो चरण नेविगेशन',
+  'presenter.restart': 'शुरुआत से चलाएँ',
+  'presenter.prev': 'पिछला चरण',
+  'presenter.next': 'अगला चरण',
+  'presenter.stepOnboardingTitle': '1. स्वागत एवं भाषा चयन',
+  'presenter.stepOnboardingCue':
+    'हिन्दी या अंग्रेज़ी चयन दिखाएँ और समझाएँ कि हर वाक्य की 3 रिकॉर्डिंग से सुन्न उपयोगकर्ता की आवाज़ सीखता है।',
+  'presenter.stepPhrasesTitle': '2. वाक्य संग्रह एवं डेटा स्रोत',
+  'presenter.stepPhrasesCue':
+    'सहेजे गए वाक्य, आपातकालीन टैग और डेमो स्रोत दिखाएँ। समझाएँ कि व्यक्तिगत वाक्य पूरी तरह निजी रहते हैं।',
+  'presenter.stepSpeakTitle': '3. बोलना, पहचान एवं आवाज़',
+  'presenter.stepSpeakCue':
+    'माहौल (अस्पताल, घर) के आधार पर पहचान दिखाएँ। समझाएँ कि सुन्न वाक्य चुनकर तुरंत स्पष्ट आवाज़ में बोलता है।',
+  'presenter.stepSettingsTitle': '4. सुगमता एवं आवाज़ क्लोनिंग',
+  'presenter.stepSettingsCue':
+    'बड़ा टेक्स्ट, स्पष्ट फोकस और कम गति दिखाएँ। स्पष्ट सहमति के साथ अपनी आवाज़ क्लोन करने का नियम समझाएँ।',
+  'presenter.stepProgressTitle': '5. प्रगति एवं डेटा सुरक्षा',
+  'presenter.stepProgressCue':
+    'स्पष्ट करें कि यह चिकित्सीय सुधार नहीं बल्कि पहचान की निरंतरता मापता है। खाता मिटाने की सुविधा दिखाएँ।',
 
   'demo.sourceBadge_pilot': 'डेमो (पायलट)',
   'demo.sourceDesc_pilot': 'सहमति देने वाले डिस्आर्थ्रिया प्रतिभागी द्वारा रिकॉर्ड किया गया',
