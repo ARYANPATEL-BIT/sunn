@@ -397,4 +397,43 @@ export default {
   'onboarding.goLibrary': 'Open phrase library',
   'onboarding.revisitTitle': 'Welcome guide',
   'onboarding.revisitDesc': 'Review the introduction and learn how to use Sunn.',
+
+  'presenter.shortLabel': 'Demo',
+  'presenter.enter': 'Enter presenter demo mode (Alt+P)',
+  'presenter.exit': 'Exit presenter demo mode (Alt+P)',
+  'presenter.title': 'Presenter Demo Mode',
+  'presenter.stepIndicator': 'Step {current} of {total}',
+  'presenter.expand': 'Expand presenter panel',
+  'presenter.collapse': 'Collapse presenter panel',
+  'presenter.navAria': 'Demo steps navigation',
+  'presenter.restart': 'Restart demo',
+  'presenter.prev': 'Previous step',
+  'presenter.next': 'Next step',
+  'presenter.stepOnboardingTitle': '1. Onboarding and language selection',
+  'presenter.stepOnboardingCue':
+    'Show language selection (Hindi or Indian English) and explain how 3 recordings per phrase teach Sunn the user pronunciation.',
+  'presenter.stepPhrasesTitle': '2. Personal phrase library',
+  'presenter.stepPhrasesCue':
+    'Highlight everyday phrases, urgency tags, and demo data labels (Pilot vs Simulated). Emphasize that custom phrases are stored privately.',
+  'presenter.stepSpeakTitle': '3. Speak, recognize, and playback',
+  'presenter.stepSpeakCue':
+    'Demonstrate recording and context selection (Hospital, Home). Show how candidate ranking picks the intended phrase and speaks it clearly.',
+  'presenter.stepSettingsTitle': '4. Accessibility and voice controls',
+  'presenter.stepSettingsCue':
+    'Demonstrate Large Text, Enhanced Focus, and Reduced Motion. Explain own-voice cloning with strict consent safeguards.',
+  'presenter.stepProgressTitle': '5. Progress metrics and privacy',
+  'presenter.stepProgressCue':
+    'Explain that metrics track speech recognition consistency, not medical recovery. Highlight the complete account deletion guarantee.',
+
+  'demo.sourceBadge_pilot': 'Demo (Pilot)',
+  'demo.sourceDesc_pilot': 'Recorded by a pilot participant with dysarthria who consented',
+  'demo.sourceBadge_torgo': 'Demo (TORGO)',
+  'demo.sourceDesc_torgo': 'From the TORGO database of dysarthric speech',
+  'demo.sourceBadge_simulated': 'Demo (Simulated)',
+  'demo.sourceDesc_simulated': 'Simulated unclear speech for pipeline verification, not real dysarthria',
+  'speak.composedBadge': 'Composed',
+  'speak.usingBrowserTts': 'Playing with browser speech synthesis fallback because the speech service is unavailable.',
+  'speak.micTroubleshootTitle': 'Microphone permission blocked',
+  'speak.micTroubleshootBody':
+    'To allow access: Click the lock or settings icon beside the URL in your browser address bar, set Microphone to "Allow", then tap Retry below.',
 }

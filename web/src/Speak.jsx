@@ -37,6 +37,7 @@ export default function Speak() {
   const [newText, setNewText] = useState('')
   const [busy, setBusy] = useState(null) // 'listening' while Prisma works, 'playing' while Timbre speaks
   const [error, setError] = useState(null)
+  const [fallbackUsed, setFallbackUsed] = useState(false)
   const confirmedSampleRef = useRef(null)
   const confirmingSampleRef = useRef(null)
   const isMountedRef = useRef(true)
@@ -91,6 +92,7 @@ export default function Speak() {
       setTyping(false)
       setNewText('')
       setError(null)
+      setFallbackUsed(false)
       confirmedSampleRef.current = null
       confirmingSampleRef.current = null
     }
@@ -131,8 +133,12 @@ export default function Speak() {
       }
 
       try {
-        await Promise.all([api.say(candidate.text), confirmPromise])
+        const [playback] = await Promise.all([
+          api.say(candidate.text, { fallback: true, language: user?.language }),
+          confirmPromise,
+        ])
         setSpoken(candidate)
+        setFallbackUsed(Boolean(playback?.fallback))
       } catch (e) {
         setError(e)
         if (!confirmed && confirmedSampleRef.current !== sampleId) {
@@ -165,7 +171,8 @@ export default function Speak() {
       setSpoken(targetPhrase)
       setTyping(false)
       try {
-        await api.say(targetPhrase.text)
+        const playback = await api.say(targetPhrase.text, { fallback: true, language: user?.language })
+        setFallbackUsed(Boolean(playback?.fallback))
       } catch (e) {
         setError(e)
       }
@@ -268,6 +275,11 @@ export default function Speak() {
                         {t('speak.urgent')}
                       </span>
                     )}
+                    {c.composed && (
+                      <span className="composed-badge" aria-label={t('speak.composedBadge')}>
+                        {t('speak.composedBadge')}
+                      </span>
+                    )}
                   </div>
                   {isSelected && (
                     <span className="said">
@@ -291,6 +303,12 @@ export default function Speak() {
                   <span>{t('speak.stopPlaying')}</span>
                 </button>
               </div>
+            )}
+
+            {fallbackUsed && (
+              <p className="fallback-tts-note" role="status">
+                {t('speak.usingBrowserTts')}
+              </p>
             )}
 
             {typing ? (
@@ -330,6 +348,13 @@ export default function Speak() {
       </div>
 
       <Alert error={error || recorder.error} />
+
+      {recorder.error?.kind === 'micDenied' && (
+        <div className="mic-troubleshoot-card" role="region" aria-label={t('speak.micTroubleshootTitle')}>
+          <p className="troubleshoot-title">{t('speak.micTroubleshootTitle')}</p>
+          <p className="troubleshoot-body muted">{t('speak.micTroubleshootBody')}</p>
+        </div>
+      )}
 
       {(error || recorder.error) && (
         <div className="error-actions">

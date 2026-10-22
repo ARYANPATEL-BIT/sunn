@@ -182,13 +182,42 @@ export const enrollTemplate = (templateId, blob) =>
 export const speak = (text) => post('/speak', { text }).then((r) => r.blob())
 export const synthesize = speak
 
-// Speak text aloud using the browser Audio player
-export async function say(text) {
+// Speaks using the browser's native Web Speech API (window.speechSynthesis)
+export function speakBrowserFallback(text, language = 'hi-IN') {
+  if (typeof window === 'undefined' || !window.speechSynthesis) {
+    return Promise.reject(new Error('Browser speech synthesis unavailable'))
+  }
+  return new Promise((resolve, reject) => {
+    stopAudio()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = language
+    utterance.onend = () => resolve({ fallback: true })
+    utterance.onerror = (e) => {
+      if (e.error === 'canceled' || e.error === 'interrupted') {
+        resolve({ fallback: true, canceled: true })
+      } else {
+        reject(e)
+      }
+    }
+    window.speechSynthesis.speak(utterance)
+  })
+}
+
+// Speak text aloud using the browser Audio player, with optional browser fallback
+export async function say(text, options = {}) {
   const playId = ++currentPlayId
-  const blob = await speak(text)
-  if (playId !== currentPlayId) return blob
-  await play(blob, playId)
-  return blob
+  try {
+    const blob = await speak(text)
+    if (playId !== currentPlayId) return { blob, fallback: false }
+    await play(blob, playId)
+    return { blob, fallback: false }
+  } catch (err) {
+    if (options.fallback && typeof window !== 'undefined' && window.speechSynthesis) {
+      await speakBrowserFallback(text, options.language === 'en' ? 'en-IN' : 'hi-IN')
+      return { blob: null, fallback: true }
+    }
+    throw err
+  }
 }
 
 let player = null
@@ -222,6 +251,9 @@ export async function play(blob, playId = null) {
 // Stop currently playing audio and cancel pending playback
 export function stopAudio() {
   currentPlayId++
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    window.speechSynthesis.cancel()
+  }
   if (player) {
     player.pause()
     player.currentTime = 0
