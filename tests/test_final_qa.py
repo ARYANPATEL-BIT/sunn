@@ -101,3 +101,34 @@ def test_end_to_end_demo_user_journey(env):
 
     # 8. Post-deletion authentication rejection
     assert client.get("/auth/me").status_code == 401
+
+
+def test_speech_synthesis_and_recognition_error_contracts(env):
+    """Verify TTS and recognition error handling contracts and fallback requirements."""
+    client = env.signup("hi")
+
+    # 1. Valid TTS audio response
+    speak_res = client.post("/speak", json={"text": "पानी चाहिए"})
+    assert speak_res.status_code == 200
+    assert speak_res.headers["content-type"] == "audio/wav"
+    assert len(speak_res.content) > 0
+
+    # 2. Empty text input contract rejected cleanly with 400 invalid_input
+    empty_speak_res = client.post("/speak", json={"text": "   "})
+    assert empty_speak_res.status_code == 400
+    assert empty_speak_res.json()["error"] == "invalid_input"
+
+    # 3. Recognition endpoint requires authentication
+    unauthed_client = env.client()
+    unauthed_rec = unauthed_client.post("/me/recognize")
+    assert unauthed_rec.status_code == 401
+
+    # 4. Recognition without audio payload returns validation error (422)
+    missing_audio_res = client.post("/me/recognize")
+    assert missing_audio_res.status_code == 422
+
+    # 5. Verify frontend api.js provides fallback to window.speechSynthesis
+    api_code = (ROOT / "web" / "src" / "api.js").read_text(encoding="utf-8")
+    assert "speakBrowserFallback" in api_code
+    assert "window.speechSynthesis" in api_code
+    assert "options.fallback" in api_code
