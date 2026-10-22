@@ -1,28 +1,55 @@
-# Posts
+# Social Announcements and Sharing Drafts
 
-Replace `[teammate]` with your teammate's name or handle and `[demo link]` with the Space's direct address (`https://<you>-sunn.hf.space`) before
-posting. Add results only once `scripts/evaluate.py` has produced real ones.
+Before posting, replace each placeholder in brackets with your real submission links and handles:
+- `[teammate name/handle]`: Your teammate or co-contributor handle
+- `[live demo link]`: Your deployed demo URL (e.g. `https://<user>-sunn.hf.space`)
+- `[demo video link]`: 3-minute video link (YouTube, Loom, or Google Drive)
+- `[writeup link]`: GitHub writeup or blog post URL
+- `[github repository link]`: Public GitHub repo URL
 
-## LinkedIn
+## LinkedIn Post
 
-I built Sunn with [teammate], who made its screens, for the Gnani Great Indian AI Internship
-Challenge.
+I built Sunn with [teammate name/handle] for Gnani AI's Great Indian AI Internship Challenge.
 
-It's a speech aid for people with dysarthria, the slurred or uneven speech that can come after
-a stroke or with Parkinson's or cerebral palsy. Family often understands them. Strangers,
-nurses and speech recognition often don't.
+Sunn is an accessibility speech assistant designed for people with dysarthria, cerebral palsy, Parkinson's, or speech motor impairments following a stroke.
 
-Sunn doesn't try to fix the speech recognizer. You record each everyday phrase about three
-times, and Gnani's Prisma transcribes it, often not quite right. The bet is that it gets it
-wrong in a similar way each time, so that transcript becomes the phrase's fingerprint. When you speak
-later, Sunn matches the new transcript against those fingerprints, shows the three closest
-phrases, and Gnani's Timbre says the one you pick out loud.
+Standard speech recognition models frequently fail on atypical speech because training datasets exclude slurred or uneven articulation. Sunn takes a pragmatic personalization approach:
+1. Users enroll essential phrases (2-3 recordings each).
+2. Gnani's Prisma STT transcribes each sample. Even when misheard, the transcription errors are consistent and reproducible.
+3. Sunn treats those consistent misrecognitions as acoustic phonetic fingerprints.
+4. When the user speaks in daily life, Sunn matches the incoming audio against their personal fingerprints, ranks candidate intents, and speaks the confirmed phrase aloud via Gnani's Timbre TTS (with automatic browser speech synthesis fallback if offline).
 
-It works in Hindi and Indian English, needs no model training, and only knows the phrases
-you've taught it. That's the honest limit.
+Sunn supports Hindi and Indian English, runs with full local data ownership, and includes caregiver contact alerts and privacy-first data erasure.
 
-Try it: [demo link]
+Watch our 3-minute demo video: [demo video link]
+Try the live application: [live demo link]
+Technical writeup and code: [writeup link]
 
-## X
+Special thanks to the Gnani AI team for building inclusive speech models that power this work.
 
-Built Sunn for the Gnani Great Indian AI Internship Challenge, a speech aid for dysarthria. Prisma tends to mishear a phrase the same way each time, so Sunn uses those mistakes as fingerprints to find what you meant, and Timbre says it. Hindi + English. [demo link]
+#GnaniAI #Accessibility #VoiceAI #Dysarthria #AIForGood #SpeechRecognition #Inclusion
+
+## X (Twitter) Post (Option A: Single Post)
+
+Built Sunn for the @Gnani_AI Great Indian AI Internship Challenge: an atypical speech assistant for dysarthria.
+
+Sunn turns consistent STT misrecognitions into phonetic fingerprints, mapping slurred speech to clear intent via Prisma + Timbre TTS.
+
+Video: [demo video link]
+Demo: [live demo link]
+
+## X (Twitter) Post (Option B: 2-Post Thread)
+
+1/2
+Standard speech models struggle with dysarthria (slurred or uneven articulation after a stroke or cerebral palsy).
+
+With [teammate name/handle], we built Sunn for @Gnani_AI's Great Indian AI Internship Challenge: a personalized speech assistant for Hindi & Indian English.
+
+2/2
+Sunn captures phrase fingerprints from consistent Prisma STT transcripts and speaks confirmed phrases with Timbre TTS (or local fallback).
+
+Full data ownership, caregiver alerts, and zero-medical-hype design.
+
+Demo video: [demo video link]
+Try demo: [live demo link]
+Code: [github repository link]
