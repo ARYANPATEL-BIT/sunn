@@ -5,6 +5,28 @@ const PREF_KEYS = {
   largeText: 'sunn.large_text',
   reducedMotion: 'sunn.reduced_motion',
   enhancedFocus: 'sunn.enhanced_focus',
+  presenterMode: 'sunn.presenter_mode',
+}
+
+export const PRESENTER_CHANGE_EVENT = 'sunn:presenter-mode'
+
+export function isPresenterMode() {
+  try {
+    return localStorage.getItem(PREF_KEYS.presenterMode) === 'true'
+  } catch {
+    return false
+  }
+}
+
+export function setPresenterMode(value) {
+  try {
+    localStorage.setItem(PREF_KEYS.presenterMode, String(Boolean(value)))
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(PRESENTER_CHANGE_EVENT, { detail: Boolean(value) }))
+    }
+  } catch {
+    // Storage unavailable
+  }
 }
 
 export function getSystemReducedMotion() {
@@ -20,6 +42,7 @@ export function getPreferences() {
     // If not, use user in-app preference.
     const reducedMotion = getSystemReducedMotion() || storedMotion === 'true'
     const enhancedFocus = localStorage.getItem(PREF_KEYS.enhancedFocus) === 'true'
+    const presenterMode = isPresenterMode()
 
     return {
       largeText,
@@ -27,6 +50,7 @@ export function getPreferences() {
       systemReducedMotion: getSystemReducedMotion(),
       userReducedMotion: storedMotion === 'true',
       enhancedFocus,
+      presenterMode,
     }
   } catch {
     return {
@@ -35,6 +59,7 @@ export function getPreferences() {
       systemReducedMotion: getSystemReducedMotion(),
       userReducedMotion: false,
       enhancedFocus: false,
+      presenterMode: false,
     }
   }
 }
@@ -70,6 +95,8 @@ export function setPreference(key, value) {
       localStorage.setItem(PREF_KEYS.reducedMotion, String(Boolean(value)))
     } else if (key === 'enhancedFocus') {
       localStorage.setItem(PREF_KEYS.enhancedFocus, String(Boolean(value)))
+    } else if (key === 'presenterMode') {
+      setPresenterMode(value)
     }
   } catch {
     // Storage unavailable
