@@ -81,3 +81,48 @@ def test_health_check_endpoint_and_liveness(env, tmp_path):
     # 3. Verify no sensitive data or diagnostic leak
     for key in ("secret", "key", "token", "env", "password", "path"):
         assert key not in root_health.text.lower()
+
+
+def test_deploy_space_secret_and_blocked_path_validation(tmp_path):
+    import sys
+    from pathlib import Path
+
+    scripts_dir = str(Path(__file__).resolve().parent.parent / "scripts")
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    import deploy_space
+
+    # 1. Blocked vs allowed path rules
+    candidate_files = [
+        ".env",
+        ".env.local",
+        "data/app.db",
+        "logs/app.log",
+        "web/certs/cert.pem",
+        ".env.example",
+        "data/default_phrases_hi.txt",
+        "src/api.py",
+    ]
+    blocked = deploy_space.blocked_paths(candidate_files)
+    assert ".env" in blocked
+    assert ".env.local" in blocked
+    assert "data/app.db" in blocked
+    assert "logs/app.log" in blocked
+    assert "web/certs/cert.pem" in blocked
+    assert ".env.example" not in blocked
+    assert "data/default_phrases_hi.txt" not in blocked
+    assert "src/api.py" not in blocked
+
+    # 2. Secret leakage detection with real secret
+    test_folder = tmp_path / "repo"
+    test_folder.mkdir()
+    (test_folder / "file_with_secret.py").write_text("API_KEY = 'real-secret-token-xyz'")
+    (test_folder / "clean_file.py").write_text("API_KEY = 'your-key-here'")
+
+    env_file = tmp_path / ".env"
+    env_file.write_text("GNANI_API_KEY=real-secret-token-xyz\nJWT_SECRET=generate-one-with-the-command-above")
+
+    leaks = deploy_space.files_with_secrets(["file_with_secret.py", "clean_file.py"], test_folder, env_file)
+    assert len(leaks) == 1
+    assert "file_with_secret.py (GNANI_API_KEY)" in leaks
+    assert "clean_file.py" not in leaks[0]
