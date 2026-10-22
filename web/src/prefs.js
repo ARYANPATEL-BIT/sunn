@@ -1,5 +1,6 @@
 // Sunn client-side display and accessibility preferences.
 // Stored in localStorage so they persist across sessions and reloads.
+import { useCallback, useEffect, useState } from 'react'
 
 const PREF_KEYS = {
   largeText: 'sunn.large_text',
@@ -27,6 +28,34 @@ export function setPresenterMode(value) {
   } catch {
     // Storage unavailable
   }
+}
+
+export function usePresenterMode() {
+  const [active, setActive] = useState(() => isPresenterMode())
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handleUpdate = (e) => {
+      setActive(Boolean(e.detail))
+    }
+    const handleStorage = (e) => {
+      if (e.key === PREF_KEYS.presenterMode) {
+        setActive(e.newValue === 'true')
+      }
+    }
+    window.addEventListener(PRESENTER_CHANGE_EVENT, handleUpdate)
+    window.addEventListener('storage', handleStorage)
+    return () => {
+      window.removeEventListener(PRESENTER_CHANGE_EVENT, handleUpdate)
+      window.removeEventListener('storage', handleStorage)
+    }
+  }, [])
+
+  const toggle = useCallback(() => {
+    setPresenterMode(!active)
+  }, [active])
+
+  return [active, toggle]
 }
 
 export function getSystemReducedMotion() {

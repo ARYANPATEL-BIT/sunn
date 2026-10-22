@@ -397,4 +397,8 @@ export default {
   'onboarding.goLibrary': 'Open phrase library',
   'onboarding.revisitTitle': 'Welcome guide',
   'onboarding.revisitDesc': 'Review the introduction and learn how to use Sunn.',
+
+  'presenter.shortLabel': 'Demo',
+  'presenter.enter': 'Enter presenter demo mode (Alt+P)',
+  'presenter.exit': 'Exit presenter demo mode (Alt+P)',
 }

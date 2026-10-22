@@ -402,4 +402,8 @@ export default {
   'onboarding.goLibrary': 'वाक्य संग्रह खोलें',
   'onboarding.revisitTitle': 'स्वागत मार्गदर्शिका',
   'onboarding.revisitDesc': 'सुन्न का उपयोग समझने के लिए मार्गदर्शिका दोबारा देखें।',
+
+  'presenter.shortLabel': 'डेमो',
+  'presenter.enter': 'प्रस्तुतकर्ता डेमो मोड चालू करें (Alt+P)',
+  'presenter.exit': 'प्रस्तुतकर्ता डेमो मोड से बाहर निकलें (Alt+P)',
 }

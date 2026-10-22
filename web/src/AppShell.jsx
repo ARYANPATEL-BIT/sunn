@@ -1,7 +1,9 @@
-import { AudioLines, BookOpen, ChartNoAxesColumn, LogOut, Mic, Settings as SettingsIcon } from 'lucide-react'
+import { AudioLines, BookOpen, ChartNoAxesColumn, LogOut, Mic, Presentation, Settings as SettingsIcon } from 'lucide-react'
+import { useEffect } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
+import { usePresenterMode } from './prefs.js'
 import { LangToggle, reducedMotion, useGo, Wordmark } from './ui.jsx'
 
 const TABS = [
@@ -17,6 +19,18 @@ export default function AppShell() {
   const { user, logout } = useAuth()
   const { t } = useLang()
   const go = useGo()
+  const [presenterMode, togglePresenter] = usePresenterMode()
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.altKey && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault()
+        togglePresenter()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [togglePresenter])
 
   async function logOut() {
     await logout()
@@ -28,6 +42,17 @@ export default function AppShell() {
       <header className="app-header">
         <Wordmark />
         <div className="app-header-end">
+          <button
+            type="button"
+            className={`pill-outline presenter-nav-btn ${presenterMode ? 'active' : ''}`}
+            onClick={togglePresenter}
+            aria-pressed={presenterMode}
+            title={presenterMode ? t('presenter.exit') : t('presenter.enter')}
+            aria-label={presenterMode ? t('presenter.exit') : t('presenter.enter')}
+          >
+            <Presentation size={18} aria-hidden="true" strokeWidth={1.5} />
+            <span className="presenter-nav-text">{t('presenter.shortLabel')}</span>
+          </button>
           <LangToggle />
           <NavLink
             to="/app/settings"
