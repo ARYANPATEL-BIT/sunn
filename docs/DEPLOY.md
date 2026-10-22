@@ -21,6 +21,20 @@ Everything comes from environment variables. Locally they live in `.env` (copy
 | `OWNER_EMAIL` | no | the account that may read `GET /api/me/usage` |
 | `DATA_DIR` | no (default `data`) | where the database, recordings and caches go |
 
+## Hosting Options Comparison
+
+| Option | Cost | HTTPS / Mic Support | Data Persistence | Best Used For |
+| - | - | - | - | - |
+| **Hugging Face Docker Space** | Free | Yes (Native HTTPS direct URL) | Ephemeral on free tier (resets on restart) | Public challenge submission and mentor review |
+| **Local Secure Tunnel** (`cloudflared`) | Free | Yes (`*.trycloudflare.com` HTTPS) | 100% persistent (`data/app.db` on host disk) | Live evaluator demos from developer laptop |
+| **Self-Hosted VPS** (Docker + Volume) | Low / Paid | Yes (via Caddy, Nginx, or Let's Encrypt) | 100% persistent (`-v data:/home/user/app/data`) | Long-running pilot programs and care centers |
+
+### Storage Persistence Trade-offs
+
+1. **Free Hugging Face Space**: The container filesystem is ephemeral. Reboots, idle sleep (after 48 hours), or redeployments wipe `data/` (SQLite database, user recordings, and cached TTS audio). To preserve demo accounts, run `scripts/load_demo.py` after a restart, or enable Hugging Face persistent disk in Space settings.
+2. **Local Tunnel**: All writes persist directly into your local `data/` directory. Zero data loss across reboots. Requires keeping your development computer awake and connected to the internet during demonstration.
+3. **Container Volumes**: When deploying to any Docker VPS or container host, always mount a persistent volume to `/home/user/app/data` to ensure user profiles and speech fingerprints survive container restarts.
+
 ### Why TRUST_PROXY is on for Hugging Face and off locally
 
 Sign-up allows 5 wrong invite codes per IP address per 15 minutes. On a Space, the app never
