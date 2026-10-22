@@ -199,3 +199,38 @@ microphone and the Secure cookie both work), or run the smoke test against
 
 Without Docker: `cd web; npm ci; npm run build; cd ..` then `uv run src/server.py` serves the
 same thing on http://127.0.0.1:7860.
+
+## Live Demo Smoke Test and Failure Recovery Runbook
+
+### 1. Step-by-Step Live Smoke Test
+
+Run the automated smoke test script using two sample WAV files:
+
+```powershell
+$env:DEMO_INVITE_CODE = "<your-invite-code>"
+uv run scripts/smoke_test.py sample1.wav sample2.wav --url https://<you>-sunn.hf.space/api
+```
+
+This verifies:
+1. Connecting to the live deployment over HTTPS.
+2. Registering a test account with the invite code.
+3. Adding a starter phrase.
+4. Uploading an enrollment audio sample through Prisma STT.
+5. Performing recognition and asserting that candidate suggestions are returned.
+
+### 2. Failure Recovery Runbook
+
+| Symptom / HTTP Code | Root Cause | Recovery Action |
+| - | - | - |
+| **502 `gnani_unreachable`** | `GNANI_API_KEY` missing or invalid in Space secrets | Open Space Settings -> Variables and secrets, verify `GNANI_API_KEY`. Audio playback will fall back to browser speech synthesis. |
+| **429 `credit_limit_reached`** | Global `GNANI_CALL_LIMIT` reached | Previously cached phrases continue to play. To increase limit, update `GNANI_CALL_LIMIT` variable in Space settings. |
+| **403 `invite_required`** | Sign-up attempted without valid code | Verify `DEMO_INVITE_CODE` in Space secrets and ensure presenter enters the code on sign-up. |
+| **404 on page reload** | Reverse proxy misconfiguration | Use direct URL `https://<you>-sunn.hf.space`, not the framed Hugging Face preview page. |
+| **Slow initial response (30s+)** | Free Space waking from idle sleep | Wait 30 seconds for the container to boot, then refresh. The app runs smoothly once awake. |
+
+### 3. Teardown and Cleanup
+
+To stop or remove the live demo and avoid unnecessary resource usage:
+1. Open your Space at `https://huggingface.co/spaces/<you>/sunn`.
+2. Navigate to **Settings -> Delete this Space**.
+3. Confirm deletion to permanently erase all deployed files, secrets, and container instances.
