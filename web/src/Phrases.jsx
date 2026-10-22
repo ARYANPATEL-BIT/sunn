@@ -592,6 +592,15 @@ export default function Phrases() {
                         {t('speak.urgent')}
                       </span>
                     )}
+                    {phrase.sources?.map((source) => (
+                      <span
+                        key={source}
+                        className={`demo-source-tag source-${source}`}
+                        title={t(`demo.sourceDesc_${source}`)}
+                      >
+                        {t(`demo.sourceBadge_${source}`)}
+                      </span>
+                    ))}
                     {phrase.contexts?.map((ctx) => (
                       <span key={ctx} className="context-tag">
                         {t(`speak.context_${ctx}`)}

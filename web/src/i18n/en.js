@@ -401,4 +401,12 @@ export default {
   'presenter.shortLabel': 'Demo',
   'presenter.enter': 'Enter presenter demo mode (Alt+P)',
   'presenter.exit': 'Exit presenter demo mode (Alt+P)',
+
+  'demo.sourceBadge_pilot': 'Demo (Pilot)',
+  'demo.sourceDesc_pilot': 'Recorded by a pilot participant with dysarthria who consented',
+  'demo.sourceBadge_torgo': 'Demo (TORGO)',
+  'demo.sourceDesc_torgo': 'From the TORGO database of dysarthric speech',
+  'demo.sourceBadge_simulated': 'Demo (Simulated)',
+  'demo.sourceDesc_simulated': 'Simulated unclear speech for pipeline verification, not real dysarthria',
+  'speak.composedBadge': 'Composed',
 }

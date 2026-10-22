@@ -268,6 +268,11 @@ export default function Speak() {
                         {t('speak.urgent')}
                       </span>
                     )}
+                    {c.composed && (
+                      <span className="composed-badge" aria-label={t('speak.composedBadge')}>
+                        {t('speak.composedBadge')}
+                      </span>
+                    )}
                   </div>
                   {isSelected && (
                     <span className="said">

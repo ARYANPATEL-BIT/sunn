@@ -406,4 +406,12 @@ export default {
   'presenter.shortLabel': 'डेमो',
   'presenter.enter': 'प्रस्तुतकर्ता डेमो मोड चालू करें (Alt+P)',
   'presenter.exit': 'प्रस्तुतकर्ता डेमो मोड से बाहर निकलें (Alt+P)',
+
+  'demo.sourceBadge_pilot': 'डेमो (पायलट)',
+  'demo.sourceDesc_pilot': 'सहमति देने वाले डिस्आर्थ्रिया प्रतिभागी द्वारा रिकॉर्ड किया गया',
+  'demo.sourceBadge_torgo': 'डेमो (टोरगो)',
+  'demo.sourceDesc_torgo': 'टोरगो डिस्आर्थ्रिक शोध डेटाबेस से',
+  'demo.sourceBadge_simulated': 'डेमो (अनुकरण)',
+  'demo.sourceDesc_simulated': 'पाइपलाइन जाँच के लिए बनाया गया अनुकरण, वास्तविक डिस्आर्थ्रिया नहीं',
+  'speak.composedBadge': 'संयुक्त',
 }
