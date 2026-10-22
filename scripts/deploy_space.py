@@ -30,6 +30,13 @@ BLOCKED = [".env*", "*/.env*", "data/*", "logs/*", "web/certs/*", "web/reference
 # image needs (the same exceptions as .gitignore and .dockerignore).
 ALLOWED = [".env.example", "data/default_phrases_*.txt"]
 SECRETS = ["GNANI_API_KEY", "JWT_SECRET"]
+# Safe default placeholders from .env.example that should not be flagged as real secrets.
+SAFE_PLACEHOLDERS = {
+    "your-key-here",
+    "generate-one-with-the-command-above",
+    "change-me",
+    "placeholder",
+}
 
 
 def git(*args):
@@ -58,6 +65,9 @@ def files_with_secrets(files, folder, env_path):
         value = (env.get(name) or os.environ.get(name) or "").strip()
         if not value:
             print(f"note: {name} isn't in {env_path} or the environment, so no file was checked for it")
+            continue
+        if value in SAFE_PLACEHOLDERS:
+            print(f"note: {name} is set to placeholder '{value}' in {env_path}, skipping secret leak check")
             continue
         found += [f"{f} ({name})" for f in files if value.encode() in (folder / f).read_bytes()]
     return found
