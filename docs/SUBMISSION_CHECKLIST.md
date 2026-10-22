@@ -15,7 +15,8 @@ This document tracks all submission deliverables for the Gnani Great Indian AI I
 | **Privacy & Consent** | Standalone voice consent, session cookie auth, atomic account deletion | `src/api.py`, `tests/test_privacy.py` | **Complete** |
 | **Presenter Demo Mode** | Collapsible cue bar, 5-step navigation, provenance badges (`pilot`, `simulated`) | `web/src/PresenterBar.jsx` | **Complete** |
 | **Resilient TTS Fallback** | Automatic client-side Web Speech API playback when Gnani TTS is unreachable | `web/src/api.js`, `web/src/Speak.jsx` | **Complete** |
-| **Automated Test Suite** | 88 passing backend pytest tests covering API, contracts, privacy, and demo logic | `uv run pytest` | **Complete (88/88 passed)** |
+| **Health Probe & Operations** | Liveness health probe at `/api/health` and `/health`, log rotation | `src/api.py`, `src/server.py`, `tests/test_deploy.py` | **Complete** |
+| **Automated Test Suite** | 98 passing backend pytest tests covering API, contracts, privacy, deploy, and demo logic | `uv run pytest` | **Complete (98/98 passed)** |
 | **Production Build** | Clean Vite build producing production bundles without errors | `cd web && npm run build` | **Complete (built in <500ms)** |
 | **Deployment Package** | Single Docker image serving API on `/api` and web app on port 7860 | `Dockerfile`, `src/server.py`, `docs/DEPLOY.md` | **Complete** |
 | **Challenge Write-Up** | Comprehensive solution overview, user personas, and technical write-up | `docs/WRITEUP.md` | **Complete** |
