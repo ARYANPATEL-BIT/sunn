@@ -53,3 +53,31 @@ def test_one_app_serves_the_api_and_the_web_app(env, tmp_path):
     assert missing.status_code == 404 and missing.json()["error"] == "not_found"
     assert signup(client, path="/api/auth/signup").status_code == 200  # as the browser does
     assert client.get("/api/auth/me").status_code == 200  # the cookie comes back on /api paths
+
+
+def test_health_check_endpoint_and_liveness(env, tmp_path):
+    import server
+
+    # 1. API health probe directly through client
+    client = env.client()
+    res = client.get("/health")
+    assert res.status_code == 200
+    assert res.json() == {"status": "ok"}
+
+    # 2. Server top-level and /api mounting health probes
+    dist = tmp_path / "dist"
+    dist.mkdir(parents=True)
+    (dist / "index.html").write_text("<p>sunn</p>")
+    server_client = TestClient(server.make_app(str(dist)), base_url="https://testserver")
+
+    root_health = server_client.get("/health")
+    assert root_health.status_code == 200
+    assert root_health.json() == {"status": "ok"}
+
+    api_health = server_client.get("/api/health")
+    assert api_health.status_code == 200
+    assert api_health.json() == {"status": "ok"}
+
+    # 3. Verify no sensitive data or diagnostic leak
+    for key in ("secret", "key", "token", "env", "password", "path"):
+        assert key not in root_health.text.lower()
