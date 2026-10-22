@@ -29,6 +29,11 @@ class WebApp(StaticFiles):
 def make_app(dist=DIST):
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)  # the API's own are at /api/docs
     app.mount("/api", api.app)  # first, so an unknown /api path is the API's JSON 404, not the web app
+
+    @app.get("/health")
+    def health():
+        return api.health()
+
     if os.path.isdir(dist):
         app.mount("/", WebApp(directory=dist, html=True))
     return app

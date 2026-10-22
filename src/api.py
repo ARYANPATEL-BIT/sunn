@@ -757,3 +757,10 @@ def usage(user=Depends(current_user)):
 def config():
     """What the app needs to know before anyone signs in."""
     return {"invite_required": bool(invite_code())}
+
+
+@app.get("/health", response_model=schemas.Health)
+def health():
+    """Liveness probe verifying server process responsiveness and database connectivity."""
+    db.row("SELECT 1")
+    return {"status": "ok"}
