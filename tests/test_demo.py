@@ -73,3 +73,68 @@ def test_load_then_evaluate(env, tmp_path):
         "eval_demo_accuracy.png", "eval_demo_context.png", "eval_demo_enrollments.png"]
     evaluate.evaluate("demo@example.com", folder)  # a second run is all cached
     assert len(env.fake.sent("stt")) == 5
+
+
+def test_i18n_presenter_keys_parity_and_no_em_dashes():
+    """Presenter mode and demo labels have 100% key parity and no em dashes."""
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+
+    def parse_keys(filepath):
+        text = filepath.read_text(encoding="utf-8")
+        assert "\u2014" not in text, f"Em dash found in {filepath}"
+        return set(re.findall(r"^\s*['\"]([a-zA-Z0-9_.]+)['\"]\s*:", text, re.M))
+
+    en_keys = parse_keys(root / "web/src/i18n/en.js")
+    hi_keys = parse_keys(root / "web/src/i18n/hi.js")
+
+    assert en_keys == hi_keys, f"Key mismatch: EN-HI={en_keys - hi_keys}, HI-EN={hi_keys - en_keys}"
+
+    # Verify presenter mode keys exist
+    expected_presenter_keys = [
+        "presenter.shortLabel",
+        "presenter.enter",
+        "presenter.exit",
+        "presenter.title",
+        "presenter.stepIndicator",
+        "presenter.restart",
+        "presenter.prev",
+        "presenter.next",
+        "presenter.stepOnboardingTitle",
+        "presenter.stepPhrasesTitle",
+        "presenter.stepSpeakTitle",
+        "presenter.stepSettingsTitle",
+        "presenter.stepProgressTitle",
+        "demo.sourceBadge_pilot",
+        "demo.sourceBadge_simulated",
+        "demo.sourceBadge_torgo",
+        "speak.usingBrowserTts",
+        "speak.micTroubleshootTitle",
+    ]
+    for key in expected_presenter_keys:
+        assert key in en_keys, f"Missing key {key} in en.js"
+        assert key in hi_keys, f"Missing key {key} in hi.js"
+
+
+def test_demo_source_tagging_contract(env):
+    """Phrases enrolled through normal app flow have empty sources, while demo loader tags sources."""
+    client = env.signup(language="hi")
+    phrases = client.get("/me/phrases").json()
+    assert phrases, "Expected default phrases"
+    # Normal user enrollment has empty demo sources
+    assert all(p["sources"] == [] for p in phrases)
+
+    # When sample is tagged with speech_source in DB
+    target_phrase = phrases[0]
+    db.execute(
+        "INSERT INTO samples (user_id, phrase_id, audio_path, prisma_hypothesis, source, speech_source, language, created_at)"
+        " VALUES (1, ?, 'mock.wav', 'mock text', 'enroll', 'pilot', 'hi', datetime('now'))",
+        (target_phrase["id"],)
+    )
+
+    updated = client.get("/me/phrases").json()
+    updated_target = next(p for p in updated if p["id"] == target_phrase["id"])
+    assert updated_target["sources"] == ["pilot"]
+
