@@ -264,3 +264,23 @@ def test_signup_invite_code_enforcement_and_frontend_contract(env, monkeypatch):
     assert "signup-invite" in auth_pages_code
     assert "invite_code: inviteCode" in auth_pages_code
     assert "export const config =" in api_js_code
+
+
+def test_deployment_dry_run_preflight_check():
+    """Verify that deployment dry-run check passes on current HEAD with zero blocked files."""
+    import subprocess
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    cmd = [
+        "uv",
+        "run",
+        "scripts/deploy_space.py",
+        "--check-only",
+    ]
+    res = subprocess.run(cmd, cwd=root, capture_output=True, text=True)
+    assert res.returncode == 0, f"deploy_space.py --check-only failed: {res.stderr}"
+    assert "checks passed:" in res.stdout
+    assert "docs/SUBMISSION_PACKAGE.md" in res.stdout
+    assert "data/app.db" not in res.stdout
+    assert ".env" not in res.stdout.splitlines()
