@@ -85,3 +85,21 @@ To protect evaluator budgets and ensure reproducible evaluations even when offli
   uv run scripts/evaluate.py --email demo@example.com --folder data/demo
   ```
   Evaluates top-1 and top-3 accuracy, acoustic distance thresholds, and context filtering without consuming live Gnani credits.
+
+---
+
+## 5. Verified Privacy, Data Flow, and Local Storage Guarantees
+
+Sunn is built around strict data ownership principles, avoiding opaque cloud aggregation:
+
+### 1. External Data Flow (What Leaves the Server)
+- **Gnani Prisma STT**: Audio recordings of spoken phrases are transmitted to Gnani's API for transcription. Only the audio bytes necessary for transcription are sent.
+- **Gnani Timbre TTS**: Confirmed phrase text is sent to Gnani's synthesis endpoint to generate speech audio.
+- **No Third-Party Analytics**: Zero third-party trackers, telemetry libraries, analytics beacons, or advertising SDKs are included in the frontend or backend.
+
+### 2. Local Storage and Data Isolation (What Stays Local)
+- **Database Storage**: User profiles, phrase texts, slot words, templates, and usage timestamps reside exclusively in the local SQLite database (`DATA_DIR/app.db`).
+- **Audio Files**: Raw WAV recordings and cached Prisma hypothesis files are stored under `DATA_DIR/users/<user_id>/`. The server does not provide any public endpoint to browse or download these recordings.
+- **Static File Isolation**: The static web server serves exclusively from `web/dist`. Automated path-traversal regression tests verify that directory escape attempts (`../.env` or `../app.db`) are blocked.
+- **Redacted Operational Logging**: Logs are written to `logs/app.log` in JSON Lines format with automated 5 MB rotation. Sensitive credentials, raw passwords, session tokens, audio paths, and full transcripts are sanitized before writing.
+- **Atomic Deletion Guarantee**: Invoking `DELETE /api/me` atomically purges all database records across `users`, `phrases`, `slot_words`, `templates`, `samples`, and `uses`, while deleting the user's audio directory and voiceprints on disk.
