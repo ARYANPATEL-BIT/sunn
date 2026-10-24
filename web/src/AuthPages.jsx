@@ -1,5 +1,5 @@
 import { Eye, EyeOff } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import * as api from './api.js'
 import { safeNext, useAuth } from './auth.jsx'
@@ -10,7 +10,14 @@ import { Alert, errorText, LangToggle, Pill, reducedMotion, useGo, Wordmark } fr
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const MIN_PASSWORD = 8
 // Which field a refusal from the API is about, so its message sits under that field.
-const FIELD_OF = { no_name: 'name', bad_email: 'email', email_taken: 'email', short_password: 'password' }
+const FIELD_OF = {
+  no_name: 'name',
+  bad_email: 'email',
+  email_taken: 'email',
+  short_password: 'password',
+  invite_required: 'invite_code',
+  no_invite_code: 'invite_code',
+}
 
 // A label above, the input, then a hint or this field's error underneath.
 function Field({ id, label, hint, error, children }) {
@@ -193,12 +200,29 @@ export function SignupPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [inviteCode, setInviteCode] = useState(params.get('invite') || '')
+  const [inviteRequired, setInviteRequired] = useState(false)
   const [speaks, setSpeaks] = useState(lang) // the language the person speaks, not the page's
   const [consent, setConsent] = useState(false)
   const [busy, setBusy] = useState(false)
-  const refs = { name: useRef(null), email: useRef(null), password: useRef(null) }
+  const refs = { name: useRef(null), email: useRef(null), password: useRef(null), invite_code: useRef(null) }
   const { errors, show, fromApi } = useFormErrors(refs)
   const leaving = useRef(false)
+
+  useEffect(() => {
+    let active = true
+    api
+      .config()
+      .then((cfg) => {
+        if (active && cfg?.invite_required) {
+          setInviteRequired(true)
+        }
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
 
   if (status === 'ready' && user && !leaving.current) return <Navigate replace to={next || '/app/speak'} />
 
@@ -208,13 +232,20 @@ export function SignupPage() {
     const found = {}
     if (!name.trim()) found.name = refusal('no_name')
     if (!EMAIL.test(email.trim())) found.email = refusal('bad_email')
+    if (inviteRequired && !inviteCode.trim()) found.invite_code = refusal('no_invite_code')
     if (password.length < MIN_PASSWORD) found.password = refusal('short_password')
     if (Object.keys(found).length) return show(found)
     setBusy(true)
     show({})
     let me
     try {
-      me = await api.signup({ name: name.trim(), email: email.trim(), password, language: speaks })
+      me = await api.signup({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        language: speaks,
+        invite_code: inviteCode.trim() || undefined,
+      })
     } catch (error) {
       fromApi(error)
       return setBusy(false)
@@ -248,6 +279,27 @@ export function SignupPage() {
         <Field id="signup-email" label={t('auth.email')} error={errors.email}>
           {(aria) => <EmailInput value={email} onChange={setEmail} inputRef={refs.email} {...aria} />}
         </Field>
+        {inviteRequired && (
+          <Field
+            id="signup-invite"
+            label={t('signup.inviteCode')}
+            hint={t('signup.inviteHint')}
+            error={errors.invite_code}
+          >
+            {(aria) => (
+              <input
+                ref={refs.invite_code}
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value)}
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                placeholder={t('signup.invitePlaceholder')}
+                {...aria}
+              />
+            )}
+          </Field>
+        )}
         <Field id="signup-password" label={t('auth.password')} hint={t('signup.passwordHint')} error={errors.password}>
           {(aria) => (
             <PasswordInput

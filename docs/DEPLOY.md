@@ -234,3 +234,27 @@ To stop or remove the live demo and avoid unnecessary resource usage:
 1. Open your Space at `https://huggingface.co/spaces/<you>/sunn`.
 2. Navigate to **Settings -> Delete this Space**.
 3. Confirm deletion to permanently erase all deployed files, secrets, and container instances.
+
+## Deployment Security Review and Launch Decision
+
+### Security & Privacy Audit Summary
+
+| Item | Requirement | Verification Result |
+| - | - | - |
+| **Registration Guard** | Sign-up restricted against quota drainage | **Verified**: `DEMO_INVITE_CODE` supported across API, frontend UI, and i18n dictionaries. |
+| **Session Security** | Signed tokens, HttpOnly, Secure, SameSite | **Verified**: `sunn_session` cookie enforces `HttpOnly=True`, `SameSite="Lax"`, `Secure=True`. |
+| **Proxy Safety** | Client IP extracted from trusted proxy header | **Verified**: `TRUST_PROXY=1` uses left-most `X-Forwarded-For` with rate limiting. |
+| **Frontend Secrets** | No server keys bundled in client code | **Verified**: Zero API keys or secrets in `web/src` or production Vite bundle. |
+| **Data Isolation** | Private files unreadable via static routing | **Verified**: Static file server prevents directory traversal out of `web/dist`. |
+| **Account Deletion** | Complete erasure of user recordings and records | **Verified**: `DELETE /me` purges database rows, audio files, and cloned voice directories. |
+| **Quota Caps** | Automatic budget protection against overages | **Verified**: `GNANI_CALL_LIMIT` and `DAILY_CALL_CAP_PER_USER` reject before API calls. |
+| **Fallback Messaging** | Transparent TTS notices | **Verified**: UI displays notice when offline or browser speech synthesis fallback is used. |
+
+### Recommended Deployment Outcome: Ready for Restricted-Access Demo Only
+
+**Recommendation**: Set `DEMO_INVITE_CODE` when deploying to a public Hugging Face Space.
+
+**Rationale**:
+1. Without `DEMO_INVITE_CODE`, any anonymous visitor or web crawler finding the Space address could create accounts and consume the Gnani credit budget.
+2. With `DEMO_INVITE_CODE` configured, only challenge evaluators and judges possessing the invite code can create accounts and run speech recognitions.
+3. Free Hugging Face Spaces wipe container storage upon reboot. Real patient recordings must never be stored on ephemeral public cloud tiers; only synthetic demo data should be demonstrated.
