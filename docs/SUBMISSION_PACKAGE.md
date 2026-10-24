@@ -103,3 +103,46 @@ Sunn is built around strict data ownership principles, avoiding opaque cloud agg
 - **Static File Isolation**: The static web server serves exclusively from `web/dist`. Automated path-traversal regression tests verify that directory escape attempts (`../.env` or `../app.db`) are blocked.
 - **Redacted Operational Logging**: Logs are written to `logs/app.log` in JSON Lines format with automated 5 MB rotation. Sensitive credentials, raw passwords, session tokens, audio paths, and full transcripts are sanitized before writing.
 - **Atomic Deletion Guarantee**: Invoking `DELETE /api/me` atomically purges all database records across `users`, `phrases`, `slot_words`, `templates`, `samples`, and `uses`, while deleting the user's audio directory and voiceprints on disk.
+
+---
+
+## 6. Safe Deployment Dry Run and Verification Commands
+
+Judges and evaluators can verify the entire application locally using standard terminal commands without incurring API costs:
+
+### 1. Local Setup
+```powershell
+# 1. Install backend dependencies
+uv sync
+
+# 2. Build production frontend assets
+cd web; npm ci; npm run build; cd ..
+
+# 3. Run full automated test suite (100 backend tests)
+uv run pytest
+
+# 4. Launch single-container server (API + Web on port 7860)
+uv run src/server.py --port 7860
+```
+Open [http://localhost:7860](http://localhost:7860) in a desktop browser.
+
+### 2. Pre-Flight Deployment Dry Run
+Verify that the repository contains no untracked secrets, uncommitted changes, or blocked files:
+```powershell
+uv run scripts/deploy_space.py --check-only
+```
+Expected output: Lists the tracked deployment files and reports `checks passed: XX files would be uploaded`.
+
+---
+
+## 7. Operational Troubleshooting Guide
+
+| Issue / Error | Likely Root Cause | Verified Resolution |
+| :--- | :--- | :--- |
+| **Microphone blocked / red icon** | Non-secure origin on mobile, or permission denied in browser | On desktop, use `http://localhost:7860` (treated as secure origin). On mobile, access via HTTPS direct URL. Check browser site permissions to allow microphone access. |
+| **502 `gnani_unreachable`** | `GNANI_API_KEY` is not set or invalid | The API fails safely without crashing. Audio playback automatically falls back to browser speech synthesis (`window.speechSynthesis`), with an on-screen notice. |
+| **403 `invite_required`** | Sign-up attempted without invite code when `DEMO_INVITE_CODE` is set | Enter the designated evaluator invite code in the signup form. |
+| **429 `too_many_attempts`** | 5 incorrect invite codes entered within 15 minutes | IP address temporarily locked out. Wait 15 minutes or test from another client IP address. |
+| **429 `credit_limit_reached`** | Global `GNANI_CALL_LIMIT` reached | Previously cached phrases continue to play without spending new credits. Local TTS fallback remains active. |
+| **404 on page reload** | Reverse proxy misconfiguration or accessing framed HF preview | Always use the direct space address (`https://<space>.hf.space`), which routes unknown paths to `index.html` for client-side routing. |
+| **Cold start delay (20 to 30s)** | Free Hugging Face Space waking from idle pause | Allow 30 seconds for the container to boot upon first visit. Once awake, performance is instantaneous. |
