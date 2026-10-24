@@ -79,6 +79,9 @@ function upload(path, blob, fields = {}) {
 
 // --- Authentication and Account ---
 
+// Server configuration (e.g. whether invite_required is true)
+export const config = () => request('/config').then(json)
+
 // language is the language the person speaks: 'hi' or 'en'
 export const signup = (body) => post('/auth/signup', { ...body, consent: true }).then(json)
 export const login = (email, password) => post('/auth/login', { email, password }).then(json)
