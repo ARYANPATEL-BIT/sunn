@@ -146,3 +146,21 @@ Expected output: Lists the tracked deployment files and reports `checks passed: 
 | **429 `credit_limit_reached`** | Global `GNANI_CALL_LIMIT` reached | Previously cached phrases continue to play without spending new credits. Local TTS fallback remains active. |
 | **404 on page reload** | Reverse proxy misconfiguration or accessing framed HF preview | Always use the direct space address (`https://<space>.hf.space`), which routes unknown paths to `index.html` for client-side routing. |
 | **Cold start delay (20 to 30s)** | Free Hugging Face Space waking from idle pause | Allow 30 seconds for the container to boot upon first visit. Once awake, performance is instantaneous. |
+
+---
+
+## 8. Final Challenge Submission Checklist
+
+This checklist tracks the final deliverables required for official form submission:
+
+| Deliverable | Description / Location | Status |
+| :--- | :--- | :---: |
+| **Code Repository** | `https://github.com/ARYANPATEL-BIT/sunn` | **Verified Ready** |
+| **Backend Test Suite** | 100 passing automated pytest assertions (`uv run pytest`) | **Verified Ready** |
+| **Frontend Production Build** | Vite production bundle built without errors (`web/dist/`) | **Verified Ready** |
+| **Technical Write-Up** | Comprehensive solution documentation in `docs/WRITEUP.md` | **Verified Ready** |
+| **Health Check & Ops** | Live health probe at `/api/health` and `/health` with log rotation | **Verified Ready** |
+| **Live Deployment URL** | Direct Space URL: `[placeholder: https://<username>-sunn.hf.space]` | *Manual Team Action* |
+| **Evaluator Invite Code** | Passcode for judges: `[placeholder: private code generated for reviewers]` | *Manual Team Action* |
+| **3-Minute Demo Video** | Video link (YouTube/Drive): `[placeholder: demo video link]` | *Manual Team Action* |
+| **Social Announcements** | LinkedIn and X posts prepared in `docs/POSTS.md` | *Manual Team Action* |
