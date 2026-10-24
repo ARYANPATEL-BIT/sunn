@@ -228,3 +228,39 @@ def test_static_hosting_path_traversal_protection(env, tmp_path):
         assert "SECRET_KEY" not in res.text, f"Secret leaked via path {path}"
         assert "SQLITE_BINARY_DUMP_CONTENT" not in res.text, f"Database leaked via path {path}"
         assert res.status_code in (200, 404, 400)
+
+
+def test_signup_invite_code_enforcement_and_frontend_contract(env, monkeypatch):
+    """Verify signup invite code enforcement in API and frontend integration."""
+    from pathlib import Path
+
+    client = env.client()
+
+    # 1. Open signup when DEMO_INVITE_CODE is unset
+    monkeypatch.delenv("DEMO_INVITE_CODE", raising=False)
+    assert client.get("/config").json() == {"invite_required": False}
+    open_res = signup(client)
+    assert open_res.status_code == 200
+
+    # 2. Restricted signup when DEMO_INVITE_CODE is set
+    monkeypatch.setenv("DEMO_INVITE_CODE", "secret-evaluator-pass")
+    assert client.get("/config").json() == {"invite_required": True}
+
+    # Missing invite code is rejected with 403
+    rejected = signup(client)
+    assert rejected.status_code == 403
+    assert rejected.json()["error"] == "invite_required"
+
+    # Valid invite code is accepted with 200
+    allowed = signup(client, invite_code="secret-evaluator-pass")
+    assert allowed.status_code == 200
+
+    # 3. Verify frontend AuthPages and api client have invite code contract
+    root = Path(__file__).resolve().parent.parent
+    auth_pages_code = (root / "web" / "src" / "AuthPages.jsx").read_text(encoding="utf-8")
+    api_js_code = (root / "web" / "src" / "api.js").read_text(encoding="utf-8")
+
+    assert "inviteRequired" in auth_pages_code
+    assert "signup-invite" in auth_pages_code
+    assert "invite_code: inviteCode" in auth_pages_code
+    assert "export const config =" in api_js_code
