@@ -1,9 +1,9 @@
 # Sunn Challenge Submission Package
 
-**Gnani AI's Great Indian AI Internship Challenge**  
-**Project**: Sunn (सुन)  
-**Submission Category**: Speech AI / Assistive Technology  
-**Primary Languages**: Hindi (`hi-IN`) and Indian English (`en-IN`)
+- **Challenge**: Gnani AI's Great Indian AI Internship Challenge
+- **Project**: Sunn (सुन)
+- **Category**: Speech AI / Assistive Technology
+- **Primary Languages**: Hindi (`hi-IN`) and Indian English (`en-IN`)
 
 ---
 
