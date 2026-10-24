@@ -190,3 +190,41 @@ def test_database_custom_data_dir_and_persistence_isolation(tmp_path, monkeypatc
     assert db.row("SELECT COUNT(*) AS c FROM uses WHERE user_id = ?", (uid,))["c"] == 0
     # api_calls retained as anonymous counter with user_id NULL
     assert db.row("SELECT user_id FROM api_calls")["user_id"] is None
+
+
+def test_static_hosting_path_traversal_protection(env, tmp_path):
+    """Ensure path traversal attacks cannot escape web/dist to access secrets, databases, or logs."""
+    import server
+
+    # Setup sandbox: root directory containing secret file and a dist folder
+    sandbox = tmp_path / "sandbox"
+    sandbox.mkdir()
+    (sandbox / ".env").write_text("SECRET_KEY=leaked_production_secret")
+    (sandbox / "app.db").write_text("SQLITE_BINARY_DUMP_CONTENT")
+
+    dist = sandbox / "dist"
+    dist.mkdir()
+    (dist / "index.html").write_text("<html><body>Sunn App</body></html>")
+    (dist / "style.css").write_text("body { color: black; }")
+
+    client = TestClient(server.make_app(str(dist)), base_url="https://testserver")
+
+    # Valid static asset request
+    assert client.get("/style.css").text == "body { color: black; }"
+
+    # Traversal attempts must never return secret files or db content
+    traversal_paths = [
+        "/../.env",
+        "/../../.env",
+        "/..%2F..%2F.env",
+        "/../app.db",
+        "/../../app.db",
+        "/..%2F..%2Fapp.db",
+        "/..%2F.env",
+        "/static/../../.env",
+    ]
+    for path in traversal_paths:
+        res = client.get(path)
+        assert "SECRET_KEY" not in res.text, f"Secret leaked via path {path}"
+        assert "SQLITE_BINARY_DUMP_CONTENT" not in res.text, f"Database leaked via path {path}"
+        assert res.status_code in (200, 404, 400)
