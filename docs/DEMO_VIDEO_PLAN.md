@@ -59,3 +59,16 @@ This document provides a production-ready recording script and screen capture pl
 - [ ] Verify presenter mode toggle (`Alt + P`) works cleanly for quick navigation if recording in one continuous take.
 - [ ] Ensure no personal email addresses, API keys, or private files are visible during browser recording.
 - [ ] Export video as MP4 with H.264 video codec and AAC audio codec.
+
+---
+
+## Feature Status for Presenters and Evaluators
+
+| Feature in Video | Implementation Status | Data Source Used in Demo |
+| :--- | :--- | :--- |
+| **Prisma STT & Timbre TTS** | **Implemented** | Live Gnani API endpoints |
+| **Acoustic Fingerprinting** | **Implemented** | Personal SQLite matching algorithm (`src/matcher.py`) |
+| **Web Speech API Fallback** | **Implemented** | Client-side `window.speechSynthesis` |
+| **Atypical Speech Samples** | **Synthetic / Consented** | Pre-recorded demo corpus (`data/demo/`) labeled `pilot` or `simulated` |
+| **Voice Cloning Consent** | **Implemented / Experimental** | Gnani Voice Clone API (`vachana-vc-v1`), requires explicit audio consent |
+| **Progress Metrics** | **Implemented** | Usage history and Prisma string distance trends (non-clinical) |
