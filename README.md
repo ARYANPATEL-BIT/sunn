@@ -299,6 +299,14 @@ uv run scripts/smoke_test.py first.wav second.wav                          # htt
 uv run scripts/smoke_test.py first.wav second.wav --url https://<you>-sunn.hf.space/api --invite <code>
 ```
 
+## Challenge Submission
+
+- **Master Submission Package**: [`docs/SUBMISSION_PACKAGE.md`](docs/SUBMISSION_PACKAGE.md) (judge-facing evaluation guide, problem statement, architecture, truthful limits, and troubleshooting).
+- **Technical Write-up**: [`docs/WRITEUP.md`](docs/WRITEUP.md) (in-depth solution design, user personas, and pipeline details).
+- **Deployment and Dry Run**: [`docs/DEPLOY.md`](docs/DEPLOY.md) (Docker setup, persistent storage comparison, and pre-flight check).
+- **Live Demo Runbook**: [`docs/DEMO_RUNBOOK.md`](docs/DEMO_RUNBOOK.md) (step-by-step evaluator journey).
+- **Demo Video Script**: [`docs/DEMO_VIDEO_PLAN.md`](docs/DEMO_VIDEO_PLAN.md) (3-minute shot list and recording plan).
+
 ## API
 
 `docs/API.md` is the contract the web app is built against: every route, its body, an

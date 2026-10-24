@@ -2,8 +2,16 @@
 
 This runbook provides a reproducible, step-by-step walkthrough for live presentations to judges, mentors, and clinical partners.
 
-## Prerequisites and Local Environment
+## Prerequisites and Evaluation Modes
 
+### Mode A: Single-Port Production Server (Recommended for Reviewers)
+```powershell
+cd web; npm run build; cd ..
+uv run src/server.py --port 7860
+```
+Open `http://localhost:7860` in a desktop browser (Chrome, Edge, or Firefox). Desktop browsers treat localhost as a secure origin, enabling microphone access.
+
+### Mode B: Dual Dev Servers with Hot Reload (For Development)
 1. **Backend Server**:
    ```powershell
    uv run uvicorn api:app --app-dir src --port 8000
@@ -12,10 +20,12 @@ This runbook provides a reproducible, step-by-step walkthrough for live presenta
    ```powershell
    cd web; npm run dev
    ```
-   Open `http://localhost:5173` in a desktop browser (Chrome, Edge, or Firefox).
-3. **Presenter Mode Activation**:
-   - Click the **Demo** pill in the top navigation header, or press **Alt + P** (**Option + P** on macOS).
-   - The Presenter Cue Bar docks near the top of the viewport with step navigation pills and talking points.
+   Open `http://localhost:5173`.
+
+### Evaluator Account Setup and Invite Code
+1. Navigate to `/signup`. If `DEMO_INVITE_CODE` is configured on the server, enter the designated evaluator invite code in the demo code field.
+2. Enter Name, Email, Password, select language (Hindi or English), and check the consent box.
+3. Once registered, click the **Demo** pill in the top header (or press **Alt + P** / **Option + P** on macOS) to activate the Presenter Bar.
 
 ---
 

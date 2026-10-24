@@ -182,3 +182,44 @@ def test_no_unresolved_merge_conflicts():
                 conflict_violations.append((str(path.relative_to(ROOT)), idx, line))
 
     assert not conflict_violations, f"Found merge conflict markers: {conflict_violations}"
+
+
+def test_submission_package_documentation_integrity():
+    """Verify docs/SUBMISSION_PACKAGE.md contains all required judge-facing sections without secrets."""
+    doc_path = ROOT / "docs" / "SUBMISSION_PACKAGE.md"
+    assert doc_path.exists(), "docs/SUBMISSION_PACKAGE.md must exist"
+    content = doc_path.read_text(encoding="utf-8")
+
+    required_sections = [
+        "## 1. Executive Summary and Problem Statement",
+        "## 2. Technical Architecture and Stack",
+        "## 3. Judge-Facing Evaluation Sequence",
+        "## 4. Synthetic Demo Data vs Live Gnani Inference",
+        "## 5. Verified Privacy, Data Flow, and Local Storage Guarantees",
+        "## 6. Safe Deployment Dry Run and Verification Commands",
+        "## 7. Operational Troubleshooting Guide",
+        "## 8. Final Challenge Submission Checklist",
+    ]
+    for section in required_sections:
+        assert section in content, f"Missing section in SUBMISSION_PACKAGE.md: {section}"
+
+    # Verify no accidental em dashes in documentation
+    assert chr(0x2014) not in content, "Found em dash in SUBMISSION_PACKAGE.md"
+
+    # Verify key topics are discussed honestly
+    assert "Not a Medical Device" in content
+    assert "window.speechSynthesis" in content
+    assert "Fixed Phrase Vocabulary" in content
+
+
+def test_synthetic_demo_data_provenance_and_safety():
+    """Verify synthetic demo provenance tags in schema and evaluate script availability."""
+    import db
+
+    # 1. Schema check for allowed provenance tags
+    cols = [r["name"] for r in db.rows("PRAGMA table_info(samples)")]
+    assert "speech_source" in cols
+
+    # 2. Evaluation script exists
+    eval_script = ROOT / "scripts" / "evaluate.py"
+    assert eval_script.exists()

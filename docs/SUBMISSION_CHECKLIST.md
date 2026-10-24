@@ -21,6 +21,7 @@ This document tracks all submission deliverables for the Gnani Great Indian AI I
 | **Production Build** | Clean Vite build producing production bundles without errors | `cd web && npm run build` | **Complete (built in <500ms)** |
 | **Deployment Package** | Single Docker image serving API on `/api` and web app on port 7860 | `Dockerfile`, `src/server.py`, `docs/DEPLOY.md` | **Complete** |
 | **Challenge Write-Up** | Comprehensive solution overview, user personas, and technical write-up | `docs/WRITEUP.md` | **Complete** |
+| **Submission Package** | Unified judge-facing documentation, dry run, and evaluation runbook | `docs/SUBMISSION_PACKAGE.md` | **Complete** |
 | **Social Media Posts** | Drafts for LinkedIn and X announcements | `docs/POSTS.md` | **Complete** |
 
 ---
