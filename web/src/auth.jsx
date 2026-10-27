@@ -2,12 +2,14 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { Navigate, useLocation } from 'react-router-dom'
 import * as api from './api.js'
 import { useLang } from './i18n/index.jsx'
+import { forgetUser } from './prefs.js'
 import { Alert } from './ui.jsx'
 
 const AuthContext = createContext(null)
 
 // The session itself is an httpOnly cookie; this only mirrors who it belongs to.
 // status: 'loading' until GET /auth/me answers, then 'ready' (user or null) or 'error'.
+// left: the user signed out or deleted the account on purpose, so /app/* goes home, not to login.
 export function AuthProvider({ children }) {
   const [state, setState] = useState({ status: 'loading', user: null, error: null })
 
@@ -26,13 +28,24 @@ export function AuthProvider({ children }) {
     return () => removeEventListener(api.SIGNED_OUT, signedOut)
   }, [refresh])
 
+  const left = () => {
+    api.stopAudio()
+    setState({ status: 'ready', user: null, error: null, left: true })
+  }
   const value = {
     ...state,
     refresh,
     signedIn: (user) => setState({ status: 'ready', user, error: null }),
     async logout() {
       await api.logout().catch(() => {}) // even if the server is down, forget the user here
-      setState({ status: 'ready', user: null, error: null })
+      left()
+    },
+    // Deletes the account on the server (which also ends the session), then everything this
+    // browser kept about it. Display preferences belong to the device and stay.
+    async deleteAccount() {
+      await api.deleteAccount()
+      forgetUser(state.user?.id)
+      left()
     },
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -49,7 +62,7 @@ export const loginPath = (next) => `/login?next=${encodeURIComponent(next)}`
 
 // /app/*: signed-out visitors go to /login, which brings them back here afterwards.
 export function RequireAuth({ children }) {
-  const { status, user, error, refresh } = useAuth()
+  const { status, user, error, refresh, left } = useAuth()
   const { t } = useLang()
   const location = useLocation()
 
@@ -70,6 +83,6 @@ export function RequireAuth({ children }) {
       </section>
     )
   }
-  if (!user) return <Navigate replace to={loginPath(location.pathname + location.search)} />
+  if (!user) return <Navigate replace to={left ? '/' : loginPath(location.pathname + location.search)} />
   return children
 }
