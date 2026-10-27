@@ -5,6 +5,7 @@ import os
 import audio
 import db
 import gnani
+import gnani_mock
 
 # From https://docs.gnani.ai/api/STT/speech-to-text.md
 URL = "https://api.vachana.ai/stt/v3"
@@ -29,6 +30,8 @@ def transcribe(wav_path, language="hi", user_id=None):
     for (see gnani.post)."""
     with open(wav_path, "rb") as f:
         audio_bytes = f.read()
+    if gnani_mock.on():
+        return gnani_mock.transcript(audio_bytes, language)
     seconds = audio.seconds(audio_bytes)
     path = cache_path(audio_bytes, language)
     if os.path.exists(path):
