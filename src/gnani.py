@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 import audio
 import db
+import gnani_mock
 import log
 
 TIMEOUT = 15  # seconds per attempt
@@ -58,6 +59,8 @@ def post(kind, url, audio_seconds=None, user_id=None, **request):
     sent call in api_calls; a TTS call's audio_seconds is the length of the audio it returned.
     A call for a user (user_id) also counts against their daily cap; scripts pass none."""
     load_dotenv()
+    if gnani_mock.on():  # prisma.py and speak.py answer mock calls before they get here
+        raise GnaniError("gnani_rejected", "GNANI_MOCK is on; no request is sent to Gnani")
     api_key = os.environ.get("GNANI_API_KEY")
     if not api_key or api_key == "your-key-here":
         raise GnaniError("gnani_unreachable", "GNANI_API_KEY is not configured in .env", status=502)
