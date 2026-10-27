@@ -50,6 +50,7 @@ body {
   margin: 0;
   background: var(--sky);
   -webkit-text-size-adjust: 100%;
+  text-wrap: pretty; /* no single word left alone on a last line, which Hindi lines often did */
 }
 
 h1,
@@ -390,6 +391,13 @@ button:disabled {
   font-size: 16px;
 }
 
+/* EN and हिं stay narrow, to read as one pill, but each takes taps 44px wide and tall */
+.lang-toggle button::after {
+  content: '';
+  position: absolute;
+  inset: -1px -4px;
+}
+
 .lang-toggle button[aria-pressed='true'] {
   color: var(--foam);
   text-decoration: underline 1px;
@@ -412,6 +420,13 @@ button:disabled {
   letter-spacing: -0.01em;
   text-decoration: none;
   text-shadow: 0 0 18px rgb(242 246 251 / 0.35);
+}
+
+.site-nav .wordmark-link,
+.site-footer .wordmark-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 /* ---- Forms ---- */
@@ -1185,6 +1200,12 @@ legend + * {
   min-width: 0;
 }
 
+/* No header control is squeezed below its 44px; the user's name gives way first */
+.app-header-end > .pill-outline,
+.app-header-end > .lang-toggle {
+  flex-shrink: 0;
+}
+
 .who {
   min-width: 0;
   max-width: 14em;
@@ -1202,6 +1223,10 @@ legend + * {
   content: '';
   position: absolute;
   inset: -10px -2px;
+}
+
+.app-header .lang-toggle button::after {
+  inset: -10px -4px;
 }
 
 .app-header .pill-outline,
@@ -1544,8 +1569,6 @@ legend + * {
   padding: 0 var(--s1);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--saffron);
   border: 1px solid rgb(243 154 43 / 0.4);
   border-radius: 999px;
@@ -2439,6 +2462,28 @@ html.enhanced-focus :focus-visible {
     0 0 14px var(--haze);
 }
 
+/* The own-voice file picker: a pill in the app's language over the visually hidden input */
+.file-pick {
+  max-width: 100%;
+  cursor: pointer;
+}
+
+.file-pick span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+input[type='file']:focus-visible + .file-pick {
+  outline: 2px solid var(--haze);
+  outline-offset: 3px;
+}
+
+input[type='file']:disabled + .file-pick {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* Header Settings Navigation */
 .settings-nav-btn {
   min-height: 44px;
@@ -3310,7 +3355,8 @@ html.enhanced-focus :focus-visible {
   border-radius: 16px;
 }
 
-.step-number {
+/* The welcome guide's numbered steps; the landing page's .step-number stays plain mist. */
+.workflow-item .step-number {
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -3436,6 +3482,24 @@ html.enhanced-focus :focus-visible {
   gap: var(--s1);
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+/* Narrow screens: only its icon, like Settings and Log out (the name stays for screen readers) */
+@media (max-width: 600px) {
+  .presenter-nav-btn {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .presenter-nav-btn .presenter-nav-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 .presenter-nav-btn.active {
@@ -3659,10 +3723,8 @@ html.enhanced-focus :focus-visible {
 .demo-source-tag {
   display: inline-flex;
   align-items: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   padding: 2px 7px;
   border-radius: 6px;
   border: 1px solid transparent;
