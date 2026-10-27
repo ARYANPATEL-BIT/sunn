@@ -12,9 +12,9 @@ export default {
 
   'hero.headline': 'Understand every voice.',
   'hero.line1': 'Speak the way you can.',
-  'hero.line2': 'Sunn learns your voice and says it back clearly.',
+  'hero.line2': 'Sunn learns how you say your everyday phrases and says them back clearly.',
   'cta.start': 'Start speaking',
-  'feature.learns': 'Learns your voice',
+  'feature.learns': 'Learns how you speak',
   'feature.speaks': 'Speaks it clearly',
   'feature.languages': 'Hindi and English',
 
@@ -77,11 +77,11 @@ export default {
     },
     {
       q: 'How many recordings does it need?',
-      a: "Each phrase is recorded three times, and Sunn suggests 51 everyday phrases to start with. It can match a phrase after its first recording. When none of its guesses is right, you type the phrase you meant, and that teaches it too. We haven't measured yet how quickly it gets good for different people.",
+      a: "Each phrase is recorded three times. Sunn suggests 51 everyday phrases, and you start with the 10 most important: once they have their three recordings each, you can speak. When none of its guesses is right, you type the phrase you meant, and that teaches it too. We haven't measured yet how quickly it gets good for different people.",
     },
     {
       q: 'Where does my audio go?',
-      a: "Recordings are saved on the computer that runs Sunn, and each one is sent to Gnani's servers to be turned into text. The phrase to be spoken is sent to Gnani Timbre. Nothing goes anywhere else.",
+      a: "Recordings are saved on the computer that runs Sunn, and each one is sent to Gnani's servers to be turned into text. The phrase to be spoken is sent to Gnani Timbre. If you add your own voice, that recording is sent to Gnani once to make the voice, then deleted. Nothing goes anywhere else.",
     },
     {
       q: 'Is it free?',
@@ -181,7 +181,7 @@ export default {
   'enroll.save': 'Save',
 
   'speak.title': 'Speak',
-  'speak.none': 'Record the first phrases first',
+  'speak.none': 'Record your first phrases',
   'speak.noneBody': '{n} of {total} are ready. Each one needs 3 recordings.',
   'speak.goTeach': 'Record phrases',
   'speak.maybe': 'Maybe',
@@ -251,7 +251,7 @@ export default {
   'phrases.contextsHelp': 'Select where this phrase is most commonly needed.',
   'phrases.urgentLabel': 'Mark as urgent',
   'phrases.urgentHelp': 'Urgent phrases get an Urgent label when Sunn suggests them.',
-  'phrases.errorRequired': 'Please enter phrase text.',
+  'error.empty_phrase': 'Please enter phrase text.',
   'phrases.addedSuccess': 'Phrase added successfully.',
   'phrases.updatedSuccess': 'Phrase updated successfully.',
   'phrases.deletedSuccess': 'Phrase deleted.',
@@ -277,7 +277,6 @@ export default {
   'progress.weeklyAssistedLabel': 'Assisted by Sunn',
   'progress.weeklyTableToggle': 'Show table view',
   'progress.weeklyChartToggle': 'Show chart view',
-  'progress.weekLabel': 'Week of {date}',
   'progress.noActivity': 'No speech activity recorded in this period.',
   'progress.disclaimerHeading': 'Understanding your statistics',
   'progress.disclaimerText':
@@ -305,7 +304,7 @@ export default {
   'settings.languageLabel': 'Application language',
   'settings.languageHelp': 'For buttons, messages and menus. Only on this device.',
   'settings.langEnglish': 'English',
-  'settings.langHindi': 'हिन्दी (Hindi)',
+  'settings.langHindi': 'हिन्दी',
   'settings.textSizeLabel': 'Text size',
   'settings.textSizeHelp': 'Make text larger across the application for easier reading.',
   'settings.textSizeDefault': 'Default',
@@ -444,7 +443,7 @@ export default {
   'error.invalid_input': 'Something in that wasn\'t right. Check it and try again.',
   'error.bad_audio': 'That recording couldn\'t be read. Please record it again.',
   'error.gnani_unreachable': 'The speech service didn\'t answer. Wait a moment, then try again.',
-  'error.gnani_rejected': 'The speech service couldn\'t use that recording. Please try again.',
+  'error.gnani_rejected': 'The speech service turned the request down. Please try again later.',
   'error.daily_cap_reached': 'This account has used all of today\'s speech service calls. More are available after 5:30 in the morning, India time. Phrases played before still play.',
   'error.no_voice': 'Add your own voice first.',
   'error.not_owner': 'Only the owner of this server can see this.',
@@ -468,7 +467,9 @@ export default {
   'settings.voiceUpload': 'Add voice',
   'settings.voiceUploading': 'Adding the voice. This can take a minute…',
   'enroll.quickStart': 'Record these 10 first. You can start speaking after that.',
-  'enroll.quickProgress': '{n} of {total} ready',
+  'enroll.quickProgress': '{n} of {total} are ready.',
   'enroll.quickDone': 'The first 10 are ready. You can start speaking now, or keep recording more phrases.',
   'enroll.rerecord': 'Recorded in the language you spoke before. Record it again to use it.',
+  'progress.weekColumn': 'Week of',
+  'settings.voiceChoose': 'Choose a recording',
 }
