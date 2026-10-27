@@ -5,7 +5,7 @@ import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { usePresenterMode } from './prefs.js'
 import PresenterBar from './PresenterBar.jsx'
-import { LangToggle, reducedMotion, useGo, Wordmark } from './ui.jsx'
+import { LangToggle, reducedMotion, Wordmark } from './ui.jsx'
 
 const TABS = [
   { to: '/app/enroll', key: 'tab.enroll', Icon: AudioLines },
@@ -19,7 +19,6 @@ const TABS = [
 export default function AppShell() {
   const { user, logout } = useAuth()
   const { t } = useLang()
-  const go = useGo()
   const [presenterMode, togglePresenter] = usePresenterMode()
 
   useEffect(() => {
@@ -32,11 +31,6 @@ export default function AppShell() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [togglePresenter])
-
-  async function logOut() {
-    await logout()
-    go('/', { replace: true })
-  }
 
   return (
     <>
@@ -69,7 +63,7 @@ export default function AppShell() {
             <span className="visually-hidden">{t('app.signedIn', { name: user.name })}</span>
             <span aria-hidden="true">{user.name}</span>
           </span>
-          <button type="button" className="pill-outline logout" onClick={logOut}>
+          <button type="button" className="pill-outline logout" onClick={logout}>
             <LogOut aria-hidden="true" strokeWidth={1.5} />
             <span>{t('app.logOut')}</span>
           </button>
