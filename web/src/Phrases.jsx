@@ -41,7 +41,7 @@ export default function Phrases() {
   const [busy, setBusy] = useState(null) // 'loading', 'adding', 'updating', 'deleting', 'defaults', 'playing'
   const [playingText, setPlayingText] = useState(null)
   const [error, setError] = useState(null)
-  const [feedback, setFeedback] = useState(null)
+  const [feedback, setFeedback] = useState(null) // a string key, worded when shown
   const isMounted = useRef(true)
 
   const loadPhrases = async () => {
@@ -73,7 +73,7 @@ export default function Phrases() {
   }, [])
 
   const flashFeedback = (msgKey) => {
-    setFeedback(t(msgKey))
+    setFeedback(msgKey)
     setTimeout(() => {
       if (isMounted.current) setFeedback(null)
     }, 4000)
@@ -121,7 +121,7 @@ export default function Phrases() {
     e.preventDefault()
     const text = addText.trim()
     if (!text) {
-      setError(new Error(t('phrases.errorRequired')))
+      setError({ kind: 'server', code: 'empty_phrase' })
       return
     }
 
@@ -176,7 +176,7 @@ export default function Phrases() {
     e.preventDefault()
     const text = editText.trim()
     if (!text) {
-      setError(new Error(t('phrases.errorRequired')))
+      setError({ kind: 'server', code: 'empty_phrase' })
       return
     }
 
@@ -344,7 +344,7 @@ export default function Phrases() {
 
       {/* Notifications and Alerts */}
       <div aria-live="polite">
-        {feedback && <p className="notice-banner" role="status">{feedback}</p>}
+        {feedback && <p className="notice-banner" role="status">{t(feedback)}</p>}
         <Alert error={error} />
       </div>
 
