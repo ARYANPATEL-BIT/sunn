@@ -7,6 +7,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException
+from starlette.middleware.gzip import GZipMiddleware
 
 import api
 
@@ -35,7 +36,8 @@ def make_app(dist=DIST):
         return api.health()
 
     if os.path.isdir(dist):
-        app.mount("/", WebApp(directory=dist, html=True))
+        # Compressed: the built script is about 500 KB, 150 KB gzipped, which matters on a phone.
+        app.mount("/", GZipMiddleware(WebApp(directory=dist, html=True), minimum_size=1000))
     return app
 
 

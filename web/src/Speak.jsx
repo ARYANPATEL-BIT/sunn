@@ -247,7 +247,9 @@ export default function Speak() {
             {result.hypothesis && (
               <p className="heard-raw">
                 <span className="muted">{t('speak.heard')}</span>
-                <span className="raw-text">“{result.hypothesis}”</span>
+                <span className="raw-text" lang={user.language}>
+                  “{result.hypothesis}”
+                </span>
               </p>
             )}
 

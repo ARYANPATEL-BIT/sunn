@@ -3,12 +3,13 @@
 Signs up a new user (which sets the session cookie), sets a caregiver, adds the default
 phrases and enrolls the first two with the given wavs. Then enrolls a slot word and a
 template's fixed part with the same two wavs, recognizes wav1 in the home context, confirms
-the top candidate, edits and deletes a phrase, reads the stats and usage, and finally
-deletes the account.
+the top candidate and says it aloud, edits and deletes a phrase, reads the stats and usage, and
+finally deletes the account.
 
-Gnani is called twice (one Prisma call per wav); every later step reuses those cached
-transcripts. --voice ref.wav (5-30 s of speech) also clones that voice and speaks one phrase
-in it: one clone call and one Timbre call, both cached for the next run.
+Gnani is called three times: one Prisma call per wav (the same file twice makes it one) and one
+Timbre call to say the confirmed phrase; every later step reuses those cached answers.
+--voice ref.wav (5-30 s of speech) also clones that voice and speaks one phrase in it: one clone
+call and one Timbre call, both cached for the next run.
 
 --url is the API's base: http://127.0.0.1:7860/api for src/server.py or the Docker image,
 https://<space>.hf.space/api for the deployed Space, http://127.0.0.1:8000 for uvicorn api:app.
@@ -81,6 +82,7 @@ if __name__ == "__main__":
     answer = ({"template_id": top["template_id"], "slot_word_id": top["slot_word_id"]} if top["composed"]
               else {"phrase_id": top["phrase_id"]})
     show(f"confirm {top['text']}", session.post(f"{me}/confirm", json={"sample_id": heard["sample_id"], **answer}))
+    show(f"say {top['text']}", session.post(f"{args.url}/speak", json={"text": top["text"]}, timeout=90))
 
     show("mark the second phrase urgent, at home",
          session.patch(f"{me}/phrases/{phrases[1]['id']}", json={"contexts": ["home"], "urgent": True}))

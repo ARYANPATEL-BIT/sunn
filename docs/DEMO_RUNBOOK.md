@@ -33,26 +33,26 @@ Open `http://localhost:7860` in a desktop browser (Chrome, Edge, or Firefox). De
 
 ### Step 1: Mission and Onboarding (0:00 to 0:45)
 - **Route**: `/app/onboarding` (or Step 1 on the Presenter Bar)
-- **Action**: Display the welcome card and demonstrate language selection (Hindi / Indian English).
+- **Action**: Display the welcome card. Show both languages with the EN / हिं switch in the header, not the guide's own language cards: those also change the language the account speaks, so its recordings stop counting (docs/AUDIT.md).
 - **Presenter Script**:
-  > "Sunn is an assistive communication assistant built for people with dysarthria, whose speech may be slurred or unclear due to stroke, Parkinson's disease, or cerebral palsy. Instead of attempting to retrain large speech models, Sunn uses Gnani Prisma to capture consistent error fingerprints for everyday phrases."
-- **Expected Result**: Language switches cleanly; explains the 3-recording learning principle.
+  > "Sunn is an assistive communication assistant built for people with dysarthria, whose speech may be slurred or unclear due to stroke, Parkinson's disease, or cerebral palsy. Instead of retraining speech models, Sunn keeps Gnani Prisma's transcripts of a few recordings of each everyday phrase as its fingerprint, betting that Prisma mishears a person's phrase in a similar way each time."
+- **Expected Result**: The screen's language switches; explains the 3-recording learning principle.
 - **Recovery Plan**: If the account already finished onboarding, click Step 1 on the Presenter Bar to jump directly back to the guide.
 
 ### Step 2: Personal Phrase Library (0:45 to 1:30)
 - **Route**: `/app/phrases` (or Step 2 on the Presenter Bar)
 - **Action**: Search for "help", filter by "Hospital", and point out the urgency badges and demo source badges.
 - **Presenter Script**:
-  > "Users start with 51 common phrases for basic needs, pain, and hospital settings. Preloaded phrases are labeled with provenance badges: Pilot indicates real consented dysarthric speaker data, Simulated indicates pipeline verification data, and untagged phrases represent live user enrollments."
+  > "Users start with 51 common phrases for basic needs, pain, and hospital settings. Preloaded phrases are labeled with provenance badges: Pilot marks recordings by a real speaker who consented, TORGO the TORGO research corpus, and Simulated speech someone imitating unclear speech. Phrases without a badge were recorded in the app."
 - **Expected Result**: Phrase cards display clear tags (`Demo (Pilot)`, `Urgent`, `Hospital`).
-- **Recovery Plan**: If the library is empty, click "Add everyday phrases" to populate the default phrase bank in under one second.
+- **Recovery Plan**: If the library is empty, click "Add everyday phrases" to add the 51 everyday phrases.
 
 ### Step 3: Speak Screen and Context Recognition (1:30 to 3:00)
 - **Route**: `/app/speak` (or Step 3 on the Presenter Bar)
-- **Action**: Select the `Hospital` context, tap the Sun to record or select a candidate phrase, confirm the selection, and listen to the speech output.
+- **Action**: Use an account whose 10 quick-start phrases have 3 recordings each (Speak opens only then; a demo account from `scripts/load_demo.py`, or record them on Teach). Select the `Hospital` context, tap the Sun to record, pick a candidate, and listen to the speech output.
 - **Presenter Script**:
-  > "In the Speak screen, context selection boosts relevant phrases like pain and medicine. When the speaker speaks unclearly, Gnani Prisma transcribes it, and Sunn ranks the enrolled candidates by phonetic similarity. Tapping a candidate confirms it and speaks it aloud immediately."
-- **Expected Result**: Candidate cards appear with similarity rankings. Tapping a candidate triggers Gnani Timbre speech output.
+  > "In the Speak screen, context selection boosts relevant phrases like pain and medicine. When the speaker speaks unclearly, Gnani Prisma transcribes it, and Sunn ranks the enrolled phrases by how close that transcript is to each phrase's fingerprints. Tapping a candidate confirms it and speaks it aloud immediately."
+- **Expected Result**: The three closest phrases appear, best first (no scores are shown). Tapping one triggers Gnani Timbre speech output.
 - **Recovery Plan**:
   - *Microphone blocked*: Point out the on-screen troubleshooting instructions.
   - *Gnani TTS unavailable*: The app automatically uses browser speech synthesis fallback (`window.speechSynthesis`) and displays a clear notice.
@@ -61,15 +61,15 @@ Open `http://localhost:7860` in a desktop browser (Chrome, Edge, or Firefox). De
 - **Route**: `/app/settings` (or Step 4 on the Presenter Bar)
 - **Action**: Toggle Large Text, Enhanced Focus, and Reduced Motion. Explain own-voice cloning consent.
 - **Presenter Script**:
-  > "Accessibility is foundational. Sunn includes instant switches for Large Text, high-contrast Enhanced Focus rings, and Reduced Motion for motor sensitivities. Optional voice cloning allows synthesis in the user's pre-injury voice, requiring explicit standalone consent."
+  > "Accessibility is foundational. Sunn includes switches for Large text, High-contrast focus outlines, and Reduced motion. Optional voice cloning can speak in the user's own voice from before their speech changed, from an old voice note, with its own consent."
 - **Expected Result**: The interface typography, focus indicators, and animations adapt immediately.
 - **Recovery Plan**: Toggle the settings back and forth to demonstrate instant client-side persistence without page reloads.
 
 ### Step 5: Transparent Progress and Privacy Safeguards (3:45 to 4:30)
 - **Route**: `/app/progress` (or Step 5 on the Presenter Bar)
-- **Action**: Show weekly recognition consistency trends and highlight the complete account deletion cascade.
+- **Action**: Show the weekly trend and the account deletion option.
 - **Presenter Script**:
-  > "We believe in honest metrics. Sunn measures speech recognition consistency against raw transcripts, not medical recovery. All audio and embeddings are isolated per user. Calling Delete Account immediately purges all audio files, cached transcripts, and database rows in a single atomic operation."
+  > "We believe in honest metrics. The weekly trend shows how often Prisma's own transcript already matched the confirmed phrase. It is a usage trend, not a medical measure. Each person's audio and voice are theirs alone. Delete Account removes the recordings, cached transcripts and cloned voice, then the account's rows in one database transaction. Only call counts and the shared stock-voice cache stay, tied to no one."
 - **Expected Result**: Metrics cards and top phrases display cleanly; deletion confirmation dialog is accessible.
 - **Recovery Plan**: Clarify that if progress has no uses recorded yet, the screen displays a helpful empty state guiding the user to speak their first phrase.
 

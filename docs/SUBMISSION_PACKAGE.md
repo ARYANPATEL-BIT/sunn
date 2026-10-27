@@ -9,18 +9,18 @@
 
 ## 1. Executive Summary and Problem Statement
 
-Sunn is an accessibility speech assistant engineered for individuals with atypical speech patterns caused by dysarthria, stroke, cerebral palsy, Parkinson's disease, or motor-neuron conditions.
+Sunn is a speech aid for people with dysarthria, the slurred, slow or uneven speech that can come with a stroke, cerebral palsy, Parkinson's disease or motor neuron disease.
 
 ### The Speech Challenge
-Standard automatic speech recognition (ASR) engines are predominantly trained on neurotypical speech. When presented with dysarthric speech (marked by slurred articulation, variable phonation, or reduced breath control), off-the-shelf recognizers typically exhibit word error rates exceeding 50%. This forces individuals with atypical speech to rely on manual pointing, typing on boards, or continuous translation by family members.
+Standard automatic speech recognition (ASR) engines are predominantly trained on neurotypical speech. When presented with dysarthric speech (marked by slurred articulation, variable phonation, or reduced breath control), off-the-shelf recognizers often get it wrong. This forces individuals with atypical speech to rely on manual pointing, typing on boards, or continuous translation by family members.
 
-### Sunn's Core Innovation: Acoustic Phonetic Fingerprinting
-Sunn does not attempt to repair the general speech recognizer or train large neural models from scratch. Instead, it leverages a clinical observation: **motor-speech dysarthria produces repeatable, consistent articulatory variations for the same speaker**.
+### Sunn's Core Idea: Error Fingerprints
+Sunn does not attempt to repair the general speech recognizer or train a model. Instead, it makes a bet: **a recognizer tends to mishear the same person's phrase in a similar way each time**. We have not yet measured how often that holds (see Results in README.md).
 
-1. When a user records an everyday phrase 2 to 3 times during enrollment, Gnani's Prisma STT often misrecognizes the words.
-2. Crucially, Prisma tends to produce the **same or similar phonetic misrecognition each time** for that speaker's vocal tract characteristics.
-3. Sunn stores those repeatable misrecognitions as an **acoustic phonetic fingerprint** of the intended phrase.
-4. When the user speaks in daily life, Sunn matches the incoming hypothesis against their personal phrase fingerprints and active context (Home, Clinic, Market, Urgent), presenting the top 3 candidate phrases.
+1. A user records each everyday phrase about 3 times during enrollment, and Gnani's Prisma STT transcribes each recording, often not quite right.
+2. The bet is that Prisma's mistakes for that person and phrase are **similar each time**.
+3. Sunn stores those transcripts as the phrase's **fingerprint**: text, not audio.
+4. When the user speaks later, Sunn compares the new transcript with every fingerprint by edit distance, with a small boost for the chosen place (Home, Hospital, Market) and for frequent phrases, and shows the 3 closest phrases.
 5. Upon confirmation, the phrase is vocalized clearly using Gnani's Timbre TTS (Nalini in Hindi, Kaveri in English) or the browser's Web Speech API fallback.
 
 ---
@@ -29,19 +29,19 @@ Sunn does not attempt to repair the general speech recognizer or train large neu
 
 | Component | Technology | Role and Implementation Details |
 | :--- | :--- | :--- |
-| **Frontend** | React 19, Vite, Plain CSS | Responsive single-page application, high-contrast mode, accessible focus targets, WebRTC audio recorder, Web Speech API fallback. |
+| **Frontend** | React 19, Vite, Plain CSS | Responsive single-page application, high-contrast focus outlines, large tap targets, MediaRecorder audio recorder, Web Speech API fallback. |
 | **Backend API** | FastAPI, Python 3.13 / 3.14 | RESTful ASGI backend serving endpoints under `/api`, token authentication, audio conversion via `imageio-ffmpeg`. |
 | **Speech-to-Text** | Gnani Prisma STT | Transcribes incoming WAV audio samples (16 kHz mono 16-bit PCM). |
 | **Text-to-Speech** | Gnani Timbre TTS v2.5 | Synthesizes confirmed phrases aloud (`Nalini` for Hindi, `Kaveri` for Indian English). |
 | **Local Speech Fallback** | Browser Web Speech API | Client-side `window.speechSynthesis` provides immediate vocalization if offline or API limits are reached. |
-| **Database & Storage** | SQLite (`app.db`), Local Disk | Single-tenant database storage, personal audio samples stored in user directories, zero multi-tenant cloud audio pooling. |
+| **Database & Storage** | SQLite (`app.db`), Local Disk | Every account in one SQLite database on the server, recordings in per-user folders; one person's recordings are never matched against another's. |
 | **Deployment** | Docker, Uvicorn | Single container image serving both API and static frontend on port 7860. |
 
 ### Truthful Limitations and Non-Medical Disclaimer
 - **Not a Medical Device**: Sunn is a communication assistance tool. It does not diagnose, treat, prevent, or measure speech disorders. The Progress dashboard displays usage and recognition trends, not clinical therapy metrics.
 - **Fixed Phrase Vocabulary**: Sunn recognizes phrases that have been enrolled or seeded into the user's personal phrase library. It cannot interpret open-ended conversational speech outside of enrolled phrases and slot-word templates.
-- **Acoustic Consistency Requirement**: The matching engine relies on the user making relatively consistent articulatory errors. If speech articulation varies drastically between attempts, recognition confidence will degrade.
-- **Ephemeral Cloud Storage on Free Tiers**: On free Hugging Face Docker Spaces, local container storage resets on restart or sleep. Real patient recordings must only be deployed on persistent VPS volumes or tested locally.
+- **Consistency Requirement**: The matching relies on Prisma mishearing a person's phrase in a similar way each time. If its transcripts of the same phrase vary a lot, or two phrases come back alike, Sunn picks the wrong one.
+- **Ephemeral Cloud Storage on Free Tiers**: On free Hugging Face Docker Spaces, local container storage resets on restart or sleep. Real users' recordings belong on a server with persistent storage, or on a local machine.
 
 ---
 
@@ -53,13 +53,14 @@ Judges and challenge mentors can evaluate Sunn either through a deployed instanc
 
 | Step | Action | Route | Expected Result |
 | :--- | :--- | :--- | :--- |
-| **1. Sign Up** | Enter Name, Email, Password, Language (Hindi or English), and Invite Code (if configured). | `/signup` | Explicit consent captured; account initialized with starter building blocks. |
-| **2. Onboarding** | Follow 4-step wizard: Language selection, consent confirmation, phrase category, and practice recording. | `/app/onboarding` | User calibrates microphone and learns the tap-to-record interaction. |
-| **3. Live Speak** | Tap the central sun button, articulate an enrolled phrase (e.g. *पानी चाहिए* or *I need help*), tap to stop. | `/app/speak` | Waveform visualizer animates; Prisma transcribes; top 3 matching candidates are ranked with confidence indicators. |
-| **4. Confirmation** | Tap the confirmed phrase card. | `/app/speak` | Timbre TTS synthesizes the confirmed phrase aloud; sample joins the phrase's acoustic profile. |
-| **5. Phrase Library** | Filter by context (Home, Clinic, Market, Urgent), add custom phrase, test slot substitution. | `/app/phrases` | Immediate phrase filtering; slot-word substitution (e.g. *चाय चाहिए* vs *पानी चाहिए*). |
-| **6. Settings** | Toggle high-contrast theme, enter caregiver contact info, test emergency WhatsApp link. | `/app/settings` | Contrast updates immediately; wa.me link formats with country code; data erasure controls visible. |
-| **7. Progress** | Review confirmed recognition trends and top-used phrases. | `/app/progress` | Displays usage analytics and raw Prisma similarity trends without diagnostic claims. |
+| **1. Sign Up** | Enter Name, Email, Invite Code (if configured), Password, the language you speak (Hindi or English), and tick consent. | `/signup` | Explicit consent captured; the 51 everyday phrases and starter building blocks are added. |
+| **2. Welcome Guide** | Four short steps: welcome, language, how Sunn learns, getting ready. Use the EN / हिं switch in the header to show both languages; the guide's own language cards also change the language the account speaks (docs/AUDIT.md). | `/app/onboarding` | Explains the tap-to-record interaction and the 3 recordings per phrase. |
+| **3. Teach** | Record the 10 quick-start phrases (help, pain, basic needs), 3 times each. Speak opens once all 10 are ready. | `/app/enroll` | Each saved recording fills a dot; a note says when Speak is open. |
+| **4. Live Speak** | Tap the central sun button, say an enrolled phrase (e.g. *पानी चाहिए* or *I need help*), tap to stop. | `/app/speak` | The sun's glow follows the voice; Prisma transcribes; the 3 closest phrases are shown, best first ("Maybe" when the match is weak). |
+| **5. Confirmation** | Tap the right phrase, or "None of these" to type it. | `/app/speak` | Timbre says the phrase aloud; the recording joins that phrase's examples. |
+| **6. Phrase Library** | Search, filter by place (Home, Hospital, Market) or Urgent, add, edit and delete phrases. | `/app/phrases` | Immediate filtering; phrases recorded only in a previous language say "Record again". |
+| **7. Settings** | App language, the language you speak, text size, focus outlines, reduced motion, own voice, caregiver contact. | `/app/settings` | Changes apply at once; the caregiver number becomes a wa.me link; account deletion asks first. |
+| **8. Progress** | Review counts, the first-suggestion match rate, top phrases and the weekly trend. | `/app/progress` | A weekly trend of how often Prisma alone already got the phrase right; not a medical measure. |
 
 ---
 
@@ -74,35 +75,36 @@ To protect evaluator budgets and ensure reproducible evaluations even when offli
 - **Fallback**: If the network is unavailable or API credits are exhausted, the browser's native `window.speechSynthesis` executes automatically with an on-screen notice.
 
 ### 2. Synthetic Demo Data (Offline Evaluation Mode)
-- **Demo Corpus**: Located in `data/demo/`, containing pre-recorded WAV samples with known transcripts.
+- **Demo Corpus**: A folder of recordings you make yourself (`data/demo/`, kept out of git; how to record it, and the consent it needs, is in `docs/DEMO_DATA.md`).
 - **Provenance Tagging**: Every stored sample carries a strict `speech_source` database tag:
-  - `pilot`: Recordings from consented dysarthric pilot participants.
-  - `simulated`: Synthetically generated dysarthric speech patterns with controlled articulatory noise.
-  - `torgo`: Consented research samples from the TORGO acoustic dysarthria database.
+  - `pilot`: A real person with a speech difference who gave informed consent.
+  - `simulated`: Someone without a speech difference imitating unclear speech. It shows the pipeline works and says nothing about real users.
+  - `torgo`: Recordings from the TORGO database of dysarthric speech (check its licence before using them publicly).
   - `NULL`: Recordings made directly by the user in the live application.
 - **Offline Evaluation Script**:
   ```powershell
   uv run scripts/evaluate.py --email demo@example.com --folder data/demo
   ```
-  Evaluates top-1 and top-3 accuracy, acoustic distance thresholds, and context filtering without consuming live Gnani credits.
+  Reports raw Prisma exact-match accuracy, Sunn's top-1 and top-3 accuracy, the effect of the place context, and accuracy with 1 to 3 enrollment recordings, per source. Each held-out recording is sent to Prisma once (cached after), so the first run spends credits. It refuses to run with `GNANI_MOCK` on.
 
 ---
 
 ## 5. Verified Privacy, Data Flow, and Local Storage Guarantees
 
-Sunn is built around strict data ownership principles, avoiding opaque cloud aggregation:
+What leaves the server, and what stays:
 
 ### 1. External Data Flow (What Leaves the Server)
 - **Gnani Prisma STT**: Audio recordings of spoken phrases are transmitted to Gnani's API for transcription. Only the audio bytes necessary for transcription are sent.
 - **Gnani Timbre TTS**: Confirmed phrase text is sent to Gnani's synthesis endpoint to generate speech audio.
-- **No Third-Party Analytics**: Zero third-party trackers, telemetry libraries, analytics beacons, or advertising SDKs are included in the frontend or backend.
+- **Gnani Voice Clone**: Only if the user adds their own voice: that recording is sent once to make the voice, then deleted.
+- **No Third-Party Analytics**: No trackers, telemetry, analytics or advertising code in the frontend or backend. The web app does load its fonts from Google Fonts.
 
 ### 2. Local Storage and Data Isolation (What Stays Local)
 - **Database Storage**: User profiles, phrase texts, slot words, templates, and usage timestamps reside exclusively in the local SQLite database (`DATA_DIR/app.db`).
-- **Audio Files**: Raw WAV recordings and cached Prisma hypothesis files are stored under `DATA_DIR/users/<user_id>/`. The server does not provide any public endpoint to browse or download these recordings.
+- **Audio Files**: WAV recordings are stored under `DATA_DIR/users/<user_id>/`; cached Prisma transcripts under `DATA_DIR/cache/prisma/`. The server does not provide any public endpoint to browse or download these recordings.
 - **Static File Isolation**: The static web server serves exclusively from `web/dist`. Automated path-traversal regression tests verify that directory escape attempts (`../.env` or `../app.db`) are blocked.
 - **Redacted Operational Logging**: Logs are written to `logs/app.log` in JSON Lines format with automated 5 MB rotation. Sensitive credentials, raw passwords, session tokens, audio paths, and full transcripts are sanitized before writing.
-- **Atomic Deletion Guarantee**: Invoking `DELETE /api/me` atomically purges all database records across `users`, `phrases`, `slot_words`, `templates`, `samples`, and `uses`, while deleting the user's audio directory and voiceprints on disk.
+- **Account Deletion**: `DELETE /api/me` first deletes the user's recordings, their cached transcripts and the cloned voice on disk, then the user's rows in `users`, `phrases`, `slot_words`, `templates`, `samples` and `uses` in one database transaction. Call counts stay, tied to no one, as does the shared stock-voice cache.
 
 ---
 
@@ -118,13 +120,13 @@ uv sync
 # 2. Build production frontend assets
 cd web; npm ci; npm run build; cd ..
 
-# 3. Run full automated test suite (100 backend tests)
+# 3. Run the backend tests (every Gnani call faked)
 uv run pytest
 
 # 4. Launch single-container server (API + Web on port 7860)
 uv run src/server.py --port 7860
 ```
-Open [http://localhost:7860](http://localhost:7860) in a desktop browser.
+Open [http://localhost:7860](http://localhost:7860) in a desktop browser. To try it without spending Gnani credits, set `GNANI_MOCK=1` first: Prisma and Timbre answers are then made up, and the server says so at startup.
 
 ### 2. Pre-Flight Deployment Dry Run
 Verify that the repository contains no untracked secrets, uncommitted changes, or blocked files:
@@ -140,12 +142,13 @@ Expected output: Lists the tracked deployment files and reports `checks passed: 
 | Issue / Error | Likely Root Cause | Verified Resolution |
 | :--- | :--- | :--- |
 | **Microphone blocked / red icon** | Non-secure origin on mobile, or permission denied in browser | On desktop, use `http://localhost:7860` (treated as secure origin). On mobile, access via HTTPS direct URL. Check browser site permissions to allow microphone access. |
-| **502 `gnani_unreachable`** | `GNANI_API_KEY` is not set or invalid | The API fails safely without crashing. Audio playback automatically falls back to browser speech synthesis (`window.speechSynthesis`), with an on-screen notice. |
+| **502 `gnani_unreachable`** | Gnani didn't answer, or `GNANI_API_KEY` is not set | The API fails safely without crashing. Playback falls back to browser speech synthesis (`window.speechSynthesis`), with an on-screen notice; recognition waits for Prisma. |
+| **502 `gnani_rejected`** | Gnani refused the request, for example an invalid key (HTTP 401) | Check the key in the Space's secrets. |
 | **403 `invite_required`** | Sign-up attempted without invite code when `DEMO_INVITE_CODE` is set | Enter the designated evaluator invite code in the signup form. |
-| **429 `too_many_attempts`** | 5 incorrect invite codes entered within 15 minutes | IP address temporarily locked out. Wait 15 minutes or test from another client IP address. |
+| **429 `too_many_attempts`** | 5 wrong invite codes from one address, or 5 failed logins for one email, within 15 minutes | Locked for up to 15 minutes; the message says how long. |
 | **429 `credit_limit_reached`** | Global `GNANI_CALL_LIMIT` reached | Previously cached phrases continue to play without spending new credits. Local TTS fallback remains active. |
 | **404 on page reload** | Reverse proxy misconfiguration or accessing framed HF preview | Always use the direct space address (`https://<space>.hf.space`), which routes unknown paths to `index.html` for client-side routing. |
-| **Cold start delay (20 to 30s)** | Free Hugging Face Space waking from idle pause | Allow 30 seconds for the container to boot upon first visit. Once awake, performance is instantaneous. |
+| **Cold start delay** | Free Hugging Face Space waking from idle pause | The first visit after a pause waits for the container to start; after that it answers normally. |
 
 ---
 
@@ -156,7 +159,7 @@ This checklist tracks the final deliverables required for official form submissi
 | Deliverable | Description / Location | Status |
 | :--- | :--- | :---: |
 | **Code Repository** | `https://github.com/ARYANPATEL-BIT/sunn` | **Verified Ready** |
-| **Backend Test Suite** | 100 passing automated pytest assertions (`uv run pytest`) | **Verified Ready** |
+| **Backend Test Suite** | `uv run pytest` passes (counts in docs/AUDIT.md) | **Verified Ready** |
 | **Frontend Production Build** | Vite production bundle built without errors (`web/dist/`) | **Verified Ready** |
 | **Technical Write-Up** | Comprehensive solution documentation in `docs/WRITEUP.md` | **Verified Ready** |
 | **Health Check & Ops** | Live health probe at `/api/health` and `/health` with log rotation | **Verified Ready** |

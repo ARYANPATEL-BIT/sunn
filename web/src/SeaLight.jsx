@@ -152,7 +152,26 @@ function grainTile() {
   return { backgroundImage: `url(${tile.toDataURL()})`, backgroundSize: `${size / devicePixelRatio}px` }
 }
 
-// Fixed, full-viewport background. Mounted once at the app root, so it never restarts.
+// Reduced motion can change while the page is open: the system setting, or the app's own
+// (Settings adds a class to <html>). The background follows it without a reload.
+function useReducedMotion() {
+  const [still, setStill] = useState(reducedMotion)
+  useEffect(() => {
+    const update = () => setStill(reducedMotion())
+    const query = matchMedia('(prefers-reduced-motion: reduce)')
+    query.addEventListener('change', update)
+    const observer = new MutationObserver(update)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => {
+      query.removeEventListener('change', update)
+      observer.disconnect()
+    }
+  }, [])
+  return still
+}
+
+// Fixed, full-viewport background. Mounted once at the app root; it restarts only when reduced
+// motion is turned on or off.
 // `veil` (0..0.5) is a layer of the sky base between the light and the content.
 export default function SeaLight({ intensity, veil }) {
   const canvas = useRef(null)
@@ -160,10 +179,12 @@ export default function SeaLight({ intensity, veil }) {
   const redraw = useRef(null)
   const [webgl, setWebgl] = useState(true)
   const [grain] = useState(grainTile)
+  const still = useReducedMotion()
   target.current = intensity
 
   useEffect(() => {
     const el = canvas.current
+    if (!el) return // WebGL already failed: the CSS fallback is showing
     const gl = el.getContext('webgl', { alpha: false, antialias: false, depth: false, powerPreference: 'low-power' })
     const program = gl && createProgram(gl)
     if (!program) return setWebgl(false)
@@ -177,7 +198,6 @@ export default function SeaLight({ intensity, veil }) {
     const uniform = (name) => gl.getUniformLocation(program, name)
     const [res, time, strength] = ['res', 'time', 'intensity'].map(uniform)
 
-    const still = reducedMotion()
     let drift = 140 // seconds into the drift; a nice composition for the frozen frame
     let current = target.current
     let frame = 0
@@ -221,17 +241,19 @@ export default function SeaLight({ intensity, veil }) {
       play()
       document.addEventListener('visibilitychange', play)
     }
-    el.addEventListener('webglcontextlost', () => {
+    function lost() {
       cancelAnimationFrame(frame)
       document.removeEventListener('visibilitychange', play)
       setWebgl(false)
-    })
+    }
+    el.addEventListener('webglcontextlost', lost)
     return () => {
       cancelAnimationFrame(frame)
       removeEventListener('resize', resize)
       document.removeEventListener('visibilitychange', play)
+      el.removeEventListener('webglcontextlost', lost)
     }
-  }, [])
+  }, [still])
 
   useEffect(() => redraw.current?.(), [intensity])
 

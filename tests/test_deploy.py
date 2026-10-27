@@ -42,12 +42,16 @@ def test_one_app_serves_the_api_and_the_web_app(env, tmp_path):
     (dist / "assets").mkdir(parents=True)
     (dist / "index.html").write_text("<p>sunn</p>")
     (dist / "assets" / "app.js").write_text("console.log('sunn')")
+    (dist / "assets" / "big.js").write_bytes(b"console.log('sunn');\n" * 500)  # bytes: no CRLF on Windows
     client = TestClient(server.make_app(str(dist)), base_url="https://testserver")
 
     for path in ("/", "/app/speak", "/login?next=/app/enroll"):
         page = client.get(path)
         assert page.status_code == 200 and page.text == "<p>sunn</p>", path
     assert client.get("/assets/app.js").text == "console.log('sunn')"
+    big = client.get("/assets/big.js", headers={"Accept-Encoding": "gzip"})
+    assert big.headers["content-encoding"] == "gzip" and big.text == "console.log('sunn');\n" * 500
+    assert "content-encoding" not in client.get("/api/config", headers={"Accept-Encoding": "gzip"}).headers
 
     assert client.get("/api/config").json() == {"invite_required": False}
     missing = client.get("/api/nowhere")

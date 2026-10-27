@@ -100,8 +100,8 @@ not the average.
 
 ## Honesty
 No invented statistics, testimonials or logos, no medical claims, no "real-time translation".
-Example content is labelled "Example" / "उदाहरण". Features that aren't built yet say so
-("Coming next" on own voice). Promises on the privacy section must stay true in the code.
+Example content is labelled "Example" / "उदाहरण". Features that aren't built yet say so, or
+aren't mentioned. Promises on the privacy section must stay true in the code.
 
 ## Banned
 Glassmorphism or frosted panels, gradients as decoration on UI elements, ALL CAPS labels,

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
+    "e2e": "vite build && playwright test",
     "tunnel": "cloudflared tunnel --url https://localhost:5173 --no-tls-verify"
   },
   "dependencies": {

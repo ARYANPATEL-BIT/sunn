@@ -39,6 +39,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
 import audio  # noqa: E402
 import db  # noqa: E402
+import gnani_mock  # noqa: E402
 import matcher  # noqa: E402
 import prisma  # noqa: E402
 from load_demo import SOURCES, read_manifest  # noqa: E402
@@ -198,6 +199,8 @@ if __name__ == "__main__":
     parser.add_argument("--folder", required=True, help="the demo folder with manifest.csv")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
+    if gnani_mock.on():
+        sys.exit("GNANI_MOCK is on: Prisma's answers would be made up, and so would these results. Unset it.")
 
     samples, summary, phrases = evaluate(args.email, args.folder)
     account = re.sub(r"[^a-z0-9]+", "-", args.email.lower().split("@")[0]).strip("-")

@@ -3,6 +3,7 @@ import {
   Check,
   CheckCircle2,
   ExternalLink,
+  FileAudio,
   Languages,
   Phone,
   Shield,
@@ -36,7 +37,7 @@ export default function Settings() {
   const [confirmDeleteVoice, setConfirmDeleteVoice] = useState(false)
   const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false)
 
-  const [feedback, setFeedback] = useState(null)
+  const [feedback, setFeedback] = useState(null) // a string key, worded when shown
   const [error, setError] = useState(null)
   const isMounted = useRef(true)
 
@@ -58,7 +59,7 @@ export default function Settings() {
   }, [user])
 
   const flashFeedback = (msgKey) => {
-    setFeedback(t(msgKey))
+    setFeedback(msgKey)
     setTimeout(() => {
       if (isMounted.current) setFeedback(null)
     }, 4000)
@@ -128,7 +129,7 @@ export default function Settings() {
 
     const cleanedPhone = caregiverPhone.replace(/[\s\-()+]/g, '')
     if (cleanedPhone && !/^[1-9]\d{7,14}$/.test(cleanedPhone)) { // as src/api.py checks it
-      setError(new Error(t('error.invalid_phone')))
+      setError({ kind: 'server', code: 'invalid_phone' }) // Alert words it from the code
       setBusy(null)
       return
     }
@@ -261,7 +262,7 @@ export default function Settings() {
       <div aria-live="polite">
         {feedback && (
           <p className="notice-banner" role="status">
-            {feedback}
+            {t(feedback)}
           </p>
         )}
         <Alert error={error} />
@@ -288,7 +289,7 @@ export default function Settings() {
               onClick={() => handleSetLanguage('en')}
             >
               {lang === 'en' && <Check size={14} aria-hidden="true" strokeWidth={2} />}
-              <span>{t('settings.langEnglish')}</span>
+              <span lang="en">{t('settings.langEnglish')}</span>
             </button>
             <button
               type="button"
@@ -298,7 +299,7 @@ export default function Settings() {
               onClick={() => handleSetLanguage('hi')}
             >
               {lang === 'hi' && <Check size={14} aria-hidden="true" strokeWidth={2} />}
-              <span>{t('settings.langHindi')}</span>
+              <span lang="hi">{t('settings.langHindi')}</span>
             </button>
           </div>
         </div>
@@ -494,14 +495,21 @@ export default function Settings() {
             <strong id="voice-upload-title">{t('settings.voiceUploadLabel')}</strong>
             <div className="field">
               <label htmlFor="voice-file">{t('settings.voiceFile')}</label>
+              {/* The browser's own picker says "Choose file" in the browser's language; this pill
+                  says it in the app's. The input stays focusable, and its ring shows on the pill. */}
               <input
                 id="voice-file"
                 type="file"
                 accept="audio/*"
+                className="visually-hidden"
                 aria-describedby="voice-file-hint"
                 onChange={(e) => setVoiceFile(e.target.files[0] || null)}
                 disabled={busy === 'upload'}
               />
+              <label htmlFor="voice-file" className="pill-outline file-pick" aria-hidden="true">
+                <FileAudio size={16} strokeWidth={1.5} />
+                <span>{voiceFile ? voiceFile.name : t('settings.voiceChoose')}</span>
+              </label>
               <p className="field-hint" id="voice-file-hint">
                 {t('settings.voiceUploadHelp')}
               </p>
