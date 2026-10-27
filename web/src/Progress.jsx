@@ -64,6 +64,7 @@ function DeleteAccount() {
 
 export default function Progress() {
   const { lang, t } = useLang()
+  const { user } = useAuth()
   const go = useGo()
 
   const [stats, setStats] = useState(null)
@@ -227,7 +228,9 @@ export default function Progress() {
                     <span className="rank-badge" aria-hidden="true">
                       {idx + 1}
                     </span>
-                    <span className="phrase-text">{phrase.text}</span>
+                    <span className="phrase-text" lang={user.language}>
+                      {phrase.text}
+                    </span>
                   </div>
                   <div className="top-phrase-meta">
                     <span className="uses-badge">
@@ -282,7 +285,7 @@ export default function Progress() {
                   <caption className="visually-hidden">{t('progress.weeklyDesc')}</caption>
                   <thead>
                     <tr>
-                      <th scope="col">{t('progress.weekLabel', { date: '' }).replace('{date}', '').trim()}</th>
+                      <th scope="col">{t('progress.weekColumn')}</th>
                       <th scope="col">{t('progress.confirmed')}</th>
                       <th scope="col">{t('progress.weeklyClearLabel')}</th>
                       <th scope="col">{t('progress.weeklyAssistedLabel')}</th>
