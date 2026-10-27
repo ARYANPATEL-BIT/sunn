@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
+import { speakProgress } from './quickstart.js'
 import { Alert, failure, Pill, Sun, useGo, useRecorder } from './ui.jsx'
 
 const CONTEXT_LIST = ['any', 'home', 'hospital', 'market']
@@ -30,7 +31,7 @@ export default function Speak() {
   const { user } = useAuth()
   const go = useGo()
   const [context, setContext] = useState('any')
-  const [learned, setLearned] = useState(null) // phrases with at least one enrollment recording
+  const [learned, setLearned] = useState(null) // speakProgress: the quick-start phrases ready so far
   const [result, setResult] = useState(null) // the /recognize response
   const [spoken, setSpoken] = useState(null) // { phrase_id, text } chosen for this result
   const [typing, setTyping] = useState(false)
@@ -58,7 +59,7 @@ export default function Speak() {
   useEffect(() => {
     isMountedRef.current = true
     api.listPhrases().then((phrases) => {
-      if (isMountedRef.current) setLearned(phrases.filter((p) => p.enrolled > 0).length)
+      if (isMountedRef.current) setLearned(speakProgress(phrases, user.language))
     }, (err) => {
       if (isMountedRef.current) setError(err)
     })
@@ -189,11 +190,11 @@ export default function Speak() {
     recorder.reset?.()
   }
 
-  if (learned === 0) {
+  if (learned && !learned.open) {
     return (
       <section className="screen narrow">
         <h1>{t('speak.none')}</h1>
-        <p className="muted">{t('speak.noneBody')}</p>
+        <p className="muted">{t('speak.noneBody', { n: learned.ready, total: learned.total })}</p>
         <Pill icon={null} onClick={() => go('/app/enroll')}>
           {t('speak.goTeach')}
         </Pill>
