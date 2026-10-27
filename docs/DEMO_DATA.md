@@ -87,6 +87,16 @@ Each new enroll recording is one Prisma call for the demo account, so it counts 
 load, or load over several days: the loader stops at the cap and picks up where it left off.
 If the server has an invite code, pass `--invite` or set `$env:DEMO_INVITE_CODE`.
 
+Load with `GNANI_MOCK` off. In mock mode every recording gets a made-up transcript, so the demo
+account's fingerprints would be made up too (`scripts/evaluate.py` refuses to run in mock mode).
+
+The 10 quick-start phrases have to be in the manifest, 3 recordings each, for the account's
+Speak screen to open (`web/src/quickstart.js` lists them): in Hindi मदद चाहिए, दर्द हो रहा है,
+पानी चाहिए, बाथरूम जाना है, दवाई दे दो, डॉक्टर को बुलाओ, सांस लेने में तकलीफ़ है, भूख लगी है, ठंड
+लग रही है, मुझे उठा दो; in English I need help, I'm in pain, I need water, I need the bathroom,
+Give me my medicine, Call the doctor, I can't breathe properly, I'm hungry, I feel cold, Help me
+sit up.
+
 To put the same account on the deployed Space, run the loader again with
 `--url https://<you>-sunn.hf.space/api`. The Space loses all data whenever it restarts
 (docs/DEPLOY.md), so do it again after every restart.
