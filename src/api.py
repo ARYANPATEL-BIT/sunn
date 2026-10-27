@@ -290,12 +290,18 @@ def add_slot_word(user_id, slot, text):
 
 
 def add_default_building_blocks(user_id, language):
-    """The default slot words and templates for language; ones the user already has are skipped."""
-    for slot, words in DEFAULT_SLOT_WORDS[language].items():
-        for word in words:
-            add_slot_word(user_id, slot, word)
-    for template in DEFAULT_TEMPLATES[language]:
-        add_template(user_id, template)
+    """The default slot words and templates for language, in one transaction; ones the user
+    already has are skipped."""
+    words = {(w["slot"], w["text"]) for w in db.rows("SELECT slot, text FROM slot_words WHERE user_id = ?", (user_id,))}
+    templates = {t["text"] for t in db.rows("SELECT text FROM templates WHERE user_id = ?", (user_id,))}
+    statements = [("INSERT INTO slot_words (user_id, slot, text) VALUES (?, ?, ?)", (user_id, slot, word))
+                  for slot, slot_words in DEFAULT_SLOT_WORDS[language].items() for word in slot_words
+                  if (slot, word) not in words]
+    statements += [("INSERT INTO templates (user_id, text, fixed_part) VALUES (?, ?, ?)",
+                    (user_id, text, matcher.parse_template(text)[1]))
+                   for text in DEFAULT_TEMPLATES[language] if text not in templates]
+    if statements:
+        db.transaction(*statements)
 
 
 def trust_proxy():
@@ -489,15 +495,22 @@ def add_default_phrases(user=Depends(current_user)):
     """Add the everyday phrases in the user's language (data/default_phrases_<hi|en>.txt), with
     contexts from their group comment (GROUP_CONTEXTS; a group not listed there is any), and the
     default slot words and templates for it. Text the user already has is skipped, so after a
-    language change this adds the new language's."""
+    language change this adds the new language's. One transaction for all of them: one commit
+    instead of one per phrase, which kept sign-up waiting for seconds."""
     add_default_building_blocks(user["id"], user["language"])
-    contexts = "any"
+    have = {p["text"] for p in db.rows("SELECT text FROM phrases WHERE user_id = ?", (user["id"],))}
+    contexts, statements = "any", []
     with open(DEFAULT_PHRASES.format(language=user["language"]), encoding="utf-8") as f:
         for line in f:
+            text = " ".join(line.split())
             if line.startswith("#"):
                 contexts = GROUP_CONTEXTS.get(line.strip("# \n"), "any")
-            elif line.strip():
-                find_or_add_phrase(user["id"], line, contexts, line.strip() in URGENT_PHRASES)
+            elif text and text not in have:
+                have.add(text)
+                statements.append(("INSERT INTO phrases (user_id, text, contexts, urgent) VALUES (?, ?, ?, ?)",
+                                   (user["id"], text, contexts, int(text in URGENT_PHRASES))))
+    if statements:
+        db.transaction(*statements)
     return list_phrases(user)
 
 
