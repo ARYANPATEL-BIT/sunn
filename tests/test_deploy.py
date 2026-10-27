@@ -1,4 +1,5 @@
 """The single deployable app (src/server.py) and the client address behind a proxy."""
+import os
 import uuid
 
 from fastapi.testclient import TestClient
@@ -278,8 +279,11 @@ def test_deployment_dry_run_preflight_check():
         "scripts/deploy_space.py",
         "--check-only",
     ]
-    res = subprocess.run(cmd, cwd=root, capture_output=True, text=True)
-    assert res.returncode == 0, f"deploy_space.py --check-only failed: {res.stderr}"
+    # Without conftest's fake secrets: "test-key" is in conftest.py itself, so the script would
+    # flag it whenever .env doesn't set a real GNANI_API_KEY.
+    env = {k: v for k, v in os.environ.items() if k not in ("GNANI_API_KEY", "JWT_SECRET")}
+    res = subprocess.run(cmd, cwd=root, capture_output=True, text=True, env=env)
+    assert res.returncode == 0, f"deploy_space.py --check-only failed: {res.stdout}{res.stderr}"
     assert "checks passed:" in res.stdout
     assert "docs/SUBMISSION_PACKAGE.md" in res.stdout
     assert "data/app.db" not in res.stdout
