@@ -120,6 +120,7 @@ def env(tmp_path, monkeypatch):
     monkeypatch.delenv("OWNER_EMAIL", raising=False)
     monkeypatch.delenv("DEMO_INVITE_CODE", raising=False)  # open sign-up, whatever .env says
     monkeypatch.delenv("TRUST_PROXY", raising=False)
+    monkeypatch.delenv("GNANI_MOCK", raising=False)  # FakeGnani, not mock mode, unless a test sets it
     monkeypatch.setattr(auth, "_failures", defaultdict(deque))  # no lockouts left by another test
     db.init()
     fake = FakeGnani()
