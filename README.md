@@ -108,17 +108,22 @@ of the audio or text and the full request, so the same request is never paid for
 - Sign-up with consent, optional invite code; sign-in with an httpOnly session cookie
 - 51 built-in everyday phrases in Hindi and in English, tagged by place, with "I need help"
   and "I'm in pain" marked urgent
-- Enrollment of phrases, about 3 recordings each. Templates and slot words work in the API;
-  the web app has no screens for them yet
+- Enrollment of phrases, about 3 recordings each, starting with 10 quick-start phrases (help,
+  pain and basic needs). Speak opens once those 10 have 3 recordings each. Templates and slot
+  words work in the API; the web app has no screens for them yet
 - Speaking: tap to record, then pick from the top 3 candidates, which Timbre says aloud.
   Optional place context, an urgent badge, and a low-confidence flag
-- The person's own cloned voice, if they want it
+- The person's own cloned voice, if they want it: upload 5-30 s of their speech in Settings,
+  with its own consent, then turn it on or off
 - Phrase library: search, add, edit, tag and delete phrases
 - A caregiver contact, for a ready-made WhatsApp link
 - Progress: phrase and recording counts, top-1 hit rate, most used phrases, and a weekly
   trend of how often Prisma got it right without Sunn's help
-- Speech in Hindi or Indian English, interface in English or Hindi, switchable at any time
-- Accessibility settings (large text, reduced motion), WCAG AA contrast
+- Speech in Hindi or Indian English, interface in English or Hindi. Both can be changed in
+  Settings: the interface language only on that device, the spoken one for the account (after
+  a warning that recordings in the old language stop counting)
+- Accessibility settings (large text, reduced motion, stronger focus outlines); text colours
+  chosen for WCAG AA contrast (web/DESIGN.md)
 - Credit protection: a server-wide cap on Gnani calls (`GNANI_CALL_LIMIT`) and a per-account
   daily cap (`DAILY_CALL_CAP_PER_USER`)
 
@@ -241,28 +246,29 @@ Open `http://localhost:5173` in a desktop browser (Chrome, Edge, or Firefox). De
 1. **Step 1: Onboarding and Language Setup (0:00 to 0:45)**:
    - Jump to Onboarding (`/app/onboarding`).
    - Explain Sunn's core mission: an assistive communication aid for people whose speech is difficult to understand.
-   - Show English / Hindi language toggle and the 3-recording learning principle.
+   - Show the 3-recording learning principle, and the EN / हिं switch in the header, which changes only the screen's language.
+   - Don't pick a language on the guide's own language step with an account that has recordings: it also changes the language the account speaks, so those recordings stop counting (docs/AUDIT.md).
 2. **Step 2: Personal Phrase Library (0:45 to 1:30)**:
    - Jump to Phrase Library (`/app/phrases`).
    - Point out everyday phrases, context tags (home, hospital, market), and urgent tags.
-   - Point out the demo source badges: `Demo (Pilot)` indicates consented dysarthric speaker data, `Demo (Simulated)` indicates pipeline test data, and untagged phrases represent live user enrollments.
+   - Point out the demo source badges: `Demo (Pilot)` marks recordings by a consenting pilot speaker, `Demo (TORGO)` the TORGO corpus, and `Simulated speech` someone imitating unclear speech; phrases without a badge were recorded in the app.
 3. **Step 3: Speak, Recognize, and Synthesis (1:30 to 3:00)**:
-   - Jump to Speak Screen (`/app/speak`).
+   - Jump to Speak Screen (`/app/speak`). It opens once the 10 quick-start phrases have 3 recordings each, so use a demo account loaded with `scripts/load_demo.py`, or record them on Teach first.
    - Select a context (e.g. `Hospital` or `Home`) to show contextual ranking.
-   - Tap the Sun to speak or record. Show top candidate ranking with similarity scores.
+   - Tap the Sun to speak, then tap again. Show the three closest phrases, best first (the screen shows no scores; `/api/docs` shows each candidate's score parts).
    - Tap a candidate to confirm and hear clear speech output.
 4. **Step 4: Accessibility and Voice Cloning (3:00 to 3:45)**:
    - Jump to Settings (`/app/settings`).
-   - Demonstrate accessibility controls: Large Text, Enhanced Focus rings, and Reduced Motion.
-   - Explain own-voice cloning with strict separate consent requirements (`voice_consent_given_at`).
+   - Demonstrate accessibility controls: Large text, High-contrast focus outlines, and Reduced motion.
+   - Show own voice: upload 5-30 s of the person's speech with its own consent (`voice_consent_given_at`), turn it on, and Speak uses it.
 5. **Step 5: Transparent Metrics and Privacy (3:45 to 4:30)**:
    - Jump to Progress (`/app/progress`).
-   - Clarify the metrics: Sunn measures speech recognition consistency against Gnani raw hypotheses, not clinical recovery.
-   - Highlight the atomic account deletion option (`DELETE /me`) that wipes all audio and database records immediately.
+   - Clarify the metrics: the weekly trend counts how often Prisma's own transcript already matched the confirmed phrase. It is a usage trend, not a clinical measure.
+   - Show account deletion (`DELETE /me`): it removes the account, its phrases, recordings, cached transcripts and cloned voice. Only call counts and the shared stock-voice cache stay, tied to no one.
 
 ### 4. Handling Failures and Fallbacks During Presentations
 - **Microphone permission blocked**: The screen displays an inline troubleshoot guide with instructions to allow access in the browser address bar.
-- **Speech service exhaustion / offline**: If Gnani Timbre reaches limits or network drops, playback automatically falls back to browser offline speech synthesis (`window.speechSynthesis`), clearly labeled as local browser fallback.
+- **Speech service unavailable**: If Timbre fails (limits, errors, or no connection), playback falls back to the browser's own speech synthesis (`window.speechSynthesis`), with a note on screen. Recognition needs Prisma, so speaking stops working until it is back.
 - **Demo data transparency**: Every pre-enrolled phrase displays its origin badge so judges always know whether data is pilot-recorded or simulated.
 
 ### Demo and Submission Resources
@@ -289,10 +295,24 @@ uv run pytest
 Each test runs the API in its own temporary folder, with every Gnani call faked, so the
 tests never spend credits or touch `data/`.
 
+`GNANI_MOCK=1` (in `.env` or the environment) runs the app with made-up Prisma and Timbre
+answers (`src/gnani_mock.py`, `src/gnani_mock.json`), to try it or test it without spending
+credits. It says so loudly at startup and refuses to start together with `TRUST_PROXY`, so it
+can't reach a deployment. `scripts/evaluate.py` refuses to run with it.
+
+The end-to-end tests (`web/e2e`, Playwright) drive the real app in mock mode, at 390 and 1440
+wide, in both languages: sign-up with an invite code, onboarding, the quick start, speaking,
+correcting, the phrase library, settings, progress, keyboard-only use and reduced motion. They
+fail on any console error or warning, failed request or unexpected error status:
+
+```powershell
+cd web; npx playwright install chromium; npm run e2e
+```
+
 The smoke test drives a running server end to end over HTTP: sign-up, enrollment, building
-blocks, recognition, confirmation, edits, stats and account deletion. It needs two short
-recordings of real speech and makes 2 Prisma calls (`--voice ref.wav` adds a voice clone and
-a Timbre call):
+blocks, recognition, confirmation, speaking the confirmed phrase, edits, stats and account
+deletion. It needs two short recordings of real speech and makes 2 Prisma calls and 1 Timbre call
+(`--voice ref.wav` adds a voice clone and a Timbre call):
 
 ```powershell
 uv run scripts/smoke_test.py first.wav second.wav                          # http://127.0.0.1:7860/api
