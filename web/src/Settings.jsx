@@ -3,16 +3,13 @@ import {
   Check,
   CheckCircle2,
   ExternalLink,
-  Globe,
   Languages,
-  Mic,
   Phone,
-  RotateCcw,
   Shield,
   Square,
   Trash2,
   Type,
-  User,
+  Upload,
   Volume2,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -23,7 +20,7 @@ import { applyPreferences, getPreferences, setPreference } from './prefs.js'
 import { Alert, Pill, useGo } from './ui.jsx'
 
 export default function Settings() {
-  const { user, signedIn, logout } = useAuth()
+  const { user, signedIn, deleteAccount } = useAuth()
   const { lang, setLang, t } = useLang()
   const go = useGo()
 
@@ -31,8 +28,11 @@ export default function Settings() {
   const [caregiverName, setCaregiverName] = useState(user?.caregiver_name || '')
   const [caregiverPhone, setCaregiverPhone] = useState(user?.caregiver_phone || '')
 
-  const [busy, setBusy] = useState(null) // 'caregiver' | 'voice' | 'account' | 'test_voice'
+  const [busy, setBusy] = useState(null) // 'caregiver' | 'voice' | 'upload' | 'language' | 'account'
   const [playingSample, setPlayingSample] = useState(false)
+  const [confirmSpeak, setConfirmSpeak] = useState(null) // the language the user asked to speak
+  const [voiceFile, setVoiceFile] = useState(null)
+  const [voiceConsent, setVoiceConsent] = useState(false)
   const [confirmDeleteVoice, setConfirmDeleteVoice] = useState(false)
   const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false)
 
@@ -65,14 +65,32 @@ export default function Settings() {
   }
 
   // --- Display and Language ---
-  const handleSetLanguage = async (nextLang) => {
+  // The app's language belongs to this device (localStorage), never to the account.
+  const handleSetLanguage = (nextLang) => {
     if (nextLang === lang) return
     setLang(nextLang)
     flashFeedback('settings.savedSuccess')
+  }
+
+  // The language the user speaks is the account's: Prisma and Timbre follow it, and recordings
+  // in the old one stop counting, so it is asked first. The new language's everyday phrases are
+  // added next to the old ones (docs/API.md, PATCH /me).
+  const speakName = (code) => t(code === 'hi' ? 'settings.speakHindi' : 'settings.speakEnglish')
+  const handleSetSpeakLanguage = async () => {
+    setBusy('language')
+    setError(null)
     try {
-      await api.updateMe({ language: nextLang })
-    } catch {
-      // Backend language stub is non-blocking
+      const updated = await api.updateMe({ language: confirmSpeak })
+      if (isMounted.current) signedIn(updated)
+      await api.loadDefaultPhrases()
+      if (isMounted.current) {
+        setConfirmSpeak(null)
+        flashFeedback('settings.savedSuccess')
+      }
+    } catch (err) {
+      if (isMounted.current) setError(err)
+    } finally {
+      if (isMounted.current) setBusy(null)
     }
   }
 
@@ -109,7 +127,7 @@ export default function Settings() {
     setError(null)
 
     const cleanedPhone = caregiverPhone.replace(/[\s\-()+]/g, '')
-    if (cleanedPhone && !/^\d{7,15}$/.test(cleanedPhone)) {
+    if (cleanedPhone && !/^[1-9]\d{7,14}$/.test(cleanedPhone)) { // as src/api.py checks it
       setError(new Error(t('error.invalid_phone')))
       setBusy(null)
       return
@@ -151,6 +169,28 @@ export default function Settings() {
     }
   }
 
+  const handleUploadVoice = async (e) => {
+    e.preventDefault()
+    if (!voiceFile) return setError({ kind: 'server', code: 'no_voice_file' })
+    setBusy('upload')
+    setError(null)
+    try {
+      const updated = await api.setVoice(voiceFile)
+      if (isMounted.current) {
+        signedIn(updated)
+        setVoiceFile(null)
+        setVoiceConsent(false)
+        flashFeedback('settings.savedSuccess')
+      }
+    } catch (err) {
+      // The phrase-length wording of these two (0.3 to 15 s) is wrong for a voice (5 to 30 s).
+      const length = ['audio_too_short', 'audio_too_long'].includes(err.code)
+      if (isMounted.current) setError(length ? { kind: 'server', code: 'voice_length' } : err)
+    } finally {
+      if (isMounted.current) setBusy(null)
+    }
+  }
+
   const handlePlayVoiceSample = async () => {
     if (playingSample) {
       api.stopAudio()
@@ -160,10 +200,8 @@ export default function Settings() {
 
     setPlayingSample(true)
     setError(null)
-    const sampleText =
-      lang === 'hi'
-        ? 'नमस्ते, यह सुन्न की आवाज़ की जाँच है।'
-        : 'Hello, this is a test of Sunn speech output.'
+    // In the language the user speaks: that is the language Timbre is asked to speak in.
+    const sampleText = user?.language === 'en' ? 'Hello, I need some water.' : 'नमस्ते, मुझे पानी चाहिए।'
 
     try {
       await api.say(sampleText)
@@ -196,9 +234,7 @@ export default function Settings() {
     setBusy('account')
     setError(null)
     try {
-      await api.deleteAccount()
-      await logout()
-      go('/', { replace: true })
+      await deleteAccount() // signs out, and /app/* then goes home
     } catch (err) {
       if (isMounted.current) {
         setError(err)
@@ -266,6 +302,63 @@ export default function Settings() {
             </button>
           </div>
         </div>
+
+        <hr className="divider" />
+
+        <div className="settings-row">
+          <div className="row-text">
+            <strong id="speak-language-label">{t('settings.speakLanguageLabel')}</strong>
+            <p className="muted">{t('settings.speakLanguageHelp')}</p>
+          </div>
+          <div className="segmented-control" role="radiogroup" aria-labelledby="speak-language-label">
+            {['hi', 'en'].map((code) => (
+              <button
+                key={code}
+                type="button"
+                role="radio"
+                aria-checked={user?.language === code}
+                className={`segment-btn ${user?.language === code ? 'active' : ''}`}
+                onClick={() => setConfirmSpeak(code === user?.language ? null : code)}
+                disabled={busy !== null}
+              >
+                {user?.language === code && <Check size={14} aria-hidden="true" strokeWidth={2} />}
+                <span>{speakName(code)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {confirmSpeak && (
+          <div className="inline-confirm-box" role="group" aria-labelledby="speak-language-confirm">
+            <p>
+              <strong id="speak-language-confirm">
+                {t('settings.speakLanguageConfirm', { language: speakName(confirmSpeak) })}
+              </strong>
+            </p>
+            <p className="muted">{t('settings.speakLanguageWarning', { language: speakName(confirmSpeak) })}</p>
+            <div className="actions">
+              <button
+                type="button"
+                className="pill-outline"
+                onClick={() => setConfirmSpeak(null)}
+                disabled={busy === 'language'}
+                autoFocus
+              >
+                {t('settings.cancel')}
+              </button>
+              <button
+                type="button"
+                className="pill-outline"
+                onClick={handleSetSpeakLanguage}
+                disabled={busy === 'language'}
+              >
+                {busy === 'language'
+                  ? t('settings.speakLanguageSwitching')
+                  : t('settings.speakLanguageYes', { language: speakName(confirmSpeak) })}
+              </button>
+            </div>
+          </div>
+        )}
 
         <hr className="divider" />
 
@@ -348,9 +441,7 @@ export default function Settings() {
             {prefs.enhancedFocus && (
               <CheckCircle2 size={16} aria-hidden="true" strokeWidth={2} />
             )}
-            <span>
-              {t(prefs.enhancedFocus ? 'settings.motionActive' : 'settings.motionOff')}
-            </span>
+            <span>{t(prefs.enhancedFocus ? 'settings.on' : 'settings.off')}</span>
           </button>
         </div>
 
@@ -394,23 +485,47 @@ export default function Settings() {
               {user.use_own_voice && (
                 <CheckCircle2 size={16} aria-hidden="true" strokeWidth={2} />
               )}
-              <span>
-                {t(user.use_own_voice ? 'settings.motionActive' : 'settings.motionOff')}
-              </span>
+              <span>{t(user.use_own_voice ? 'settings.on' : 'settings.off')}</span>
             </button>
           </div>
         ) : (
-          <div className="voice-enroll-hint">
+          <form className="voice-enroll-hint" onSubmit={handleUploadVoice} aria-labelledby="voice-upload-title">
             <p className="muted">{t('settings.voiceNotRecordedHelp')}</p>
-            <button
-              type="button"
-              className="pill-outline"
-              onClick={() => go('/app/enroll')}
-            >
-              <Mic size={16} aria-hidden="true" strokeWidth={1.5} />
-              <span>{t('settings.goTeach')}</span>
-            </button>
-          </div>
+            <strong id="voice-upload-title">{t('settings.voiceUploadLabel')}</strong>
+            <div className="field">
+              <label htmlFor="voice-file">{t('settings.voiceFile')}</label>
+              <input
+                id="voice-file"
+                type="file"
+                accept="audio/*"
+                aria-describedby="voice-file-hint"
+                onChange={(e) => setVoiceFile(e.target.files[0] || null)}
+                disabled={busy === 'upload'}
+              />
+              <p className="field-hint" id="voice-file-hint">
+                {t('settings.voiceUploadHelp')}
+              </p>
+            </div>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={voiceConsent}
+                onChange={(e) => setVoiceConsent(e.target.checked)}
+                disabled={busy === 'upload'}
+              />
+              <span>{t('settings.voiceConsent')}</span>
+            </label>
+            <div className="actions">
+              <button
+                type="submit"
+                className="pill-outline"
+                disabled={!voiceConsent || busy !== null}
+              >
+                <Upload size={16} aria-hidden="true" strokeWidth={1.5} />
+                <span>{t(busy === 'upload' ? 'settings.voiceUploading' : 'settings.voiceUpload')}</span>
+              </button>
+            </div>
+          </form>
         )}
 
         <div className="voice-actions-row">
