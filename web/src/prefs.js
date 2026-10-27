@@ -150,3 +150,12 @@ export function setOnboarded(userId, value = true) {
     // Storage unavailable
   }
 }
+
+// Forget what this browser kept about an account that was deleted.
+export function forgetUser(userId) {
+  try {
+    localStorage.removeItem(`sunn.onboarded.${userId}`)
+  } catch {
+    // Storage unavailable
+  }
+}

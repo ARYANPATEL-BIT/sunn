@@ -4,12 +4,12 @@ import { useLocation } from 'react-router-dom'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
+import { NEEDED, needsRerecord, quickStart, ready } from './quickstart.js'
 import { Alert, Pill, Sun, useGo, useRecorder } from './ui.jsx'
 
-const NEEDED = 3
-
-// One phrase at a time, NEEDED saved recordings each. Every save is stored on the server,
-// so leaving is pausing: coming back resumes at the first phrase that still needs recordings.
+// One phrase at a time, NEEDED saved recordings each, the 10 quick-start phrases first. Every
+// save is stored on the server, so leaving is pausing: coming back resumes at the first phrase
+// that still needs recordings.
 export default function Enroll() {
   const { t } = useLang()
   const { user } = useAuth()
@@ -72,8 +72,11 @@ export default function Enroll() {
     )
   }
 
-  const done = phrases.filter((p) => p.enrolled >= NEEDED).length
-  const phrase = phrases.find((p) => p.enrolled < NEEDED)
+  const first = quickStart(phrases, user.language)
+  const order = [...first, ...phrases.filter((p) => !first.includes(p))]
+  const done = phrases.filter(ready).length
+  const firstDone = first.filter(ready).length
+  const phrase = order.find((p) => !ready(p))
 
   const progress = (
     <div
@@ -102,7 +105,11 @@ export default function Enroll() {
   function save() {
     run(async () => {
       await api.enroll(phrase.id, blob)
-      setPhrases(phrases.map((p) => (p.id === phrase.id ? { ...p, enrolled: p.enrolled + 1 } : p)))
+      setPhrases(
+        phrases.map((p) =>
+          p.id === phrase.id ? { ...p, enrolled: p.enrolled + 1, sample_count: p.sample_count + 1 } : p,
+        ),
+      )
       setBlob(null)
     })
   }
@@ -110,14 +117,28 @@ export default function Enroll() {
   return (
     <section className="screen enroll">
       {progress}
+      {first.length > 0 &&
+        (firstDone < first.length ? (
+          <p className="note">
+            {t('enroll.quickStart')} {t('enroll.quickProgress', { n: firstDone, total: first.length })}
+          </p>
+        ) : (
+          <p className="note">
+            {t('enroll.quickDone')}{' '}
+            <button type="button" className="link" onClick={() => go('/app/speak')}>
+              {t('enroll.goSpeak')}
+            </button>
+          </p>
+        ))}
       <p className="step">{t('enroll.step', { n: done + 1, total: phrases.length })}</p>
       <h1 className="phrase" lang={user.language}>
         <span className="visually-hidden">{t('enroll.say')}: </span>
         {phrase.text}
       </h1>
-      <p className="dots" role="img" aria-label={t('enroll.saved', { n: phrase.enrolled, needed: NEEDED })}>
+      {needsRerecord(phrase) && <p className="note">{t('enroll.rerecord')}</p>}
+      <p className="dots" role="img" aria-label={t('enroll.saved', { n: phrase.sample_count, needed: NEEDED })}>
         {Array.from({ length: NEEDED }, (_, i) => (
-          <span key={i} className={i < phrase.enrolled ? 'saved' : ''} />
+          <span key={i} className={i < phrase.sample_count ? 'saved' : ''} />
         ))}
       </p>
 

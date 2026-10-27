@@ -22,18 +22,19 @@ import * as api from './api.js'
 import { loginPath, useAuth } from './auth.jsx'
 import Example from './Example.jsx'
 import { useLang } from './i18n/index.jsx'
+import { speakProgress } from './quickstart.js'
 import { LangToggle, Pill, reducedMotion, useGo, Wordmark } from './ui.jsx'
 
 const ICON = { 'aria-hidden': true, strokeWidth: 1.25 }
 
-// Signed in: speak, or teach first if nothing is enrolled yet. Signed out: log in, then speak.
+// Signed in: speak, or record the first phrases if Speak isn't open yet. Signed out: log in, then speak.
 function useStartSpeaking() {
   const { status, user } = useAuth()
   const go = useGo()
   return async () => {
     if (status === 'ready' && !user) return go(loginPath('/app/speak'))
     const phrases = await api.listPhrases().catch(() => null)
-    go(phrases && !phrases.some((p) => p.enrolled > 0) ? '/app/enroll' : '/app/speak')
+    go(phrases && user && !speakProgress(phrases, user.language).open ? '/app/enroll' : '/app/speak')
   }
 }
 

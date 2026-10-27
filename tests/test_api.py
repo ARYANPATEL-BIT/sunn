@@ -93,6 +93,32 @@ def test_one_user_can_never_read_or_change_another_users_data(env):
     assert env.client().get("/me/phrases").status_code == 401  # and nobody at all without a session
 
 
+def test_routes_without_ids_only_ever_touch_the_signed_in_user(env):
+    """The list, stats, speak and account routes take the user from the cookie alone."""
+    alice, bob = env.signup(), env.signup()
+    alice.post("/me/templates", json={"text": "{place} ले चलो"})
+    env.enroll_phrase(alice, "पानी चाहिए", "paani")
+    alice_heard = env.recognize(alice, "paani")
+    alice.post("/me/confirm", json={"sample_id": alice_heard["sample_id"], "phrase_id": phrase_id(alice, "पानी चाहिए")})
+    alice.post("/me/voice", data={"consent": "true"}, files=env.recording(6))
+    alice.patch("/me", json={"caregiver_name": "Ravi", "caregiver_phone": "919876543210", "use_own_voice": True})
+    before = {path: alice.get(path).json() for path in
+              ("/auth/me", "/me/phrases", "/me/slot-words", "/me/templates", "/me/stats")}
+
+    assert "{place} ले चलो" not in [t["text"] for t in bob.get("/me/templates").json()]
+    stats = bob.get("/me/stats").json()
+    assert stats["confirmed"] == 0 and stats["top_phrases"] == []
+    # bob has nothing enrolled, so alice's fingerprint for the same words is never a candidate
+    assert env.recognize(bob, "paani")["candidates"] == []
+    assert bob.post("/speak", json={"text": "पानी चाहिए"}).status_code == 200  # the stock voice, not alice's
+    assert env.fake.sent("tts")[-1]["json"]["model"] == "timbre-v2.5"
+
+    assert bob.delete("/me/voice").json()["has_own_voice"] is False
+    assert bob.patch("/me", json={"caregiver_name": None, "language": "en"}).status_code == 200
+    assert bob.delete("/me").status_code == 200
+    assert {path: alice.get(path).json() for path in before} == before
+
+
 # --- recognition ---
 
 def test_recognize_returns_score_parts_urgency_and_context_boost(env):
@@ -179,6 +205,9 @@ def test_upload_limits_and_no_speech(env):
     assert enroll(env.recording(16))["error"] == "audio_too_long"
     assert enroll(env.recording(0.1))["error"] == "audio_too_short"
     assert enroll({"audio": ("big.wav", b"\0" * (10 * 2**20 + 1), "audio/wav")})["error"] == "file_too_large"
+    # far over the limit: refused from Content-Length alone, before the body is read
+    huge = enroll({"audio": ("huge.wav", b"\0" * (11 * 2**20), "audio/wav")})
+    assert huge["error"] == "file_too_large" and huge["message"].startswith("the upload is over")
     assert enroll({"audio": ("junk.wav", b"not audio", "audio/wav")})["error"] == "bad_audio"
     env.fake.transcripts.append("  ")
     assert enroll(env.recording())["error"] == "no_speech"

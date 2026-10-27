@@ -21,6 +21,7 @@ import audio
 import auth
 import db
 import gnani
+import gnani_mock
 import log
 import matcher
 import prisma
@@ -113,6 +114,18 @@ async def log_requests(request: Request, call_next):
     log.event("request", method=request.method, path=request.url.path, status=response.status_code,
               ms=round(1000 * (time.monotonic() - started)))
     return response
+
+
+@app.middleware("http")
+async def refuse_large_bodies(request: Request, call_next):
+    """Refuse a body that says it is over MAX_UPLOAD_BYTES (plus room for the form fields) before
+    any of it is read; save_wav still checks the file itself."""
+    length = request.headers.get("content-length", "")
+    if length.isdigit() and int(length) > MAX_UPLOAD_BYTES + 64 * 1024:
+        log.event("refused", path=request.url.path, status=413, code="file_too_large")
+        return JSONResponse({"error": "file_too_large", "message": f"the upload is over {MAX_UPLOAD_BYTES // 2**20} MB"},
+                            status_code=413)
+    return await call_next(request)
 
 
 def now():
@@ -288,6 +301,9 @@ def add_default_building_blocks(user_id, language):
 def trust_proxy():
     """TRUST_PROXY: on when the app runs behind a proxy that sets X-Forwarded-For (docs/DEPLOY.md)."""
     return os.environ.get("TRUST_PROXY", "").strip().lower() in ("1", "true", "yes", "on")
+
+
+gnani_mock.check_startup(trust_proxy())  # never mock behind a proxy, and say so loudly when on
 
 
 def client_ip(request):

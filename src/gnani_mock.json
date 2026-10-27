@@ -1,0 +1,5 @@
+{
+  "_comment": "Prisma transcripts for GNANI_MOCK=1 (src/gnani_mock.py). by_sha256 maps the sha256 of the 16 kHz wav the server stores to a transcript (\"\" means no speech); any other recording gets the default for the user's language.",
+  "default": {"hi": "पानी चाहिए", "en": "I need water"},
+  "by_sha256": {}
+}

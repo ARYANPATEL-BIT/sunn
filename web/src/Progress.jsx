@@ -20,8 +20,7 @@ function formatWeekStart(isoDate, currentLang) {
 // Delete account shortcut retained for safety and account control
 function DeleteAccount() {
   const { t } = useLang()
-  const { logout } = useAuth()
-  const go = useGo()
+  const { deleteAccount } = useAuth()
   const [asking, setAsking] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -30,9 +29,7 @@ function DeleteAccount() {
     setBusy(true)
     setError(null)
     try {
-      await api.deleteAccount()
-      await logout()
-      go('/', { replace: true })
+      await deleteAccount() // signs out, and /app/* then goes home
     } catch (e) {
       setError(e)
       setBusy(false)
@@ -66,7 +63,7 @@ function DeleteAccount() {
 }
 
 export default function Progress() {
-  const { t } = useLang()
+  const { lang, t } = useLang()
   const go = useGo()
 
   const [stats, setStats] = useState(null)
