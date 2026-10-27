@@ -319,3 +319,9 @@ example answer and its error codes. The live version is `/api/docs`.
 - `src/correct.py` and `src/eval_correct.py`: the first feasibility test of the fingerprint
   idea, run on Prisma transcripts of TORGO recordings. They read
   `results/prisma_predictions.csv`, which isn't in the repo.
+
+
+## Contributors
+
+1. Aryan Patel
+2. Tuhin Mondal
