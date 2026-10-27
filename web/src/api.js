@@ -5,17 +5,11 @@ export const BASE = '/api'
 // Fired when any call finds the session gone (expired, or signed out elsewhere); auth.jsx listens.
 export const SIGNED_OUT = 'sunn:signed-out'
 
-// Supported contexts for phrases and recognition ranking (matcher.py)
-export const CONTEXTS = ['home', 'hospital', 'market', 'any']
-
-// Supported slot types for building block templates and slot words
-export const SLOTS = ['item', 'person', 'place']
-
 // Every failure becomes an Error with a kind the screens turn into a direction:
 // offline (our server can't be reached), gnani (Prisma/Timbre failed), server (anything else).
 // code is the API's reason for a refusal (bad_login, email_taken, not_logged_in…), when it gives one.
 // Every API error is { error: code, message } (docs/API.md).
-const GNANI_CODES = ['gnani_unreachable', 'gnani_rejected', 'credit_limit_reached']
+const GNANI_CODES = ['gnani_unreachable', 'gnani_rejected', 'credit_limit_reached', 'daily_cap_reached']
 
 function apiError(kind, message, status, body) {
   const error = new Error(message || kind)
@@ -23,7 +17,6 @@ function apiError(kind, message, status, body) {
   error.status = status
   error.code = body?.error
   error.retryAfter = body?.retry_after
-  error.source = body?.source
   return error
 }
 
@@ -96,9 +89,8 @@ export const me = () =>
       throw e
     })
 
-// Update user settings (use_own_voice, caregiver_name, caregiver_phone)
+// Any of use_own_voice, caregiver_name, caregiver_phone, language (the language the person speaks)
 export const updateMe = (changes) => patch('/me', changes).then(json)
-export const updateSettings = updateMe
 
 // Deletes the account, its phrases, recordings, transcripts and cloned voice
 export const deleteAccount = () => del('/me').then(json)
@@ -106,16 +98,14 @@ export const deleteAccount = () => del('/me').then(json)
 // --- Own-Voice Controls (Voice Cloning) ---
 
 // Clone user's voice from 5-30s audio recording with explicit consent
-export const setVoice = (blob, consent = true) =>
-  upload('/me/voice', blob, { consent: String(consent) }).then(json)
-export const uploadVoice = setVoice
+export const setVoice = (file) => upload('/me/voice', file, { consent: 'true' }).then(json)
 
 // Forget the cloned voice, its embedding, cache and phrases spoken in it
 export const deleteVoice = () => del('/me/voice').then(json)
 
 // --- Phrase Management ---
 
-// [{ id, text, contexts, urgent, enrolled, sample_count, last_used_at }]
+// [{ id, text, contexts, urgent, enrolled, sample_count, last_used_at, sources }]
 export const listPhrases = () => request('/me/phrases').then(json)
 
 // Add the default everyday phrases in the user's language
@@ -123,7 +113,6 @@ export const loadDefaultPhrases = () => post('/me/phrases/default').then(json)
 
 // Create a new phrase: { text }
 export const createPhrase = (text) => post('/me/phrases', { text }).then(json)
-export const addPhrase = createPhrase
 
 // Update a phrase: changes can include text, contexts (array), urgent (bool)
 export const updatePhrase = (phraseId, changes) => patch(`/me/phrases/${phraseId}`, changes).then(json)
@@ -131,17 +120,14 @@ export const updatePhrase = (phraseId, changes) => patch(`/me/phrases/${phraseId
 // Delete a phrase, its samples, recordings and uses
 export const deletePhrase = (phraseId) => del(`/me/phrases/${phraseId}`).then(json)
 
-// Delete a single recording sample
-export const deleteSample = (sampleId) => del(`/me/samples/${sampleId}`).then(json)
-
 // --- Enrollment, Recognition and Confirmation ---
 
 // Enroll a phrase sample recording (3 needed per phrase)
 export const enroll = (phraseId, blob) => upload('/me/enroll', blob, { phrase_id: phraseId }).then(json)
 
-// Top 3 candidates for a recording, with optional context ('home', 'hospital', 'market', 'any')
-export const recognize = (blob, context = null) =>
-  upload('/me/recognize', blob, context ? { context } : {}).then(json)
+// Top 3 candidates for a recording. context is 'home', 'hospital' or 'market'; 'any' sends none.
+export const recognize = (blob, context) =>
+  upload('/me/recognize', blob, context && context !== 'any' ? { context } : {}).then(json)
 
 // Confirm a recognition result. Accepts:
 // - { sample_id, phrase_id }
@@ -149,41 +135,10 @@ export const recognize = (blob, context = null) =>
 // - { sample_id, template_id, slot_word_id } (composed candidate)
 export const confirm = (body) => post('/me/confirm', body).then(json)
 
-// --- Building Blocks: Slot Words and Templates ---
-
-// List slot words: [{ id, slot, text, enrolled }]
-export const listSlotWords = () => request('/me/slot-words').then(json)
-
-// Create a slot word: slot is 'item', 'person', or 'place'
-export const createSlotWord = (slot, text) => post('/me/slot-words', { slot, text }).then(json)
-export const addSlotWord = createSlotWord
-
-// Delete a slot word and its recordings
-export const deleteSlotWord = (slotWordId) => del(`/me/slot-words/${slotWordId}`).then(json)
-
-// Enroll an audio recording for a slot word
-export const enrollSlotWord = (slotWordId, blob) =>
-  upload(`/me/slot-words/${slotWordId}/enroll`, blob).then(json)
-
-// List templates: [{ id, text, fixed_part, slot, enrolled }]
-export const listTemplates = () => request('/me/templates').then(json)
-
-// Create a template: text must contain {item}, {person}, or {place}
-export const createTemplate = (text) => post('/me/templates', { text }).then(json)
-export const addTemplate = createTemplate
-
-// Delete a template and its recordings
-export const deleteTemplate = (templateId) => del(`/me/templates/${templateId}`).then(json)
-
-// Enroll an audio recording for a template's fixed part alone
-export const enrollTemplate = (templateId, blob) =>
-  upload(`/me/templates/${templateId}/enroll`, blob).then(json)
-
 // --- Speech Synthesis and Audio Playback ---
 
 // Synthesize speech to a WAV Blob via Gnani Timbre / cloned voice
 export const speak = (text) => post('/speak', { text }).then((r) => r.blob())
-export const synthesize = speak
 
 // Speaks using the browser's native Web Speech API (window.speechSynthesis)
 export function speakBrowserFallback(text, language = 'hi-IN') {
@@ -274,8 +229,3 @@ export function stopAudio() {
 
 // Totals, top 5 phrases, and 8-week clear_without_help_rate trend
 export const stats = () => request('/me/stats').then(json)
-export const getStats = stats
-
-// Usage counts against GNANI_CALL_LIMIT (owner account only)
-export const usage = () => request('/me/usage').then(json)
-export const getUsage = usage
