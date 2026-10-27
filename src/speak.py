@@ -7,6 +7,7 @@ import shutil
 import audio
 import db
 import gnani
+import gnani_mock
 
 # From https://docs.gnani.ai/api/TTS/tts-inference.md and https://docs.gnani.ai/api/VC/vc-inference.md:
 # a stock voice and a cloned voice go to the same endpoint, with different bodies.
@@ -42,6 +43,8 @@ def synthesize(text, language="hi", embedding=None, cache_dir=CACHE_DIR, user_id
     """Return the path of a cached wav for text; calls Gnani only on a cache miss. The cache
     key covers the whole request body, so the language and the voice (stock or cloned) are
     part of it. user_id is who the call is for (see gnani.post)."""
+    if gnani_mock.on():
+        return gnani_mock.silence()
     body = request_body(text, language, embedding)
     key = hashlib.sha256(repr(sorted(body.items())).encode("utf-8")).hexdigest()
     path = os.path.join(cache_dir, f"{key}.wav")
@@ -60,6 +63,8 @@ def clone_voice(wav_path, cache_dir, user_id=None):
     """Gnani's speaker_embedding ({embedding, shape, dtype}) for a reference recording; calls
     Gnani only on a cache miss. The cache holds a voiceprint, so it lives in cache_dir, inside
     the user's own folder, and goes when they remove their voice."""
+    if gnani_mock.on():
+        return dict(gnani_mock.EMBEDDING)
     with open(wav_path, "rb") as f:
         audio_bytes = f.read()
     seconds = audio.seconds(audio_bytes)
