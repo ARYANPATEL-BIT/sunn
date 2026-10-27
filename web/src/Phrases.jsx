@@ -3,10 +3,17 @@ import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
+import { NEEDED, needsRerecord } from './quickstart.js'
 import { Alert, Pill, useGo } from './ui.jsx'
 
 const CONTEXT_OPTIONS = ['any', 'home', 'hospital', 'market']
-const NEEDED_RECORDINGS = 3
+const FILTERS = [
+  ['all', 'phrases.filterAll'],
+  ['urgent', 'phrases.filterUrgent'],
+  ['home', 'phrases.filterHome'],
+  ['hospital', 'phrases.filterHospital'],
+  ['market', 'phrases.filterMarket'],
+]
 
 export default function Phrases() {
   const { t } = useLang()
@@ -317,13 +324,7 @@ export default function Phrases() {
           </div>
 
           <div className="filter-strip" role="radiogroup" aria-label={t('phrases.contextsLabel')}>
-            {[
-              ['all', 'phrases.filterAll'],
-              ['urgent', 'phrases.filterUrgent'],
-              ['home', 'phrases.filterHome'],
-              ['hospital', 'phrases.filterHospital'],
-              ['market', 'phrases.filterMarket'],
-            ].map(([fKey, labelKey]) => (
+            {FILTERS.map(([fKey, labelKey]) => (
               <button
                 key={fKey}
                 type="button"
@@ -559,7 +560,9 @@ export default function Phrases() {
       {totalCount > 0 && filteredPhrases.length === 0 && (
         <div className="phrases-no-search">
           <p>
-            {t('phrases.noSearchResults', { query: search || activeFilter })}
+            {t('phrases.noSearchResults', {
+              query: search || t(FILTERS.find(([key]) => key === activeFilter)[1]),
+            })}
           </p>
           <p className="muted">{t('phrases.noSearchBody')}</p>
           <button
@@ -592,6 +595,11 @@ export default function Phrases() {
                         {t('speak.urgent')}
                       </span>
                     )}
+                    {needsRerecord(phrase) && (
+                      <span className="context-tag" title={t('phrases.rerecordHelp')}>
+                        {t('phrases.rerecord')}
+                      </span>
+                    )}
                     {phrase.sources?.map((source) => (
                       <span
                         key={source}
@@ -610,23 +618,11 @@ export default function Phrases() {
                 </div>
 
                 <div className="phrase-card-meta">
-                  <span
-                    className="meta-stat"
-                    title={t('phrases.enrolledStatus', {
-                      enrolled: phrase.enrolled ?? 0,
-                      needed: NEEDED_RECORDINGS,
-                    })}
-                  >
-                    {t('phrases.enrolledStatus', {
-                      enrolled: phrase.enrolled ?? 0,
-                      needed: NEEDED_RECORDINGS,
-                    })}
+                  <span className="meta-stat">
+                    {needsRerecord(phrase)
+                      ? t('phrases.rerecordHelp')
+                      : t('phrases.enrolledStatus', { enrolled: Math.min(phrase.sample_count, NEEDED), needed: NEEDED })}
                   </span>
-                  {Boolean(phrase.sample_count) && (
-                    <span className="meta-stat">
-                      {t('phrases.usesCount', { count: phrase.sample_count })}
-                    </span>
-                  )}
                 </div>
               </div>
 
