@@ -54,7 +54,7 @@ Judges and challenge mentors can evaluate Sunn either through a deployed instanc
 | Step | Action | Route | Expected Result |
 | :--- | :--- | :--- | :--- |
 | **1. Sign Up** | Enter Name, Email, Invite Code (if configured), Password, the language you speak (Hindi or English), and tick consent. | `/signup` | Explicit consent captured; the 51 everyday phrases and starter building blocks are added. |
-| **2. Welcome Guide** | Four short steps: welcome, language, how Sunn learns, getting ready. Use the EN / हिं switch in the header to show both languages; the guide's own language cards also change the language the account speaks (docs/AUDIT.md). | `/app/onboarding` | Explains the tap-to-record interaction and the 3 recordings per phrase. |
+| **2. Welcome Guide** | Four short steps: welcome, the app's language (only the screen's; the language spoken is in Settings), how Sunn learns, getting ready. | `/app/onboarding` | Explains the tap-to-record interaction and the 3 recordings per phrase. |
 | **3. Teach** | Record the 10 quick-start phrases (help, pain, basic needs), 3 times each. Speak opens once all 10 are ready. | `/app/enroll` | Each saved recording fills a dot; a note says when Speak is open. |
 | **4. Live Speak** | Tap the central sun button, say an enrolled phrase (e.g. *पानी चाहिए* or *I need help*), tap to stop. | `/app/speak` | The sun's glow follows the voice; Prisma transcribes; the 3 closest phrases are shown, best first ("Maybe" when the match is weak). |
 | **5. Confirmation** | Tap the right phrase, or "None of these" to type it. | `/app/speak` | Timbre says the phrase aloud; the recording joins that phrase's examples. |

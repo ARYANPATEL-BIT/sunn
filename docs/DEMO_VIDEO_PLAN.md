@@ -23,7 +23,7 @@ This document provides a production-ready recording script and screen capture pl
 - **Visual**: First-time user onboarding (`/app/onboarding`).
 - **Narration**:
   > "Setup is fast and respectful. The user selects their language, Hindi or English, and learns how Sunn personalizes to their voice. Instead of retraining models, Sunn bets that when Prisma mishears a person's phrase, it mishears it in a similar way each time. Sunn keeps that transcript as the phrase's fingerprint."
-- **Screen Action**: Show the Hindi and English cards without clicking them: with the demo account, picking one also changes the language the account speaks and closes Speak (docs/AUDIT.md). Click through to the Speak screen.
+- **Screen Action**: Toggle between the Hindi and English cards (they change only the screen's language). Click through to the Speak screen.
 
 ### Scene 3: Everyday Phrase Library and Provenance (0:55 to 1:25)
 - **Visual**: Phrase Library screen (`/app/phrases`).

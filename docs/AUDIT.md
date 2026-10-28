@@ -14,8 +14,8 @@ Every automated run used `GNANI_MOCK=1`, except the one real check (section 6).
   language stub is non-blocking", `web/src/Settings.jsx`) hid a real bug (section 8). No mocks
   or stubs in the code; `docs/API.md` already says every route is real.
 - Dead code: 20 of the 45 exports in `web/src/api.js` were unused (aliases, the building-block
-  and usage clients, `deleteSample`): removed. Unused imports and variables in `web/src/Onboarding.jsx`: left,
-  since that file was not to change.
+  and usage clients, `deleteSample`): removed. Unused imports and variables in
+  `web/src/Onboarding.jsx`: removed with the fix to that file (section 8).
 - `uv run pytest`: 102 passed, 1 failed. The deploy dry run test failed because it inherited
   conftest's fake `GNANI_API_KEY` ("test-key") and then found that value in conftest.py itself.
 
@@ -45,7 +45,7 @@ Every automated run used `GNANI_MOCK=1`, except the one real check (section 6).
 | `POST /auth/login` | Sign in | `LoginPage` | connected |
 | `POST /auth/logout` | app header | `AppShell` via `auth.jsx` | connected; **was** racing to `/login?next=…`, now lands on `/` |
 | `GET /auth/me` | every page load | `AuthProvider` (auth.jsx) | connected |
-| `PATCH /me` | Settings; Welcome guide | `Settings.jsx`; `Onboarding.jsx` | **was called wrong**: the app-language toggle sent `{language}`, silently changing the spoken language. Fixed in Settings. Onboarding still does it (section 8) |
+| `PATCH /me` | Settings | `Settings.jsx` | **was called wrong**: the app-language toggle in Settings and the language cards in the welcome guide sent `{language}`, silently changing the spoken language. Both fixed; only Settings' own spoken-language control sends it now, after a warning |
 | `DELETE /me` | Settings, Progress | `Settings.jsx`, `DeleteAccount` (Progress.jsx) via `auth.jsx` | connected; now also clears this browser's state for the account |
 | `POST /me/voice` | Settings | `Settings.jsx` | **was not called**: no upload existed (the button sent users to Teach). Connected |
 | `DELETE /me/voice` | Settings | `Settings.jsx` | connected |
@@ -80,7 +80,7 @@ Every automated run used `GNANI_MOCK=1`, except the one real check (section 6).
 | app | bottom tabs | navigation | yes |
 | presenter bar | steps, previous, next, restart, collapse, close, Alt+P | navigation only | yes |
 | Welcome guide | Skip setup, Continue, Back, Escape, Go to Speak | navigation, local flag | yes |
-| Welcome guide | language cards | interface language **and** `PATCH /me {language}` | **no**: changes the spoken language too (section 8) |
+| Welcome guide | language cards | nothing (localStorage `sunn.lang`) | yes (fixed: they also sent `PATCH /me {language}`) |
 | Welcome guide | Teach phrases now, Add everyday phrases, Open phrase library | `/app/enroll`; `POST /me/phrases/default`; `/app/phrases` | yes |
 | Teach | sun, Play back, Save, Record again | `POST /me/enroll` (Save) | yes |
 | Teach | Speak (after the quick start), Add everyday phrases, Try again | `/app/speak`; `POST /me/phrases/default`; `GET /me/phrases` | yes |
@@ -127,6 +127,7 @@ plays a tone. `cd web; npm run e2e` builds the app and runs them.
 | `settings.spec.js` | own voice: upload with consent, toggle, preview, Speak in the cloned voice, remove; app language (no request sent); spoken language (confirm, `PATCH`, new phrases, "Record again" on the old ones, Speak closes); text size; caregiver and its wa.me link; account deletion (signed out, local flag gone, `/auth/me` 401, landing page) |
 | `progress.spec.js` | the empty state of a new account, then counts, first-suggestion match, top phrases, the chart and the 8-week table |
 | `keyboard.spec.js` | every Tab stop on 9 screens shows a focus ring; sign in, record, pick a phrase and add one with the keyboard alone; Escape leaves the welcome guide |
+| `onboarding.spec.js` | the guide's language cards send no request and leave the spoken language alone; its last step says "ready" only once Speak is open |
 | `motion.spec.js` | with motion: the background animates and the sun breathes; with system reduced motion nothing moves and the example is paused; the app's own setting stops and restarts motion without a reload |
 | `presenter.spec.js` | the presenter bar opens, steps through screens, closes, and Alt+P brings it back |
 | `screens.spec.js` | the screenshots in `docs/screenshots` |
@@ -136,7 +137,7 @@ language (Latin words in Hindi mode, Devanagari in English mode; product and cha
 quoted data, the user's own phrases and name excepted). Each test also fails on any console
 error or warning, failed request, or 4xx or 5xx it didn't say it expects.
 
-Last full run: 45 passed, 3 skipped (the phone-only screenshots and the once-a-run wrong invite
+Last full run: 53 passed, 3 skipped (the phone-only screenshots and the once-a-run wrong invite
 code, skipped on desktop), plus `uv run pytest`: 112 passed.
 
 ## 4. Quality checks
@@ -229,7 +230,7 @@ every doc already said accuracy isn't measured.
 | own voice "Coming next … not built yet" | landing, DESIGN.md | built now (Settings) | "Optional … needs its own consent" |
 | "Urgent phrases … given higher priority when speaking" | Phrases screen | urgency doesn't change the ranking | "get an Urgent label when Sunn suggests them" |
 | "All interactive controls … 44px to 64px" | Settings screen | was not true for EN / हिं | made true |
-| "Show English / Hindi language toggle" on the welcome guide | README, DEMO_RUNBOOK, DEMO_VIDEO_PLAN, SUBMISSION_PACKAGE | it also changes the spoken language | presenters now told to use the header toggle |
+| the welcome guide's language step | README, DEMO_RUNBOOK, DEMO_VIDEO_PLAN, SUBMISSION_PACKAGE | it also changed the spoken language | fixed in the app; the docs say it changes only the screen's language |
 
 docs/WRITEUP.md needed no change. Medical claims: none found; every doc keeps "not a medical device".
 
@@ -279,27 +280,25 @@ Web app
   lines, mostly in Hindi.
 - `web/src/Speak.jsx`, `Progress.jsx`, `Settings.jsx`: user phrases and language names now carry
   their `lang`, for screen readers.
+- `web/src/Onboarding.jsx`: the guide's language cards also sent `PATCH /me {language}`, silently
+  changing the language the account speaks; now they change only the screen. Its last step said
+  "ready to speak" once any phrase had 3 recordings in any language; now only once Speak is open.
 
 ### Still broken or risky
 
-1. **The welcome guide's language cards change the spoken language** (`Onboarding.jsx`, which
-   was not to change). Picking a card calls `PATCH /me {language}`: an account with recordings
-   loses them for recognition, silently. The fix is to delete the `api.updateMe` call in
-   `handleLanguageSelect`. The guide also judges readiness by `enrolled`, not `sample_count`.
-   The docs now steer presenters away from the cards.
-2. **The real Gnani check didn't pass**: the key in `.env` is refused (401).
-3. **Speak stays closed until the 10 quick-start phrases have 3 recordings each.** A demo account
+1. **The real Gnani check didn't pass**: the key in `.env` is refused (401).
+2. **Speak stays closed until the 10 quick-start phrases have 3 recordings each.** A demo account
    must include them (docs/DEMO_DATA.md lists them). None of the 8 local accounts in
    `data/app.db` qualifies: none has recordings for more than one phrase.
-4. **No accuracy results**: `results/` doesn't exist. Every doc says so.
-5. **Not built**: SOS, show-to-listener, bottom sheet, building-block screens.
-6. **Saffron outside the sun**: urgent badges, delete buttons, onboarding and the presenter bar
+3. **No accuracy results**: `results/` doesn't exist. Every doc says so.
+4. **Not built**: SOS, show-to-listener, bottom sheet, building-block screens.
+5. **Saffron outside the sun**: urgent badges, delete buttons, onboarding and the presenter bar
    use saffron, which DESIGN.md reserves for the sun and recording. A design decision, not changed.
-7. **Phone performance**: Lighthouse 74 (landing) and 82 (Speak) on a throttled phone; one
+6. **Phone performance**: Lighthouse 74 (landing) and 82 (Speak) on a throttled phone; one
    500 KB script and render-blocking Google Fonts.
-8. **`/favicon.ico`** gets the app's HTML; there is no icon.
-9. The free Space loses accounts and recordings on every restart (docs/DEPLOY.md).
-10. `@Gnani_AI` in docs/POSTS.md is not verified as Gnani's handle.
+7. **`/favicon.ico`** gets the app's HTML; there is no icon.
+8. The free Space loses accounts and recordings on every restart (docs/DEPLOY.md).
+9. `@Gnani_AI` in docs/POSTS.md is not verified as Gnani's handle.
 
 ### Before you submit (by hand)
 
@@ -311,12 +310,10 @@ Web app
    docker rm -f sunn-real
    ```
    (`speech.wav`: a few seconds of you saying "I need help".)
-2. Decide on item 1 above (the one-line Onboarding fix), or keep the presenters away from the
-   language cards.
-3. Record or load the demo account with the 10 quick-start phrases, 3 times each, with real
+2. Record or load the demo account with the 10 quick-start phrases, 3 times each, with real
    speech and `GNANI_MOCK` off; give every recording its true source.
-4. Deploy (`scripts/deploy_space.py`), with `TRUST_PROXY=1` and without `GNANI_MOCK` in the
+3. Deploy (`scripts/deploy_space.py`), with `TRUST_PROXY=1` and without `GNANI_MOCK` in the
    Space's settings; open it on a phone and check the microphone and playback.
-5. Replace the placeholders in docs/POSTS.md and docs/SUBMISSION_PACKAGE.md; check `@Gnani_AI`.
-6. Record the video from docs/DEMO_VIDEO_PLAN.md as updated (header language toggle only).
-7. Commit and push this branch, then merge it into `main`.
+4. Replace the placeholders in docs/POSTS.md and docs/SUBMISSION_PACKAGE.md; check `@Gnani_AI`.
+5. Record the video from docs/DEMO_VIDEO_PLAN.md as updated.
+6. Merge this branch into `main`.

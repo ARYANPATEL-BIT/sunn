@@ -246,8 +246,7 @@ Open `http://localhost:5173` in a desktop browser (Chrome, Edge, or Firefox). De
 1. **Step 1: Onboarding and Language Setup (0:00 to 0:45)**:
    - Jump to Onboarding (`/app/onboarding`).
    - Explain Sunn's core mission: an assistive communication aid for people whose speech is difficult to understand.
-   - Show the 3-recording learning principle, and the EN / हिं switch in the header, which changes only the screen's language.
-   - Don't pick a language on the guide's own language step with an account that has recordings: it also changes the language the account speaks, so those recordings stop counting (docs/AUDIT.md).
+   - Show the 3-recording learning principle, and the guide's language step, which changes only the screen's language (the language spoken is in Settings).
 2. **Step 2: Personal Phrase Library (0:45 to 1:30)**:
    - Jump to Phrase Library (`/app/phrases`).
    - Point out everyday phrases, context tags (home, hospital, market), and urgent tags.

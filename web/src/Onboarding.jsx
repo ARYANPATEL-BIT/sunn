@@ -1,9 +1,10 @@
-import { ArrowLeft, ArrowRight, AudioLines, BookOpen, Check, CheckCircle2, Mic, Sparkles, Volume2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, Check, CheckCircle2, Mic, Volume2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
-import { isOnboarded, setOnboarded } from './prefs.js'
+import { setOnboarded } from './prefs.js'
+import { speakProgress } from './quickstart.js'
 import { Alert, Pill, useGo } from './ui.jsx'
 
 const TOTAL_STEPS = 4
@@ -15,13 +16,12 @@ export default function Onboarding() {
 
   const [step, setStep] = useState(1)
   const [phrases, setPhrases] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [seeding, setSeeding] = useState(false)
 
   const hasPhrases = phrases && phrases.length > 0
-  const enrolledCount = phrases ? phrases.filter((p) => (p.enrolled ?? 0) >= 3).length : 0
-  const needCount = phrases ? phrases.filter((p) => (p.enrolled ?? 0) < 3).length : 0
+  // Ready means Speak is open: the quick-start phrases recorded in the language spoken now.
+  const ready = hasPhrases && speakProgress(phrases, user.language).open
 
   const handleLoadDefaults = async () => {
     setSeeding(true)
@@ -36,14 +36,10 @@ export default function Onboarding() {
     }
   }
 
-  const handleLanguageSelect = async (code) => {
-    if (code === lang) return
-    setLang(code)
-    try {
-      await api.updateMe({ language: code })
-    } catch {
-      // Non-blocking
-    }
+  // The screen's language only, on this device. The language the user speaks is set at sign-up
+  // and changed in Settings, which warns first: changing it makes old recordings stop counting.
+  const handleLanguageSelect = (code) => {
+    if (code !== lang) setLang(code)
   }
 
   useEffect(() => {
@@ -55,9 +51,6 @@ export default function Onboarding() {
       })
       .catch((err) => {
         if (active) setError(err)
-      })
-      .finally(() => {
-        if (active) setLoading(false)
       })
     return () => {
       active = false
@@ -85,7 +78,7 @@ export default function Onboarding() {
     if (step < TOTAL_STEPS) {
       setStep((s) => s + 1)
     } else {
-      if (hasPhrases && enrolledCount === 0) {
+      if (hasPhrases && !ready) {
         handleFinish('/app/enroll')
       } else {
         handleFinish('/app/speak')
@@ -228,7 +221,7 @@ export default function Onboarding() {
           <article className="step-card setup-readiness-card" aria-labelledby="step4-title">
             <h1 id="step4-title">{t('onboarding.setupHeading')}</h1>
 
-            {enrolledCount > 0 ? (
+            {ready ? (
               <div className="readiness-state ready">
                 <CheckCircle2 className="readiness-icon" size={32} aria-hidden="true" strokeWidth={1.5} />
                 <h2>{t('onboarding.setupReadyTitle')}</h2>
