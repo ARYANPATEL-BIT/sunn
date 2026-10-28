@@ -33,7 +33,7 @@ Open `http://localhost:7860` in a desktop browser (Chrome, Edge, or Firefox). De
 
 ### Step 1: Mission and Onboarding (0:00 to 0:45)
 - **Route**: `/app/onboarding` (or Step 1 on the Presenter Bar)
-- **Action**: Display the welcome card. Show both languages with the EN / हिं switch in the header, not the guide's own language cards: those also change the language the account speaks, so its recordings stop counting (docs/AUDIT.md).
+- **Action**: Display the welcome card and the language step, which changes only the screen's language (the language spoken is in Settings).
 - **Presenter Script**:
   > "Sunn is an assistive communication assistant built for people with dysarthria, whose speech may be slurred or unclear due to stroke, Parkinson's disease, or cerebral palsy. Instead of retraining speech models, Sunn keeps Gnani Prisma's transcripts of a few recordings of each everyday phrase as its fingerprint, betting that Prisma mishears a person's phrase in a similar way each time."
 - **Expected Result**: The screen's language switches; explains the 3-recording learning principle.
