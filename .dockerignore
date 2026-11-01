@@ -8,7 +8,9 @@
 data/*
 !data/default_phrases_*.txt
 logs
+models
 results
+training
 tests
 web/node_modules
 web/dist
