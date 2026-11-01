@@ -25,6 +25,20 @@ dev = [
     "huggingface-hub>=2.2.0",
     "pytest>=9.1.1",
 ]
+# The shared-model research pipeline in training/ (uv sync --group train). Not in the app or the image.
+train = [
+    "peft>=0.17.0",
+    "torch>=2.7.0",
+    "transformers>=4.56.0",
+]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "scripts"]
