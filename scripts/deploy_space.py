@@ -46,9 +46,25 @@ def git(*args):
 def export_head(folder):
     """Write the last commit's files into folder, with the line endings they have in git (the
     working tree has CRLF ones on Windows)."""
+    folder_path = Path(folder)
     archive = git("-c", "core.autocrlf=false", "archive", "HEAD")
     with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
-        tar.extractall(folder, filter="data")
+        tar.extractall(folder_path, filter="data")
+    # Ensure Hugging Face Spaces receives required YAML frontmatter even when repo README omits it.
+    readme = folder_path / "README.md"
+    if readme.exists():
+        content = readme.read_text(encoding="utf-8")
+        if not content.startswith("---"):
+            hf_header = (
+                "---\n"
+                "title: Sunn\n"
+                "sdk: docker\n"
+                "app_port: 7860\n"
+                "pinned: false\n"
+                "short_description: Speech aid for dysarthric speech, Hindi and Indian English\n"
+                "---\n\n"
+            )
+            readme.write_text(hf_header + content, encoding="utf-8")
 
 
 def blocked_paths(files):
