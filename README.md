@@ -1,19 +1,22 @@
+# Sunn (सुन)
+
+> An accessibility speech assistant for individuals with dysarthria and atypical speech patterns, powered by Gnani AI's Prisma STT and Timbre TTS.
+
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-19+-61DAFB?style=flat&logo=react)](https://react.dev)
+[![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.14-blue?style=flat&logo=python)](https://python.org)
+[![Tests](https://img.shields.io/badge/Pytest-112%20passed-success?style=flat&logo=pytest)](tests/)
+[![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%20AA-purple?style=flat)](docs/AUDIT.md)
+[![Playwright](https://img.shields.io/badge/Playwright-E2E%20Verified-green?style=flat&logo=playwright)](web/e2e/)
+[![Gnani AI](https://img.shields.io/badge/Gnani%20AI-Prisma%20%2B%20Timbre-orange?style=flat)](https://gnani.ai)
+
 ---
-title: Sunn
-sdk: docker
-app_port: 7860
-pinned: false
-short_description: Speech aid for dysarthric speech, Hindi and Indian English
+
+Sunn is an assistive speech communication aid engineered for individuals whose speech is difficult for unfamiliar listeners and general automatic speech recognition (ASR) engines to understand. Users speak everyday phrases in their natural voice, and Sunn identifies what was intended and vocalizes it clearly in Hindi (`hi-IN`) or Indian English (`en-IN`).
+
+Built for **Gnani AI's Great Indian AI Internship Challenge**.
+
 ---
-
-# Sunn
-
-Sunn is a speech aid for people whose speech is hard for others, and for speech recognition,
-to understand. They say one of their everyday phrases the way they can, and Sunn shows what it
-thinks they meant and says it aloud in a clear voice.
-
-Built on Gnani's Prisma (speech to text) and Timbre (text to speech) for the Gnani Great Indian
-AI Internship Challenge. Hindi and Indian English.
 
 ## The problem
 
