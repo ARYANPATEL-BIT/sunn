@@ -18,6 +18,22 @@ Built for **Gnani AI's Great Indian AI Internship Challenge**.
 
 ---
 
+## Interface & Screen Walkthrough
+
+Sunn is designed mobile-first with high-contrast visual themes, minimum 44px accessible touch targets, and full bilingual support in Hindi and Indian English.
+
+| Speak & Listen | Recognition Candidates | Phrase Library | Progress Trends |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/screenshots/en-15-speak.jpg" width="180" alt="Speak Screen" /> | <img src="docs/screenshots/en-16-speak-candidates.jpg" width="180" alt="Candidate Selection" /> | <img src="docs/screenshots/en-19-phrases.jpg" width="180" alt="Phrase Library" /> | <img src="docs/screenshots/en-23-progress.jpg" width="180" alt="Progress Metrics" /> |
+
+| Hindi Bilingual Mode | Own Voice Setup | Accessibility Controls | Large Text Display |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/screenshots/hi-15-speak.jpg" width="180" alt="Hindi Speak Screen" /> | <img src="docs/screenshots/en-26-settings-own-voice.jpg" width="180" alt="Own Voice Cloning" /> | <img src="docs/screenshots/en-25-settings.jpg" width="180" alt="Accessibility Settings" /> | <img src="docs/screenshots/en-29-speak-large-text.jpg" width="180" alt="Large Text Mode" /> |
+
+> Complete visual reference: [58-screen UI screenshot gallery](docs/screenshots/README.md) covering every screen, modal, and state in both English and Hindi.
+
+---
+
 ## The problem
 
 Dysarthria is a speech disorder caused by conditions such as stroke, Parkinson's disease,
@@ -108,27 +124,17 @@ of the audio or text and the full request, so the same request is never paid for
 
 ## Features
 
-- Sign-up with consent, optional invite code; sign-in with an httpOnly session cookie
-- 51 built-in everyday phrases in Hindi and in English, tagged by place, with "I need help"
-  and "I'm in pain" marked urgent
-- Enrollment of phrases, about 3 recordings each, starting with 10 quick-start phrases (help,
-  pain and basic needs). Speak opens once those 10 have 3 recordings each. Templates and slot
-  words work in the API; the web app has no screens for them yet
-- Speaking: tap to record, then pick from the top 3 candidates, which Timbre says aloud.
-  Optional place context, an urgent badge, and a low-confidence flag
-- The person's own cloned voice, if they want it: upload 5-30 s of their speech in Settings,
-  with its own consent, then turn it on or off
-- Phrase library: search, add, edit, tag and delete phrases
-- A caregiver contact, for a ready-made WhatsApp link
-- Progress: phrase and recording counts, top-1 hit rate, most used phrases, and a weekly
-  trend of how often Prisma got it right without Sunn's help
-- Speech in Hindi or Indian English, interface in English or Hindi. Both can be changed in
-  Settings: the interface language only on that device, the spoken one for the account (after
-  a warning that recordings in the old language stop counting)
-- Accessibility settings (large text, reduced motion, stronger focus outlines); text colours
-  chosen for WCAG AA contrast (web/DESIGN.md)
-- Credit protection: a server-wide cap on Gnani calls (`GNANI_CALL_LIMIT`) and a per-account
-  daily cap (`DAILY_CALL_CAP_PER_USER`)
+- **Quick-Start Gated Enrollment**: 10 essential everyday phrases (Help, Pain, Water, Bathroom, Yes, No, Hungry, Medicines, Emergency, Call Caregiver) are recorded first (3 takes each). The Speak screen unlocks once these foundational phrases are trained.
+- **Dual Language Independence**: Complete separation of UI display language (instant English / Hindi switch in the navigation header) from the user's spoken account language (configured in Settings with safety checks).
+- **Sign-up with consent and optional invite code**: Sign-in with secure httpOnly session cookies.
+- **51 built-in everyday phrases**: Pre-configured in Hindi and English, tagged by place (Home, Hospital, Market), with "I need help" and "I'm in pain" marked urgent.
+- **Speaking & Recognition**: Tap to record, then pick from the top 3 candidates, which Timbre says aloud. Contextual ranking, urgent badges, and low-confidence warnings.
+- **In-App Own Voice Cloning**: Upload 5 to 30 seconds of speech in Settings with separate explicit consent to activate personalized synthesis.
+- **Phrase Library**: Full CRUD support: search, add, edit, tag, mark urgent, and delete phrases.
+- **Caregiver Contact**: One-tap WhatsApp emergency alert link.
+- **Transparent Progress Tracking**: Phrase and recording counts, top-1 hit rate, most used phrases, and weekly Prisma accuracy trends.
+- **Accessibility Controls**: Large text display, high-contrast focus outlines, and reduced motion toggles adhering to WCAG AA guidelines.
+- **Credit Protection**: Global server limit (`GNANI_CALL_LIMIT`) and per-user daily limits (`DAILY_CALL_CAP_PER_USER`).
 
 ## Results
 
