@@ -136,6 +136,29 @@ of the audio or text and the full request, so the same request is never paid for
 - **Accessibility Controls**: Large text display, high-contrast focus outlines, and reduced motion toggles adhering to WCAG AA guidelines.
 - **Credit Protection**: Global server limit (`GNANI_CALL_LIMIT`) and per-user daily limits (`DAILY_CALL_CAP_PER_USER`).
 
+## Gnani Mock Mode (Zero Credit Offline Testing)
+
+Sunn includes a comprehensive offline mock engine (`src/gnani_mock.py`, `src/gnani_mock.json`) that allows evaluators, judges, and developers to test the entire application end-to-end without spending API credits or configuring an API key:
+
+```bash
+GNANI_MOCK=1 uv run src/server.py --port 7860
+```
+
+- Answers Prisma STT, Timbre TTS, and voice cloning locally with deterministic fixture responses.
+- **Safety Guard**: Mock Mode automatically refuses to start if `TRUST_PROXY=1` is set, ensuring it can never accidentally run in public production deployments.
+
+## Shared-Model Machine Learning Experiment (`training/`)
+
+In addition to per-speaker acoustic error fingerprinting, the repository includes a complete machine learning research module in `training/` exploring shared acoustic models for dysarthric speech:
+
+- **Objective**: Evaluates whether parameter-efficient fine-tuning (PEFT LoRA) of `openai/whisper-small` across multiple dysarthric speakers can improve baseline transcription compared to generic commercial ASR.
+- **Speaker-Split Data Pipeline** (`training/data.py`): Enforces strict speaker isolation between training and evaluation splits using TORGO corpus and pilot recordings, guaranteeing zero speaker data leakage.
+- **LoRA Training Module** (`training/train.py`): Implements 8-bit quantized LoRA fine-tuning targeting Whisper attention projection layers (`q_proj`, `v_proj`) with PyTorch CUDA 12.8 support via optional `[dependency-groups.train]`.
+- **Zero-Leakage Evaluation Gate** (`training/evaluate.py`): Asserts Word Error Rate (WER) and Character Error Rate (CER) baselines with formal non-leakage verification.
+- **Production Isolation**: Training scripts, checkpoints, and adapter weights are explicitly excluded from Docker container builds (`.dockerignore`) and git tracking (`.gitignore`) to keep runtime deployments lightweight.
+
+> See [`training/README.md`](training/README.md) for full training scripts, hyperparameter configurations, and evaluation benchmarks.
+
 ## Results
 
 **Not measured yet for this version.** No evaluation has been run on real or demo recordings
