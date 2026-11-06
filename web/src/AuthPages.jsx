@@ -1,11 +1,11 @@
-import { Eye, EyeOff } from 'lucide-react'
+import { Check, CircleAlert, Eye, EyeOff } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import * as api from './api.js'
 import { safeNext, useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { isOnboarded } from './prefs.js'
-import { Alert, errorText, LangToggle, Pill, reducedMotion, useGo, Wordmark } from './ui.jsx'
+import { Alert, errorText, ICON, LangToggle, Pill, reducedMotion, ThemeToggle, useGo, Wordmark } from './ui.jsx'
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const MIN_PASSWORD = 8
@@ -19,13 +19,15 @@ const FIELD_OF = {
   no_invite_code: 'invite_code',
 }
 
-// A label above, the input, then a hint or this field's error underneath.
+// One cell of a grouped form: the label above the input, then a hint or this field's error.
 function Field({ id, label, hint, error, children }) {
   const i18n = useLang()
   const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(' ') || undefined
   return (
-    <div className="field">
-      <label htmlFor={id}>{label}</label>
+    <div className={`field-cell ${error ? 'invalid' : ''}`}>
+      <label htmlFor={id} className="field-label">
+        {label}
+      </label>
       {children({ id, 'aria-describedby': describedBy, 'aria-invalid': error ? true : undefined })}
       {hint && (
         <p className="field-hint" id={`${id}-hint`}>
@@ -34,7 +36,8 @@ function Field({ id, label, hint, error, children }) {
       )}
       {error && (
         <p className="field-error" id={`${id}-error`}>
-          {errorText(i18n, error)}
+          <CircleAlert {...ICON} />
+          <span>{errorText(i18n, error)}</span>
         </p>
       )}
     </div>
@@ -45,7 +48,7 @@ function PasswordInput({ value, onChange, inputRef, autoComplete, ...aria }) {
   const { t } = useLang()
   const [shown, setShown] = useState(false)
   return (
-    <div className="password">
+    <>
       <input
         ref={inputRef}
         type={shown ? 'text' : 'password'}
@@ -63,10 +66,10 @@ function PasswordInput({ value, onChange, inputRef, autoComplete, ...aria }) {
         aria-label={t(shown ? 'auth.hideLabel' : 'auth.showLabel')}
         onClick={() => setShown(!shown)}
       >
-        {shown ? <EyeOff aria-hidden="true" strokeWidth={1.5} /> : <Eye aria-hidden="true" strokeWidth={1.5} />}
+        {shown ? <EyeOff {...ICON} /> : <Eye {...ICON} />}
         <span aria-hidden="true">{t(shown ? 'auth.hide' : 'auth.show')}</span>
       </button>
-    </div>
+    </>
   )
 }
 
@@ -86,16 +89,19 @@ function EmailInput({ value, onChange, inputRef, ...aria }) {
   )
 }
 
-// The shared frame: language toggle at the top, then the centered column under the wordmark.
+// The shared frame: the wordmark, language and theme at the top, then one centered column.
 function AuthFrame({ title, children }) {
   return (
     <div className="auth">
-      <div className="auth-top">
-        <LangToggle />
-      </div>
-      <main className="auth-column">
+      <header className="bar">
         <Wordmark />
-        <h1>{title}</h1>
+        <div className="bar-end">
+          <LangToggle />
+          <ThemeToggle />
+        </div>
+      </header>
+      <main className="auth-column">
+        <h1 className="large-title">{title}</h1>
         {children}
       </main>
     </div>
@@ -162,22 +168,24 @@ export function LoginPage() {
   return (
     <AuthFrame title={t('login.title')}>
       <form className="auth-form" onSubmit={submit} noValidate>
-        <Field id="login-email" label={t('auth.email')} error={errors.email}>
-          {(aria) => <EmailInput value={email} onChange={setEmail} inputRef={refs.email} {...aria} />}
-        </Field>
-        <Field id="login-password" label={t('auth.password')} error={errors.password}>
-          {(aria) => (
-            <PasswordInput
-              value={password}
-              onChange={setPassword}
-              inputRef={refs.password}
-              autoComplete="current-password"
-              {...aria}
-            />
-          )}
-        </Field>
+        <div className="group">
+          <Field id="login-email" label={t('auth.email')} error={errors.email}>
+            {(aria) => <EmailInput value={email} onChange={setEmail} inputRef={refs.email} {...aria} />}
+          </Field>
+          <Field id="login-password" label={t('auth.password')} error={errors.password}>
+            {(aria) => (
+              <PasswordInput
+                value={password}
+                onChange={setPassword}
+                inputRef={refs.password}
+                autoComplete="current-password"
+                {...aria}
+              />
+            )}
+          </Field>
+        </div>
         <Alert error={errors.form} />
-        <Pill type="submit" icon={null} disabled={busy}>
+        <Pill type="submit" className="block" disabled={busy}>
           {t(busy ? 'login.busy' : 'login.submit')}
         </Pill>
       </form>
@@ -264,96 +272,114 @@ export function SignupPage() {
   return (
     <AuthFrame title={t('signup.title')}>
       <form className="auth-form" onSubmit={submit} noValidate>
-        <Field id="signup-name" label={t('signup.name')} error={errors.name}>
-          {(aria) => (
-            <input
-              ref={refs.name}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
-              autoCapitalize="words"
-              {...aria}
-            />
-          )}
-        </Field>
-        <Field id="signup-email" label={t('auth.email')} error={errors.email}>
-          {(aria) => <EmailInput value={email} onChange={setEmail} inputRef={refs.email} {...aria} />}
-        </Field>
-        {inviteRequired && (
-          <Field
-            id="signup-invite"
-            label={t('signup.inviteCode')}
-            hint={t('signup.inviteHint')}
-            error={errors.invite_code}
-          >
+        <div className="group">
+          <Field id="signup-name" label={t('signup.name')} error={errors.name}>
             {(aria) => (
               <input
-                ref={refs.invite_code}
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value)}
-                autoComplete="off"
-                autoCapitalize="none"
-                spellCheck={false}
-                placeholder={t('signup.invitePlaceholder')}
+                ref={refs.name}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
+                autoCapitalize="words"
                 {...aria}
               />
             )}
           </Field>
-        )}
-        <Field id="signup-password" label={t('auth.password')} hint={t('signup.passwordHint')} error={errors.password}>
-          {(aria) => (
-            <PasswordInput
-              value={password}
-              onChange={setPassword}
-              inputRef={refs.password}
-              autoComplete="new-password"
-              {...aria}
-            />
+          <Field id="signup-email" label={t('auth.email')} error={errors.email}>
+            {(aria) => <EmailInput value={email} onChange={setEmail} inputRef={refs.email} {...aria} />}
+          </Field>
+          {inviteRequired && (
+            <Field
+              id="signup-invite"
+              label={t('signup.inviteCode')}
+              hint={t('signup.inviteHint')}
+              error={errors.invite_code}
+            >
+              {(aria) => (
+                <input
+                  ref={refs.invite_code}
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value)}
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  placeholder={t('signup.invitePlaceholder')}
+                  {...aria}
+                />
+              )}
+            </Field>
           )}
-        </Field>
+          <Field
+            id="signup-password"
+            label={t('auth.password')}
+            hint={t('signup.passwordHint')}
+            error={errors.password}
+          >
+            {(aria) => (
+              <PasswordInput
+                value={password}
+                onChange={setPassword}
+                inputRef={refs.password}
+                autoComplete="new-password"
+                {...aria}
+              />
+            )}
+          </Field>
+        </div>
 
-        <fieldset className="choice">
-          <legend>{t('signup.language')}</legend>
-          <p className="field-hint">{t('signup.languageHint')}</p>
-          <div className="choice-options">
+        <fieldset className="group-wrap">
+          <legend className="group-title">{t('signup.language')}</legend>
+          <div className="group">
             {[
               ['hi', 'हिंदी'],
               ['en', 'English'],
             ].map(([code, label]) => (
-              <label key={code} className="choice-option" lang={code}>
+              <label key={code} className="row choice" lang={code}>
                 <input
                   type="radio"
                   name="speaks"
                   value={code}
+                  className="visually-hidden"
                   checked={speaks === code}
                   onChange={() => setSpeaks(code)}
                 />
-                <span>{label}</span>
+                <span className="row-title">{label}</span>
+                <Check className="choice-check" {...ICON} />
               </label>
             ))}
           </div>
+          <p className="group-footer">{t('signup.languageHint')}</p>
         </fieldset>
 
-        <fieldset className="consent">
-          <legend>{t('signup.consentTitle')}</legend>
-          <p id="consent-body">{t('signup.consentBody')}</p>
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
-              aria-describedby="consent-body"
-            />
-            <span>{t('signup.consent')}</span>
-          </label>
+        <fieldset className="group-wrap">
+          <legend className="group-title">{t('signup.consentTitle')}</legend>
+          <div className="group">
+            <p className="row consent-body" id="consent-body">
+              {t('signup.consentBody')}
+            </p>
+            <label className="row check-row">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                aria-describedby="consent-body"
+              />
+              <span className="row-title">{t('signup.consent')}</span>
+            </label>
+          </div>
         </fieldset>
 
         <Alert error={errors.form} />
-        <Pill type="submit" icon={null} disabled={!consent || busy} aria-describedby={consent ? undefined : 'consent-needed'}>
+        <Pill
+          type="submit"
+          className="block"
+          disabled={!consent || busy}
+          aria-describedby={consent ? undefined : 'consent-needed'}
+        >
           {t(busy ? 'signup.busy' : 'signup.submit')}
         </Pill>
         {!consent && (
-          <p className="field-hint" id="consent-needed">
+          <p className="form-hint" id="consent-needed">
             {t('signup.consentNeeded')}
           </p>
         )}
