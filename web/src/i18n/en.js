@@ -1,11 +1,13 @@
 // Every UI string in English. hi.js has the same keys. {name}-style slots are filled by t().
 export default {
   'lang.label': 'Language',
+  'theme.toggle': 'Appearance: {theme}',
+  'theme.light': 'Light',
+  'theme.dark': 'Dark',
+  'theme.system': 'Automatic',
+  'sheet.close': 'Close',
 
   'nav.home': 'Sunn, home',
-  'nav.how': 'How it works',
-  'nav.who': "Who it's for",
-  'nav.privacy': 'Privacy',
   'nav.signIn': 'Sign in',
   'nav.openApp': 'Open app',
   'nav.main': 'Main',
@@ -14,24 +16,21 @@ export default {
   'hero.line1': 'Speak the way you can.',
   'hero.line2': 'Sunn learns how you say your everyday phrases and says them back clearly.',
   'cta.start': 'Start speaking',
-  'feature.learns': 'Learns how you speak',
-  'feature.speaks': 'Speaks it clearly',
-  'feature.languages': 'Hindi and English',
 
   'how.title': 'How it works',
-  'how.steps': [
-    { title: 'Record a few everyday phrases', body: 'Say each one three times, the way you usually say it.' },
-    { title: 'Speak', body: 'Tap once, say what you need, then tap again.' },
-    { title: 'Be heard clearly', body: 'Sunn shows the closest phrases. Tap the right one and it is said out loud, clearly.' },
-  ],
   'example.label': 'Example',
-  'example.heard': 'What the speech service heard',
-  'example.understood': 'What Sunn says',
   // English under each example phrase; hi.js has none, so only one language shows at a time.
   'example.gloss': ['I need water', "I'm in pain", 'Call my son'],
   'example.pause': 'Pause the example',
   'example.play': 'Play the example',
   'example.describe': 'Example: unclear speech is heard as “{raw}”, and Sunn says “{phrase}”.',
+
+  'landing.speakBody':
+    'Tap, say what you need, tap again. Sunn finds the closest of your own phrases and says it out loud, clearly.',
+  'landing.fixEyebrow': 'Correction',
+  'landing.fixTitle': 'Not the right one? Type it once.',
+  'landing.fixBody':
+    'When none of the suggestions is right, type the phrase you meant. Sunn says it straight away, and learns it for next time.',
 
   'voice.title': 'Your own voice, back.',
   'voice.body':
@@ -39,14 +38,10 @@ export default {
   'voice.status': 'Optional',
   'voice.statusNote': 'It needs its own consent, separate from sign-up.',
 
-  'who.title': "Who it's for",
-  'who.items': [
-    { title: 'People whose speech is hard to understand', body: 'Speak in your own way. Sunn learns how you say things.' },
-    { title: 'Families and caregivers', body: 'Record phrases together, and hear clearly what is needed.' },
-    { title: 'Speech therapists and rehab centres', body: 'A simple tool to use alongside therapy, not instead of it.' },
-  ],
-
   'hood.title': 'Under the hood',
+  'hood.headline': 'Built on Gnani. Tuned to one voice.',
+  'hood.body':
+    "Gnani Prisma turns speech into text. A personal layer matches it to this one person's phrases. Gnani Timbre says the phrase clearly.",
   'hood.steps': [
     { title: 'Speech', body: 'You speak, the way you can' },
     { title: 'Gnani Prisma', body: 'Understands Indian speech' },
@@ -55,6 +50,7 @@ export default {
   ],
 
   'privacy.title': 'Privacy',
+  'privacy.headline': 'Consent first. Delete anytime.',
   'privacy.items': [
     { title: 'Consent first', body: 'Nothing is recorded until you agree, and every recording starts with your own tap.' },
     {
@@ -63,30 +59,6 @@ export default {
     },
     { title: 'Delete anytime', body: 'Delete your account and every recording from inside the app, whenever you want.' },
     { title: 'Not a medical device', body: "Sunn helps with everyday communication. It doesn't diagnose or treat anything." },
-  ],
-
-  'faq.title': 'Questions',
-  'faq.items': [
-    {
-      q: 'Which languages?',
-      a: 'Hindi and Indian English. You pick one when you sign up, and Sunn listens and speaks in that language. The app itself can be shown in either.',
-    },
-    {
-      q: 'Is it a medical device?',
-      a: "No. It's a communication aid for everyday phrases. It doesn't diagnose, treat or replace therapy.",
-    },
-    {
-      q: 'How many recordings does it need?',
-      a: "Each phrase is recorded three times. Sunn suggests 51 everyday phrases, and you start with the 10 most important: once they have their three recordings each, you can speak. When none of its guesses is right, you type the phrase you meant, and that teaches it too. We haven't measured yet how quickly it gets good for different people.",
-    },
-    {
-      q: 'Where does my audio go?',
-      a: "Recordings are saved on the computer that runs Sunn, and each one is sent to Gnani's servers to be turned into text. The phrase to be spoken is sent to Gnani Timbre. If you add your own voice, that recording is sent to Gnani once to make the voice, then deleted. Nothing goes anywhere else.",
-    },
-    {
-      q: 'Is it free?',
-      a: "Right now, yes. Sunn is a project made for the Gnani Great Indian AI Internship Challenge. Whether it stays free hasn't been decided.",
-    },
   ],
 
   'closing.line': 'Every voice deserves to be understood.',
@@ -137,12 +109,12 @@ export default {
   'error.gnani': "The speech service didn't answer. Wait a moment, then try again.",
   'error.silent': 'No sound was heard. Please speak again.',
   'error.no_speech': 'No speech was heard. Please speak again.',
-  'error.audio_too_short': 'That was too short. Tap the sun, speak, then tap again.',
+  'error.audio_too_short': 'That was too short. Tap the button, speak, then tap again.',
   'error.audio_too_long': 'That was too long. Keep it under 15 seconds.',
   'error.file_too_large': 'That recording is too big. Please record a shorter one.',
   'error.credit_limit_reached': 'The speech service limit for this demo is used up.',
-  'error.micDenied': 'The microphone is blocked. Allow it in the browser settings, then tap the sun.',
-  'error.noMic': 'No microphone was found. Connect one, then tap the sun.',
+  'error.micDenied': 'The microphone is blocked. Allow it in the browser settings, then tap the record button.',
+  'error.noMic': 'No microphone was found. Connect one, then tap the record button.',
   'error.insecure': 'Open the https address to use the microphone.',
   'error.playback': "The sound didn't play. Tap the phrase again.",
   'error.unsupported': 'Your browser does not support audio recording.',
@@ -209,7 +181,6 @@ export default {
   'speak.statusSpoke': 'Spoke phrase: {text}',
 
   'phrases.title': 'Phrase library',
-  'phrases.subtitle': 'Manage your saved everyday phrases, contexts, and urgency tags.',
   'phrases.total': '{count} saved',
   'phrases.urgentCount': '{count} urgent',
   'phrases.enrolledStatus': '{enrolled} of {needed} recordings',
@@ -224,7 +195,6 @@ export default {
   'phrases.addTitle': 'Add new phrase',
   'phrases.addPrompt': 'Type a phrase you want Sunn to recognize.',
   'phrases.textLabel': 'Phrase text',
-  'phrases.textPlaceholder': 'Enter phrase…',
   'phrases.save': 'Save phrase',
   'phrases.saving': 'Saving…',
   'phrases.cancel': 'Cancel',
@@ -237,7 +207,6 @@ export default {
   'phrases.deleteNo': 'Keep phrase',
   'phrases.deleting': 'Deleting…',
   'phrases.listen': 'Listen',
-  'phrases.playing': 'Playing…',
   'phrases.stopPlaying': 'Stop audio',
   'phrases.teach': 'Teach phrase',
   'phrases.noSearchResults': 'No phrases matching “{query}”',
@@ -259,7 +228,6 @@ export default {
   'error.not_found': "That wasn't found. It may have been deleted already.",
 
   'progress.title': 'Progress',
-  'progress.subtitle': 'Review your communication activity, frequently used phrases, and speech assistance trends.',
   'progress.overviewHeading': 'Communication activity',
   'progress.phrases': 'Saved phrases',
   'progress.teaching': 'Teaching recordings',
@@ -288,7 +256,7 @@ export default {
   'progress.goPhrases': 'View phrase library',
   'progress.goSpeak': 'Start speaking',
   'progress.goTeach': 'Teach phrases',
-  'progress.nothing': 'Nothing spoken yet. Tap the sun in Speak to start.',
+  'progress.nothing': 'Nothing spoken yet. Tap the record button in Speak to start.',
   'progress.deleteTitle': 'Your data',
   'progress.delete': 'Delete my account and recordings',
   'progress.deleteConfirm':
@@ -298,26 +266,23 @@ export default {
   'progress.deleting': 'Deleting…',
 
   'settings.title': 'Settings and accessibility',
-  'settings.subtitle': 'Customize language, text size, voice output, and assistance preferences.',
   'settings.savedSuccess': 'Settings saved successfully.',
-  'settings.sectionDisplay': 'Language and display',
   'settings.languageLabel': 'Application language',
   'settings.languageHelp': 'For buttons, messages and menus. Only on this device.',
   'settings.langEnglish': 'English',
-  'settings.langHindi': 'हिन्दी',
+  'settings.langHindi': 'हिंदी',
+  'settings.themeLabel': 'Appearance',
+  'settings.themeHelp': 'Automatic follows the light or dark setting of this device. Only on this device.',
   'settings.textSizeLabel': 'Text size',
   'settings.textSizeHelp': 'Make text larger across the application for easier reading.',
   'settings.textSizeDefault': 'Default',
   'settings.textSizeLarge': 'Large',
   'settings.motionLabel': 'Reduced motion',
-  'settings.motionHelp': 'Minimizes motion, glowing effects, and animated transitions.',
-  'settings.motionActive': 'Reduced motion active',
-  'settings.motionOff': 'Standard animations',
+  'settings.motionHelp': 'Turns off animations and transitions across the app.',
   'settings.motionSystemNote': 'Operating system reduced motion is active.',
   'settings.sectionAccessibility': 'Accessibility and interaction',
   'settings.focusLabel': 'High-contrast focus outlines',
   'settings.focusHelp': 'Bolder outlines when navigating with a keyboard or switch device.',
-  'settings.touchLabel': 'Touch target sizing',
   'settings.touchHelp': 'All interactive controls include enlarged hit areas of 44px to 64px.',
   'settings.sectionVoice': 'Voice and speech output',
   'settings.voiceDesc': 'When Sunn speaks your phrases aloud, it uses speech synthesis.',
@@ -379,7 +344,7 @@ export default {
   'onboarding.langHeading': "Choose the app's language",
   'onboarding.langDesc': 'This changes only what the screens are written in. The language you speak is in Settings.',
   'onboarding.langEnglish': 'English',
-  'onboarding.langHindi': 'हिन्दी (Hindi)',
+  'onboarding.langHindi': 'हिंदी (Hindi)',
   'onboarding.howHeading': 'Teaching Sunn your voice',
   'onboarding.howDesc': 'Sunn gets better the more it learns your pronunciation.',
   'onboarding.howStep1': 'Record 3 samples for each phrase so Sunn understands how you say it.',
@@ -450,8 +415,6 @@ export default {
   'error.server_error': 'Something went wrong on the server. Please try again.',
   'error.voice_length': 'The voice recording needs to be 5 to 30 seconds long.',
   'error.no_voice_file': 'Choose a recording of the voice first.',
-  'settings.on': 'On',
-  'settings.off': 'Off',
   'settings.speakLanguageLabel': 'Language you speak',
   'settings.speakLanguageHelp': 'Sunn listens and speaks in this language. It is separate from the app language above.',
   'settings.speakHindi': 'Hindi',
