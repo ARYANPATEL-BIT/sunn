@@ -5,7 +5,7 @@ import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { setOnboarded } from './prefs.js'
 import { speakProgress } from './quickstart.js'
-import { Alert, Pill, useGo } from './ui.jsx'
+import { Alert, ICON, Pill, useGo } from './ui.jsx'
 
 const TOTAL_STEPS = 4
 
@@ -93,27 +93,17 @@ export default function Onboarding() {
   }
 
   return (
-    <section className="screen onboarding-screen">
-      <header className="onboarding-header">
-        <div
-          className="onboarding-step-indicator"
-          aria-label={t('onboarding.stepProgress', { current: step, total: TOTAL_STEPS })}
-        >
-          <div className="step-dots" aria-hidden="true">
-            {Array.from({ length: TOTAL_STEPS }, (_, i) => (
-              <span
-                key={i}
-                className={`step-dot ${i + 1 === step ? 'active' : i + 1 < step ? 'done' : ''}`}
-              />
-            ))}
-          </div>
-          <span className="step-pill">
-            {t('onboarding.stepProgress', { current: step, total: TOTAL_STEPS })}
-          </span>
-          <button type="button" className="pill-outline skip-btn" onClick={() => handleFinish('/app/speak')}>
-            {t('onboarding.skip')}
-          </button>
+    <section className="screen onboarding">
+      <header className="onboarding-top">
+        <div className="step-dots" aria-hidden="true">
+          {Array.from({ length: TOTAL_STEPS }, (_, i) => (
+            <span key={i} className={i + 1 === step ? 'active' : i + 1 < step ? 'done' : ''} />
+          ))}
         </div>
+        <span className="step-count">{t('onboarding.stepProgress', { current: step, total: TOTAL_STEPS })}</span>
+        <button type="button" className="text-button" onClick={() => handleFinish('/app/speak')}>
+          {t('onboarding.skip')}
+        </button>
       </header>
 
       <Alert error={error} />
@@ -123,136 +113,125 @@ export default function Onboarding() {
         {t('onboarding.stepProgress', { current: step, total: TOTAL_STEPS })}
       </div>
 
-      <div className="onboarding-step-container">
+      <div className="onboarding-step" key={step}>
         {step === 1 && (
-          <article className="step-card" aria-labelledby="step1-title">
-            <h1 id="step1-title">{t('onboarding.welcomeHeading')}</h1>
-            <p className="step-desc">{t('onboarding.welcomeBody')}</p>
-
-            <div className="features-grid">
-              <div className="feature-item">
-                <BookOpen className="feature-icon" size={24} aria-hidden="true" strokeWidth={1.5} />
-                <div className="feature-text">
-                  <strong>{t('onboarding.featurePhrasesTitle')}</strong>
-                  <p className="muted">{t('onboarding.featurePhrasesDesc')}</p>
-                </div>
-              </div>
-
-              <div className="feature-item">
-                <Volume2 className="feature-icon" size={24} aria-hidden="true" strokeWidth={1.5} />
-                <div className="feature-text">
-                  <strong>{t('onboarding.featureVoiceTitle')}</strong>
-                  <p className="muted">{t('onboarding.featureVoiceDesc')}</p>
-                </div>
-              </div>
-            </div>
+          <article aria-labelledby="step1-title">
+            <h1 id="step1-title" className="large-title">
+              {t('onboarding.welcomeHeading')}
+            </h1>
+            <p className="lede-sm">{t('onboarding.welcomeBody')}</p>
+            <ul className="group">
+              <li className="row">
+                <span className="row-badge">
+                  <BookOpen {...ICON} />
+                </span>
+                <span className="row-text">
+                  <strong className="row-title">{t('onboarding.featurePhrasesTitle')}</strong>
+                  <span className="row-sub">{t('onboarding.featurePhrasesDesc')}</span>
+                </span>
+              </li>
+              <li className="row">
+                <span className="row-badge">
+                  <Volume2 {...ICON} />
+                </span>
+                <span className="row-text">
+                  <strong className="row-title">{t('onboarding.featureVoiceTitle')}</strong>
+                  <span className="row-sub">{t('onboarding.featureVoiceDesc')}</span>
+                </span>
+              </li>
+            </ul>
           </article>
         )}
 
         {step === 2 && (
-          <article className="step-card" aria-labelledby="step2-title">
-            <h1 id="step2-title">{t('onboarding.langHeading')}</h1>
-            <p className="step-desc">{t('onboarding.langDesc')}</p>
-
-            <div className="choice-cards-grid" role="radiogroup" aria-label={t('onboarding.langHeading')}>
+          <article aria-labelledby="step2-title">
+            <h1 id="step2-title" className="large-title">
+              {t('onboarding.langHeading')}
+            </h1>
+            <p className="lede-sm">{t('onboarding.langDesc')}</p>
+            <div className="group" role="radiogroup" aria-label={t('onboarding.langHeading')}>
               {[
                 ['hi', 'onboarding.langHindi', 'नमस्ते'],
                 ['en', 'onboarding.langEnglish', 'Hello'],
-              ].map(([code, labelKey, sampleGreeting]) => {
-                const isSelected = lang === code
-                return (
-                  <button
-                    key={code}
-                    type="button"
-                    role="radio"
-                    aria-checked={isSelected}
-                    className={`choice-card ${isSelected ? 'active' : ''}`}
-                    onClick={() => handleLanguageSelect(code)}
-                  >
-                    <div className="choice-card-content">
-                      <span className="choice-greeting">{sampleGreeting}</span>
-                      <strong className="choice-label">{t(labelKey)}</strong>
-                    </div>
-                    {isSelected && <Check className="choice-check" size={20} aria-hidden="true" strokeWidth={2} />}
-                  </button>
-                )
-              })}
+              ].map(([code, labelKey, sampleGreeting]) => (
+                <button
+                  key={code}
+                  type="button"
+                  role="radio"
+                  aria-checked={lang === code}
+                  className="row choice"
+                  onClick={() => handleLanguageSelect(code)}
+                >
+                  <span className="row-text">
+                    <span className="greeting" lang={code}>
+                      {sampleGreeting}
+                    </span>
+                    <span className="row-sub">{t(labelKey)}</span>
+                  </span>
+                  <Check className="choice-check" {...ICON} />
+                </button>
+              ))}
             </div>
           </article>
         )}
 
         {step === 3 && (
-          <article className="step-card" aria-labelledby="step3-title">
-            <h1 id="step3-title">{t('onboarding.howHeading')}</h1>
-            <p className="step-desc">{t('onboarding.howDesc')}</p>
-
-            <div className="workflow-steps">
-              <div className="workflow-item">
-                <span className="step-number" aria-hidden="true">
-                  1
-                </span>
-                <div className="workflow-content">
-                  <p>{t('onboarding.howStep1')}</p>
-                </div>
-              </div>
-
-              <div className="workflow-item">
-                <span className="step-number" aria-hidden="true">
-                  2
-                </span>
-                <div className="workflow-content">
-                  <p>{t('onboarding.howStep2')}</p>
-                </div>
-              </div>
-
-              <div className="workflow-item">
-                <span className="step-number" aria-hidden="true">
-                  3
-                </span>
-                <div className="workflow-content">
-                  <p>{t('onboarding.howStep3')}</p>
-                </div>
-              </div>
-            </div>
+          <article aria-labelledby="step3-title">
+            <h1 id="step3-title" className="large-title">
+              {t('onboarding.howHeading')}
+            </h1>
+            <p className="lede-sm">{t('onboarding.howDesc')}</p>
+            <ol className="group">
+              {['onboarding.howStep1', 'onboarding.howStep2', 'onboarding.howStep3'].map((key, i) => (
+                <li key={key} className="row">
+                  <span className="row-badge number" aria-hidden="true">
+                    {i + 1}
+                  </span>
+                  <span className="row-text">
+                    <span className="row-title">{t(key)}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
           </article>
         )}
 
         {step === 4 && (
-          <article className="step-card setup-readiness-card" aria-labelledby="step4-title">
-            <h1 id="step4-title">{t('onboarding.setupHeading')}</h1>
+          <article aria-labelledby="step4-title">
+            <h1 id="step4-title" className="large-title">
+              {t('onboarding.setupHeading')}
+            </h1>
 
             {ready ? (
-              <div className="readiness-state ready">
-                <CheckCircle2 className="readiness-icon" size={32} aria-hidden="true" strokeWidth={1.5} />
+              <div className="status-card">
+                <CheckCircle2 className="status-icon success" {...ICON} />
                 <h2>{t('onboarding.setupReadyTitle')}</h2>
-                <p className="muted">{t('onboarding.setupReadyDesc')}</p>
-                <div className="readiness-meta">
-                  <span className="summary-pill">{t('phrases.total', { count: phrases.length })}</span>
-                </div>
+                <p>{t('onboarding.setupReadyDesc')}</p>
+                <p className="status-meta">{t('phrases.total', { count: phrases.length })}</p>
               </div>
             ) : hasPhrases ? (
-              <div className="readiness-state need-teaching">
-                <Mic className="readiness-icon" size={32} aria-hidden="true" strokeWidth={1.5} />
+              <div className="status-card">
+                <Mic className="status-icon" {...ICON} />
                 <h2>{t('onboarding.setupNeedTitle')}</h2>
-                <p className="muted">{t('onboarding.setupNeedDesc')}</p>
-                <div className="readiness-actions">
-                  <button type="button" className="pill-outline" onClick={() => handleFinish('/app/enroll')}>
-                    <Mic size={16} aria-hidden="true" strokeWidth={1.5} />
+                <p>{t('onboarding.setupNeedDesc')}</p>
+                <div className="actions">
+                  <button type="button" className="button" onClick={() => handleFinish('/app/enroll')}>
+                    <Mic {...ICON} />
                     <span>{t('onboarding.goTeach')}</span>
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="readiness-state empty">
-                <BookOpen className="readiness-icon" size={32} aria-hidden="true" strokeWidth={1.5} />
+              <div className="status-card">
+                <BookOpen className="status-icon" {...ICON} />
                 <h2>{t('onboarding.setupEmptyTitle')}</h2>
-                <p className="muted">{t('onboarding.setupEmptyDesc')}</p>
-                <div className="readiness-actions">
-                  <Pill onClick={handleLoadDefaults} disabled={seeding} icon={null} arrow={false}>
+                <p>{t('onboarding.setupEmptyDesc')}</p>
+                <div className="actions">
+                  <button type="button" className="button" onClick={handleLoadDefaults} disabled={seeding}>
                     {t(seeding ? 'onboarding.addingDefaults' : 'onboarding.addDefaults')}
-                  </Pill>
-                  <button type="button" className="pill-outline" onClick={() => handleFinish('/app/phrases')}>
-                    <span>{t('onboarding.goLibrary')}</span>
+                  </button>
+                  <button type="button" className="button" onClick={() => handleFinish('/app/phrases')}>
+                    {t('onboarding.goLibrary')}
                   </button>
                 </div>
               </div>
@@ -261,16 +240,14 @@ export default function Onboarding() {
         )}
       </div>
 
-      <footer className="onboarding-footer">
+      <footer className="onboarding-actions">
         {step > 1 && (
-          <button type="button" className="pill-outline" onClick={handleBack}>
-            <ArrowLeft size={16} aria-hidden="true" strokeWidth={1.5} />
+          <button type="button" className="button" onClick={handleBack}>
+            <ArrowLeft {...ICON} />
             <span>{t('onboarding.back')}</span>
           </button>
         )}
-        <Pill onClick={handleNext} arrow={step < TOTAL_STEPS}>
-          {t(step === TOTAL_STEPS ? 'onboarding.finish' : 'onboarding.next')}
-        </Pill>
+        <Pill onClick={handleNext}>{t(step === TOTAL_STEPS ? 'onboarding.finish' : 'onboarding.next')}</Pill>
       </footer>
     </section>
   )
