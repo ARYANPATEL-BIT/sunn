@@ -1,10 +1,11 @@
-import { RotateCcw, Square } from 'lucide-react'
+import { ChevronRight, Mic, PencilLine, RotateCcw, Square, Volume2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { speakProgress } from './quickstart.js'
-import { Alert, failure, Pill, Sun, useGo, useRecorder } from './ui.jsx'
+import { RecordButton, useRecorder } from './record.jsx'
+import { Alert, Chips, failure, ICON, Pill, Sheet, useGo } from './ui.jsx'
 
 const CONTEXT_LIST = ['any', 'home', 'hospital', 'market']
 
@@ -192,10 +193,10 @@ export default function Speak() {
 
   if (learned && !learned.open) {
     return (
-      <section className="screen narrow">
-        <h1>{t('speak.none')}</h1>
-        <p className="muted">{t('speak.noneBody', { n: learned.ready, total: learned.total })}</p>
-        <Pill icon={null} onClick={() => go('/app/enroll')}>
+      <section className="screen narrow empty-state">
+        <h1 className="large-title">{t('speak.none')}</h1>
+        <p className="lede-sm">{t('speak.noneBody', { n: learned.ready, total: learned.total })}</p>
+        <Pill icon={Mic} onClick={() => go('/app/enroll')}>
           {t('speak.goTeach')}
         </Pill>
       </section>
@@ -207,9 +208,45 @@ export default function Speak() {
     : []
   const typed = spoken && !candidates.some((c) => isSameCandidate(c, spoken))
   const shown = typed ? [spoken] : candidates
+  // The best guess gets the big card; the others (or a typed phrase) are rows under it.
+  const top = typed ? null : shown[0]
+  const rest = typed ? shown : shown.slice(1)
+
+  function candidateButton(c, i, isTop) {
+    const isSelected = isSameCandidate(spoken, c)
+    return (
+      <button
+        key={candidateKey(c, i)}
+        type="button"
+        className={isTop ? 'candidate top' : 'row candidate'}
+        onClick={() => choose(c)}
+        disabled={busy === 'listening'}
+        aria-pressed={isSelected}
+      >
+        <span className="candidate-body">
+          <span className="candidate-text" lang={user.language}>
+            {c.text}
+          </span>
+          {(c.urgent || c.composed) && (
+            <span className="badges">
+              {c.urgent && (
+                <span className="badge">
+                  <span className="dot-red" aria-hidden="true" />
+                  {t('speak.urgent')}
+                </span>
+              )}
+              {c.composed && <span className="badge">{t('speak.composedBadge')}</span>}
+            </span>
+          )}
+          {isSelected && <span className="said">{t(busy === 'playing' ? 'speak.playing' : 'speak.played')}</span>}
+        </span>
+        <Volume2 className="candidate-icon" {...ICON} />
+      </button>
+    )
+  }
 
   return (
-    <section className="screen speak">
+    <section className={`screen speak ${result ? 'has-result' : ''}`}>
       <h1 className="visually-hidden">{t('speak.title')}</h1>
 
       {/* Screen reader live announcements for speech states */}
@@ -225,150 +262,85 @@ export default function Speak() {
                 : null}
       </div>
 
-      <div className="context-bar" role="radiogroup" aria-label={t('speak.context')}>
-        {CONTEXT_LIST.map((ctx) => (
-          <button
-            key={ctx}
-            type="button"
-            role="radio"
-            aria-checked={context === ctx}
-            className={`context-pill ${context === ctx ? 'active' : ''}`}
-            onClick={() => setContext(ctx)}
-            disabled={recorder.recording || busy !== null}
-          >
-            {t(`speak.context_${ctx}`)}
-          </button>
-        ))}
-      </div>
+      <Chips
+        label={t('speak.context')}
+        options={CONTEXT_LIST.map((ctx) => ({ value: ctx, label: t(`speak.context_${ctx}`) }))}
+        value={context}
+        onChange={setContext}
+        disabled={recorder.recording || busy !== null}
+      />
 
       <div className="results" aria-live="polite">
         {result && (
-          <div className="stack" key={result.sample_id}>
+          <div className="result" key={result.sample_id}>
             {result.hypothesis && (
-              <p className="heard-raw">
-                <span className="muted">{t('speak.heard')}</span>
+              <p className="heard">
+                {t('speak.heard')}{' '}
                 <span className="raw-text" lang={user.language}>
                   “{result.hypothesis}”
                 </span>
               </p>
             )}
 
-            {result.low_confidence && !typed && candidates.length > 0 && (
-              <p className="maybe">{t('speak.maybe')}</p>
-            )}
+            {result.low_confidence && !typed && candidates.length > 0 && <p className="maybe">{t('speak.maybe')}</p>}
 
-            {shown.length === 0 && <p>{t('speak.unknown')}</p>}
+            {shown.length === 0 && <p className="unknown">{t('speak.unknown')}</p>}
 
-            {shown.map((c, i) => {
-              const isTop = i === 0 && !typed
-              const isSelected = isSameCandidate(spoken, c)
-              return (
-                <button
-                  key={candidateKey(c, i)}
-                  type="button"
-                  className={isTop ? 'candidate top' : 'candidate'}
-                  onClick={() => choose(c)}
-                  disabled={busy === 'listening'}
-                  aria-pressed={isSelected}
-                >
-                  <div className="candidate-text-row">
-                    <span lang={user.language}>{c.text}</span>
-                    {c.urgent && (
-                      <span className="urgent-badge" aria-label={t('speak.urgent')}>
-                        {t('speak.urgent')}
-                      </span>
-                    )}
-                    {c.composed && (
-                      <span className="composed-badge" aria-label={t('speak.composedBadge')}>
-                        {t('speak.composedBadge')}
-                      </span>
-                    )}
-                  </div>
-                  {isSelected && (
-                    <span className="said">
-                      {t(busy === 'playing' ? 'speak.playing' : 'speak.played')}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+            {top && candidateButton(top, 0, true)}
+
+            <div className="group alternates">
+              {rest.map((c, i) => candidateButton(c, typed ? i : i + 1, false))}
+              <button
+                type="button"
+                className="row none-row"
+                onClick={() => setTyping(true)}
+                disabled={busy !== null}
+                aria-haspopup="dialog"
+              >
+                <PencilLine className="row-icon" {...ICON} />
+                <span className="row-title">{t(shown.length ? 'speak.noneOfThese' : 'speak.typeIt')}</span>
+                <ChevronRight className="row-chevron" {...ICON} />
+              </button>
+            </div>
 
             {busy === 'playing' && (
               <div className="playback-bar">
                 <span>{t('speak.playing')}</span>
-                <button
-                  type="button"
-                  className="pill-outline stop-playback-btn"
-                  onClick={stopPlayback}
-                  aria-label={t('speak.stopPlaying')}
-                >
-                  <Square size={13} fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
+                <button type="button" className="button small" onClick={stopPlayback} aria-label={t('speak.stopPlaying')}>
+                  <Square fill="currentColor" {...ICON} />
                   <span>{t('speak.stopPlaying')}</span>
                 </button>
               </div>
             )}
 
             {fallbackUsed && (
-              <p className="fallback-tts-note" role="status">
+              <p className="note" role="status">
                 {t('speak.usingBrowserTts')}
               </p>
-            )}
-
-            {typing ? (
-              <form className="stack" onSubmit={submitNewText}>
-                <div className="field">
-                  <label htmlFor="new-text">{t('speak.typeLabel')}</label>
-                  <textarea
-                    id="new-text"
-                    lang={user.language}
-                    value={newText}
-                    onChange={(e) => setNewText(e.target.value)}
-                    rows={2}
-                    autoFocus
-                  />
-                </div>
-                <div className="actions">
-                  <button type="button" className="pill-outline" onClick={() => setTyping(false)}>
-                    {t('speak.cancel')}
-                  </button>
-                  <Pill type="submit" icon={null} disabled={!newText.trim() || busy !== null}>
-                    {t('speak.sayIt')}
-                  </Pill>
-                </div>
-              </form>
-            ) : (
-              <button
-                type="button"
-                className="link none"
-                onClick={() => setTyping(true)}
-                disabled={busy !== null}
-              >
-                {t(shown.length ? 'speak.noneOfThese' : 'speak.typeIt')}
-              </button>
             )}
           </div>
         )}
       </div>
 
-      <Alert error={error || recorder.error} />
+      {!typing && <Alert error={error || recorder.error} />}
 
       {recorder.error?.kind === 'micDenied' && (
-        <div className="mic-troubleshoot-card" role="region" aria-label={t('speak.micTroubleshootTitle')}>
-          <p className="troubleshoot-title">{t('speak.micTroubleshootTitle')}</p>
-          <p className="troubleshoot-body muted">{t('speak.micTroubleshootBody')}</p>
+        <div className="help-card" role="region" aria-label={t('speak.micTroubleshootTitle')}>
+          <p className="help-title">{t('speak.micTroubleshootTitle')}</p>
+          <p className="help-body">{t('speak.micTroubleshootBody')}</p>
         </div>
       )}
 
-      {(error || recorder.error) && (
-        <div className="error-actions">
-          <button type="button" className="pill-outline" onClick={retry}>
-            <RotateCcw size={16} strokeWidth={1.5} aria-hidden="true" />
+      {(error || recorder.error) && !typing && (
+        <div className="actions">
+          <button type="button" className="button" onClick={retry}>
+            <RotateCcw {...ICON} />
             <span>{t('speak.retry')}</span>
           </button>
         </div>
       )}
 
-      <Sun
+      <RecordButton
         recorder={recorder}
         onClick={record}
         waiting={busy === 'listening'}
@@ -376,6 +348,35 @@ export default function Speak() {
         compact={!!result}
         label={result ? t('sun.again') : undefined}
       />
+
+      <Sheet open={typing} onClose={() => setTyping(false)} label={t(shown.length ? 'speak.noneOfThese' : 'speak.typeIt')}>
+        <form className="sheet-form" onSubmit={submitNewText}>
+          <div className="group">
+            <div className="field-cell">
+              <label htmlFor="new-text" className="field-label">
+                {t('speak.typeLabel')}
+              </label>
+              <textarea
+                id="new-text"
+                lang={user.language}
+                value={newText}
+                onChange={(e) => setNewText(e.target.value)}
+                rows={2}
+                data-autofocus
+              />
+            </div>
+          </div>
+          <Alert error={error} />
+          <div className="actions">
+            <button type="button" className="button" onClick={() => setTyping(false)}>
+              {t('speak.cancel')}
+            </button>
+            <Pill type="submit" disabled={!newText.trim() || busy !== null}>
+              {t('speak.sayIt')}
+            </Pill>
+          </div>
+        </form>
+      </Sheet>
     </section>
   )
 }
