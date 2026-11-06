@@ -1,9 +1,9 @@
-import { BookOpen, Mic, RotateCcw, Square, Trash2, Volume2 } from 'lucide-react'
+import { BookOpen, ChevronRight, Mic, RotateCcw, Square, Trash2, Volume2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
-import { Alert, useGo } from './ui.jsx'
+import { Alert, ICON, Sheet, useGo } from './ui.jsx'
 
 function formatWeekStart(isoDate, currentLang) {
   try {
@@ -37,28 +37,69 @@ function DeleteAccount() {
   }
 
   return (
-    <section className="danger" aria-labelledby="your-data">
-      <h2 id="your-data">{t('progress.deleteTitle')}</h2>
-      {asking ? (
-        <div className="stack" role="group" aria-labelledby="delete-warning">
-          <p id="delete-warning">{t('progress.deleteConfirm')}</p>
+    <section className="group-wrap" aria-labelledby="your-data">
+      <h2 className="title-2" id="your-data">
+        {t('progress.deleteTitle')}
+      </h2>
+      <div className="group">
+        <button type="button" className="row" onClick={() => setAsking(true)} aria-haspopup="dialog">
+          <Trash2 className="row-icon" {...ICON} />
+          <span className="row-title">{t('progress.delete')}</span>
+        </button>
+      </div>
+      <Sheet open={asking} onClose={() => setAsking(false)} labelledBy="delete-warning">
+        <div className="confirm">
+          <p className="sheet-title" id="delete-warning">
+            {t('progress.deleteConfirm')}
+          </p>
           <Alert error={error} />
-          <div className="actions">
-            <button type="button" className="pill-outline" onClick={() => setAsking(false)} disabled={busy} autoFocus>
+          <div className="actions stacked">
+            <button type="button" className="button" onClick={() => setAsking(false)} disabled={busy} data-autofocus>
               {t('progress.deleteNo')}
             </button>
-            <button type="button" className="pill-outline destructive" onClick={remove} disabled={busy}>
-              <Trash2 aria-hidden="true" strokeWidth={1.5} />
+            <button type="button" className="button" onClick={remove} disabled={busy}>
+              <Trash2 {...ICON} />
               <span>{t(busy ? 'progress.deleting' : 'progress.deleteYes')}</span>
             </button>
           </div>
         </div>
-      ) : (
-        <button type="button" className="link" onClick={() => setAsking(true)}>
-          {t('progress.delete')}
-        </button>
-      )}
+      </Sheet>
     </section>
+  )
+}
+
+// Confirmed phrases per week, stacked: understood directly (full ink) under assisted (gray),
+// a 2px gap between them, the total above each bar, a hairline grid. Values are in the table view.
+function WeeklyChart({ weeks, lang }) {
+  const { t } = useLang()
+  const max = Math.max(1, ...weeks.map((w) => w.confirmed))
+  const ticks = max > 1 ? [0, Math.round(max / 2), max] : [0, max]
+  return (
+    <figure className="chart" role="img" aria-label={t('progress.weeklyDesc')}>
+      <div className="chart-plot" aria-hidden="true">
+        {ticks.map((tick) => (
+          <div key={tick} className="chart-gridline" style={{ '--at': tick / max }}>
+            <span>{tick}</span>
+          </div>
+        ))}
+        <div className="chart-columns">
+          {weeks.map((w) => {
+            const clear = Math.min(w.clear, w.confirmed)
+            const assisted = Math.max(0, w.confirmed - w.clear)
+            return (
+              <div key={w.week_start} className="chart-column">
+                <div className="chart-bar" style={{ '--h': w.confirmed / max }}>
+                  {w.confirmed > 0 && <span className="chart-total">{w.confirmed}</span>}
+                  {assisted > 0 && <span className="segment assisted" style={{ flexGrow: assisted }} />}
+                  {clear > 0 && <span className="segment clear" style={{ flexGrow: clear }} />}
+                </div>
+                <span className="chart-x">{formatWeekStart(w.week_start, lang)}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </figure>
   )
 }
 
@@ -95,10 +136,7 @@ export default function Progress() {
     setLoading(true)
     setError(null)
     try {
-      const [statsData, phrasesData] = await Promise.all([
-        api.stats(),
-        api.listPhrases().catch(() => []),
-      ])
+      const [statsData, phrasesData] = await Promise.all([api.stats(), api.listPhrases().catch(() => [])])
       if (isMounted.current) {
         setStats(statsData)
         setPhrases(phrasesData)
@@ -137,9 +175,9 @@ export default function Progress() {
     return (
       <section className="screen narrow">
         <Alert error={error} />
-        <div className="error-actions">
-          <button type="button" className="pill-outline" onClick={loadData}>
-            <RotateCcw size={16} aria-hidden="true" strokeWidth={1.5} />
+        <div className="actions">
+          <button type="button" className="button" onClick={loadData}>
+            <RotateCcw {...ICON} />
             <span>{t('error.retry')}</span>
           </button>
         </div>
@@ -150,125 +188,130 @@ export default function Progress() {
   const hitRate = stats?.top1_hit_rate == null ? '-' : `${Math.round(stats.top1_hit_rate * 100)}%`
   const urgentCount = phrases?.filter((p) => p.urgent).length ?? 0
   const weeks = stats?.clear_without_help_by_week ?? []
-  const maxWeekly = Math.max(1, ...weeks.map((w) => w.confirmed))
+  const hasActivity = weeks.some((w) => w.confirmed > 0)
+  const metrics = [
+    ['progress.phrases', stats?.phrases ?? 0],
+    ['progress.teaching', stats?.enroll_samples ?? 0],
+    ['progress.spoken', stats?.recognitions ?? 0],
+    ['progress.confirmed', stats?.confirmed ?? 0],
+    ['progress.urgentPhrases', urgentCount],
+  ]
 
   return (
     <section className="screen progress-screen">
-      <header className="progress-header">
-        <h1>{t('progress.title')}</h1>
-        <p className="muted">{t('progress.subtitle')}</p>
-      </header>
+      <h1 className="large-title">{t('progress.title')}</h1>
 
       <Alert error={error} />
 
-      {/* Section 1: Overview Metrics */}
-      <section className="progress-section" aria-labelledby="heading-overview">
-        <h2 id="heading-overview">{t('progress.overviewHeading')}</h2>
-        <div className="metrics-grid">
-          <div className="metric-card">
-            <span className="metric-label">{t('progress.phrases')}</span>
-            <span className="metric-value">{stats?.phrases ?? 0}</span>
+      {stats?.recognitions === 0 && (
+        <article className="status-card" aria-labelledby="empty-progress-title">
+          <Mic className="status-icon" {...ICON} />
+          <h2 id="empty-progress-title">{t('progress.nothing')}</h2>
+          <p>{t('progress.guidancePhrases')}</p>
+          <div className="actions">
+            <button type="button" className="button" onClick={() => go('/app/speak')}>
+              <Mic {...ICON} />
+              <span>{t('progress.goSpeak')}</span>
+            </button>
+            <button type="button" className="button" onClick={() => go('/app/phrases')}>
+              <BookOpen {...ICON} />
+              <span>{t('progress.goPhrases')}</span>
+            </button>
           </div>
-          <div className="metric-card">
-            <span className="metric-label">{t('progress.teaching')}</span>
-            <span className="metric-value">{stats?.enroll_samples ?? 0}</span>
-          </div>
-          <div className="metric-card">
-            <span className="metric-label">{t('progress.spoken')}</span>
-            <span className="metric-value">{stats?.recognitions ?? 0}</span>
-          </div>
-          <div className="metric-card">
-            <span className="metric-label">{t('progress.confirmed')}</span>
-            <span className="metric-value">{stats?.confirmed ?? 0}</span>
-          </div>
-          <div className="metric-card urgent-metric">
-            <span className="metric-label">{t('progress.urgentPhrases')}</span>
-            <span className="metric-value">{urgentCount}</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 2: Suggestion Match Rate */}
-      {Boolean(stats?.confirmed) && (
-        <article className="match-rate-card" aria-labelledby="heading-match-rate">
-          <div className="match-rate-header">
-            <h2 id="heading-match-rate">{t('progress.firstRight')}</h2>
-            <span className="match-rate-percent">{hitRate}</span>
-          </div>
-          <p className="muted">{t('progress.matchRateExplanation')}</p>
-          <div
-            className="match-rate-bar"
-            role="progressbar"
-            aria-valuenow={Math.round((stats?.top1_hit_rate ?? 0) * 100)}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={t('progress.firstRight')}
-          >
-            <div
-              className="match-rate-fill"
-              style={{ width: `${Math.round((stats?.top1_hit_rate ?? 0) * 100)}%` }}
-            />
-          </div>
-          <small className="muted hit-detail">
-            {stats?.top1_hits ?? 0} / {stats?.confirmed ?? 0} {t('progress.confirmed').toLowerCase()}
-          </small>
         </article>
       )}
 
-      {/* Section 3: Frequently Used Phrases */}
+      {/* Overview: the big numbers */}
+      <section className="progress-section" aria-labelledby="heading-overview">
+        <h2 id="heading-overview" className="title-2">
+          {t('progress.overviewHeading')}
+        </h2>
+        <div className="metrics">
+          {metrics.map(([key, value]) => (
+            <div className="metric-card" key={key}>
+              <span className="metric-value">{value}</span>
+              <span className="metric-label">{t(key)}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* How often the first suggestion was the one */}
+      {Boolean(stats?.confirmed) && (
+        <article className="progress-section match" aria-labelledby="heading-match-rate">
+          <h2 id="heading-match-rate" className="title-2">
+            {t('progress.firstRight')}
+          </h2>
+          <div className="match-card">
+            <span className="match-value">{hitRate}</span>
+            <div
+              className="meter"
+              role="progressbar"
+              aria-valuenow={Math.round((stats?.top1_hit_rate ?? 0) * 100)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={t('progress.firstRight')}
+            >
+              <div style={{ transform: `scaleX(${stats?.top1_hit_rate ?? 0})` }} />
+            </div>
+            <p className="match-detail">
+              {stats?.top1_hits ?? 0} / {stats?.confirmed ?? 0} {t('progress.confirmed').toLowerCase()}
+            </p>
+            <p className="match-explain">{t('progress.matchRateExplanation')}</p>
+          </div>
+        </article>
+      )}
+
+      {/* Frequently Used Phrases */}
       <section className="progress-section" aria-labelledby="heading-top-phrases">
-        <h2 id="heading-top-phrases">{t('progress.topPhrasesHeading')}</h2>
+        <h2 id="heading-top-phrases" className="title-2">
+          {t('progress.topPhrasesHeading')}
+        </h2>
         {stats?.top_phrases && stats.top_phrases.length > 0 ? (
-          <ul className="top-phrases-list" aria-label={t('progress.topPhrasesHeading')}>
+          <ul className="group" aria-label={t('progress.topPhrasesHeading')}>
             {stats.top_phrases.map((phrase, idx) => {
               const isPlaying = playingPhrase === phrase.text
               return (
-                <li key={phrase.phrase_id} className="top-phrase-item">
-                  <div className="top-phrase-main">
-                    <span className="rank-badge" aria-hidden="true">
-                      {idx + 1}
-                    </span>
-                    <span className="phrase-text" lang={user.language}>
+                <li key={phrase.phrase_id} className="row top-phrase-item">
+                  <span className="rank" aria-hidden="true">
+                    {idx + 1}
+                  </span>
+                  <span className="row-text">
+                    <span className="row-title" lang={user.language}>
                       {phrase.text}
                     </span>
-                  </div>
-                  <div className="top-phrase-meta">
-                    <span className="uses-badge">
-                      {t('progress.usesCount', { count: phrase.uses })}
-                    </span>
-                    <button
-                      type="button"
-                      className="icon-pill-btn"
-                      onClick={() => handlePlayPhrase(phrase.text)}
-                      aria-label={`${t(isPlaying ? 'phrases.stopPlaying' : 'phrases.listen')}: ${phrase.text}`}
-                    >
-                      {isPlaying ? (
-                        <Square size={15} fill="currentColor" aria-hidden="true" />
-                      ) : (
-                        <Volume2 size={15} aria-hidden="true" strokeWidth={1.5} />
-                      )}
-                    </button>
-                  </div>
+                    <span className="row-sub">{t('progress.usesCount', { count: phrase.uses })}</span>
+                  </span>
+                  <button
+                    type="button"
+                    className="icon-button"
+                    onClick={() => handlePlayPhrase(phrase.text)}
+                    aria-label={`${t(isPlaying ? 'phrases.stopPlaying' : 'phrases.listen')}: ${phrase.text}`}
+                  >
+                    {isPlaying ? <Square fill="currentColor" {...ICON} /> : <Volume2 {...ICON} />}
+                  </button>
                 </li>
               )
             })}
           </ul>
         ) : (
-          <p className="muted empty-note">{t('progress.topPhrasesEmpty')}</p>
+          <p className="empty-note">{t('progress.topPhrasesEmpty')}</p>
         )}
       </section>
 
-      {/* Section 4: Weekly Activity Trend Chart */}
+      {/* Weekly trend */}
       <section className="progress-section" aria-labelledby="heading-weekly">
         <div className="section-header-row">
           <div>
-            <h2 id="heading-weekly">{t('progress.weeklyHeading')}</h2>
-            <p className="muted">{t('progress.weeklyDesc')}</p>
+            <h2 id="heading-weekly" className="title-2">
+              {t('progress.weeklyHeading')}
+            </h2>
+            <p className="section-sub">{t('progress.weeklyDesc')}</p>
           </div>
-          {weeks.some((w) => w.confirmed > 0) && (
+          {hasActivity && (
             <button
               type="button"
-              className="pill-outline table-toggle-btn"
+              className="button small"
               onClick={() => setShowTableView(!showTableView)}
               aria-expanded={showTableView}
             >
@@ -277,171 +320,83 @@ export default function Progress() {
           )}
         </div>
 
-        {weeks.some((w) => w.confirmed > 0) ? (
-          <div className="weekly-chart-card">
+        {hasActivity ? (
+          <div className="chart-card">
             {showTableView ? (
-              <div className="chart-table-container">
-                <table className="accessible-chart-table">
-                  <caption className="visually-hidden">{t('progress.weeklyDesc')}</caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">{t('progress.weekColumn')}</th>
-                      <th scope="col">{t('progress.confirmed')}</th>
-                      <th scope="col">{t('progress.weeklyClearLabel')}</th>
-                      <th scope="col">{t('progress.weeklyAssistedLabel')}</th>
+              <table className="data-table">
+                <caption className="visually-hidden">{t('progress.weeklyDesc')}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">{t('progress.weekColumn')}</th>
+                    <th scope="col">{t('progress.confirmed')}</th>
+                    <th scope="col">{t('progress.weeklyClearLabel')}</th>
+                    <th scope="col">{t('progress.weeklyAssistedLabel')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {weeks.map((w) => (
+                    <tr key={w.week_start}>
+                      <th scope="row">{formatWeekStart(w.week_start, lang)}</th>
+                      <td>{w.confirmed}</td>
+                      <td>{w.clear}</td>
+                      <td>{Math.max(0, w.confirmed - w.clear)}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {weeks.map((w) => (
-                      <tr key={w.week_start}>
-                        <th scope="row">{formatWeekStart(w.week_start, lang)}</th>
-                        <td>{w.confirmed}</td>
-                        <td>{w.clear}</td>
-                        <td>{Math.max(0, w.confirmed - w.clear)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             ) : (
               <>
                 <div className="chart-legend" aria-hidden="true">
                   <span className="legend-item">
-                    <span className="legend-dot assisted" />
-                    <span>{t('progress.weeklyAssistedLabel')}</span>
-                  </span>
-                  <span className="legend-item">
-                    <span className="legend-dot clear" />
+                    <span className="swatch clear" />
                     <span>{t('progress.weeklyClearLabel')}</span>
                   </span>
+                  <span className="legend-item">
+                    <span className="swatch assisted" />
+                    <span>{t('progress.weeklyAssistedLabel')}</span>
+                  </span>
                 </div>
-
-                <div className="svg-chart-container" role="img" aria-label={t('progress.weeklyDesc')}>
-                  <svg viewBox="0 0 400 160" className="activity-svg" preserveAspectRatio="none">
-                    <line x1="10" y1="130" x2="390" y2="130" stroke="var(--line)" strokeWidth="1" />
-                    {weeks.map((w, idx) => {
-                      const x = 20 + idx * 46
-                      const barWidth = 28
-                      const maxH = 100
-                      const total = w.confirmed
-                      const h = total > 0 ? Math.max(8, (total / maxWeekly) * maxH) : 0
-                      const y = 130 - h
-                      const clearH = total > 0 ? (w.clear / total) * h : 0
-                      const assistedH = h - clearH
-
-                      return (
-                        <g key={w.week_start} className="chart-bar-group">
-                          {total > 0 ? (
-                            <>
-                              {assistedH > 0 && (
-                                <rect
-                                  x={x}
-                                  y={y}
-                                  width={barWidth}
-                                  height={assistedH}
-                                  rx="3"
-                                  fill="var(--saffron)"
-                                  opacity="0.9"
-                                />
-                              )}
-                              {clearH > 0 && (
-                                <rect
-                                  x={x}
-                                  y={y + assistedH}
-                                  width={barWidth}
-                                  height={clearH}
-                                  rx="3"
-                                  fill="var(--haze)"
-                                  opacity="0.8"
-                                />
-                              )}
-                            </>
-                          ) : (
-                            <circle cx={x + barWidth / 2} cy={130} r="2" fill="var(--line-strong)" />
-                          )}
-                          <text
-                            x={x + barWidth / 2}
-                            y="148"
-                            textAnchor="middle"
-                            fontSize="10"
-                            fill="var(--mist)"
-                          >
-                            {formatWeekStart(w.week_start, lang)}
-                          </text>
-                        </g>
-                      )
-                    })}
-                  </svg>
-                </div>
+                <WeeklyChart weeks={weeks} lang={lang} />
               </>
             )}
           </div>
         ) : (
-          <p className="muted empty-note">{t('progress.noActivity')}</p>
+          <p className="empty-note">{t('progress.noActivity')}</p>
         )}
       </section>
 
-      {stats?.recognitions === 0 && (
-        <article className="progress-empty-card" aria-labelledby="empty-progress-title">
-          <h2 id="empty-progress-title">{t('progress.nothing')}</h2>
-          <p className="muted">{t('progress.guidancePhrases')}</p>
-          <div className="empty-actions">
-            <button
-              type="button"
-              className="pill-outline"
-              onClick={() => go('/app/speak')}
-            >
-              <Mic size={16} aria-hidden="true" strokeWidth={1.5} />
-              <span>{t('progress.goSpeak')}</span>
-            </button>
-            <button
-              type="button"
-              className="pill-outline"
-              onClick={() => go('/app/phrases')}
-            >
-              <BookOpen size={16} aria-hidden="true" strokeWidth={1.5} />
-              <span>{t('progress.goPhrases')}</span>
-            </button>
-          </div>
-        </article>
-      )}
-
-      {/* Section 5: Supportive Suggestions and Quick Links */}
-      <section className="progress-section" aria-labelledby="heading-guidance">
-        <h2 id="heading-guidance">{t('progress.guidanceHeading')}</h2>
-        <div className="guidance-grid">
-          <div className="guidance-item">
-            <p>{t('progress.guidancePhrases')}</p>
-            <button
-              type="button"
-              className="pill-outline"
-              onClick={() => go('/app/phrases')}
-            >
-              <BookOpen size={16} aria-hidden="true" strokeWidth={1.5} />
-              <span>{t('progress.goPhrases')}</span>
-            </button>
-          </div>
-          <div className="guidance-item">
-            <p>{t('progress.guidanceEnroll')}</p>
-            <button
-              type="button"
-              className="pill-outline"
-              onClick={() => go('/app/enroll')}
-            >
-              <Mic size={16} aria-hidden="true" strokeWidth={1.5} />
-              <span>{t('progress.goTeach')}</span>
-            </button>
-          </div>
+      {/* Supportive suggestions */}
+      <section className="group-wrap" aria-labelledby="heading-guidance">
+        <h2 id="heading-guidance" className="title-2">
+          {t('progress.guidanceHeading')}
+        </h2>
+        <div className="group">
+          <button type="button" className="row" onClick={() => go('/app/phrases')}>
+            <BookOpen className="row-icon" {...ICON} />
+            <span className="row-text">
+              <span className="row-title">{t('progress.goPhrases')}</span>
+              <span className="row-sub">{t('progress.guidancePhrases')}</span>
+            </span>
+            <ChevronRight className="row-chevron" {...ICON} />
+          </button>
+          <button type="button" className="row" onClick={() => go('/app/enroll')}>
+            <Mic className="row-icon" {...ICON} />
+            <span className="row-text">
+              <span className="row-title">{t('progress.goTeach')}</span>
+              <span className="row-sub">{t('progress.guidanceEnroll')}</span>
+            </span>
+            <ChevronRight className="row-chevron" {...ICON} />
+          </button>
         </div>
       </section>
 
-      {/* Section 6: Statistical Disclaimer and Transparency */}
-      <aside className="disclaimer-card" aria-labelledby="heading-disclaimer">
-        <h3 id="heading-disclaimer">{t('progress.disclaimerHeading')}</h3>
-        <p className="muted">{t('progress.disclaimerText')}</p>
-      </aside>
-
       <DeleteAccount />
+
+      {/* What the numbers are, and aren't */}
+      <aside className="footnote" aria-labelledby="heading-disclaimer">
+        <h3 id="heading-disclaimer">{t('progress.disclaimerHeading')}</h3>
+        <p>{t('progress.disclaimerText')}</p>
+      </aside>
     </section>
   )
 }
