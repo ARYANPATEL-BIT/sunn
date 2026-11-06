@@ -1,7 +1,7 @@
 import { expect, markOnboarded, openSpeak, signUp, t, test } from './helpers.js'
 
-// Counts the animation frames the page asks for; the background asks for about 30 a second
-// while it moves, and none once it is still.
+// Counts the animation frames the page asks for. Nothing asks for any at rest; while recording,
+// the recorder asks for one a frame to measure the voice.
 const COUNT_FRAMES = () => {
   const raf = window.requestAnimationFrame.bind(window)
   window.__frames = 0
@@ -17,38 +17,62 @@ async function framesInASecond(page) {
 }
 const running = (page) =>
   page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running').length)
+// How loud the record button thinks the voice is (its --level, 0..1), which sizes its ring.
+const level = (button) => button.evaluate((el) => parseFloat(el.style.getPropertyValue('--level')) || 0)
 
 test.describe('motion allowed', () => {
   test.use({ reducedMotion: 'no-preference' })
 
-  test('the background moves and the sun breathes', async ({ page }) => {
+  test('the landing example plays, and the record button follows the voice', async ({ page, watch }) => {
+    watch.allow(401, '/api/auth/me')
+    await page.goto('/')
+    const example = page.locator('.example')
+    await expect(page.getByRole('button', { name: t('en', 'example.pause') })).toBeVisible()
+    for (const phase of ['heard', 'said', 'wave']) await expect(example).toHaveAttribute('data-phase', phase)
+
     const user = await signUp(page.request)
     await openSpeak(page.request, user)
     await markOnboarded(page, user)
-    await page.addInitScript(COUNT_FRAMES)
     await page.goto('/app/speak')
-    await expect(page.getByRole('button', { name: t('en', 'sun.tap') })).toBeVisible()
-    expect(await framesInASecond(page)).toBeGreaterThan(10)
-    expect(await running(page)).toBeGreaterThan(0)
+    const button = page.locator('button.record')
+    await button.click()
+    await expect(button).toHaveClass(/recording/)
+    await expect.poll(() => level(button)).toBeGreaterThan(0.2) // the fake microphone's tone
+    await button.click()
+    await expect(button).not.toHaveClass(/recording/)
+    expect(await level(button)).toBe(0)
   })
 
   test("the app's own setting stops the motion at once, and starts it again", async ({ page }) => {
     const user = await signUp(page.request)
+    await openSpeak(page.request, user)
     await markOnboarded(page, user)
-    await page.addInitScript(COUNT_FRAMES)
     await page.goto('/app/settings')
-    expect(await framesInASecond(page)).toBeGreaterThan(10)
 
     const toggle = page.locator('.settings-row', { hasText: t('en', 'settings.motionLabel') }).getByRole('button')
     await toggle.click()
     await expect(page.locator('html')).toHaveClass(/reduced-motion/)
-    await page.waitForTimeout(300) // let the last frame finish
-    expect(await framesInASecond(page)).toBeLessThanOrEqual(1)
-    expect(await running(page)).toBe(0)
+    expect(await running(page)).toBe(0) // the switch doesn't slide, the saved note doesn't rise
 
+    // Without a reload: the ring stands still while recording.
+    const speak = page.getByRole('link', { name: t('en', 'tab.speak') })
+    const button = page.locator('button.record')
+    await speak.click()
+    await button.click()
+    await expect(button).toHaveClass(/recording/)
+    await page.waitForTimeout(600)
+    expect(await level(button)).toBe(0)
+    expect(await running(page)).toBe(0)
+    await button.click()
+    await expect(button).not.toHaveClass(/recording/)
+
+    await page.getByRole('link', { name: t('en', 'tab.settings') }).first().click()
     await toggle.click()
     await expect(page.locator('html')).not.toHaveClass(/reduced-motion/)
-    expect(await framesInASecond(page)).toBeGreaterThan(10)
+    await speak.click()
+    await button.click()
+    await expect(button).toHaveClass(/recording/)
+    await expect.poll(() => level(button)).toBeGreaterThan(0.2)
   })
 })
 

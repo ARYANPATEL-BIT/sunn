@@ -42,9 +42,6 @@ export const test = base.extend({
       const isAllowed = (status, url) => allowed.some((a) => a.status === status && url.includes(a.path))
       page.on('console', (m) => {
         if (!['error', 'warning'].includes(m.type())) return
-        // Headless Chrome renders WebGL in software and reads the canvas back to composite it;
-        // the app itself never reads pixels (src/SeaLight.jsx), and a real GPU doesn't do this.
-        if (/GL Driver Message .*GPU stall due to ReadPixels/.test(m.text())) return
         const status = Number(m.text().match(/status of (\d{3})/)?.[1])
         if (status && isAllowed(status, m.location().url)) return
         problems.push(`console ${m.type()}: ${m.text()} (${m.location().url})`)
@@ -169,6 +166,9 @@ export async function expectNoLeaks(page, lang, data = []) {
 // The card of the phrase with exactly this text (पानी चाहिए, not गरम पानी चाहिए).
 export const phraseCard = (page, text) =>
   page.locator('.phrase-card').filter({ has: page.locator('.phrase-card-text').getByText(text, { exact: true }) })
+
+// Taps that phrase in the library, which opens its details: Listen, Edit and Delete.
+export const openPhrase = (page, text) => phraseCard(page, text).locator('.phrase-row').click()
 
 // Answers the next request to `path` with an API refusal, for checking how the app words it
 // without tripping the server's real limits (5 wrong invite codes from one address lock sign-up
