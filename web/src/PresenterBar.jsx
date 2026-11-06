@@ -84,7 +84,7 @@ export default function PresenterBar({ onClose }) {
     >
       <div className="presenter-bar-header">
         <div className="presenter-title-wrap">
-          <Presentation size={18} aria-hidden="true" className="presenter-icon" />
+          <Presentation size={18} strokeWidth={1.5} aria-hidden="true" className="presenter-icon" />
           <span className="presenter-heading">{t('presenter.title')}</span>
           <span className="presenter-step-badge">
             {t('presenter.stepIndicator', {
@@ -103,7 +103,7 @@ export default function PresenterBar({ onClose }) {
             title={collapsed ? t('presenter.expand') : t('presenter.collapse')}
             aria-label={collapsed ? t('presenter.expand') : t('presenter.collapse')}
           >
-            {collapsed ? <ChevronDown size={18} aria-hidden="true" /> : <ChevronUp size={18} aria-hidden="true" />}
+            {collapsed ? <ChevronDown size={18} strokeWidth={1.5} aria-hidden="true" /> : <ChevronUp size={18} strokeWidth={1.5} aria-hidden="true" />}
           </button>
           <button
             type="button"
@@ -112,7 +112,7 @@ export default function PresenterBar({ onClose }) {
             title={t('presenter.exit')}
             aria-label={t('presenter.exit')}
           >
-            <X size={18} aria-hidden="true" />
+            <X size={18} strokeWidth={1.5} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -132,7 +132,7 @@ export default function PresenterBar({ onClose }) {
                   aria-current={isCurrent ? 'step' : undefined}
                 >
                   {isPast ? (
-                    <CheckCircle2 size={14} aria-hidden="true" className="presenter-pill-icon" />
+                    <CheckCircle2 size={14} strokeWidth={1.5} aria-hidden="true" className="presenter-pill-icon" />
                   ) : (
                     <span className="presenter-pill-num">{idx + 1}</span>
                   )}
@@ -144,7 +144,7 @@ export default function PresenterBar({ onClose }) {
 
           <div className="presenter-cue-card">
             <div className="presenter-cue-header">
-              <Lightbulb size={16} aria-hidden="true" className="presenter-cue-icon" />
+              <Lightbulb size={16} strokeWidth={1.5} aria-hidden="true" className="presenter-cue-icon" />
               <strong className="presenter-cue-title">{t(currentStep.titleKey)}</strong>
             </div>
             <p className="presenter-cue-text">{t(currentStep.cueKey)}</p>
@@ -157,7 +157,7 @@ export default function PresenterBar({ onClose }) {
               onClick={handleRestart}
               title={t('presenter.restart')}
             >
-              <RotateCcw size={14} aria-hidden="true" />
+              <RotateCcw size={14} strokeWidth={1.5} aria-hidden="true" />
               <span>{t('presenter.restart')}</span>
             </button>
 
@@ -169,7 +169,7 @@ export default function PresenterBar({ onClose }) {
                 disabled={activeIndex <= 0}
                 aria-label={t('presenter.prev')}
               >
-                <ChevronLeft size={16} aria-hidden="true" />
+                <ChevronLeft size={16} strokeWidth={1.5} aria-hidden="true" />
                 <span>{t('presenter.prev')}</span>
               </button>
               <button
@@ -180,7 +180,7 @@ export default function PresenterBar({ onClose }) {
                 aria-label={t('presenter.next')}
               >
                 <span>{t('presenter.next')}</span>
-                <ChevronRight size={16} aria-hidden="true" />
+                <ChevronRight size={16} strokeWidth={1.5} aria-hidden="true" />
               </button>
             </div>
           </div>
