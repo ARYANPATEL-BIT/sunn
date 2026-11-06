@@ -24,8 +24,7 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     permissions: ['microphone'],
-    // Headless Chrome draws the WebGL background in software, a CPU core per page at 30 fps, which
-    // starves the server under test. Reduced motion draws it once; motion.spec.js covers both.
+    // Still pages make stable screenshots and steady timings; motion.spec.js covers both.
     reducedMotion: 'reduce',
     launchOptions: {
       args: [
@@ -33,7 +32,6 @@ export default defineConfig({
         '--use-fake-device-for-media-stream',
         `--use-file-for-fake-audio-capture=${TONE}`,
         '--autoplay-policy=no-user-gesture-required',
-        '--enable-unsafe-swiftshader', // WebGL in headless, without Chrome's fallback warning
       ],
     },
   },
