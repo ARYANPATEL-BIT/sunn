@@ -12,7 +12,7 @@ export default {
   'nav.openApp': 'Open app',
   'nav.main': 'Main',
 
-  'hero.headline': 'Understand every voice.',
+  'hero.headline': 'Every voice, understood.',
   'hero.line1': 'Speak the way you can.',
   'hero.line2': 'Sunn learns how you say your everyday phrases and says them back clearly.',
   'cta.start': 'Start speaking',
@@ -435,4 +435,54 @@ export default {
   'enroll.rerecord': 'Recorded in the language you spoke before. Record it again to use it.',
   'progress.weekColumn': 'Week of',
   'settings.voiceChoose': 'Choose a recording',
+
+  // The device: labels printed on it, always shown in both languages (DESIGN.md: Label).
+  'device.listen': 'Mic',
+  'device.heard': 'Heard',
+  'device.understood': 'Understood',
+  'device.say': 'Say this',
+  'device.saved': 'Saved',
+  'device.place': 'Place',
+  'device.others': 'Others',
+  'device.learned': 'Learned',
+  'device.urgent': 'Urgent',
+  'device.status_ready': 'Ready',
+  'device.status_listening': 'Listening',
+  'device.status_thinking': 'Matching',
+  'device.status_result': 'Match found',
+  'device.status_unknown': 'No match',
+  'device.status_error': 'Try again',
+  'speak.idle': 'Tap the button below and say your phrase.',
+  'speak.tapToSay': 'Tap the phrase to hear it.',
+
+  'hero.link': 'See how it works',
+  'nav.faq': 'Questions',
+  'spec.title': 'Specifications',
+  'spec.items': [
+    { label: 'Setup', value: '3 recordings a phrase' },
+    { label: 'Languages', value: 'Hindi, Hinglish, English' },
+    { label: 'Runs on', value: 'Any phone browser' },
+    { label: 'Built on', value: 'Gnani Prisma and Timbre' },
+  ],
+  'pocket.title': 'The same object in your pocket.',
+  'pocket.body': 'Sunn runs in the phone’s browser. There is nothing to install.',
+  'pocket.steps': [
+    'Record each everyday phrase three times.',
+    'Tap the orange button and say what you need.',
+    'Sunn finds the closest phrase and says it out loud.',
+  ],
+  'faq.title': 'Questions',
+  'faq.items': [
+    {
+      q: 'Who is Sunn for?',
+      a: 'People whose speech is hard for others to follow, for example after a stroke, and the family who help them.',
+    },
+    { q: 'Does it need the internet?', a: "Yes. What you say is sent to Gnani's servers to be turned into text." },
+    { q: 'How long does setup take?', a: 'Each phrase needs three recordings. Speak opens once the first 10 phrases are recorded.' },
+    {
+      q: 'Can I add my own phrases?',
+      a: 'Yes. Add them in the phrase library, or type one when none of the suggestions is right. Sunn learns it for next time.',
+    },
+    { q: 'Is Sunn a medical device?', a: 'No. It helps with everyday communication. It does not diagnose or treat anything.' },
+  ],
 }

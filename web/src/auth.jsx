@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import * as api from './api.js'
 import { useLang } from './i18n/index.jsx'
 import { forgetUser } from './prefs.js'
-import { Alert } from './ui.jsx'
+import { Alert } from './ui/index.js'
 
 const AuthContext = createContext(null)
 
