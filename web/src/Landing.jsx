@@ -1,31 +1,12 @@
-import {
-  ArrowDown,
-  ArrowRight,
-  AudioLines,
-  Building2,
-  Ear,
-  Fingerprint,
-  HeartHandshake,
-  Info,
-  Languages,
-  MessageCircle,
-  Mic,
-  Plus,
-  ShieldCheck,
-  Trash2,
-  Volume2,
-  Waves,
-} from 'lucide-react'
-import { Fragment, useId, useState } from 'react'
+import { ChevronRight, Ear, Fingerprint, Info, Mic, PencilLine, ShieldCheck, Trash2, Volume2, Waves } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import * as api from './api.js'
 import { loginPath, useAuth } from './auth.jsx'
 import Example from './Example.jsx'
 import { useLang } from './i18n/index.jsx'
 import { speakProgress } from './quickstart.js'
-import { LangToggle, Pill, reducedMotion, useGo, Wordmark } from './ui.jsx'
-
-const ICON = { 'aria-hidden': true, strokeWidth: 1.25 }
+import { RecordCircle } from './record.jsx'
+import { ICON, LangToggle, Pill, reducedMotion, ThemeToggle, useGo, Wordmark } from './ui.jsx'
 
 // Signed in: speak, or record the first phrases if Speak isn't open yet. Signed out: log in, then speak.
 function useStartSpeaking() {
@@ -43,23 +24,15 @@ function SiteNav() {
   const { user } = useAuth()
   return (
     <header className="site-nav">
-      <Wordmark />
-      <nav className="site-nav-end" aria-label={t('nav.main')}>
-        <ul className="site-links">
-          <li>
-            <a href="#how">{t('nav.how')}</a>
-          </li>
-          <li>
-            <a href="#who">{t('nav.who')}</a>
-          </li>
-          <li>
-            <a href="#privacy">{t('nav.privacy')}</a>
-          </li>
-        </ul>
-        <LangToggle />
-        <Link className="pill-outline" to={user ? '/app/speak' : '/login'} viewTransition={!reducedMotion()}>
-          {t(user ? 'nav.openApp' : 'nav.signIn')}
-        </Link>
+      <nav className="bar" aria-label={t('nav.main')}>
+        <Wordmark />
+        <div className="bar-end">
+          <LangToggle />
+          <ThemeToggle />
+          <Link className="nav-link" to={user ? '/app/speak' : '/login'} viewTransition={!reducedMotion()}>
+            {t(user ? 'nav.openApp' : 'nav.signIn')}
+          </Link>
+        </div>
       </nav>
     </header>
   )
@@ -67,139 +40,138 @@ function SiteNav() {
 
 function Hero({ onStart }) {
   const { t } = useLang()
-  const features = [
-    [AudioLines, 'feature.learns'],
-    [Volume2, 'feature.speaks'],
-    [Languages, 'feature.languages'],
-  ]
   return (
     <section className="hero">
-      <div className="hero-center">
-        <h1 className="hero-title">
-          <span className="hero-mark" lang="en">
-            Sunn
-          </span>
-          <span className="hero-headline">{t('hero.headline')}</span>
-        </h1>
-        <p className="hero-lines">
-          <span>{t('hero.line1')}</span>
-          <span>{t('hero.line2')}</span>
+      <p className="eyebrow" lang="en">
+        Sunn
+      </p>
+      <h1 className="display">{t('hero.headline')}</h1>
+      <p className="lede">{t('hero.line2')}</p>
+      <Pill icon={Mic} onClick={onStart}>
+        {t('cta.start')}
+      </Pill>
+    </section>
+  )
+}
+
+// One point per section: a small label, a big headline, one line, then something to see.
+function Section({ id, eyebrow, title, lede, alt, children }) {
+  return (
+    <section className={`section ${alt ? 'alt' : ''}`} aria-labelledby={id}>
+      {eyebrow && <p className="eyebrow">{eyebrow}</p>}
+      <h2 className="section-title" id={id}>
+        {title}
+      </h2>
+      {lede && <p className="lede">{lede}</p>}
+      <div className="visual">{children}</div>
+    </section>
+  )
+}
+
+// Made-up phrases, labelled as an example, in the language the page is shown in.
+const FIX_EXAMPLE = {
+  en: { heard: 'plee oben de window…', candidates: ['Help me sit up', 'Give me my medicine'], typed: 'Please open the window' },
+  hi: { heard: 'khirki kol do…', candidates: ['मुझे उठा दो', 'दवाई दे दो'], typed: 'खिड़की खोल दो' },
+}
+
+// The correction loop as it looks in Speak: two wrong guesses, "None of these", and the sheet
+// with the phrase the person meant.
+function Correction() {
+  const { t, lang } = useLang()
+  const example = FIX_EXAMPLE[lang]
+  return (
+    <figure className="stage fix-stage">
+      <figcaption className="stage-label">{t('example.label')}</figcaption>
+      <div aria-hidden="true">
+        <p className="heard">
+          {t('speak.heard')} <span lang={lang === 'hi' ? 'hi-Latn' : 'en'}>“{example.heard}”</span>
         </p>
-        <Pill className="pill-glow" onClick={onStart}>
-          {t('cta.start')}
-        </Pill>
-      </div>
-      <ul className="features">
-        {features.map(([Icon, key]) => (
-          <li key={key}>
-            <Icon {...ICON} />
-            <span>{t(key)}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
-}
-
-function SectionHead({ id, title, children }) {
-  return (
-    <div className="section-head">
-      <h2 id={id}>{title}</h2>
-      {children}
-    </div>
-  )
-}
-
-function How() {
-  const { t } = useLang()
-  return (
-    <section className="section how" id="how" aria-labelledby="how-title">
-      <SectionHead id="how-title" title={t('how.title')} />
-      <div className="how-grid">
-        <ol className="steps">
-          {t('how.steps').map((step, i) => (
-            <li key={i}>
-              <span className="step-number" aria-hidden="true">
-                {String(i + 1).padStart(2, '0')}
+        <div className="group alternates">
+          {example.candidates.map((text) => (
+            <div key={text} className="row candidate">
+              <span className="row-title" lang={lang}>
+                {text}
               </span>
-              <div>
-                <h3>{step.title}</h3>
-                <p>{step.body}</p>
-              </div>
-            </li>
+              <Volume2 className="row-icon" {...ICON} />
+            </div>
           ))}
-        </ol>
-        <Example />
+          <div className="row none-row">
+            <PencilLine className="row-icon" {...ICON} />
+            <span className="row-title">{t('speak.noneOfThese')}</span>
+            <ChevronRight className="row-chevron" {...ICON} />
+          </div>
+        </div>
+        <div className="stage-scrim" />
+        <div className="sheet sheet-static">
+          <div className="sheet-body">
+            <div className="group">
+              <div className="field-cell">
+                <span className="field-label">{t('speak.typeLabel')}</span>
+                <span className="field-value" lang={lang}>
+                  {example.typed}
+                  <span className="caret" />
+                </span>
+              </div>
+            </div>
+            <div className="actions">
+              <span className="button">{t('speak.cancel')}</span>
+              <span className="pill">{t('speak.sayIt')}</span>
+            </div>
+          </div>
+        </div>
       </div>
-    </section>
+      <p className="visually-hidden">{t('landing.fixBody')}</p>
+    </figure>
   )
 }
 
+// The voice rows from Settings, as they look once a voice has been added.
 function OwnVoice() {
   const { t } = useLang()
   return (
-    <section className="section voice" aria-labelledby="voice-title">
-      <p className="tag">
-        <span>{t('voice.status')}</span>
-        <span className="visually-hidden">. {t('voice.statusNote')}</span>
-      </p>
-      <h2 id="voice-title" className="display">
-        {t('voice.title')}
-      </h2>
-      <p className="lede">{t('voice.body')}</p>
-    </section>
+    <figure>
+      <div className="group" aria-hidden="true">
+        <div className="row">
+          <span className="row-text">
+            <span className="row-title">{t('settings.voiceStatusLabel')}</span>
+            <span className="row-sub">{t('settings.voiceRecorded')}</span>
+          </span>
+        </div>
+        <div className="row">
+          <span className="row-title">{t('settings.useOwnVoiceLabel')}</span>
+          <span className="switch on" />
+        </div>
+        <div className="row">
+          <span className="row-title">{t('settings.testVoice')}</span>
+          <Volume2 className="row-icon" {...ICON} />
+        </div>
+      </div>
+    </figure>
   )
 }
 
-function Who() {
-  const { t } = useLang()
-  const icons = [MessageCircle, HeartHandshake, Building2]
-  return (
-    <section className="section" id="who" aria-labelledby="who-title">
-      <SectionHead id="who-title" title={t('who.title')} />
-      <ul className="columns">
-        {t('who.items').map((item, i) => {
-          const Icon = icons[i]
-          return (
-            <li key={i}>
-              <Icon {...ICON} />
-              <h3>{item.title}</h3>
-              <p>{item.body}</p>
-            </li>
-          )
-        })}
-      </ul>
-    </section>
-  )
-}
-
-function UnderTheHood() {
+function Pipeline() {
   const { t } = useLang()
   const icons = [Mic, Waves, Fingerprint, Volume2]
   return (
-    <section className="section" aria-labelledby="hood-title">
-      <SectionHead id="hood-title" title={t('hood.title')} />
-      <ol className="pipeline">
-        {t('hood.steps').map((step, i) => {
-          const Icon = icons[i]
-          return (
-            <Fragment key={i}>
-              {i > 0 && (
-                <li className="pipeline-arrow" aria-hidden="true">
-                  <ArrowRight {...ICON} className="across" />
-                  <ArrowDown {...ICON} className="down" />
-                </li>
-              )}
-              <li className="pipeline-step">
-                <Icon {...ICON} />
-                <h3 lang={step.title.startsWith('Gnani') ? 'en' : undefined}>{step.title}</h3>
-                <p>{step.body}</p>
-              </li>
-            </Fragment>
-          )
-        })}
-      </ol>
-    </section>
+    <ol className="group pipeline">
+      {t('hood.steps').map((step, i) => {
+        const Icon = icons[i]
+        return (
+          <li key={i} className="row">
+            <span className="row-badge">
+              <Icon {...ICON} />
+            </span>
+            <span className="row-text">
+              <span className="row-title" lang={step.title.startsWith('Gnani') ? 'en' : undefined}>
+                {step.title}
+              </span>
+              <span className="row-sub">{step.body}</span>
+            </span>
+          </li>
+        )
+      })}
+    </ol>
   )
 }
 
@@ -207,70 +179,22 @@ function Privacy() {
   const { t } = useLang()
   const icons = [ShieldCheck, Ear, Trash2, Info]
   return (
-    <section className="section" id="privacy" aria-labelledby="privacy-title">
-      <SectionHead id="privacy-title" title={t('privacy.title')} />
-      <ul className="columns four">
-        {t('privacy.items').map((item, i) => {
-          const Icon = icons[i]
-          return (
-            <li key={i}>
+    <ul className="group">
+      {t('privacy.items').map((item, i) => {
+        const Icon = icons[i]
+        return (
+          <li key={i} className="row">
+            <span className="row-badge">
               <Icon {...ICON} />
-              <h3>{item.title}</h3>
-              <p>{item.body}</p>
-            </li>
-          )
-        })}
-      </ul>
-    </section>
-  )
-}
-
-function Faq() {
-  const { t } = useLang()
-  const base = useId()
-  const [open, setOpen] = useState(null)
-  return (
-    <section className="section faq" aria-labelledby="faq-title">
-      <SectionHead id="faq-title" title={t('faq.title')} />
-      <div className="faq-list">
-        {t('faq.items').map((item, i) => {
-          const expanded = open === i
-          return (
-            <div className="faq-item" key={i}>
-              <h3>
-                <button
-                  type="button"
-                  id={`${base}-q${i}`}
-                  aria-expanded={expanded}
-                  aria-controls={`${base}-a${i}`}
-                  onClick={() => setOpen(expanded ? null : i)}
-                >
-                  <span>{item.q}</span>
-                  <Plus {...ICON} className="faq-icon" />
-                </button>
-              </h3>
-              <div id={`${base}-a${i}`} role="region" aria-labelledby={`${base}-q${i}`} hidden={!expanded}>
-                <p>{item.a}</p>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
-
-function Closing({ onStart }) {
-  const { t } = useLang()
-  return (
-    <section className="section closing" aria-labelledby="closing-title">
-      <h2 id="closing-title" className="display">
-        {t('closing.line')}
-      </h2>
-      <Pill className="pill-glow" onClick={onStart}>
-        {t('cta.start')}
-      </Pill>
-    </section>
+            </span>
+            <span className="row-text">
+              <span className="row-title">{item.title}</span>
+              <span className="row-sub">{item.body}</span>
+            </span>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
@@ -278,27 +202,55 @@ function Footer() {
   const { t } = useLang()
   return (
     <footer className="site-footer">
-      <Wordmark />
-      <p>{t('footer.built')}</p>
+      <p className="footer-built">{t('footer.built')}</p>
       <p>{t('footer.made')}</p>
     </footer>
   )
 }
 
 export default function Landing() {
+  const { t } = useLang()
   const start = useStartSpeaking()
   return (
     <div className="landing">
       <SiteNav />
       <main>
         <Hero onStart={start} />
-        <How />
-        <OwnVoice />
-        <Who />
-        <UnderTheHood />
-        <Privacy />
-        <Faq />
-        <Closing onStart={start} />
+        <Section id="speak-title" eyebrow={t('how.title')} title={t('hero.line1')} lede={t('landing.speakBody')} alt>
+          <Example />
+        </Section>
+        <Section id="fix-title" eyebrow={t('landing.fixEyebrow')} title={t('landing.fixTitle')} lede={t('landing.fixBody')}>
+          <Correction />
+        </Section>
+        <Section
+          id="voice-title"
+          eyebrow={
+            <>
+              {t('voice.status')}
+              <span className="visually-hidden">. {t('voice.statusNote')}</span>
+            </>
+          }
+          title={t('voice.title')}
+          lede={t('voice.body')}
+          alt
+        >
+          <OwnVoice />
+        </Section>
+        <Section id="hood-title" eyebrow={t('hood.title')} title={t('hood.headline')} lede={t('hood.body')}>
+          <Pipeline />
+        </Section>
+        <Section id="privacy-title" eyebrow={t('privacy.title')} title={t('privacy.headline')} alt>
+          <Privacy />
+        </Section>
+        <section className="section closing" aria-labelledby="closing-title">
+          <RecordCircle state="idle" />
+          <h2 className="section-title" id="closing-title">
+            {t('closing.line')}
+          </h2>
+          <Pill icon={Mic} onClick={start}>
+            {t('cta.start')}
+          </Pill>
+        </section>
       </main>
       <Footer />
     </div>
