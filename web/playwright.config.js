@@ -24,7 +24,7 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     permissions: ['microphone'],
-    // Still pages make stable screenshots and steady timings; motion.spec.js covers both.
+    // Still pages give steady timings; motion.spec.js covers both settings.
     reducedMotion: 'reduce',
     launchOptions: {
       args: [
