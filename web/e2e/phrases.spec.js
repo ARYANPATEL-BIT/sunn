@@ -1,4 +1,6 @@
-import { enroll, expect, expectNoLeaks, LANGS, markOnboarded, phraseCard, QUICK_START, signUp, t, test } from './helpers.js'
+import {
+  enroll, expect, expectNoLeaks, LANGS, markOnboarded, openPhrase, phraseCard, QUICK_START, signUp, t, test,
+} from './helpers.js'
 
 const SUFFIX = { en: ' now', hi: ' अभी' }
 
@@ -24,7 +26,8 @@ for (const lang of LANGS) {
       await expect(card.getByText(t(lang, 'speak.urgent'), { exact: true })).toHaveCount(0)
       await expectNoLeaks(page, lang)
 
-      // Edit the text and mark it urgent.
+      // Edit the text and mark it urgent, from the phrase's details.
+      await openPhrase(page, text)
       await card.getByRole('button', { name: `${t(lang, 'phrases.edit')}: ${text}` }).click()
       const edited = text + SUFFIX[lang]
       await page.getByLabel(t(lang, 'phrases.textLabel'), { exact: true }).fill(edited)
@@ -38,6 +41,7 @@ for (const lang of LANGS) {
       await expectNoLeaks(page, lang)
 
       // Delete asks first; keeping it changes nothing.
+      await openPhrase(page, edited)
       const deleteButton = editedCard.getByRole('button', { name: `${t(lang, 'phrases.delete')}: ${edited}` })
       await deleteButton.click()
       await expect(page.getByRole('heading', { name: t(lang, 'phrases.deleteConfirm', { text: edited }) })).toBeVisible()
