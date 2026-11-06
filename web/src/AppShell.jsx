@@ -1,21 +1,14 @@
-import { AudioLines, BookOpen, ChartNoAxesColumn, LogOut, Mic, Presentation, Settings as SettingsIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { usePresenterMode } from './prefs.js'
 import PresenterBar from './PresenterBar.jsx'
-import { LangToggle, reducedMotion, Wordmark } from './ui.jsx'
+import { Icon, LangToggle, reducedMotion, ThemeToggle, Wordmark } from './ui/index.js'
+import { TabFace, TABS } from './ui/Tabs.jsx'
 
-const TABS = [
-  { to: '/app/enroll', key: 'tab.enroll', Icon: AudioLines },
-  { to: '/app/speak', key: 'tab.speak', Icon: Mic },
-  { to: '/app/phrases', key: 'tab.phrases', Icon: BookOpen },
-  { to: '/app/progress', key: 'tab.progress', Icon: ChartNoAxesColumn },
-  { to: '/app/settings', key: 'tab.settings', Icon: SettingsIcon },
-]
-
-// Every /app screen: a header (home, language, who is signed in, log out) and the bottom tabs.
+// Every /app screen: a header (home, presenter mode, language, theme; on wide screens who is
+// signed in and log out, which phones find in Settings) and the tabs along the bottom.
 export default function AppShell() {
   const { user, logout } = useAuth()
   const { t } = useLang()
@@ -33,40 +26,33 @@ export default function AppShell() {
   }, [togglePresenter])
 
   return (
-    <>
+    <div className="app">
       <header className="app-header">
-        <Wordmark />
-        <div className="app-header-end">
-          <button
-            type="button"
-            className={`pill-outline presenter-nav-btn ${presenterMode ? 'active' : ''}`}
-            onClick={togglePresenter}
-            aria-pressed={presenterMode}
-            title={presenterMode ? t('presenter.exit') : t('presenter.enter')}
-            aria-label={presenterMode ? t('presenter.exit') : t('presenter.enter')}
-          >
-            <Presentation size={18} aria-hidden="true" strokeWidth={1.5} />
-            <span className="presenter-nav-text">{t('presenter.shortLabel')}</span>
-          </button>
-          <LangToggle />
-          <NavLink
-            to="/app/settings"
-            className="pill-outline settings-nav-btn"
-            title={t('tab.settings')}
-            aria-label={t('tab.settings')}
-            viewTransition={!reducedMotion()}
-          >
-            <SettingsIcon size={18} aria-hidden="true" strokeWidth={1.5} />
-            <span className="settings-nav-text">{t('tab.settings')}</span>
-          </NavLink>
-          <span className="who" title={t('app.signedIn', { name: user.name })}>
-            <span className="visually-hidden">{t('app.signedIn', { name: user.name })}</span>
-            <span aria-hidden="true">{user.name}</span>
-          </span>
-          <button type="button" className="pill-outline logout" onClick={logout}>
-            <LogOut aria-hidden="true" strokeWidth={1.5} />
-            <span>{t('app.logOut')}</span>
-          </button>
+        <div className="bar">
+          <Wordmark />
+          <div className="bar-end">
+            <button
+              type="button"
+              className="icon-button presenter-toggle"
+              onClick={togglePresenter}
+              aria-pressed={presenterMode}
+              title={presenterMode ? t('presenter.exit') : t('presenter.enter')}
+              aria-label={presenterMode ? t('presenter.exit') : t('presenter.enter')}
+            >
+              <Icon name="presentation" />
+              <span className="wide-only">{t('presenter.shortLabel')}</span>
+            </button>
+            <LangToggle />
+            <ThemeToggle />
+            <span className="who wide-only">
+              <span className="visually-hidden">{t('app.signedIn', { name: user.name })}</span>
+              <span aria-hidden="true">{user.name}</span>
+            </span>
+            <button type="button" className="button small wide-only" onClick={logout}>
+              <Icon name="logOut" />
+              <span>{t('app.logOut')}</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -77,13 +63,14 @@ export default function AppShell() {
       </main>
 
       <nav className="tabs" aria-label={t('app.nav')}>
-        {TABS.map(({ to, key, Icon }) => (
-          <NavLink key={to} to={to} viewTransition={!reducedMotion()}>
-            <Icon aria-hidden="true" strokeWidth={1.5} />
-            <span>{t(key)}</span>
-          </NavLink>
-        ))}
+        <div className="tabs-inner">
+          {TABS.map(({ to, key, icon }) => (
+            <NavLink key={to} to={to} className="tab" viewTransition={!reducedMotion()}>
+              <TabFace k={key} icon={icon} />
+            </NavLink>
+          ))}
+        </div>
       </nav>
-    </>
+    </div>
   )
 }

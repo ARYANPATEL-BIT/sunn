@@ -1,29 +1,16 @@
-import {
-  BookOpen,
-  Check,
-  CheckCircle2,
-  ExternalLink,
-  FileAudio,
-  Languages,
-  Phone,
-  Shield,
-  Square,
-  Trash2,
-  Type,
-  Upload,
-  Volume2,
-} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { applyPreferences, getPreferences, setPreference } from './prefs.js'
-import { Alert, Pill, useGo } from './ui.jsx'
+import { useTheme } from './theme.js'
+import { Alert, Button, Choices, Group, Icon, PrimaryButton, Row as SwitchRow, Sheet, Toast, useGo } from './ui/index.js'
 
 export default function Settings() {
-  const { user, signedIn, deleteAccount } = useAuth()
+  const { user, signedIn, deleteAccount, logout } = useAuth()
   const { lang, setLang, t } = useLang()
   const go = useGo()
+  const [theme, setTheme] = useTheme()
 
   const [prefs, setPrefs] = useState(getPreferences)
   const [caregiverName, setCaregiverName] = useState(user?.caregiver_name || '')
@@ -70,6 +57,13 @@ export default function Settings() {
   const handleSetLanguage = (nextLang) => {
     if (nextLang === lang) return
     setLang(nextLang)
+    flashFeedback('settings.savedSuccess')
+  }
+
+  // So is the theme.
+  const handleSetTheme = (next) => {
+    if (next === theme) return
+    setTheme(next)
     flashFeedback('settings.savedSuccess')
   }
 
@@ -245,258 +239,137 @@ export default function Settings() {
   }
 
   const createdDate = user?.consent_given_at
-    ? new Date(user.consent_given_at).toLocaleDateString(
-        lang === 'hi' ? 'hi-IN' : 'en-US',
-        { year: 'numeric', month: 'short', day: 'numeric' },
-      )
+    ? new Date(user.consent_given_at).toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
     : null
+  const sheetOpen = Boolean(confirmSpeak) || confirmDeleteVoice || confirmDeleteAccount
 
   return (
     <section className="screen settings-screen">
-      <header className="settings-header">
-        <h1>{t('settings.title')}</h1>
-        <p className="muted">{t('settings.subtitle')}</p>
-      </header>
+      <h1 className="large-title">{t('settings.title')}</h1>
 
       {/* Notifications and Alerts */}
       <div aria-live="polite">
-        {feedback && (
-          <p className="notice-banner" role="status">
-            {t(feedback)}
-          </p>
-        )}
-        <Alert error={error} />
+        {feedback && <Toast>{t(feedback)}</Toast>}
+        {!sheetOpen && <Alert error={error} />}
       </div>
 
-      {/* Section 1: Language and Display */}
-      <article className="settings-card" aria-labelledby="heading-display">
-        <div className="card-header">
-          <Languages className="card-icon" size={20} aria-hidden="true" strokeWidth={1.5} />
-          <h2 id="heading-display">{t('settings.sectionDisplay')}</h2>
-        </div>
+      {/* Language and display */}
+      <Group bare title={t('settings.speakLanguageLabel')} titleId="speak-language-label" footer={t('settings.speakLanguageHelp')}>
+        <Choices
+          labelledBy="speak-language-label"
+          options={['hi', 'en'].map((code) => ({ value: code, label: speakName(code) }))}
+          value={user?.language}
+          onChange={(code) => setConfirmSpeak(code === user?.language ? null : code)}
+          disabled={busy !== null}
+        />
+      </Group>
 
-        <div className="settings-row">
-          <div className="row-text">
-            <strong>{t('settings.languageLabel')}</strong>
-            <p className="muted">{t('settings.languageHelp')}</p>
-          </div>
-          <div className="segmented-control" role="radiogroup" aria-label={t('settings.languageLabel')}>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={lang === 'en'}
-              className={`segment-btn ${lang === 'en' ? 'active' : ''}`}
-              onClick={() => handleSetLanguage('en')}
-            >
-              {lang === 'en' && <Check size={14} aria-hidden="true" strokeWidth={2} />}
-              <span lang="en">{t('settings.langEnglish')}</span>
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={lang === 'hi'}
-              className={`segment-btn ${lang === 'hi' ? 'active' : ''}`}
-              onClick={() => handleSetLanguage('hi')}
-            >
-              {lang === 'hi' && <Check size={14} aria-hidden="true" strokeWidth={2} />}
-              <span lang="hi">{t('settings.langHindi')}</span>
-            </button>
-          </div>
-        </div>
+      <Group bare title={t('settings.languageLabel')} titleId="app-language-label" footer={t('settings.languageHelp')}>
+        <Choices
+          labelledBy="app-language-label"
+          options={[
+            { value: 'en', label: t('settings.langEnglish'), lang: 'en' },
+            { value: 'hi', label: t('settings.langHindi'), lang: 'hi' },
+          ]}
+          value={lang}
+          onChange={handleSetLanguage}
+        />
+      </Group>
 
-        <hr className="divider" />
+      <Group bare title={t('settings.themeLabel')} titleId="theme-label" footer={t('settings.themeHelp')}>
+        <Choices
+          labelledBy="theme-label"
+          options={['light', 'dark', 'system'].map((value) => ({ value, label: t(`theme.${value}`) }))}
+          value={theme}
+          onChange={handleSetTheme}
+        />
+      </Group>
 
-        <div className="settings-row">
-          <div className="row-text">
-            <strong id="speak-language-label">{t('settings.speakLanguageLabel')}</strong>
-            <p className="muted">{t('settings.speakLanguageHelp')}</p>
-          </div>
-          <div className="segmented-control" role="radiogroup" aria-labelledby="speak-language-label">
-            {['hi', 'en'].map((code) => (
-              <button
-                key={code}
-                type="button"
-                role="radio"
-                aria-checked={user?.language === code}
-                className={`segment-btn ${user?.language === code ? 'active' : ''}`}
-                onClick={() => setConfirmSpeak(code === user?.language ? null : code)}
-                disabled={busy !== null}
-              >
-                {user?.language === code && <Check size={14} aria-hidden="true" strokeWidth={2} />}
-                <span>{speakName(code)}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+      <Group bare title={t('settings.textSizeLabel')} titleId="text-size-label" footer={t('settings.textSizeHelp')}>
+        <Choices
+          labelledBy="text-size-label"
+          options={[
+            { value: 'default', label: t('settings.textSizeDefault') },
+            { value: 'large', label: t('settings.textSizeLarge') },
+          ]}
+          value={prefs.largeText ? 'large' : 'default'}
+          onChange={(size) => (size === 'large') !== prefs.largeText && handleToggleLargeText()}
+        />
+      </Group>
 
-        {confirmSpeak && (
-          <div className="inline-confirm-box" role="group" aria-labelledby="speak-language-confirm">
-            <p>
-              <strong id="speak-language-confirm">
-                {t('settings.speakLanguageConfirm', { language: speakName(confirmSpeak) })}
-              </strong>
-            </p>
-            <p className="muted">{t('settings.speakLanguageWarning', { language: speakName(confirmSpeak) })}</p>
-            <div className="actions">
-              <button
-                type="button"
-                className="pill-outline"
-                onClick={() => setConfirmSpeak(null)}
-                disabled={busy === 'language'}
-                autoFocus
-              >
-                {t('settings.cancel')}
-              </button>
-              <button
-                type="button"
-                className="pill-outline"
-                onClick={handleSetSpeakLanguage}
-                disabled={busy === 'language'}
-              >
-                {busy === 'language'
-                  ? t('settings.speakLanguageSwitching')
-                  : t('settings.speakLanguageYes', { language: speakName(confirmSpeak) })}
-              </button>
-            </div>
-          </div>
-        )}
+      {/* Accessibility */}
+      <Group title={t('settings.sectionAccessibility')} titleId="heading-accessibility" footer={t('settings.touchHelp')}>
+        <SwitchRow
+          id="motion"
+          title={t('settings.motionLabel')}
+          help={t('settings.motionHelp')}
+          note={prefs.systemReducedMotion && t('settings.motionSystemNote')}
+          on={prefs.reducedMotion}
+          onClick={handleToggleReducedMotion}
+          disabled={prefs.systemReducedMotion}
+        />
+        <SwitchRow
+          id="focus"
+          title={t('settings.focusLabel')}
+          help={t('settings.focusHelp')}
+          on={prefs.enhancedFocus}
+          onClick={handleToggleEnhancedFocus}
+        />
+      </Group>
 
-        <hr className="divider" />
-
-        <div className="settings-row">
-          <div className="row-text">
-            <strong>{t('settings.textSizeLabel')}</strong>
-            <p className="muted">{t('settings.textSizeHelp')}</p>
-          </div>
-          <div className="segmented-control" role="radiogroup" aria-label={t('settings.textSizeLabel')}>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={!prefs.largeText}
-              className={`segment-btn ${!prefs.largeText ? 'active' : ''}`}
-              onClick={handleToggleLargeText}
-            >
-              {!prefs.largeText && <Check size={14} aria-hidden="true" strokeWidth={2} />}
-              <span>{t('settings.textSizeDefault')}</span>
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={prefs.largeText}
-              className={`segment-btn ${prefs.largeText ? 'active' : ''}`}
-              onClick={handleToggleLargeText}
-            >
-              {prefs.largeText && <Check size={14} aria-hidden="true" strokeWidth={2} />}
-              <span>{t('settings.textSizeLarge')}</span>
-            </button>
-          </div>
-        </div>
-
-        <hr className="divider" />
-
-        <div className="settings-row">
-          <div className="row-text">
-            <strong>{t('settings.motionLabel')}</strong>
-            <p className="muted">{t('settings.motionHelp')}</p>
-            {prefs.systemReducedMotion && (
-              <p className="field-hint system-note">
-                {t('settings.motionSystemNote')}
-              </p>
-            )}
-          </div>
-          <button
-            type="button"
-            className={`pill-outline switch-btn ${prefs.reducedMotion ? 'active' : ''}`}
-            onClick={handleToggleReducedMotion}
-            disabled={prefs.systemReducedMotion}
-            aria-pressed={prefs.reducedMotion}
-          >
-            {prefs.reducedMotion ? (
-              <CheckCircle2 size={16} aria-hidden="true" strokeWidth={2} />
-            ) : null}
-            <span>
-              {t(prefs.reducedMotion ? 'settings.motionActive' : 'settings.motionOff')}
-            </span>
-          </button>
-        </div>
-      </article>
-
-      {/* Section 2: Accessibility and Interaction */}
-      <article className="settings-card" aria-labelledby="heading-accessibility">
-        <div className="card-header">
-          <Type className="card-icon" size={20} aria-hidden="true" strokeWidth={1.5} />
-          <h2 id="heading-accessibility">{t('settings.sectionAccessibility')}</h2>
-        </div>
-
-        <div className="settings-row">
-          <div className="row-text">
-            <strong>{t('settings.focusLabel')}</strong>
-            <p className="muted">{t('settings.focusHelp')}</p>
-          </div>
-          <button
-            type="button"
-            className={`pill-outline switch-btn ${prefs.enhancedFocus ? 'active' : ''}`}
-            onClick={handleToggleEnhancedFocus}
-            aria-pressed={prefs.enhancedFocus}
-          >
-            {prefs.enhancedFocus && (
-              <CheckCircle2 size={16} aria-hidden="true" strokeWidth={2} />
-            )}
-            <span>{t(prefs.enhancedFocus ? 'settings.on' : 'settings.off')}</span>
-          </button>
-        </div>
-
-        <hr className="divider" />
-
-        <div className="settings-info-box">
-          <strong>{t('settings.touchLabel')}</strong>
-          <p className="muted">{t('settings.touchHelp')}</p>
-        </div>
-      </article>
-
-      {/* Section 3: Voice and Speech Synthesis */}
-      <article className="settings-card" aria-labelledby="heading-voice">
-        <div className="card-header">
-          <Volume2 className="card-icon" size={20} aria-hidden="true" strokeWidth={1.5} />
-          <h2 id="heading-voice">{t('settings.sectionVoice')}</h2>
-        </div>
-
-        <p className="muted">{t('settings.voiceDesc')}</p>
-
-        <div className="voice-status-box">
-          <span className="status-label">{t('settings.voiceStatusLabel')}</span>
-          <span className={`status-badge ${user?.has_own_voice ? 'cloned' : 'standard'}`}>
-            {t(user?.has_own_voice ? 'settings.voiceRecorded' : 'settings.voiceStandard')}
+      {/* Voice */}
+      <Group title={t('settings.sectionVoice')} titleId="heading-voice" footer={t('settings.voiceDesc')}>
+        <div className="row">
+          <span className="row-text">
+            <span className="row-title">{t('settings.voiceStatusLabel')}</span>
+            <span className="row-sub">{t(user?.has_own_voice ? 'settings.voiceRecorded' : 'settings.voiceStandard')}</span>
           </span>
         </div>
+        {user?.has_own_voice && (
+          <SwitchRow
+            id="own-voice"
+            title={t('settings.useOwnVoiceLabel')}
+            help={t('settings.useOwnVoiceHelp')}
+            on={user.use_own_voice}
+            onClick={handleToggleUseOwnVoice}
+            disabled={busy === 'voice'}
+          />
+        )}
+        <button type="button" className="row" onClick={handlePlayVoiceSample} disabled={busy !== null}>
+          <Icon name={playingSample ? 'stop' : 'volume'} className="row-icon" />
+          <span className="row-title">{t(playingSample ? 'settings.testVoiceStop' : 'settings.testVoice')}</span>
+        </button>
+        {user?.has_own_voice && (
+          <button
+            type="button"
+            className="row"
+            onClick={() => setConfirmDeleteVoice(true)}
+            disabled={busy !== null}
+            aria-haspopup="dialog"
+          >
+            <Icon name="trash" className="row-icon" />
+            <span className="row-title">{t('settings.deleteVoice')}</span>
+          </button>
+        )}
+      </Group>
 
-        {user?.has_own_voice ? (
-          <div className="settings-row">
-            <div className="row-text">
-              <strong>{t('settings.useOwnVoiceLabel')}</strong>
-              <p className="muted">{t('settings.useOwnVoiceHelp')}</p>
-            </div>
-            <button
-              type="button"
-              className={`pill-outline switch-btn ${user.use_own_voice ? 'active' : ''}`}
-              onClick={handleToggleUseOwnVoice}
-              disabled={busy === 'voice'}
-              aria-pressed={Boolean(user.use_own_voice)}
-            >
-              {user.use_own_voice && (
-                <CheckCircle2 size={16} aria-hidden="true" strokeWidth={2} />
-              )}
-              <span>{t(user.use_own_voice ? 'settings.on' : 'settings.off')}</span>
-            </button>
-          </div>
-        ) : (
-          <form className="voice-enroll-hint" onSubmit={handleUploadVoice} aria-labelledby="voice-upload-title">
-            <p className="muted">{t('settings.voiceNotRecordedHelp')}</p>
-            <strong id="voice-upload-title">{t('settings.voiceUploadLabel')}</strong>
-            <div className="field">
-              <label htmlFor="voice-file">{t('settings.voiceFile')}</label>
-              {/* The browser's own picker says "Choose file" in the browser's language; this pill
-                  says it in the app's. The input stays focusable, and its ring shows on the pill. */}
+      {!user?.has_own_voice && (
+        <form className="group-wrap" onSubmit={handleUploadVoice} aria-labelledby="voice-upload-title">
+          <h2 className="group-title" id="voice-upload-title">
+            {t('settings.voiceUploadLabel')}
+          </h2>
+          <div className="group">
+            <p className="row row-note">{t('settings.voiceNotRecordedHelp')}</p>
+            <div className="row file-row">
+              <label htmlFor="voice-file" className="row-title">
+                {t('settings.voiceFile')}
+              </label>
+              {/* The browser's own picker says "Choose file" in the browser's language; this button
+                  says it in the app's. The input stays focusable, and its ring shows on the button. */}
               <input
                 id="voice-file"
                 type="file"
@@ -506,109 +379,42 @@ export default function Settings() {
                 onChange={(e) => setVoiceFile(e.target.files[0] || null)}
                 disabled={busy === 'upload'}
               />
-              <label htmlFor="voice-file" className="pill-outline file-pick" aria-hidden="true">
-                <FileAudio size={16} strokeWidth={1.5} />
+              <label htmlFor="voice-file" className="button small file-pick" aria-hidden="true">
+                <Icon name="fileAudio" />
                 <span>{voiceFile ? voiceFile.name : t('settings.voiceChoose')}</span>
               </label>
-              <p className="field-hint" id="voice-file-hint">
-                {t('settings.voiceUploadHelp')}
-              </p>
             </div>
-            <label className="check">
+            <label className="row check-row">
               <input
                 type="checkbox"
                 checked={voiceConsent}
                 onChange={(e) => setVoiceConsent(e.target.checked)}
                 disabled={busy === 'upload'}
               />
-              <span>{t('settings.voiceConsent')}</span>
+              <span className="row-title">{t('settings.voiceConsent')}</span>
             </label>
-            <div className="actions">
-              <button
-                type="submit"
-                className="pill-outline"
-                disabled={!voiceConsent || busy !== null}
-              >
-                <Upload size={16} aria-hidden="true" strokeWidth={1.5} />
-                <span>{t(busy === 'upload' ? 'settings.voiceUploading' : 'settings.voiceUpload')}</span>
-              </button>
-            </div>
-          </form>
-        )}
-
-        <div className="voice-actions-row">
-          <button
-            type="button"
-            className="pill-outline"
-            onClick={handlePlayVoiceSample}
-            disabled={busy !== null}
-          >
-            {playingSample ? (
-              <Square size={16} fill="currentColor" aria-hidden="true" />
-            ) : (
-              <Volume2 size={16} aria-hidden="true" strokeWidth={1.5} />
-            )}
-            <span>
-              {t(playingSample ? 'settings.testVoiceStop' : 'settings.testVoice')}
-            </span>
-          </button>
-
-          {user?.has_own_voice && !confirmDeleteVoice && (
-            <button
-              type="button"
-              className="pill-outline destructive"
-              onClick={() => setConfirmDeleteVoice(true)}
-              disabled={busy !== null}
-            >
-              <Trash2 size={16} aria-hidden="true" strokeWidth={1.5} />
-              <span>{t('settings.deleteVoice')}</span>
-            </button>
-          )}
-        </div>
-
-        {/* Delete Voice Model Confirmation */}
-        {confirmDeleteVoice && (
-          <div className="inline-confirm-box danger-box">
-            <p>
-              <strong>{t('settings.deleteVoiceConfirm')}</strong>
-            </p>
-            <p className="muted">{t('settings.deleteVoiceWarning')}</p>
-            <div className="actions">
-              <button
-                type="button"
-                className="pill-outline"
-                onClick={() => setConfirmDeleteVoice(false)}
-                disabled={busy === 'voice'}
-              >
-                {t('settings.deleteVoiceNo')}
-              </button>
-              <button
-                type="button"
-                className="pill-outline destructive"
-                onClick={handleDeleteVoice}
-                disabled={busy === 'voice'}
-              >
-                <span>
-                  {t(busy === 'voice' ? 'settings.deletingVoice' : 'settings.deleteVoiceYes')}
-                </span>
-              </button>
-            </div>
           </div>
-        )}
-      </article>
+          <p className="group-footer" id="voice-file-hint">
+            {t('settings.voiceUploadHelp')}
+          </p>
+          <div className="actions">
+            <Button type="submit" icon="upload" disabled={!voiceConsent || busy !== null}>
+              {t(busy === 'upload' ? 'settings.voiceUploading' : 'settings.voiceUpload')}
+            </Button>
+          </div>
+        </form>
+      )}
 
-      {/* Section 4: Caregiver and Emergency Contact */}
-      <article className="settings-card" aria-labelledby="heading-caregiver">
-        <div className="card-header">
-          <Phone className="card-icon" size={20} aria-hidden="true" strokeWidth={1.5} />
-          <h2 id="heading-caregiver">{t('settings.sectionCaregiver')}</h2>
-        </div>
-
-        <p className="muted">{t('settings.caregiverDesc')}</p>
-
-        <form onSubmit={handleSaveCaregiver} className="caregiver-form">
-          <div className="field">
-            <label htmlFor="caregiver-name">{t('settings.caregiverNameLabel')}</label>
+      {/* Caregiver and emergency contact */}
+      <form className="group-wrap" onSubmit={handleSaveCaregiver} aria-labelledby="heading-caregiver">
+        <h2 className="group-title" id="heading-caregiver">
+          {t('settings.sectionCaregiver')}
+        </h2>
+        <div className="fields plate">
+          <div className="field-cell">
+            <label htmlFor="caregiver-name" className="field-label">
+              {t('settings.caregiverNameLabel')}
+            </label>
             <input
               id="caregiver-name"
               type="text"
@@ -618,128 +424,160 @@ export default function Settings() {
               disabled={busy === 'caregiver'}
             />
           </div>
-
-          <div className="field">
-            <label htmlFor="caregiver-phone">{t('settings.caregiverPhoneLabel')}</label>
+          <div className="field-cell">
+            <label htmlFor="caregiver-phone" className="field-label">
+              {t('settings.caregiverPhoneLabel')}
+            </label>
             <input
               id="caregiver-phone"
               type="tel"
               value={caregiverPhone}
               onChange={(e) => setCaregiverPhone(e.target.value)}
               placeholder={t('settings.caregiverPhonePlaceholder')}
+              aria-describedby="caregiver-phone-hint"
               disabled={busy === 'caregiver'}
             />
-            <p className="field-hint">{t('settings.caregiverPhoneHint')}</p>
           </div>
-
-          <div className="caregiver-actions">
-            <Pill type="submit" icon={null} arrow={false} disabled={busy === 'caregiver'}>
-              {t(busy === 'caregiver' ? 'settings.savingCaregiver' : 'settings.saveCaregiver')}
-            </Pill>
-
-            {user?.caregiver_phone && (
-              <a
-                href={`https://wa.me/${user.caregiver_phone}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="pill-outline external-link-btn"
-              >
-                <ExternalLink size={16} aria-hidden="true" strokeWidth={1.5} />
-                <span>{t('settings.openWhatsApp')}</span>
-              </a>
-            )}
-          </div>
-        </form>
-      </article>
-
-      {/* Section 5: Welcome Guide */}
-      <article className="settings-card" aria-labelledby="heading-guide">
-        <div className="card-header">
-          <BookOpen className="card-icon" size={20} aria-hidden="true" strokeWidth={1.5} />
-          <h2 id="heading-guide">{t('onboarding.revisitTitle')}</h2>
         </div>
-        <p className="muted">{t('onboarding.revisitDesc')}</p>
-        <div className="guide-actions">
-          <button
-            type="button"
-            className="pill-outline"
-            onClick={() => go('/app/onboarding')}
-          >
-            <BookOpen size={16} aria-hidden="true" strokeWidth={1.5} />
-            <span>{t('onboarding.revisitTitle')}</span>
-          </button>
-        </div>
-      </article>
-
-      {/* Section 6: Account and Privacy */}
-      <article className="settings-card" aria-labelledby="heading-account">
-        <div className="card-header">
-          <Shield className="card-icon" size={20} aria-hidden="true" strokeWidth={1.5} />
-          <h2 id="heading-account">{t('settings.sectionAccount')}</h2>
-        </div>
-
-        <div className="account-details-grid">
-          <div className="detail-item">
-            <span className="muted">{t('settings.accountName')}</span>
-            <strong>{user?.name}</strong>
-          </div>
-          <div className="detail-item">
-            <span className="muted">{t('settings.accountEmail')}</span>
-            <strong>{user?.email}</strong>
-          </div>
-          {createdDate && (
-            <div className="detail-item">
-              <span className="muted">{t('settings.accountCreated')}</span>
-              <strong>{createdDate}</strong>
-            </div>
+        <p className="group-footer" id="caregiver-phone-hint">
+          {t('settings.caregiverDesc')} {t('settings.caregiverPhoneHint')}
+        </p>
+        <div className="actions">
+          <Button type="submit" disabled={busy === 'caregiver'}>
+            {t(busy === 'caregiver' ? 'settings.savingCaregiver' : 'settings.saveCaregiver')}
+          </Button>
+          {user?.caregiver_phone && (
+            <a href={`https://wa.me/${user.caregiver_phone}`} target="_blank" rel="noopener noreferrer" className="button">
+              <Icon name="externalLink" />
+              <span>{t('settings.openWhatsApp')}</span>
+            </a>
           )}
         </div>
+      </form>
 
-        <p className="privacy-statement">{t('settings.privacyNote')}</p>
+      {/* Welcome guide */}
+      <Group>
+        <button type="button" className="row" onClick={() => go('/app/onboarding')}>
+          <Icon name="book" className="row-icon" />
+          <span className="row-text">
+            <span className="row-title">{t('onboarding.revisitTitle')}</span>
+            <span className="row-sub">{t('onboarding.revisitDesc')}</span>
+          </span>
+          <Icon name="chevronRight" className="row-chevron" />
+        </button>
+      </Group>
 
-        {!confirmDeleteAccount ? (
-          <div className="danger-zone">
-            <button
-              type="button"
-              className="pill-outline destructive"
-              onClick={() => setConfirmDeleteAccount(true)}
-              disabled={busy !== null}
-            >
-              <Trash2 size={16} aria-hidden="true" strokeWidth={1.5} />
-              <span>{t('settings.deleteAccount')}</span>
-            </button>
-          </div>
-        ) : (
-          <div className="inline-confirm-box danger-box">
-            <p>
-              <strong>{t('settings.deleteAccountConfirm')}</strong>
-            </p>
-            <p className="muted">{t('settings.deleteAccountWarning')}</p>
-            <div className="actions">
-              <button
-                type="button"
-                className="pill-outline"
-                onClick={() => setConfirmDeleteAccount(false)}
-                disabled={busy === 'account'}
-                autoFocus
-              >
-                {t('settings.deleteAccountNo')}
-              </button>
-              <button
-                type="button"
-                className="pill-outline destructive"
-                onClick={handleDeleteAccount}
-                disabled={busy === 'account'}
-              >
-                <Trash2 size={16} aria-hidden="true" strokeWidth={1.5} />
-                <span>
-                  {t(busy === 'account' ? 'settings.deletingAccount' : 'settings.deleteAccountYes')}
-                </span>
-              </button>
-            </div>
+      {/* Account and privacy */}
+      <Group title={t('settings.sectionAccount')} titleId="heading-account" footer={t('settings.privacyNote')}>
+        <div className="row">
+          <span className="row-title">{t('settings.accountName')}</span>
+          <span className="row-value">{user?.name}</span>
+        </div>
+        <div className="row">
+          <span className="row-title">{t('settings.accountEmail')}</span>
+          <span className="row-value">{user?.email}</span>
+        </div>
+        {createdDate && (
+          <div className="row">
+            <span className="row-title">{t('settings.accountCreated')}</span>
+            <span className="row-value">{createdDate}</span>
           </div>
         )}
-      </article>
+      </Group>
+
+      <Group>
+        <button type="button" className="row" onClick={logout}>
+          <Icon name="logOut" className="row-icon" />
+          <span className="row-title">{t('app.logOut')}</span>
+        </button>
+        <button
+          type="button"
+          className="row"
+          onClick={() => setConfirmDeleteAccount(true)}
+          disabled={busy !== null}
+          aria-haspopup="dialog"
+        >
+          <Icon name="trash" className="row-icon" />
+          <span className="row-title">{t('settings.deleteAccount')}</span>
+        </button>
+      </Group>
+
+      {/* Asked first: the language spoken, deleting the voice, deleting the account */}
+      <Sheet open={Boolean(confirmSpeak)} onClose={() => setConfirmSpeak(null)} labelledBy="speak-language-confirm">
+        <div className="confirm">
+          <h2 className="sheet-title" id="speak-language-confirm">
+            {t('settings.speakLanguageConfirm', { language: speakName(confirmSpeak) })}
+          </h2>
+          <p className="sheet-text">{t('settings.speakLanguageWarning', { language: speakName(confirmSpeak) })}</p>
+          <Alert error={error} />
+          <div className="actions stacked">
+            <PrimaryButton onClick={handleSetSpeakLanguage} disabled={busy === 'language'}>
+              {busy === 'language'
+                ? t('settings.speakLanguageSwitching')
+                : t('settings.speakLanguageYes', { language: speakName(confirmSpeak) })}
+            </PrimaryButton>
+            <button
+              type="button"
+              className="button"
+              onClick={() => setConfirmSpeak(null)}
+              disabled={busy === 'language'}
+              data-autofocus
+            >
+              {t('settings.cancel')}
+            </button>
+          </div>
+        </div>
+      </Sheet>
+
+      <Sheet open={confirmDeleteVoice} onClose={() => setConfirmDeleteVoice(false)} labelledBy="delete-voice-confirm">
+        <div className="confirm">
+          <h2 className="sheet-title" id="delete-voice-confirm">
+            {t('settings.deleteVoiceConfirm')}
+          </h2>
+          <p className="sheet-text">{t('settings.deleteVoiceWarning')}</p>
+          <Alert error={error} />
+          <div className="actions stacked">
+            <button
+              type="button"
+              className="button"
+              onClick={() => setConfirmDeleteVoice(false)}
+              disabled={busy === 'voice'}
+              data-autofocus
+            >
+              {t('settings.deleteVoiceNo')}
+            </button>
+            <button type="button" className="button" onClick={handleDeleteVoice} disabled={busy === 'voice'}>
+              <Icon name="trash" />
+              <span>{t(busy === 'voice' ? 'settings.deletingVoice' : 'settings.deleteVoiceYes')}</span>
+            </button>
+          </div>
+        </div>
+      </Sheet>
+
+      <Sheet open={confirmDeleteAccount} onClose={() => setConfirmDeleteAccount(false)} labelledBy="delete-account-confirm">
+        <div className="confirm">
+          <h2 className="sheet-title" id="delete-account-confirm">
+            {t('settings.deleteAccountConfirm')}
+          </h2>
+          <p className="sheet-text">{t('settings.deleteAccountWarning')}</p>
+          <Alert error={error} />
+          <div className="actions stacked">
+            <button
+              type="button"
+              className="button"
+              onClick={() => setConfirmDeleteAccount(false)}
+              disabled={busy === 'account'}
+              data-autofocus
+            >
+              {t('settings.deleteAccountNo')}
+            </button>
+            <button type="button" className="button" onClick={handleDeleteAccount} disabled={busy === 'account'}>
+              <Icon name="trash" />
+              <span>{t(busy === 'account' ? 'settings.deletingAccount' : 'settings.deleteAccountYes')}</span>
+            </button>
+          </div>
+        </div>
+      </Sheet>
     </section>
   )
 }

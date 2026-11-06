@@ -47,7 +47,10 @@ export function LanguageProvider({ children }) {
 
   const has = (key) => key in STRINGS[lang]
 
-  return <LanguageContext.Provider value={{ lang, setLang, t, has }}>{children}</LanguageContext.Provider>
+  // Both languages at once, for labels printed on the device (DESIGN.md: Label).
+  const bi = (key) => ({ en: STRINGS.en[key] ?? key, hi: STRINGS.hi[key] ?? STRINGS.en[key] ?? key })
+
+  return <LanguageContext.Provider value={{ lang, setLang, t, has, bi }}>{children}</LanguageContext.Provider>
 }
 
 export const useLang = () => useContext(LanguageContext)

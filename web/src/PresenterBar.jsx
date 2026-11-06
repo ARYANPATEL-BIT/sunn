@@ -1,18 +1,7 @@
-import {
-  CheckCircle2,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  Lightbulb,
-  Presentation,
-  RotateCcw,
-  X,
-} from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useLang } from './i18n/index.jsx'
-import { reducedMotion } from './ui.jsx'
+import { Icon, reducedMotion } from './ui/index.js'
 
 export const DEMO_STEPS = [
   {
@@ -84,7 +73,7 @@ export default function PresenterBar({ onClose }) {
     >
       <div className="presenter-bar-header">
         <div className="presenter-title-wrap">
-          <Presentation size={18} aria-hidden="true" className="presenter-icon" />
+          <Icon name="presentation" className="presenter-icon" />
           <span className="presenter-heading">{t('presenter.title')}</span>
           <span className="presenter-step-badge">
             {t('presenter.stepIndicator', {
@@ -103,7 +92,7 @@ export default function PresenterBar({ onClose }) {
             title={collapsed ? t('presenter.expand') : t('presenter.collapse')}
             aria-label={collapsed ? t('presenter.expand') : t('presenter.collapse')}
           >
-            {collapsed ? <ChevronDown size={18} aria-hidden="true" /> : <ChevronUp size={18} aria-hidden="true" />}
+            <Icon name={collapsed ? 'chevronDown' : 'chevronUp'} />
           </button>
           <button
             type="button"
@@ -112,7 +101,7 @@ export default function PresenterBar({ onClose }) {
             title={t('presenter.exit')}
             aria-label={t('presenter.exit')}
           >
-            <X size={18} aria-hidden="true" />
+            <Icon name="x" />
           </button>
         </div>
       </div>
@@ -127,16 +116,16 @@ export default function PresenterBar({ onClose }) {
                 <button
                   key={step.id}
                   type="button"
-                  className={`presenter-pill ${isCurrent ? 'active' : ''} ${isPast ? 'completed' : ''}`}
+                  className={`presenter-step ${isCurrent ? 'active' : ''} ${isPast ? 'completed' : ''}`}
                   onClick={() => goToStep(idx)}
                   aria-current={isCurrent ? 'step' : undefined}
                 >
                   {isPast ? (
-                    <CheckCircle2 size={14} aria-hidden="true" className="presenter-pill-icon" />
+                    <Icon name="check" className="presenter-step-icon" />
                   ) : (
-                    <span className="presenter-pill-num">{idx + 1}</span>
+                    <span className="presenter-step-num">{idx + 1}</span>
                   )}
-                  <span className="presenter-pill-text">{t(step.titleKey)}</span>
+                  <span className="presenter-step-text">{t(step.titleKey)}</span>
                 </button>
               )
             })}
@@ -144,7 +133,7 @@ export default function PresenterBar({ onClose }) {
 
           <div className="presenter-cue-card">
             <div className="presenter-cue-header">
-              <Lightbulb size={16} aria-hidden="true" className="presenter-cue-icon" />
+              <Icon name="idea" className="presenter-cue-icon" />
               <strong className="presenter-cue-title">{t(currentStep.titleKey)}</strong>
             </div>
             <p className="presenter-cue-text">{t(currentStep.cueKey)}</p>
@@ -157,7 +146,7 @@ export default function PresenterBar({ onClose }) {
               onClick={handleRestart}
               title={t('presenter.restart')}
             >
-              <RotateCcw size={14} aria-hidden="true" />
+              <Icon name="rotate" />
               <span>{t('presenter.restart')}</span>
             </button>
 
@@ -169,7 +158,7 @@ export default function PresenterBar({ onClose }) {
                 disabled={activeIndex <= 0}
                 aria-label={t('presenter.prev')}
               >
-                <ChevronLeft size={16} aria-hidden="true" />
+                <Icon name="chevronLeft" />
                 <span>{t('presenter.prev')}</span>
               </button>
               <button
@@ -180,7 +169,7 @@ export default function PresenterBar({ onClose }) {
                 aria-label={t('presenter.next')}
               >
                 <span>{t('presenter.next')}</span>
-                <ChevronRight size={16} aria-hidden="true" />
+                <Icon name="chevronRight" />
               </button>
             </div>
           </div>

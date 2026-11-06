@@ -1,12 +1,13 @@
-import { RotateCcw, Square } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { speakProgress } from './quickstart.js'
-import { Alert, failure, Pill, Sun, useGo, useRecorder } from './ui.jsx'
-
-const CONTEXT_LIST = ['any', 'home', 'hospital', 'market']
+import { useRecorder } from './record.jsx'
+import {
+  Alert, Band, Button, CONTEXT_BAND, failure, Grille, Icon, Label, Led, PrimaryButton, PushButton, RankedFace,
+  RankedList, Readout, ReadoutRow, Sheet, useGo,
+} from './ui/index.js'
 
 function candidateKey(c, index = 0) {
   if (!c) return `candidate-empty-${index}`
@@ -192,12 +193,12 @@ export default function Speak() {
 
   if (learned && !learned.open) {
     return (
-      <section className="screen narrow">
-        <h1>{t('speak.none')}</h1>
-        <p className="muted">{t('speak.noneBody', { n: learned.ready, total: learned.total })}</p>
-        <Pill icon={null} onClick={() => go('/app/enroll')}>
+      <section className="screen narrow empty-state">
+        <h1 className="large-title">{t('speak.none')}</h1>
+        <p className="lede-sm">{t('speak.noneBody', { n: learned.ready, total: learned.total })}</p>
+        <PrimaryButton icon="mic" onClick={() => go('/app/enroll')}>
           {t('speak.goTeach')}
-        </Pill>
+        </PrimaryButton>
       </section>
     )
   }
@@ -207,9 +208,41 @@ export default function Speak() {
     : []
   const typed = spoken && !candidates.some((c) => isSameCandidate(c, spoken))
   const shown = typed ? [spoken] : candidates
+  // The best guess (or the phrase typed in) is the readout's phrase; the others are ranked under it.
+  const top = shown[0]
+  const rest = typed ? [] : shown.slice(1)
+  const problem = error || recorder.error
+
+  const blobState = recorder.recording ? 'listening' : busy === 'listening' ? 'thinking' : problem && !typing ? 'error' : 'rest'
+  const status = recorder.recording
+    ? 'device.status_listening'
+    : busy === 'listening'
+      ? 'device.status_thinking'
+      : problem && !typing
+        ? 'device.status_error'
+        : result
+          ? shown.length
+            ? 'device.status_result'
+            : 'device.status_unknown'
+          : 'device.status_ready'
+
+  function said(c) {
+    return isSameCandidate(spoken, c) ? t(busy === 'playing' ? 'speak.playing' : 'speak.played') : null
+  }
+
+  function urgentMark(c, tone = '') {
+    return (
+      c.urgent && (
+        <span className={`urgent ${tone}`}>
+          <span className="mark-urgent" aria-hidden="true" />
+          {t('speak.urgent')}
+        </span>
+      )
+    )
+  }
 
   return (
-    <section className="screen speak">
+    <section className={`screen speak ${result ? 'has-result' : ''}`}>
       <h1 className="visually-hidden">{t('speak.title')}</h1>
 
       {/* Screen reader live announcements for speech states */}
@@ -225,157 +258,184 @@ export default function Speak() {
                 : null}
       </div>
 
-      <div className="context-bar" role="radiogroup" aria-label={t('speak.context')}>
-        {CONTEXT_LIST.map((ctx) => (
-          <button
-            key={ctx}
-            type="button"
-            role="radio"
-            aria-checked={context === ctx}
-            className={`context-pill ${context === ctx ? 'active' : ''}`}
-            onClick={() => setContext(ctx)}
-            disabled={recorder.recording || busy !== null}
-          >
-            {t(`speak.context_${ctx}`)}
-          </button>
-        ))}
-      </div>
+      <div className="device speak-device">
+        <Grille className="grille-strip" />
 
-      <div className="results" aria-live="polite">
-        {result && (
-          <div className="stack" key={result.sample_id}>
-            {result.hypothesis && (
-              <p className="heard-raw">
-                <span className="muted">{t('speak.heard')}</span>
-                <span className="raw-text" lang={user.language}>
-                  “{result.hypothesis}”
-                </span>
-              </p>
-            )}
-
-            {result.low_confidence && !typed && candidates.length > 0 && (
-              <p className="maybe">{t('speak.maybe')}</p>
-            )}
-
-            {shown.length === 0 && <p>{t('speak.unknown')}</p>}
-
-            {shown.map((c, i) => {
-              const isTop = i === 0 && !typed
-              const isSelected = isSameCandidate(spoken, c)
-              return (
-                <button
-                  key={candidateKey(c, i)}
-                  type="button"
-                  className={isTop ? 'candidate top' : 'candidate'}
-                  onClick={() => choose(c)}
-                  disabled={busy === 'listening'}
-                  aria-pressed={isSelected}
-                >
-                  <div className="candidate-text-row">
-                    <span lang={user.language}>{c.text}</span>
-                    {c.urgent && (
-                      <span className="urgent-badge" aria-label={t('speak.urgent')}>
-                        {t('speak.urgent')}
-                      </span>
-                    )}
-                    {c.composed && (
-                      <span className="composed-badge" aria-label={t('speak.composedBadge')}>
-                        {t('speak.composedBadge')}
-                      </span>
-                    )}
-                  </div>
-                  {isSelected && (
-                    <span className="said">
-                      {t(busy === 'playing' ? 'speak.playing' : 'speak.played')}
-                    </span>
+        <Readout
+          blobState={blobState}
+          level={recorder.level}
+          top={
+            <>
+              <Label k={status} inline className="readout-status" />
+              {top?.urgent && !typing && <Led on tone="sos" className="readout-sos" />}
+            </>
+          }
+        >
+          <div className="results" aria-live="polite">
+            {result ? (
+              <div className="result" key={result.sample_id}>
+                {result.hypothesis && (
+                  <ReadoutRow label="device.heard">
+                    <p className="readout-heard">
+                      <span lang={user.language}>“{result.hypothesis}”</span>
+                    </p>
+                  </ReadoutRow>
+                )}
+                <ReadoutRow label="device.understood">
+                  {result.low_confidence && !typed && candidates.length > 0 && (
+                    <p className="readout-note">{t('speak.maybe')}</p>
                   )}
-                </button>
-              )
-            })}
-
-            {busy === 'playing' && (
-              <div className="playback-bar">
-                <span>{t('speak.playing')}</span>
-                <button
-                  type="button"
-                  className="pill-outline stop-playback-btn"
-                  onClick={stopPlayback}
-                  aria-label={t('speak.stopPlaying')}
-                >
-                  <Square size={13} fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
-                  <span>{t('speak.stopPlaying')}</span>
-                </button>
+                  {top ? (
+                    <button
+                      type="button"
+                      className="candidate top"
+                      onClick={() => choose(top)}
+                      disabled={busy === 'listening'}
+                      aria-pressed={isSameCandidate(spoken, top)}
+                      aria-describedby="top-hint"
+                    >
+                      <span className="candidate-text" lang={user.language}>
+                        {top.text}
+                      </span>
+                      {/* Named by the phrase alone; the urgent word and the hint are its description. */}
+                      <span className="candidate-meta" id="top-hint" aria-hidden="true">
+                        {urgentMark(top, 'on-screen')}
+                        {top.composed && <span className="tag">{t('speak.composedBadge')}</span>}
+                        <span className="candidate-hint">
+                          <Icon name="volume" />
+                          <span className={said(top) ? 'said' : undefined}>{said(top) || t('speak.tapToSay')}</span>
+                        </span>
+                      </span>
+                    </button>
+                  ) : (
+                    <p className="readout-idle">{t('speak.unknown')}</p>
+                  )}
+                </ReadoutRow>
               </div>
-            )}
-
-            {fallbackUsed && (
-              <p className="fallback-tts-note" role="status">
-                {t('speak.usingBrowserTts')}
-              </p>
-            )}
-
-            {typing ? (
-              <form className="stack" onSubmit={submitNewText}>
-                <div className="field">
-                  <label htmlFor="new-text">{t('speak.typeLabel')}</label>
-                  <textarea
-                    id="new-text"
-                    lang={user.language}
-                    value={newText}
-                    onChange={(e) => setNewText(e.target.value)}
-                    rows={2}
-                    autoFocus
-                  />
-                </div>
-                <div className="actions">
-                  <button type="button" className="pill-outline" onClick={() => setTyping(false)}>
-                    {t('speak.cancel')}
-                  </button>
-                  <Pill type="submit" icon={null} disabled={!newText.trim() || busy !== null}>
-                    {t('speak.sayIt')}
-                  </Pill>
-                </div>
-              </form>
             ) : (
-              <button
-                type="button"
-                className="link none"
-                onClick={() => setTyping(true)}
-                disabled={busy !== null}
-              >
-                {t(shown.length ? 'speak.noneOfThese' : 'speak.typeIt')}
-              </button>
+              <ReadoutRow label="device.understood">
+                <p className="readout-idle">{t('speak.idle')}</p>
+              </ReadoutRow>
             )}
           </div>
+        </Readout>
+
+        {result && (
+          <RankedList title={rest.length ? 'device.others' : undefined}>
+            {rest.map((c, i) => (
+              <button
+                key={candidateKey(c, i + 1)}
+                type="button"
+                className="ranked-row candidate"
+                onClick={() => choose(c)}
+                disabled={busy === 'listening'}
+                aria-pressed={isSameCandidate(spoken, c)}
+              >
+                <RankedFace n={i + 2} icon="volume">
+                  <span className="candidate-text" lang={user.language}>
+                    {c.text}
+                  </span>
+                  {(c.urgent || c.composed || said(c)) && (
+                    <span className="candidate-meta">
+                      {urgentMark(c)}
+                      {c.composed && <span className="tag">{t('speak.composedBadge')}</span>}
+                      {said(c) && <span className="said">{said(c)}</span>}
+                    </span>
+                  )}
+                </RankedFace>
+              </button>
+            ))}
+            <button
+              type="button"
+              className="ranked-row none-row"
+              onClick={() => setTyping(true)}
+              disabled={busy !== null}
+              aria-haspopup="dialog"
+            >
+              <RankedFace icon="chevronRight">
+                <span className="none-title">
+                  <Icon name="pencilLine" />
+                  {t(shown.length ? 'speak.noneOfThese' : 'speak.typeIt')}
+                </span>
+              </RankedFace>
+            </button>
+          </RankedList>
         )}
+
+        {busy === 'playing' && (
+          <div className="playback-bar">
+            <span>{t('speak.playing')}</span>
+            <Button className="small" icon="stop" onClick={stopPlayback} aria-label={t('speak.stopPlaying')}>
+              {t('speak.stopPlaying')}
+            </Button>
+          </div>
+        )}
+
+        {fallbackUsed && (
+          <p className="note" role="status">
+            {t('speak.usingBrowserTts')}
+          </p>
+        )}
+
+        {!typing && <Alert error={problem} />}
+
+        {recorder.error?.kind === 'micDenied' && (
+          <div className="help-card" role="region" aria-label={t('speak.micTroubleshootTitle')}>
+            <p className="help-title">{t('speak.micTroubleshootTitle')}</p>
+            <p className="help-body">{t('speak.micTroubleshootBody')}</p>
+          </div>
+        )}
+
+        {problem && !typing && (
+          <div className="actions">
+            <Button icon="rotate" onClick={retry}>
+              {t('speak.retry')}
+            </Button>
+          </div>
+        )}
+
+        <Band
+          title="device.place"
+          label={t('speak.context')}
+          options={CONTEXT_BAND}
+          value={context}
+          onChange={setContext}
+          disabled={recorder.recording || busy !== null}
+        />
+
+        <PushButton
+          recorder={recorder}
+          onClick={record}
+          waiting={busy === 'listening'}
+          disabled={busy !== null}
+          label={result ? t('sun.again') : undefined}
+        />
       </div>
 
-      <Alert error={error || recorder.error} />
-
-      {recorder.error?.kind === 'micDenied' && (
-        <div className="mic-troubleshoot-card" role="region" aria-label={t('speak.micTroubleshootTitle')}>
-          <p className="troubleshoot-title">{t('speak.micTroubleshootTitle')}</p>
-          <p className="troubleshoot-body muted">{t('speak.micTroubleshootBody')}</p>
-        </div>
-      )}
-
-      {(error || recorder.error) && (
-        <div className="error-actions">
-          <button type="button" className="pill-outline" onClick={retry}>
-            <RotateCcw size={16} strokeWidth={1.5} aria-hidden="true" />
-            <span>{t('speak.retry')}</span>
-          </button>
-        </div>
-      )}
-
-      <Sun
-        recorder={recorder}
-        onClick={record}
-        waiting={busy === 'listening'}
-        disabled={busy !== null}
-        compact={!!result}
-        label={result ? t('sun.again') : undefined}
-      />
+      <Sheet open={typing} onClose={() => setTyping(false)} label={t(shown.length ? 'speak.noneOfThese' : 'speak.typeIt')}>
+        <form className="sheet-form" onSubmit={submitNewText}>
+          <div className="field-cell">
+            <label htmlFor="new-text" className="field-label">
+              {t('speak.typeLabel')}
+            </label>
+            <textarea
+              id="new-text"
+              lang={user.language}
+              value={newText}
+              onChange={(e) => setNewText(e.target.value)}
+              rows={2}
+              data-autofocus
+            />
+          </div>
+          <Alert error={error} />
+          <div className="actions">
+            <Button onClick={() => setTyping(false)}>{t('speak.cancel')}</Button>
+            <PrimaryButton type="submit" disabled={!newText.trim() || busy !== null}>
+              {t('speak.sayIt')}
+            </PrimaryButton>
+          </div>
+        </form>
+      </Sheet>
     </section>
   )
 }

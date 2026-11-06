@@ -3,13 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#07071a" />
+    <meta name="theme-color" content="#E3E4E6" />
     <meta name="description" content="Sunn learns how one person speaks and says their everyday phrases back clearly, in Hindi or English." />
     <title>Sunn</title>
+    <script>
+      // Before the first paint, so a dark or large-text page never flashes light or small.
+      // src/theme.js and src/prefs.js keep these in step afterwards.
+      ;(function () {
+        var root = document.documentElement
+        var get = function (key) {
+          try {
+            return localStorage.getItem(key)
+          } catch (e) {
+            return null
+          }
+        }
+        var theme = get('sunn.theme')
+        var dark = theme === 'dark' || (theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+        root.dataset.theme = dark ? 'dark' : 'light'
+        if (get('sunn.large_text') === 'true') root.classList.add('large-text')
+        if (get('sunn.reduced_motion') === 'true' || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          root.classList.add('reduced-motion')
+        }
+      })()
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wght@300..700&family=Anek+Latin:wght@300..700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Devanagari:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
   </head>

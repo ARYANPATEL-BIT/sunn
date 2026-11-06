@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import * as api from './api.js'
 import { useLang } from './i18n/index.jsx'
 import { forgetUser } from './prefs.js'
-import { Alert } from './ui.jsx'
+import { Alert } from './ui/index.js'
 
 const AuthContext = createContext(null)
 
@@ -77,7 +77,7 @@ export function RequireAuth({ children }) {
     return (
       <section className="screen narrow">
         <Alert error={error} />
-        <button type="button" className="pill-outline" onClick={refresh}>
+        <button type="button" className="button" onClick={refresh}>
           {t('error.retry')}
         </button>
       </section>
