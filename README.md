@@ -18,6 +18,20 @@ Built for **Gnani AI's Great Indian AI Internship Challenge**.
 
 ---
 
+## Interface & Screen Walkthrough
+
+Sunn features a dedicated assistive listening device interface with an acoustic visualizer blob, high-contrast touch targets, and full bilingual support in Hindi and Indian English.
+
+| Device Landing | Active Listening | Candidate Matches | Phrase Enrollment |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/screenshots/01-landing.png" width="180" alt="Device Landing" /> | <img src="docs/screenshots/04-speak.png" width="180" alt="Active Listening" /> | <img src="docs/screenshots/05-candidates.png" width="180" alt="Candidate Matches" /> | <img src="docs/screenshots/03-teach.png" width="180" alt="Phrase Enrollment" /> |
+
+| Phrase Library | Progress Analytics | Device Settings | Hindi Bilingual Mode |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/screenshots/06-phrases.png" width="180" alt="Phrase Library" /> | <img src="docs/screenshots/07-progress.png" width="180" alt="Progress Analytics" /> | <img src="docs/screenshots/08-settings.png" width="180" alt="Device Settings" /> | <img src="docs/screenshots/09-hindi-speak.png" width="180" alt="Hindi Bilingual Mode" /> |
+
+---
+
 ## The problem
 
 Dysarthria is a speech disorder caused by conditions such as stroke, Parkinson's disease,
@@ -341,6 +355,7 @@ Each backend test runs in an isolated temporary directory with mocked Gnani endp
 | **Demo Video Plan & Script** | [`docs/DEMO_VIDEO_PLAN.md`](docs/DEMO_VIDEO_PLAN.md) | 3-minute video recording storyboard and narration script |
 | **Service & Fallback Matrix** | [`docs/DEMO_MATRIX.md`](docs/DEMO_MATRIX.md) | Cloud dependencies, caching behaviors, and fallback mechanisms |
 | **Deployment Runbook** | [`docs/DEPLOY.md`](docs/DEPLOY.md) | Docker containerization, Hugging Face Space setup, and proxy security |
+| **Mobile UI Screenshots** | [`docs/screenshots/`](docs/screenshots/) | Uniform mobile device screenshots across core user flows |
 | **Shared-Model Training Guide** | [`training/README.md`](training/README.md) | PyTorch LoRA Whisper fine-tuning experiments and data splits |
 | **API Contract Specification** | [`docs/API.md`](docs/API.md) | REST API endpoints, schemas, authentication, and error codes |
 
