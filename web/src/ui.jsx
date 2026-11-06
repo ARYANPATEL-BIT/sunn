@@ -1,27 +1,14 @@
-import { ArrowRight, Mic } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { Check, CheckCircle2, CircleAlert, Contrast, Moon, Sun, X } from 'lucide-react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLang } from './i18n/index.jsx'
+import { nextTheme, useTheme } from './theme.js'
 
-export const MAX_SECONDS = 8
-// A second tap this soon after starting is taken as a shaky double tap, not a stop.
-const MIN_RECORDING_MS = 700
-// Loudness (RMS of the waveform, 0..1). If a recording never gets above this, nothing was said.
-// Kept low on purpose: weak voices must never be thrown away as silence.
-const SILENCE_RMS = 0.008
+export const ICON = { 'aria-hidden': true, strokeWidth: 1.5 }
 
 export const reducedMotion = () =>
   matchMedia('(prefers-reduced-motion: reduce)').matches ||
   (typeof document !== 'undefined' && document.documentElement.classList.contains('reduced-motion'))
-
-// A tiny tap on phones that support it (Android); nothing elsewhere.
-function haptic() {
-  try {
-    navigator.vibrate?.(10)
-  } catch {
-    // vibration blocked: no feedback, nothing else changes
-  }
-}
 
 // navigate(), with a quick crossfade where the view transitions api exists (not with reduced motion).
 export function useGo() {
@@ -33,7 +20,7 @@ export function useGo() {
 export function Wordmark() {
   const { t } = useLang()
   return (
-    <Link to="/" className="wordmark-link" lang="en" aria-label={t('nav.home')} viewTransition={!reducedMotion()}>
+    <Link to="/" className="wordmark" lang="en" aria-label={t('nav.home')} viewTransition={!reducedMotion()}>
       Sunn
     </Link>
   )
@@ -55,12 +42,23 @@ export function Alert({ error, id }) {
   if (!error) return null
   return (
     <p className="alert" role="alert" id={id}>
-      {errorText(i18n, error)}
+      <CircleAlert className="alert-icon" {...ICON} />
+      <span>{errorText(i18n, error)}</span>
     </p>
   )
 }
 
-// EN / हिं, an outline pill. Switches the whole interface; the user's own phrases stay as stored.
+// A short confirmation that something was saved, above the tab bar for a few seconds.
+export function Toast({ children }) {
+  return (
+    <p className="toast" role="status">
+      <CheckCircle2 className="toast-icon" {...ICON} />
+      <span>{children}</span>
+    </p>
+  )
+}
+
+// EN / हिं. Switches the whole interface; the user's own phrases stay as stored.
 export function LangToggle() {
   const { lang, setLang, t } = useLang()
   return (
@@ -68,9 +66,6 @@ export function LangToggle() {
       <button type="button" lang="en" aria-pressed={lang === 'en'} onClick={() => setLang('en')}>
         EN
       </button>
-      <span className="lang-slash" aria-hidden="true">
-        /
-      </span>
       <button type="button" lang="hi" aria-pressed={lang === 'hi'} onClick={() => setLang('hi')}>
         हिं
       </button>
@@ -78,180 +73,174 @@ export function LangToggle() {
   )
 }
 
-// The white pill: [mic | label →]. Used for "Start speaking" and every form's submit.
-export function Pill({ children, icon: Icon = Mic, arrow = true, className = '', ...props }) {
+// Automatic is the half-filled circle, as on Apple's own appearance settings.
+const THEME_ICON = { light: Sun, dark: Moon, system: Contrast }
+
+// Steps through automatic, dark and light; Settings has all three as a list.
+export function ThemeToggle() {
+  const { t } = useLang()
+  const [theme, setTheme] = useTheme()
+  const Icon = THEME_ICON[theme]
   return (
-    <button type="button" className={`pill ${className}`} {...props}>
-      {Icon && (
-        <>
-          <Icon className="pill-icon" aria-hidden="true" strokeWidth={1.5} />
-          <span className="pill-divider" aria-hidden="true" />
-        </>
-      )}
-      <span className="pill-label">{children}</span>
-      {arrow && <ArrowRight className="pill-icon" aria-hidden="true" strokeWidth={1.5} />}
+    <button
+      type="button"
+      className="icon-button"
+      onClick={() => setTheme(nextTheme(theme))}
+      aria-label={t('theme.toggle', { theme: t(`theme.${theme}`) })}
+      title={t('theme.toggle', { theme: t(`theme.${theme}`) })}
+    >
+      <Icon {...ICON} />
     </button>
   )
 }
 
-// Tap to start, tap to stop, auto-stop after MAX_SECONDS. onDone gets the recorded blob.
-// While recording, the element in `meter` gets a --level (0..1) that follows the real mic volume.
-export function useRecorder(onDone) {
-  const [recording, setRecording] = useState(false)
-  const [seconds, setSeconds] = useState(0)
-  const [error, setError] = useState(null)
-  const meter = useRef(null)
-  const recorder = useRef(null)
-  const startedAt = useRef(0)
-  const starting = useRef(false)
-  const done = useRef(onDone)
-  done.current = onDone
-
-  // Leaving the screen mid-recording discards the recording instead of uploading it.
-  useEffect(
-    () => () => {
-      done.current = null
-      stop()
-    },
-    [],
+// The primary action: black in light, white in dark, fully round. At most one per screen.
+export function Pill({ children, icon: Icon, className = '', ...props }) {
+  return (
+    <button type="button" className={`pill ${className}`} {...props}>
+      {Icon && <Icon className="pill-icon" {...ICON} />}
+      <span>{children}</span>
+    </button>
   )
-
-  function stop() {
-    if (recorder.current?.state === 'recording') recorder.current.stop()
-  }
-
-  async function start() {
-    setError(null)
-    if (!navigator.mediaDevices?.getUserMedia) return setError(failure('insecure'))
-    starting.current = true
-    let stream
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    } catch (e) {
-      return setError(failure(e.name === 'NotFoundError' ? 'noMic' : 'micDenied'))
-    } finally {
-      starting.current = false
-    }
-    if (!done.current) return stream.getTracks().forEach((track) => track.stop()) // left the screen meanwhile
-
-    if (typeof window !== 'undefined' && typeof window.MediaRecorder === 'undefined') {
-      stream.getTracks().forEach((track) => track.stop())
-      return setError(failure('unsupported'))
-    }
-
-    const rec = new MediaRecorder(stream)
-    const chunks = []
-    const AudioCtx = window.AudioContext || window.webkitAudioContext
-    let audio = null
-    let analyser = null
-    if (AudioCtx) {
-      try {
-        audio = new AudioCtx()
-        analyser = audio.createAnalyser()
-        analyser.fftSize = 1024
-        audio.createMediaStreamSource(stream).connect(analyser)
-        audio.resume()
-      } catch {
-        audio = null
-        analyser = null
-      }
-    }
-    const wave = analyser ? new Float32Array(analyser.fftSize) : null
-    const animate = !reducedMotion()
-    let peak = 0
-    let level = 0
-    let frame
-
-    // Every frame: the loudness of the last ~20ms, for the sun's corona and for silence detection.
-    function listen() {
-      if (analyser && wave) {
-        analyser.getFloatTimeDomainData(wave)
-        const rms = Math.sqrt(wave.reduce((sum, s) => sum + s * s, 0) / wave.length)
-        const target = Math.min(1, rms * 8)
-        peak = Math.max(peak, rms)
-        level += (target - level) * (target > level ? 0.5 : 0.08) // rise fast, fall slowly
-        if (animate) meter.current?.style.setProperty('--level', level.toFixed(3))
-      }
-      frame = requestAnimationFrame(listen)
-    }
-
-    const timer = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startedAt.current) / 1000)
-      setSeconds(elapsed)
-      if (elapsed >= MAX_SECONDS) stop()
-    }, 200)
-    rec.ondataavailable = (e) => chunks.push(e.data)
-    rec.onstop = () => {
-      cancelAnimationFrame(frame)
-      clearInterval(timer)
-      stream.getTracks().forEach((track) => track.stop())
-      try {
-        audio?.close()
-      } catch {
-        // Non-blocking cleanup
-      }
-      meter.current?.style.removeProperty('--level')
-      haptic()
-      setRecording(false)
-      if (!done.current) return
-      if (!chunks.length || chunks.every((c) => c.size === 0) || peak < SILENCE_RMS) {
-        return setError(failure('silent'))
-      }
-      done.current(new Blob(chunks, { type: rec.mimeType }))
-    }
-    recorder.current = rec
-    startedAt.current = Date.now()
-    rec.start()
-    haptic()
-    setSeconds(0)
-    setRecording(true)
-    listen()
-  }
-
-  function toggle() {
-    if (starting.current) return
-    if (recorder.current?.state !== 'recording') start()
-    else if (Date.now() - startedAt.current >= MIN_RECORDING_MS) stop()
-  }
-
-  return { recording, seconds, error, toggle, meter, reset: () => setError(null) }
 }
 
-// The record button. Breathes at rest, its corona follows the voice while recording,
-// and it slowly dims and brightens while `waiting` for Prisma.
-export function Sun({ recorder, onClick = recorder.toggle, waiting, disabled, label, compact }) {
-  const { t } = useLang()
-  const state = recorder.recording ? 'recording' : waiting ? 'waiting' : ''
+// iOS switch. Its name comes from the row it sits in (labelledBy).
+export function Switch({ on, labelledBy, describedBy, ...props }) {
   return (
-    <div className={`sun-wrap ${compact ? 'compact' : ''}`}>
-      <button
-        type="button"
-        ref={recorder.meter}
-        className={`sun ${state}`}
-        onClick={onClick}
-        disabled={disabled || waiting}
-        aria-busy={waiting || undefined}
-      >
-        <span className="sun-body" aria-hidden="true">
-          <span className="corona" />
-          <span className="disc" />
-        </span>
-        <span className="sun-label">
-          {recorder.recording ? (
-            <>
-              {t('sun.stop')}
-              <span className="seconds">{t('sun.seconds', { seconds: recorder.seconds, max: MAX_SECONDS })}</span>
-            </>
-          ) : (
-            label || t('sun.tap')
-          )}
-        </span>
-      </button>
-      {waiting && (
-        <p className="listening" role="status">
-          {t('sun.listening')}
+    <button
+      type="button"
+      className="switch"
+      aria-pressed={Boolean(on)}
+      aria-labelledby={labelledBy}
+      aria-describedby={describedBy}
+      {...props}
+    />
+  )
+}
+
+// A grouped list: a title above, the rows in one rounded block, a footnote below. With bare,
+// the children bring their own block (a radiogroup of Choices, a form).
+export function Group({ title, titleId, footer, footerId, bare, children }) {
+  return (
+    <div className="group-wrap">
+      {title && (
+        <h2 className="group-title" id={titleId}>
+          {title}
+        </h2>
+      )}
+      {bare ? children : <div className="group">{children}</div>}
+      {footer && (
+        <p className="group-footer" id={footerId}>
+          {footer}
         </p>
       )}
     </div>
+  )
+}
+
+// One choice of a few, as rows with a checkmark (iOS Settings). A radiogroup of radios.
+export function Choices({ label, labelledBy, options, value, onChange, disabled }) {
+  return (
+    <div className="group" role="radiogroup" aria-label={label} aria-labelledby={labelledBy}>
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          role="radio"
+          aria-checked={value === option.value}
+          className="row choice"
+          onClick={() => onChange(option.value)}
+          disabled={disabled}
+        >
+          <span className="row-title" lang={option.lang}>
+            {option.label}
+          </span>
+          <Check className="choice-check" {...ICON} />
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// Chips: one of a few, in a row that scrolls sideways when it doesn't fit.
+export function Chips({ label, options, value, onChange, disabled }) {
+  return (
+    <div className="chips" role="radiogroup" aria-label={label}>
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          role="radio"
+          aria-checked={value === option.value}
+          className="chip"
+          onClick={() => onChange(option.value)}
+          disabled={disabled}
+        >
+          {option.dot && <span className="dot-red" aria-hidden="true" />}
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// A bottom sheet: a modal <dialog>, so focus stays inside, Escape closes it and the page
+// behind is inert. Mount it with open; it slides out before it unmounts. The element with
+// data-autofocus (or the first control) gets focus; focus goes back where it was afterwards.
+// Sheets without their own Cancel get a close button (closable).
+export function Sheet({ open, onClose, label, labelledBy, closable, className = '', children }) {
+  const { t } = useLang()
+  const dialog = useRef(null)
+  const shown = useRef(children)
+  const [mounted, setMounted] = useState(open)
+  const [closing, setClosing] = useState(false)
+  if (open) shown.current = children
+  if (open && !mounted) setMounted(true)
+  if (open && closing) setClosing(false)
+
+  useEffect(() => {
+    if (open || !mounted) return
+    if (reducedMotion()) return setMounted(false)
+    setClosing(true)
+    const fallback = setTimeout(() => setMounted(false), 400) // if animationend never comes
+    return () => clearTimeout(fallback)
+  }, [open, mounted])
+
+  useLayoutEffect(() => {
+    if (!mounted) return
+    const el = dialog.current
+    const before = document.activeElement
+    el.showModal()
+    ;(el.querySelector('[data-autofocus]') || el.querySelector('input, textarea, button:not(.sheet-close)'))?.focus()
+    return () => {
+      el.close()
+      if (before?.isConnected) before.focus({ preventScroll: true })
+    }
+  }, [mounted])
+
+  if (!mounted) return null
+  return (
+    <dialog
+      ref={dialog}
+      className={`sheet ${closing ? 'is-closing' : ''} ${className}`}
+      aria-label={label}
+      aria-labelledby={labelledBy}
+      inert={closing || undefined}
+      onCancel={(e) => {
+        e.preventDefault()
+        onClose()
+      }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onAnimationEnd={(e) => e.target === e.currentTarget && closing && setMounted(false)}
+    >
+      <div className="sheet-body">
+        {closable && (
+          <button type="button" className="sheet-close icon-button" onClick={onClose} aria-label={t('sheet.close')}>
+            <X {...ICON} />
+          </button>
+        )}
+        {open ? children : shown.current}
+      </div>
+    </dialog>
   )
 }
