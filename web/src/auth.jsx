@@ -77,7 +77,7 @@ export function RequireAuth({ children }) {
     return (
       <section className="screen narrow">
         <Alert error={error} />
-        <button type="button" className="pill-outline" onClick={refresh}>
+        <button type="button" className="button" onClick={refresh}>
           {t('error.retry')}
         </button>
       </section>
