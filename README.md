@@ -18,22 +18,6 @@ Built for **Gnani AI's Great Indian AI Internship Challenge**.
 
 ---
 
-## Interface & Screen Walkthrough
-
-Sunn is designed mobile-first with high-contrast visual themes, minimum 44px accessible touch targets, and full bilingual support in Hindi and Indian English.
-
-| Speak & Listen | Recognition Candidates | Phrase Library | Progress Trends |
-| :---: | :---: | :---: | :---: |
-| <img src="docs/screenshots/390-light/en-15-speak.jpg" width="180" alt="Speak Screen" /> | <img src="docs/screenshots/390-light/en-17-speak-candidates.jpg" width="180" alt="Candidate Selection" /> | <img src="docs/screenshots/390-dark/en-20-phrases.jpg" width="180" alt="Phrase Library" /> | <img src="docs/screenshots/390-light/en-25-progress.jpg" width="180" alt="Progress Metrics" /> |
-
-| Hindi Bilingual Mode | Own Voice Setup | Accessibility Controls | Large Text Display |
-| :---: | :---: | :---: | :---: |
-| <img src="docs/screenshots/390-dark/hi-17-speak-candidates.jpg" width="180" alt="Hindi Speak Screen" /> | <img src="docs/screenshots/390-light/en-28-settings-own-voice.jpg" width="180" alt="Own Voice Cloning" /> | <img src="docs/screenshots/390-dark/en-27-settings.jpg" width="180" alt="Accessibility Settings" /> | <img src="docs/screenshots/390-light/en-31-speak-large-text.jpg" width="180" alt="Large Text Mode" /> |
-
-> Complete visual reference: [248-screenshot UI gallery](docs/screenshots/README.md) covering every screen, sheet, and state in English and Hindi, light and dark, at phone and desktop width.
-
----
-
 ## The problem
 
 Dysarthria is a speech disorder caused by conditions such as stroke, Parkinson's disease,
@@ -357,7 +341,6 @@ Each backend test runs in an isolated temporary directory with mocked Gnani endp
 | **Demo Video Plan & Script** | [`docs/DEMO_VIDEO_PLAN.md`](docs/DEMO_VIDEO_PLAN.md) | 3-minute video recording storyboard and narration script |
 | **Service & Fallback Matrix** | [`docs/DEMO_MATRIX.md`](docs/DEMO_MATRIX.md) | Cloud dependencies, caching behaviors, and fallback mechanisms |
 | **Deployment Runbook** | [`docs/DEPLOY.md`](docs/DEPLOY.md) | Docker containerization, Hugging Face Space setup, and proxy security |
-| **Mobile UI Screenshots** | [`docs/screenshots/README.md`](docs/screenshots/README.md) | 248 screenshots: English and Hindi, light and dark, 390 and 1440 wide |
 | **Shared-Model Training Guide** | [`training/README.md`](training/README.md) | PyTorch LoRA Whisper fine-tuning experiments and data splits |
 | **API Contract Specification** | [`docs/API.md`](docs/API.md) | REST API endpoints, schemas, authentication, and error codes |
 

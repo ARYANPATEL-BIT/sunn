@@ -130,7 +130,6 @@ plays a tone. `cd web; npm run e2e` builds the app and runs them.
 | `onboarding.spec.js` | the guide's language cards send no request and leave the spoken language alone; its last step says "ready" only once Speak is open |
 | `motion.spec.js` | with motion: the landing example plays on its own and the record button's ring follows the microphone level; with system reduced motion nothing moves and the example is paused; the app's own setting stops and restarts motion without a reload |
 | `presenter.spec.js` | the presenter bar opens, steps through screens, closes, and Alt+P brings it back |
-| `screens.spec.js` | the screenshots in `docs/screenshots`: both languages, light and dark, 390 and 1440 wide |
 
 Every flow runs in English and in Hindi, and each screen is checked for text in the other
 language (Latin words in Hindi mode, Devanagari in English mode; product and challenge names,
@@ -166,9 +165,7 @@ Last full run: 59 passed, 1 skipped (the once-a-run wrong invite code, skipped o
   change made while the page was open.
 - **Tap targets**: every control on every screen is now at least 44 px, as Settings promises
   (the EN / हिं buttons and the footer wordmark were not).
-- **Screenshots**: 58, at 390 wide, both languages, in `docs/screenshots` (taken in mock mode,
-  so what Prisma "heard" in them is made up). No page scrolls sideways. What they showed is in
-  section 8.
+- **Sideways scroll**: none on any page at 390 wide, in either language.
 
 ## 5. Backend and security
 
