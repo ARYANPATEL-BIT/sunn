@@ -10,31 +10,29 @@ import Onboarding from './Onboarding.jsx'
 import Phrases from './Phrases.jsx'
 import { applyPreferences } from './prefs.js'
 import Progress from './Progress.jsx'
-import SeaLight from './SeaLight.jsx'
 import Settings from './Settings.jsx'
 import Speak from './Speak.jsx'
+import { syncThemeColor } from './theme.js'
 
-// Background per page (DESIGN.md): light intensity, and the sky veil over it.
-// The veils keep text at WCAG AA over the brightest pixel the light can reach (README: contrast).
-const SEA = { '/': [1, 0], '/login': [0.8, 0.25], '/signup': [0.8, 0.25], '/app/speak': [0.45, 0.35] }
-const SEA_DEFAULT = [0.55, 0.45]
+// The list screens sit on the tinted grouped background, like iOS Settings (DESIGN.md: themes).
+const GROUPED = ['/app/phrases', '/app/progress', '/app/settings']
 
 function Root() {
   const { pathname } = useLocation()
   const main = useRef(null)
   const first = useRef(true)
-  const [intensity, veil] = SEA[pathname] || SEA_DEFAULT
 
   // After a page change, move focus to the content for screen reader users.
   useEffect(() => {
     applyPreferences()
+    document.documentElement.dataset.surface = GROUPED.includes(pathname) ? 'grouped' : 'plain'
+    syncThemeColor()
     if (first.current) return void (first.current = false)
     main.current?.focus({ preventScroll: true })
   }, [pathname])
 
   return (
     <>
-      <SeaLight intensity={intensity} veil={veil} />
       <div ref={main} tabIndex={-1} className="page">
         <Outlet />
       </div>
