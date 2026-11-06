@@ -75,10 +75,10 @@ test.describe('keyboard only', () => {
     await page.keyboard.press('Enter')
     await expect(page).toHaveURL(/\/app\/speak$/)
 
-    const sun = page.locator('button.sun')
-    await tabTo(page, sun)
+    const recordButton = page.locator('button.record')
+    await tabTo(page, recordButton)
     await page.keyboard.press('Enter')
-    await expect(sun).toHaveClass(/recording/)
+    await expect(recordButton).toHaveClass(/recording/)
     await page.waitForTimeout(1500)
     await page.keyboard.press('Enter')
     const first = page.locator('.candidate').first()
