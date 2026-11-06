@@ -16,5 +16,3 @@ web/playwright-report/
 web/.env
 web/reference/
 web/certs/
-# Design review screenshots: regenerated on demand, never committed.
-docs/screenshots/
