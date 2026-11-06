@@ -1,38 +1,140 @@
 # Sunn design system
 
 ## Direction
-Reference-led: the landing hero follows `web/reference/landing.png` (kept out of git) for layout,
-spacing, type and feel, with Sunn's own copy. Everything else (sections below the hero, login,
-signup, the app) uses the same visual language: an aurora dusk sky, a huge glowing wordmark, white pill buttons, outline pills, thin dividers and thin line icons.
+Apple marketing pages and iOS: calm, precise, a lot of space, big confident type, content first.
+The interface is monochrome and gets out of the way of the one thing that matters, the phrase.
+Sunn = hindi "sun" (listen). Accessibility is never traded for looks.
 
-Sunn = hindi "sun" (listen). The app's record button is still a sun, in the same saffron as
-the dusk glowing up from the bottom of the sky, and the recognized phrase still resolves from blurry to sharp, because unclear speech
-becomes clear. Accessibility is never traded for looks.
+Not allowed: gradients, background effects, glass or blur, glow on text, colored decoration,
+heavy shadows, ALL CAPS labels, emoji, filled icons.
+
+## Themes
+Light, dark and automatic (follows the device, the default). The choice is changed from the
+nav (a button that steps through them) and in Settings (Appearance), and remembered in
+localStorage (`sunn.theme`, always inside try/catch). An inline script in `index.html` sets
+`<html data-theme>` before the first paint, so there is no flash; `src/theme.js` keeps it, the
+`color-scheme` and `<meta name="theme-color">` in step after that.
+
+Every screen is one of two surfaces (`<html data-surface>`, set per route in `App.jsx`):
+plain (Speak, Teach, the welcome guide, sign in, the landing page) or grouped (Phrases,
+Progress, Settings: a tinted page with white cells, like iOS Settings).
 
 ## Colors (the only colors allowed)
-- night #030A18: text on the white pill, the gap in focus rings
-- haze #8FB0D8: focus rings, the wordmark's glow
-- mist #B4C3D8: secondary text, inactive controls
-- foam #F2F6FB: primary text, the white pill, outline pill borders (at 40%), dividers (at 14%)
-- saffron #F39A2B: in the UI, ONLY the app's sun and the recording state (never on the landing
-  or auth pages). Also the dusk glow in the background
-- Background only (aurora dusk, never on UI elements): sky #07071A (the base, the veil),
-  teal #0F5E73, violet #5B3FD1, magenta #C2306B, and saffron above
-Text must pass WCAG AA (4.5:1) against the BRIGHTEST background pixel that can pass behind it,
-not the average.
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--bg` | #FFFFFF | #000000 | plain pages |
+| `--bg-grouped` | #F5F5F7 | #000000 | grouped pages, every other landing section |
+| `--surface` | #F5F5F7 on plain, #FFFFFF on grouped | #1C1C1E | cards, list cells, fields |
+| `--raised` | #FFFFFF | #2C2C2E | the toast in dark; never under secondary text |
+| `--text` | #1D1D1F | #FFFFFF | all primary text and icons |
+| `--text-2` | #6E6E73 | #8E8E93 | secondary text, inactive tabs |
+| `--separator` | #D2D2D7 | rgba(255,255,255,0.12) | hairlines |
+| `--fill` | rgba(118,118,128,0.12) | rgba(118,118,128,0.24) | secondary buttons, chips |
+| `--primary` / `--on-primary` | #000000 / #FFFFFF | #FFFFFF / #000000 | primary buttons, the record button |
+| `--red` | #FF3B30 | #FF453A | ONLY recording and urgent |
+| `--green` | #34C759 | #30D158 | ONLY success |
+
+Contrast (WCAG AA, checked for every pair):
+- `--text` passes AAA everywhere. `--text-2` passes AA on `--bg`, `--bg-grouped` and
+  `--surface` in both themes (lowest: 4.66 on #F5F5F7, 5.22 on #1C1C1E)
+- `--text-2` is never put on `--fill` (4.4 in light) or on #2C2C2E (4.27 in dark). Text on a
+  fill is always `--text`. That is why sheets in dark are black with a hairline edge and #1C1C1E
+  cells (like every grouped page in dark), not #1C1C1E with #2C2C2E cells as in iOS
+- Red and green are never text and never the only signal. Red is a fill (the record button
+  while recording, 3.4:1 with its white icon) or a dot next to the word "Urgent" in `--text`.
+  Green is a check icon next to the words that say the same thing
+- Destructive actions (delete) stay monochrome: they are told apart by their words, their
+  place at the end of a group and a confirmation sheet, not by color
 
 ## Type
-- Anek Latin + Anek Devanagari everywhere, including the user's phrases (Tiro is gone). The
-  stack is `'Anek Latin', 'Anek Devanagari'`, so each script gets its own cut of the same design
-- Wordmark "Sunn": always Latin, in both languages (it is the name). Hero 96–208px, weight 500,
-  tight tracking, a soft white glow (layered text-shadows in foam and haze)
-- Headline 30–52px / 500. Section titles 32–48px / 500. Body 18px; secondary lines in mist
-- Phrases: enroll 44px, top candidate 48px, other candidates 30px, all 500
-- Devanagari line height 1.7 (`:lang(hi)`)
+- Latin: the system stack `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
+- Devanagari: "Noto Sans Devanagari" (Google Fonts, 400 to 700) first for `:lang(hi)`
+- Headlines are large and tight: letter-spacing -0.02em, weight 700, line height 1.05 to 1.1.
+  Never tight tracking on Devanagari (it breaks the headline bar), and Devanagari line height
+  is 1.5 or more everywhere
+- Scale (rem, so the text size setting scales all of it):
+  display 3 to 6rem (landing hero) · title 2.25 to 4rem (landing sections) · large title
+  2.125rem (each app screen's h1) · title 2 1.375rem · headline 1.125rem/600 · body 1.125rem
+  (landing 1.1875 to 1.3125rem) · footnote 1rem, the smallest text there is except tab labels
+  and chart axes (0.8125rem)
+- Phrases: Teach 2.75rem, the top candidate 2.25 to 3.5rem, alternates 1.25rem, all 700/600
+- Numbers in data (Progress, seconds) use tabular figures
+
+## Shape and depth
+- 20px radius for surfaces (cards, grouped lists, sheets), 12px for controls (buttons, chips,
+  fields), fully round only for primary actions (the pill) and the record button
+- Hairline separators (1px `--separator`, inset 16px from the leading edge in lists) instead of
+  borders around things
+- No shadows, except one very soft one under sheets in light mode
+  (`0 -8px 40px rgba(0,0,0,0.08)`)
+
+## Components
+- Pill (primary, one per screen at most): `--primary` with `--on-primary`, fully round, 56px,
+  optional leading icon. "Start speaking", Save, Create account, Say it
+- Button (secondary): `--fill` with `--text`, 12px radius, 56px. Plain buttons (text only,
+  `--text`, underlined on hover) for low-emphasis actions like "None of these"
+- Chips (Speak's context, Phrases' filter): a radio group of 48px rounded rects, `--fill`;
+  the selected one inverts to `--primary`. A row that scrolls sideways if it doesn't fit
+- Grouped list: a `--surface` block with 20px radius, rows of 64px or more, hairlines between
+  rows, an optional header line above and footnote below in `--text-2`. Rows end in a
+  chevron (opens something), a switch, a checkmark (one choice of several) or a value
+- Switch: iOS shape, 51×31, `--primary` when on, a `<button aria-pressed>` labelled by its row
+- Fields: grouped like iOS: a visible label above the value inside the cell, the hint and error
+  under the group, the field with an error gets focus. Show/hide on passwords. Correct
+  autocomplete. Errors are `--text` with an alert icon, never red
+- Sheet: a native `<dialog>` (focus is trapped, Escape closes, the page behind is inert) that
+  slides up from the bottom on phones and sits centered on wide screens. 20px top corners, a
+  scrim of black at 40% (60% dark). White in light; black with a hairline edge in dark. Every
+  sheet has a Cancel or a close button
+- Toast: a small `--surface-raised` capsule above the tab bar, a green check, 4 seconds
+- Icons: lucide-react, stroke 1.5, 20px in rows, 24px in the tab bar. No filled icons
+  (the stop square is the one exception: a filled square is what "stop" looks like)
+
+## The record button
+A circle, 128px (96px once there are results): `--primary` (black in light, white in dark)
+with a mic in `--on-primary`, and its label underneath. While recording it turns `--red` with
+a white stop square, and a soft red ring behind it grows and shrinks with the real microphone
+level (`--level`, 0 to 1, set every frame by `useRecorder`). While Prisma works it dims slowly.
+With reduced motion the ring is still and the dimming is a fixed 50%.
+
+## App layout
+- Header (64px): the wordmark, then presenter mode, EN / हिं, the theme button; on wide
+  screens also the user's name and Log out (on phones, Log out is in Settings)
+- Bottom tab bar on every app screen: icon + label, the active one in `--text`, the others in
+  `--text-2`. 64px tall plus the safe area, solid background, a hairline on top
+- Content: one centered column, 640px at most (Progress 880px)
+- Speak: context chips at the top, the result in the middle, the record button low on the
+  screen where a thumb reaches it. The recognized phrase is big, in its own card; the two
+  alternates are rows in a grouped list; "None of these" opens a sheet to type the phrase
+- Phrases: search, filter chips, then one grouped list. Each row shows the phrase, its
+  recordings as three small dots (filled = saved), and its tags; tapping it opens a details
+  sheet with Listen, Edit and Delete. No swiping
+- Progress: big numbers in a grid with hairlines, the first-suggestion rate, the most used
+  phrases, and the weekly chart: stacked bars in `--text` (understood directly) and `--text-2`
+  (assisted), a 2px gap between the two, a hairline grid, the total above each bar, a legend
+  and a table view
+- Settings: iOS Settings. Grouped sections of rows: language you speak, app language,
+  appearance, text size, accessibility switches, voice, caregiver, welcome guide, account
+
+## Landing page
+Apple product page: a sticky nav (wordmark · EN / हिं · theme · Sign in), then a hero with a
+huge headline, one line under it and the pill. Then full-width sections, each making one point
+with a big headline, a short line and a real visual built from the app's own components (not
+a picture of a phone):
+1. Speak: the record button, what the speech service heard, and the phrase resolving (the
+   example, which plays on a loop with a pause button)
+2. The correction loop: the candidates, "None of these" and the sheet with the typed phrase
+3. Your own voice: the voice rows from Settings
+4. Under the hood: speech → Gnani Prisma → the personal correction layer → Gnani Timbre
+5. Privacy: the four promises as a grouped list
+Then a closing line with the pill, and a minimal footer ("Built with Gnani Prisma and Gnani
+Timbre"). Sections alternate `--bg` and `--bg-grouped` in light; in dark they are all black.
 
 ## Language
-- One language on screen at a time, never stacked. EN / हिं toggle in the landing nav (between
-  the links and Sign in), on login/signup, and in the app header
+- Hindi headlines break between phrase units, never inside one (पाते हैं, एक आवाज़, जब चाहें):
+  the units are joined with a no-break space (` `) in `hi.js`. Hindi is spelled हिंदी
+- One language on screen at a time, never stacked. EN / हिं in the landing nav, on sign in and
+  in the app header
 - Default hindi if the browser language starts with "hi", else english; remembered in
   localStorage; `<html lang>` follows it
 - Every UI string goes through `t()` (`src/i18n/en.js`, `hi.js`, same keys). Hindi is written
@@ -40,79 +142,27 @@ not the average.
   common English loanwords where people actually use them (ईमेल, पासवर्ड, साइन इन)
 - The user's own phrases are data: shown exactly as stored, tagged with the user's language
 
-## Components
-- White pill (primary): foam, night text, fully rounded, 56px (64px in the app). The start
-  button is [mic | label →]: lucide Mic, a thin vertical divider, the label, lucide ArrowRight,
-  and a soft glow (`.pill-glow`). Form submits are [label →]
-- Outline pill (secondary): transparent, 1px foam at 40%, fully rounded, 44px (64px hit area in
-  the app). Used for Sign in / Open app, the language toggle, Log out, Play back, Cancel
-- Text link: underlined, no box, for low-emphasis actions
-- Thin dividers: 1px foam at 14%, vertical between columns (hero feature strip, who it's for,
-  privacy) and horizontal between rows (steps, FAQ)
-- Icons: lucide-react, line only, stroke 1.25–1.5. Arrows are allowed (ArrowRight on pills,
-  arrows in the pipeline). No filled icons, no emoji
-- Inputs: big (60px), a visible label above (never placeholder-only), hint and error under the
-  field, the field with an error gets focus. Show/hide on passwords. Correct autocomplete
-- Panels: a 1px divider-colored border and a dark translucent fill, only where content is a
-  self-contained unit (the example panel, the pipeline steps)
-
-## Background
-- One `<SeaLight>` behind every page: fixed, full viewport, a raw WebGL shader called aurora
-  dusk. Over the sky base, large, soft color fields drift like a liquid gradient: teal in the
-  upper sky, violet across the upper middle bridging the halves, magenta in the lower sky, and
-  saffron as a thin horizon glow on the bottom edge (it never climbs behind the feature row,
-  let alone the headline). Cool on top, warm at the bottom, always; 2–3 colors clearly visible
-  at a time, never all of them
-- The space is domain-warped by slow, low-frequency noise, so the edges between colors swirl
-  like aurora curtains (saffron ignores the vertical warp, so the horizon stays level). Each
-  field moves on its own 30–60s path inside its band, so the pattern never visibly repeats
-- Colors are mixed in OKLab, not RGB, so overlaps pass through clean hues (saffron + violet
-  gives rose, magenta + teal gives violet-grey), never brown or olive. Slightly less color
-  across the middle of the screen, where the headline sits
-- Soft blend, then a luminance ceiling (0.05 relative luminance, hue kept): nothing clips or
-  goes neon, and mist text keeps 4.5:1 over the brightest pixel anywhere on screen, grain
-  included, with no vignette or box behind text
-- Grain: about ±1%, static, one noise pixel per device pixel (a 256px tile drawn once and
-  repeated by CSS, separate from the light), so it reads as a matte surface, not moving noise
-- Half-resolution light, capped at 30fps, paused while the tab is hidden
-- Intensity / veil per page (`src/App.jsx`, `SEA`): landing 1.0 / 0, login and signup 0.8 /
-  0.25, speak 0.45 / 0.35, other app screens 0.55 / 0.45
-- No WebGL: a still CSS gradient of the same fields, under the same grain. Reduced motion: one
-  frozen frame
-
 ## Interaction
-- Touch targets: 44px minimum on the landing, 64px in the app (enlarged hit areas where the
-  visual pill is smaller)
-- Visible focus everywhere: a 2px haze ring with a night gap
+- Touch targets: 44px minimum on the landing page, 64px in the app (a hit area larger than
+  the visual where the visual is smaller, never overlapping a neighbour's)
+- Focus: a 2px ring in `--text` with a 2px gap, on everything, in both themes (inset inside
+  lists and grouped cells so nothing clips it). High-contrast focus (Settings) makes it 4px
 - Recording: tap to start, tap to stop, never press-and-hold. Auto-stop at 8s. Show seconds
 - Errors say what happened and what to do, in the current language
-- Anything that loops for more than 5 seconds (the example panel) has a pause button
+- Anything that loops for more than 5 seconds (the landing example) has a pause button
+- Text size (Settings): Large sets the root font size to 118.75%, and everything is in rem
 
 ## Motion
-- Background: slow drift and swirl, never fast or flashy
-- Sun at rest: slow 6s breathing. Recording: corona driven by real mic volume. Waiting: dims
-  and brightens
-- Resolve: the top phrase goes from blur(14px) + transparent to sharp in ~600ms; the example
-  panel on the landing uses the same resolve
-- Page changes: a quick crossfade via the view transitions API
-- prefers-reduced-motion: frozen background, no breathing, no blur, instant changes, a static
-  ring while recording, the example panel paused on a finished example
+- Short and smooth: 200 to 350ms, ease-out (`cubic-bezier(0.22, 1, 0.36, 1)`), exits faster
+  than entrances. Only transform and opacity are animated
+- Sheets slide up. The top candidate scales in slightly (0.96 → 1) when it appears and again
+  when it is chosen. The record ring follows the voice. Page changes crossfade (view
+  transitions)
+- `prefers-reduced-motion` or the app's own setting (`html.reduced-motion`): no animation and
+  no transition anywhere, a still ring while recording, the landing example paused on a
+  finished example
 
 ## Honesty
 No invented statistics, testimonials or logos, no medical claims, no "real-time translation".
 Example content is labelled "Example" / "उदाहरण". Features that aren't built yet say so, or
 aren't mentioned. Promises on the privacy section must stay true in the code.
-
-## Banned
-Glassmorphism or frosted panels, gradients as decoration on UI elements, ALL CAPS labels,
-emoji, filled icons, colors outside the tokens, saffron in the UI outside the app's sun and
-recording state, the background colors on UI elements, a second animated thing competing with the sun inside the app.
-
-## Pages
-- `/` landing: nav (wordmark · How it works · Who it's for · Privacy · EN/हिं · Sign in), hero
-  (wordmark, headline, two lines, start pill, feature strip), how it works (+ example panel),
-  your own voice, who it's for, under the hood (speech → Gnani Prisma → personal correction
-  layer → Gnani Timbre), privacy, FAQ, closing line + start pill, footer
-- `/login`, `/signup`: centered column, wordmark on top, labelled fields, white pill submit
-- `/app/enroll`, `/app/speak`, `/app/progress`: header (wordmark → `/`, EN/हिं, user name,
-  log out), bottom tabs with line icons, the sun
