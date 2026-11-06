@@ -1,10 +1,10 @@
-import { Check, Pencil, Plus, RotateCcw, Search, Square, Trash2, Volume2, X } from 'lucide-react'
+import { ChevronRight, Pencil, Plus, RotateCcw, Search, Square, Trash2, Volume2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { NEEDED, needsRerecord } from './quickstart.js'
-import { Alert, Pill, useGo } from './ui.jsx'
+import { Alert, Chips, ICON, Pill, Sheet, Toast, useGo } from './ui.jsx'
 
 const CONTEXT_OPTIONS = ['any', 'home', 'hospital', 'market']
 const FILTERS = [
@@ -15,6 +15,82 @@ const FILTERS = [
   ['market', 'phrases.filterMarket'],
 ]
 
+// Three small dots: one filled for each saved recording.
+function RecordingDots({ count }) {
+  return (
+    <span className="dots small" aria-hidden="true">
+      {Array.from({ length: NEEDED }, (_, i) => (
+        <span key={i} className={i < count ? 'saved' : ''} />
+      ))}
+    </span>
+  )
+}
+
+// The text, where it's needed and whether it's urgent: the same form for adding and editing.
+function PhraseForm({ id, text, setText, contexts, toggleContext, urgent, setUrgent, onSubmit, onCancel, busy, saving, autoFocusText, children }) {
+  const { t } = useLang()
+  const { user } = useAuth()
+  return (
+    <form onSubmit={onSubmit} className="sheet-form">
+      {children}
+      <div className="group">
+        <div className="field-cell">
+          <label htmlFor={id} className="field-label">
+            {t('phrases.textLabel')}
+          </label>
+          <input
+            id={id}
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            lang={user?.language}
+            data-autofocus={autoFocusText || undefined}
+            disabled={busy !== null}
+          />
+        </div>
+      </div>
+
+      <fieldset className="group-wrap">
+        <legend className="group-title">{t('phrases.contextsLabel')}</legend>
+        <div className="chips wrap">
+          {CONTEXT_OPTIONS.map((ctx) => (
+            <button
+              key={ctx}
+              type="button"
+              className="chip"
+              aria-pressed={contexts.includes(ctx)}
+              onClick={() => toggleContext(ctx)}
+              disabled={busy !== null}
+            >
+              {t(`speak.context_${ctx}`)}
+            </button>
+          ))}
+        </div>
+        <p className="group-footer">{t('phrases.contextsHelp')}</p>
+      </fieldset>
+
+      <div className="group">
+        <label className="row check-row">
+          <input type="checkbox" checked={urgent} onChange={(e) => setUrgent(e.target.checked)} disabled={busy !== null} />
+          <span className="row-text">
+            <strong className="row-title">{t('phrases.urgentLabel')}</strong>
+            <small className="row-sub">{t('phrases.urgentHelp')}</small>
+          </span>
+        </label>
+      </div>
+
+      <div className="actions">
+        <button type="button" className="button" onClick={onCancel} disabled={busy !== null}>
+          {t('phrases.cancel')}
+        </button>
+        <Pill type="submit" disabled={!text.trim() || busy !== null}>
+          {t(saving ? 'phrases.saving' : 'phrases.save')}
+        </Pill>
+      </div>
+    </form>
+  )
+}
+
 export default function Phrases() {
   const { t } = useLang()
   const { user } = useAuth()
@@ -24,11 +100,13 @@ export default function Phrases() {
   const [search, setSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState('all') // 'all', 'urgent', 'home', 'hospital', 'market'
 
-  // Modals / Panels
+  // Sheets: adding, and one phrase's details (which can turn into its edit form or delete question)
   const [isAdding, setIsAdding] = useState(false)
   const [addText, setAddText] = useState('')
   const [addContexts, setAddContexts] = useState(['any'])
   const [addUrgent, setAddUrgent] = useState(false)
+
+  const [detailsId, setDetailsId] = useState(null)
 
   const [editingPhrase, setEditingPhrase] = useState(null)
   const [editText, setEditText] = useState('')
@@ -96,6 +174,20 @@ export default function Phrases() {
         setPlayingText(null)
       }
     }
+  }
+
+  // --- Details ---
+  const handleOpenDetails = (phrase) => {
+    setDetailsId(phrase.id)
+    setEditingPhrase(null)
+    setDeletingPhrase(null)
+    setError(null)
+  }
+
+  const handleCloseDetails = () => {
+    setDetailsId(null)
+    setEditingPhrase(null)
+    setDeletingPhrase(null)
   }
 
   // --- Add Phrase ---
@@ -188,10 +280,9 @@ export default function Phrases() {
         contexts: editContexts,
         urgent: editUrgent,
       })
-      setPhrases((prev) =>
-        prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
-      )
+      setPhrases((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)))
       setEditingPhrase(null)
+      setDetailsId(null)
       flashFeedback('phrases.updatedSuccess')
     } catch (err) {
       setError(err)
@@ -214,6 +305,7 @@ export default function Phrases() {
       await api.deletePhrase(deletingPhrase.id)
       setPhrases((prev) => prev.filter((p) => p.id !== deletingPhrase.id))
       setDeletingPhrase(null)
+      setDetailsId(null)
       flashFeedback('phrases.deletedSuccess')
     } catch (err) {
       setError(err)
@@ -254,6 +346,7 @@ export default function Phrases() {
 
   const totalCount = phrases?.length || 0
   const urgentCount = phrases?.filter((p) => p.urgent).length || 0
+  const sheetOpen = isAdding || detailsId !== null
 
   if (!phrases && busy === 'loading') {
     return (
@@ -265,44 +358,148 @@ export default function Phrases() {
     )
   }
 
+  // One phrase's sheet: its details, or the edit form, or the question before deleting it.
+  function phraseSheet(phrase) {
+    const titleId = `phrase-${phrase.id}-title`
+    if (editingPhrase?.id === phrase.id) {
+      return (
+        <PhraseForm
+          id="edit-phrase-text"
+          text={editText}
+          setText={setEditText}
+          contexts={editContexts}
+          toggleContext={handleToggleEditContext}
+          urgent={editUrgent}
+          setUrgent={setEditUrgent}
+          onSubmit={handleUpdatePhrase}
+          onCancel={() => setEditingPhrase(null)}
+          busy={busy}
+          saving={busy === 'updating'}
+          autoFocusText
+        >
+          <h2 id={titleId} className="sheet-title">
+            {t('phrases.editTitle')}
+          </h2>
+          <Alert error={error} />
+        </PhraseForm>
+      )
+    }
+    if (deletingPhrase?.id === phrase.id) {
+      return (
+        <div className="confirm">
+          <h2 id={titleId} className="sheet-title">
+            {t('phrases.deleteConfirm', { text: phrase.text })}
+          </h2>
+          <p className="sheet-text">{t('phrases.deleteWarning')}</p>
+          <Alert error={error} />
+          <div className="actions stacked">
+            <button type="button" className="button" onClick={() => setDeletingPhrase(null)} disabled={busy !== null} data-autofocus>
+              {t('phrases.deleteNo')}
+            </button>
+            <button type="button" className="button" onClick={handleConfirmDelete} disabled={busy !== null}>
+              <Trash2 {...ICON} />
+              <span>{t(busy === 'deleting' ? 'phrases.deleting' : 'phrases.deleteYes')}</span>
+            </button>
+          </div>
+        </div>
+      )
+    }
+    const isPlaying = playingText === phrase.text
+    const contexts = phrase.contexts?.length ? phrase.contexts : ['any']
+    return (
+      <div className="details">
+        <h2 id={titleId} className="details-title" lang={user?.language}>
+          {phrase.text}
+        </h2>
+        <p className="details-meta">
+          <RecordingDots count={Math.min(phrase.sample_count, NEEDED)} />
+          <span>{t('phrases.enrolledStatus', { enrolled: Math.min(phrase.sample_count, NEEDED), needed: NEEDED })}</span>
+        </p>
+        {needsRerecord(phrase) && <p className="note">{t('phrases.rerecordHelp')}</p>}
+        <div className="group">
+          <div className="row">
+            <span className="row-title">{t('phrases.contextsLabel')}</span>
+            <span className="row-value">{contexts.map((ctx) => t(`speak.context_${ctx}`)).join(', ')}</span>
+          </div>
+          {phrase.urgent && (
+            <div className="row">
+              <span className="row-title">
+                <span className="dot-red" aria-hidden="true" /> {t('speak.urgent')}
+              </span>
+            </div>
+          )}
+          {phrase.sources?.map((source) => (
+            <div key={source} className="row">
+              <span className="row-text">
+                <span className="row-title">{t(`demo.sourceBadge_${source}`)}</span>
+                <span className="row-sub">{t(`demo.sourceDesc_${source}`)}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+        <Alert error={error} />
+        <div className="actions stacked">
+          <Pill
+            icon={isPlaying ? Square : Volume2}
+            onClick={() => handlePlay(phrase.text)}
+            disabled={busy !== null && playingText !== phrase.text}
+          >
+            {t(isPlaying ? 'phrases.stopPlaying' : 'phrases.listen')}
+          </Pill>
+          <button
+            type="button"
+            className="button"
+            onClick={() => handleOpenEdit(phrase)}
+            disabled={busy !== null}
+            aria-label={`${t('phrases.edit')}: ${phrase.text}`}
+          >
+            <Pencil {...ICON} />
+            <span>{t('phrases.edit')}</span>
+          </button>
+          <button
+            type="button"
+            className="button"
+            onClick={() => handleOpenDelete(phrase)}
+            disabled={busy !== null}
+            aria-label={`${t('phrases.delete')}: ${phrase.text}`}
+          >
+            <Trash2 {...ICON} />
+            <span>{t('phrases.delete')}</span>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <section className="screen phrases-screen">
-      <header className="phrases-header">
-        <div className="phrases-header-text">
-          <h1>{t('phrases.title')}</h1>
-          <p className="muted">{t('phrases.subtitle')}</p>
+      <header className="screen-header">
+        <div>
+          <h1 className="large-title">{t('phrases.title')}</h1>
+          {totalCount > 0 && (
+            <p className="summary">
+              <span>{t('phrases.total', { count: totalCount })}</span>
+              {urgentCount > 0 && <span>{t('phrases.urgentCount', { count: urgentCount })}</span>}
+            </p>
+          )}
         </div>
-
         <button
           type="button"
-          className="pill-outline phrases-add-btn"
+          className="icon-button add-button"
           onClick={handleOpenAdd}
           disabled={busy !== null}
+          aria-label={t('phrases.add')}
+          title={t('phrases.add')}
         >
-          <Plus size={18} aria-hidden="true" strokeWidth={1.5} />
-          <span>{t('phrases.add')}</span>
+          <Plus {...ICON} />
         </button>
       </header>
 
-      {/* Summary Chips */}
-      {totalCount > 0 && (
-        <div className="phrases-summary" aria-label={t('phrases.title')}>
-          <span className="summary-pill">
-            {t('phrases.total', { count: totalCount })}
-          </span>
-          {urgentCount > 0 && (
-            <span className="summary-pill urgent">
-              {t('phrases.urgentCount', { count: urgentCount })}
-            </span>
-          )}
-        </div>
-      )}
-
       {/* Search and Filter Strip */}
       {totalCount > 0 && (
-        <div className="phrases-search-section">
-          <div className="search-field">
-            <Search className="search-icon" size={18} aria-hidden="true" strokeWidth={1.5} />
+        <div className="phrases-search">
+          <div className="search">
+            <Search className="search-icon" {...ICON} />
             <input
               type="search"
               value={search}
@@ -312,244 +509,46 @@ export default function Phrases() {
               disabled={busy === 'loading'}
             />
             {search && (
-              <button
-                type="button"
-                className="search-clear"
-                onClick={() => setSearch('')}
-                aria-label={t('phrases.searchClear')}
-              >
-                <X size={16} aria-hidden="true" strokeWidth={1.5} />
+              <button type="button" className="search-clear" onClick={() => setSearch('')} aria-label={t('phrases.searchClear')}>
+                <X {...ICON} />
               </button>
             )}
           </div>
 
-          <div className="filter-strip" role="radiogroup" aria-label={t('phrases.contextsLabel')}>
-            {FILTERS.map(([fKey, labelKey]) => (
-              <button
-                key={fKey}
-                type="button"
-                role="radio"
-                aria-checked={activeFilter === fKey}
-                className={`filter-chip ${activeFilter === fKey ? 'active' : ''} ${
-                  fKey === 'urgent' ? 'urgent-chip' : ''
-                }`}
-                onClick={() => setActiveFilter(fKey)}
-              >
-                {t(labelKey)}
-              </button>
-            ))}
-          </div>
+          <Chips
+            label={t('phrases.contextsLabel')}
+            options={FILTERS.map(([value, labelKey]) => ({ value, label: t(labelKey), dot: value === 'urgent' }))}
+            value={activeFilter}
+            onChange={setActiveFilter}
+          />
         </div>
       )}
 
       {/* Notifications and Alerts */}
       <div aria-live="polite">
-        {feedback && <p className="notice-banner" role="status">{t(feedback)}</p>}
-        <Alert error={error} />
+        {feedback && <Toast>{t(feedback)}</Toast>}
+        {!sheetOpen && <Alert error={error} />}
       </div>
 
       {error && !phrases && (
-        <div className="error-actions">
-          <button type="button" className="pill-outline" onClick={loadPhrases}>
-            <RotateCcw size={16} aria-hidden="true" strokeWidth={1.5} />
+        <div className="actions">
+          <button type="button" className="button" onClick={loadPhrases}>
+            <RotateCcw {...ICON} />
             <span>{t('error.retry')}</span>
           </button>
         </div>
       )}
 
-      {/* Add Phrase Drawer/Card */}
-      {isAdding && (
-        <article className="phrase-modal-card" aria-labelledby="add-phrase-heading">
-          <h2 id="add-phrase-heading">{t('phrases.addTitle')}</h2>
-          <p className="muted">{t('phrases.addPrompt')}</p>
-
-          <form onSubmit={handleCreatePhrase} className="phrase-form">
-            <div className="field">
-              <label htmlFor="add-phrase-text">{t('phrases.textLabel')}</label>
-              <input
-                id="add-phrase-text"
-                type="text"
-                value={addText}
-                onChange={(e) => setAddText(e.target.value)}
-                placeholder={t('phrases.textPlaceholder')}
-                lang={user?.language}
-                autoFocus
-                disabled={busy !== null}
-              />
-            </div>
-
-            <fieldset className="phrase-fieldset">
-              <legend>{t('phrases.contextsLabel')}</legend>
-              <p className="field-hint">{t('phrases.contextsHelp')}</p>
-              <div className="context-pills-row">
-                {CONTEXT_OPTIONS.map((ctx) => {
-                  const active = addContexts.includes(ctx)
-                  return (
-                    <button
-                      key={ctx}
-                      type="button"
-                      className={`context-select-pill ${active ? 'active' : ''}`}
-                      onClick={() => handleToggleAddContext(ctx)}
-                      disabled={busy !== null}
-                    >
-                      {active && <Check size={14} aria-hidden="true" strokeWidth={2} />}
-                      <span>{t(`speak.context_${ctx}`)}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </fieldset>
-
-            <label className="urgent-toggle-label">
-              <input
-                type="checkbox"
-                checked={addUrgent}
-                onChange={(e) => setAddUrgent(e.target.checked)}
-                disabled={busy !== null}
-              />
-              <span className="urgent-toggle-text">
-                <strong>{t('phrases.urgentLabel')}</strong>
-                <small className="muted">{t('phrases.urgentHelp')}</small>
-              </span>
-            </label>
-
-            <div className="actions">
-              <button
-                type="button"
-                className="pill-outline"
-                onClick={() => setIsAdding(false)}
-                disabled={busy !== null}
-              >
-                {t('phrases.cancel')}
-              </button>
-              <Pill type="submit" icon={null} disabled={!addText.trim() || busy !== null}>
-                {t(busy === 'adding' ? 'phrases.saving' : 'phrases.save')}
-              </Pill>
-            </div>
-          </form>
-        </article>
-      )}
-
-      {/* Edit Phrase Drawer/Card */}
-      {editingPhrase && (
-        <article className="phrase-modal-card" aria-labelledby="edit-phrase-heading">
-          <h2 id="edit-phrase-heading">{t('phrases.editTitle')}</h2>
-
-          <form onSubmit={handleUpdatePhrase} className="phrase-form">
-            <div className="field">
-              <label htmlFor="edit-phrase-text">{t('phrases.textLabel')}</label>
-              <input
-                id="edit-phrase-text"
-                type="text"
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                lang={user?.language}
-                autoFocus
-                disabled={busy !== null}
-              />
-            </div>
-
-            <fieldset className="phrase-fieldset">
-              <legend>{t('phrases.contextsLabel')}</legend>
-              <p className="field-hint">{t('phrases.contextsHelp')}</p>
-              <div className="context-pills-row">
-                {CONTEXT_OPTIONS.map((ctx) => {
-                  const active = editContexts.includes(ctx)
-                  return (
-                    <button
-                      key={ctx}
-                      type="button"
-                      className={`context-select-pill ${active ? 'active' : ''}`}
-                      onClick={() => handleToggleEditContext(ctx)}
-                      disabled={busy !== null}
-                    >
-                      {active && <Check size={14} aria-hidden="true" strokeWidth={2} />}
-                      <span>{t(`speak.context_${ctx}`)}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </fieldset>
-
-            <label className="urgent-toggle-label">
-              <input
-                type="checkbox"
-                checked={editUrgent}
-                onChange={(e) => setEditUrgent(e.target.checked)}
-                disabled={busy !== null}
-              />
-              <span className="urgent-toggle-text">
-                <strong>{t('phrases.urgentLabel')}</strong>
-                <small className="muted">{t('phrases.urgentHelp')}</small>
-              </span>
-            </label>
-
-            <div className="actions">
-              <button
-                type="button"
-                className="pill-outline"
-                onClick={() => setEditingPhrase(null)}
-                disabled={busy !== null}
-              >
-                {t('phrases.cancel')}
-              </button>
-              <Pill type="submit" icon={null} disabled={!editText.trim() || busy !== null}>
-                {t(busy === 'updating' ? 'phrases.saving' : 'phrases.save')}
-              </Pill>
-            </div>
-          </form>
-        </article>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {deletingPhrase && (
-        <article className="phrase-modal-card danger-card" aria-labelledby="delete-dialog-title">
-          <h2 id="delete-dialog-title">
-            {t('phrases.deleteConfirm', { text: deletingPhrase.text })}
-          </h2>
-          <p className="muted">{t('phrases.deleteWarning')}</p>
-
-          <div className="actions">
-            <button
-              type="button"
-              className="pill-outline"
-              onClick={() => setDeletingPhrase(null)}
-              disabled={busy !== null}
-              autoFocus
-            >
-              {t('phrases.deleteNo')}
-            </button>
-            <button
-              type="button"
-              className="pill-outline destructive"
-              onClick={handleConfirmDelete}
-              disabled={busy !== null}
-            >
-              <Trash2 size={16} aria-hidden="true" strokeWidth={1.5} />
-              <span>{t(busy === 'deleting' ? 'phrases.deleting' : 'phrases.deleteYes')}</span>
-            </button>
-          </div>
-        </article>
-      )}
-
       {/* Empty Library State */}
       {totalCount === 0 && !isAdding && (
-        <div className="phrases-empty-state">
-          <h2>{t('phrases.empty')}</h2>
-          <p className="muted">{t('phrases.emptyBody')}</p>
-          <div className="empty-actions">
-            <Pill
-              icon={null}
-              onClick={handleLoadDefaults}
-              disabled={busy !== null}
-            >
+        <div className="empty-state">
+          <h2 className="title-2">{t('phrases.empty')}</h2>
+          <p className="lede-sm">{t('phrases.emptyBody')}</p>
+          <div className="actions">
+            <Pill onClick={handleLoadDefaults} disabled={busy !== null}>
               {t(busy === 'defaults' ? 'phrases.addingDefaults' : 'phrases.addDefaults')}
             </Pill>
-            <button
-              type="button"
-              className="pill-outline"
-              onClick={() => go('/app/enroll')}
-            >
+            <button type="button" className="button" onClick={() => go('/app/enroll')}>
               {t('phrases.goTeach')}
             </button>
           </div>
@@ -558,16 +557,16 @@ export default function Phrases() {
 
       {/* Empty Search State */}
       {totalCount > 0 && filteredPhrases.length === 0 && (
-        <div className="phrases-no-search">
-          <p>
+        <div className="empty-state">
+          <p className="title-2">
             {t('phrases.noSearchResults', {
               query: search || t(FILTERS.find(([key]) => key === activeFilter)[1]),
             })}
           </p>
-          <p className="muted">{t('phrases.noSearchBody')}</p>
+          <p className="lede-sm">{t('phrases.noSearchBody')}</p>
           <button
             type="button"
-            className="pill-outline"
+            className="button"
             onClick={() => {
               setSearch('')
               setActiveFilter('all')
@@ -578,98 +577,79 @@ export default function Phrases() {
         </div>
       )}
 
-      {/* Phrase Cards List */}
-      <ul className="phrases-list" aria-label={t('phrases.title')}>
-        {filteredPhrases.map((phrase) => {
-          const isPlaying = playingText === phrase.text
-          return (
-            <li key={phrase.id} className="phrase-card">
-              <div className="phrase-card-content">
-                <div className="phrase-card-header">
-                  <span className="phrase-card-text" lang={user?.language}>
-                    {phrase.text}
+      {/* The library: tap a phrase for its details */}
+      {filteredPhrases.length > 0 && (
+        <ul className="group phrases-list" aria-label={t('phrases.title')}>
+          {filteredPhrases.map((phrase) => {
+            const recorded = Math.min(phrase.sample_count, NEEDED)
+            const contexts = (phrase.contexts || []).filter((ctx) => ctx !== 'any')
+            return (
+              <li key={phrase.id} className="phrase-card">
+                <button type="button" className="row phrase-row" onClick={() => handleOpenDetails(phrase)} aria-haspopup="dialog">
+                  <span className="row-text">
+                    <span className="phrase-card-text" lang={user?.language}>
+                      {phrase.text}
+                    </span>
+                    <span className="phrase-meta">
+                      <RecordingDots count={recorded} />
+                      <span>{t('phrases.enrolledStatus', { enrolled: recorded, needed: NEEDED })}</span>
+                      {phrase.urgent && (
+                        <span className="badge">
+                          <span className="dot-red" aria-hidden="true" />
+                          {t('speak.urgent')}
+                        </span>
+                      )}
+                      {needsRerecord(phrase) && <span className="badge">{t('phrases.rerecord')}</span>}
+                      {phrase.sources?.map((source) => (
+                        <span key={source} className="badge">
+                          {t(`demo.sourceBadge_${source}`)}
+                        </span>
+                      ))}
+                      {contexts.map((ctx) => (
+                        <span key={ctx} className="tag">
+                          {t(`speak.context_${ctx}`)}
+                        </span>
+                      ))}
+                    </span>
                   </span>
-                  <div className="phrase-card-badges">
-                    {phrase.urgent && (
-                      <span className="urgent-badge" aria-label={t('speak.urgent')}>
-                        {t('speak.urgent')}
-                      </span>
-                    )}
-                    {needsRerecord(phrase) && (
-                      <span className="context-tag" title={t('phrases.rerecordHelp')}>
-                        {t('phrases.rerecord')}
-                      </span>
-                    )}
-                    {phrase.sources?.map((source) => (
-                      <span
-                        key={source}
-                        className={`demo-source-tag source-${source}`}
-                        title={t(`demo.sourceDesc_${source}`)}
-                      >
-                        {t(`demo.sourceBadge_${source}`)}
-                      </span>
-                    ))}
-                    {phrase.contexts?.map((ctx) => (
-                      <span key={ctx} className="context-tag">
-                        {t(`speak.context_${ctx}`)}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="phrase-card-meta">
-                  <span className="meta-stat">
-                    {needsRerecord(phrase)
-                      ? t('phrases.rerecordHelp')
-                      : t('phrases.enrolledStatus', { enrolled: Math.min(phrase.sample_count, NEEDED), needed: NEEDED })}
-                  </span>
-                </div>
-              </div>
-
-              <div className="phrase-card-actions">
-                <button
-                  type="button"
-                  className="icon-pill-btn"
-                  onClick={() => handlePlay(phrase.text)}
-                  disabled={busy !== null && playingText !== phrase.text}
-                  aria-label={t(isPlaying ? 'phrases.stopPlaying' : 'phrases.listen')}
-                >
-                  {isPlaying ? (
-                    <Square size={16} fill="currentColor" aria-hidden="true" />
-                  ) : (
-                    <Volume2 size={16} aria-hidden="true" strokeWidth={1.5} />
-                  )}
-                  <span className="action-label">
-                    {t(isPlaying ? 'phrases.playing' : 'phrases.listen')}
-                  </span>
+                  <ChevronRight className="row-chevron" {...ICON} />
                 </button>
-
-                <button
-                  type="button"
-                  className="icon-pill-btn"
-                  onClick={() => handleOpenEdit(phrase)}
-                  disabled={busy !== null}
-                  aria-label={`${t('phrases.edit')}: ${phrase.text}`}
+                <Sheet
+                  open={detailsId === phrase.id}
+                  onClose={handleCloseDetails}
+                  labelledBy={`phrase-${phrase.id}-title`}
+                  closable
                 >
-                  <Pencil size={15} aria-hidden="true" strokeWidth={1.5} />
-                  <span className="action-label">{t('phrases.edit')}</span>
-                </button>
+                  {phraseSheet(phrase)}
+                </Sheet>
+              </li>
+            )
+          })}
+        </ul>
+      )}
 
-                <button
-                  type="button"
-                  className="icon-pill-btn delete-btn"
-                  onClick={() => handleOpenDelete(phrase)}
-                  disabled={busy !== null}
-                  aria-label={`${t('phrases.delete')}: ${phrase.text}`}
-                >
-                  <Trash2 size={15} aria-hidden="true" strokeWidth={1.5} />
-                  <span className="action-label">{t('phrases.delete')}</span>
-                </button>
-              </div>
-            </li>
-          )
-        })}
-      </ul>
+      <Sheet open={isAdding} onClose={() => setIsAdding(false)} labelledBy="add-phrase-heading">
+        <PhraseForm
+          id="add-phrase-text"
+          text={addText}
+          setText={setAddText}
+          contexts={addContexts}
+          toggleContext={handleToggleAddContext}
+          urgent={addUrgent}
+          setUrgent={setAddUrgent}
+          onSubmit={handleCreatePhrase}
+          onCancel={() => setIsAdding(false)}
+          busy={busy}
+          saving={busy === 'adding'}
+          autoFocusText
+        >
+          <h2 id="add-phrase-heading" className="sheet-title">
+            {t('phrases.addTitle')}
+          </h2>
+          <p className="sheet-text">{t('phrases.addPrompt')}</p>
+          <Alert error={error} />
+        </PhraseForm>
+      </Sheet>
     </section>
   )
 }
