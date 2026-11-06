@@ -14,9 +14,6 @@ import Settings from './Settings.jsx'
 import Speak from './Speak.jsx'
 import { syncThemeColor } from './theme.js'
 
-// The list screens sit on the tinted grouped background, like iOS Settings (DESIGN.md: themes).
-const GROUPED = ['/app/phrases', '/app/progress', '/app/settings']
-
 function Root() {
   const { pathname } = useLocation()
   const main = useRef(null)
@@ -25,7 +22,6 @@ function Root() {
   // After a page change, move focus to the content for screen reader users.
   useEffect(() => {
     applyPreferences()
-    document.documentElement.dataset.surface = GROUPED.includes(pathname) ? 'grouped' : 'plain'
     syncThemeColor()
     if (first.current) return void (first.current = false)
     main.current?.focus({ preventScroll: true })

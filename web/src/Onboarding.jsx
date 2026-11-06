@@ -1,11 +1,10 @@
-import { ArrowLeft, BookOpen, Check, CheckCircle2, Mic, Volume2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { setOnboarded } from './prefs.js'
 import { speakProgress } from './quickstart.js'
-import { Alert, ICON, Pill, useGo } from './ui.jsx'
+import { Alert, Button, Icon, PrimaryButton, useGo } from './ui/index.js'
 
 const TOTAL_STEPS = 4
 
@@ -95,9 +94,9 @@ export default function Onboarding() {
   return (
     <section className="screen onboarding">
       <header className="onboarding-top">
-        <div className="step-dots" aria-hidden="true">
+        <div className="step-meter" aria-hidden="true">
           {Array.from({ length: TOTAL_STEPS }, (_, i) => (
-            <span key={i} className={i + 1 === step ? 'active' : i + 1 < step ? 'done' : ''} />
+            <span key={i} className={`segment ${i + 1 <= step ? 'on' : ''}`} />
           ))}
         </div>
         <span className="step-count">{t('onboarding.stepProgress', { current: step, total: TOTAL_STEPS })}</span>
@@ -122,18 +121,14 @@ export default function Onboarding() {
             <p className="lede-sm">{t('onboarding.welcomeBody')}</p>
             <ul className="group">
               <li className="row">
-                <span className="row-badge">
-                  <BookOpen {...ICON} />
-                </span>
+                <Icon name="book" className="row-icon" />
                 <span className="row-text">
                   <strong className="row-title">{t('onboarding.featurePhrasesTitle')}</strong>
                   <span className="row-sub">{t('onboarding.featurePhrasesDesc')}</span>
                 </span>
               </li>
               <li className="row">
-                <span className="row-badge">
-                  <Volume2 {...ICON} />
-                </span>
+                <Icon name="volume" className="row-icon" />
                 <span className="row-text">
                   <strong className="row-title">{t('onboarding.featureVoiceTitle')}</strong>
                   <span className="row-sub">{t('onboarding.featureVoiceDesc')}</span>
@@ -168,7 +163,7 @@ export default function Onboarding() {
                     </span>
                     <span className="row-sub">{t(labelKey)}</span>
                   </span>
-                  <Check className="choice-check" {...ICON} />
+                  <Icon name="check" className="choice-check" />
                 </button>
               ))}
             </div>
@@ -184,7 +179,7 @@ export default function Onboarding() {
             <ol className="group">
               {['onboarding.howStep1', 'onboarding.howStep2', 'onboarding.howStep3'].map((key, i) => (
                 <li key={key} className="row">
-                  <span className="row-badge number" aria-hidden="true">
+                  <span className="step-n" aria-hidden="true">
                     {i + 1}
                   </span>
                   <span className="row-text">
@@ -204,35 +199,32 @@ export default function Onboarding() {
 
             {ready ? (
               <div className="status-card">
-                <CheckCircle2 className="status-icon success" {...ICON} />
+                <Icon name="checkCircle" className="status-icon success" />
                 <h2>{t('onboarding.setupReadyTitle')}</h2>
                 <p>{t('onboarding.setupReadyDesc')}</p>
                 <p className="status-meta">{t('phrases.total', { count: phrases.length })}</p>
               </div>
             ) : hasPhrases ? (
               <div className="status-card">
-                <Mic className="status-icon" {...ICON} />
+                <Icon name="mic" className="status-icon" />
                 <h2>{t('onboarding.setupNeedTitle')}</h2>
                 <p>{t('onboarding.setupNeedDesc')}</p>
                 <div className="actions">
-                  <button type="button" className="button" onClick={() => handleFinish('/app/enroll')}>
-                    <Mic {...ICON} />
-                    <span>{t('onboarding.goTeach')}</span>
-                  </button>
+                  <Button icon="mic" onClick={() => handleFinish('/app/enroll')}>
+                    {t('onboarding.goTeach')}
+                  </Button>
                 </div>
               </div>
             ) : (
               <div className="status-card">
-                <BookOpen className="status-icon" {...ICON} />
+                <Icon name="book" className="status-icon" />
                 <h2>{t('onboarding.setupEmptyTitle')}</h2>
                 <p>{t('onboarding.setupEmptyDesc')}</p>
                 <div className="actions">
-                  <button type="button" className="button" onClick={handleLoadDefaults} disabled={seeding}>
+                  <Button onClick={handleLoadDefaults} disabled={seeding}>
                     {t(seeding ? 'onboarding.addingDefaults' : 'onboarding.addDefaults')}
-                  </button>
-                  <button type="button" className="button" onClick={() => handleFinish('/app/phrases')}>
-                    {t('onboarding.goLibrary')}
-                  </button>
+                  </Button>
+                  <Button onClick={() => handleFinish('/app/phrases')}>{t('onboarding.goLibrary')}</Button>
                 </div>
               </div>
             )}
@@ -242,12 +234,11 @@ export default function Onboarding() {
 
       <footer className="onboarding-actions">
         {step > 1 && (
-          <button type="button" className="button" onClick={handleBack}>
-            <ArrowLeft {...ICON} />
-            <span>{t('onboarding.back')}</span>
-          </button>
+          <Button icon="arrowLeft" onClick={handleBack}>
+            {t('onboarding.back')}
+          </Button>
         )}
-        <Pill onClick={handleNext}>{t(step === TOTAL_STEPS ? 'onboarding.finish' : 'onboarding.next')}</Pill>
+        <PrimaryButton onClick={handleNext}>{t(step === TOTAL_STEPS ? 'onboarding.finish' : 'onboarding.next')}</PrimaryButton>
       </footer>
     </section>
   )

@@ -1,10 +1,9 @@
-import { ChevronRight, Pencil, Plus, RotateCcw, Search, Square, Trash2, Volume2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { NEEDED, needsRerecord } from './quickstart.js'
-import { Alert, Chips, ICON, Pill, Sheet, Toast, useGo } from './ui.jsx'
+import { Alert, Button, Chips, Icon, PrimaryButton, Sheet, Toast, useGo } from './ui/index.js'
 
 const CONTEXT_OPTIONS = ['any', 'home', 'hospital', 'market']
 const FILTERS = [
@@ -15,12 +14,12 @@ const FILTERS = [
   ['market', 'phrases.filterMarket'],
 ]
 
-// Three small dots: one filled for each saved recording.
-function RecordingDots({ count }) {
+// Three meter segments, one lit for each saved recording. The words beside it say the same.
+function RecordingMeter({ count }) {
   return (
-    <span className="dots small" aria-hidden="true">
+    <span className="saved-meter small" aria-hidden="true">
       {Array.from({ length: NEEDED }, (_, i) => (
-        <span key={i} className={i < count ? 'saved' : ''} />
+        <span key={i} className={`segment ${i < count ? 'on' : ''}`} />
       ))}
     </span>
   )
@@ -33,21 +32,19 @@ function PhraseForm({ id, text, setText, contexts, toggleContext, urgent, setUrg
   return (
     <form onSubmit={onSubmit} className="sheet-form">
       {children}
-      <div className="group">
-        <div className="field-cell">
-          <label htmlFor={id} className="field-label">
-            {t('phrases.textLabel')}
-          </label>
-          <input
-            id={id}
-            type="text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            lang={user?.language}
-            data-autofocus={autoFocusText || undefined}
-            disabled={busy !== null}
-          />
-        </div>
+      <div className="field-cell">
+        <label htmlFor={id} className="field-label">
+          {t('phrases.textLabel')}
+        </label>
+        <input
+          id={id}
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          lang={user?.language}
+          data-autofocus={autoFocusText || undefined}
+          disabled={busy !== null}
+        />
       </div>
 
       <fieldset className="group-wrap">
@@ -80,12 +77,12 @@ function PhraseForm({ id, text, setText, contexts, toggleContext, urgent, setUrg
       </div>
 
       <div className="actions">
-        <button type="button" className="button" onClick={onCancel} disabled={busy !== null}>
+        <Button onClick={onCancel} disabled={busy !== null}>
           {t('phrases.cancel')}
-        </button>
-        <Pill type="submit" disabled={!text.trim() || busy !== null}>
+        </Button>
+        <PrimaryButton type="submit" disabled={!text.trim() || busy !== null}>
           {t(saving ? 'phrases.saving' : 'phrases.save')}
-        </Pill>
+        </PrimaryButton>
       </div>
     </form>
   )
@@ -393,13 +390,12 @@ export default function Phrases() {
           <p className="sheet-text">{t('phrases.deleteWarning')}</p>
           <Alert error={error} />
           <div className="actions stacked">
-            <button type="button" className="button" onClick={() => setDeletingPhrase(null)} disabled={busy !== null} data-autofocus>
+            <Button onClick={() => setDeletingPhrase(null)} disabled={busy !== null} data-autofocus>
               {t('phrases.deleteNo')}
-            </button>
-            <button type="button" className="button" onClick={handleConfirmDelete} disabled={busy !== null}>
-              <Trash2 {...ICON} />
-              <span>{t(busy === 'deleting' ? 'phrases.deleting' : 'phrases.deleteYes')}</span>
-            </button>
+            </Button>
+            <Button icon="trash" onClick={handleConfirmDelete} disabled={busy !== null}>
+              {t(busy === 'deleting' ? 'phrases.deleting' : 'phrases.deleteYes')}
+            </Button>
           </div>
         </div>
       )
@@ -412,7 +408,7 @@ export default function Phrases() {
           {phrase.text}
         </h2>
         <p className="details-meta">
-          <RecordingDots count={Math.min(phrase.sample_count, NEEDED)} />
+          <RecordingMeter count={Math.min(phrase.sample_count, NEEDED)} />
           <span>{t('phrases.enrolledStatus', { enrolled: Math.min(phrase.sample_count, NEEDED), needed: NEEDED })}</span>
         </p>
         {needsRerecord(phrase) && <p className="note">{t('phrases.rerecordHelp')}</p>}
@@ -423,8 +419,9 @@ export default function Phrases() {
           </div>
           {phrase.urgent && (
             <div className="row">
-              <span className="row-title">
-                <span className="dot-red" aria-hidden="true" /> {t('speak.urgent')}
+              <span className="row-title urgent">
+                <span className="mark-urgent" aria-hidden="true" />
+                {t('speak.urgent')}
               </span>
             </div>
           )}
@@ -439,33 +436,29 @@ export default function Phrases() {
         </div>
         <Alert error={error} />
         <div className="actions stacked">
-          <Pill
-            icon={isPlaying ? Square : Volume2}
+          <PrimaryButton
+            icon={isPlaying ? 'stop' : 'volume'}
             onClick={() => handlePlay(phrase.text)}
             disabled={busy !== null && playingText !== phrase.text}
           >
             {t(isPlaying ? 'phrases.stopPlaying' : 'phrases.listen')}
-          </Pill>
-          <button
-            type="button"
-            className="button"
+          </PrimaryButton>
+          <Button
+            icon="pencil"
             onClick={() => handleOpenEdit(phrase)}
             disabled={busy !== null}
             aria-label={`${t('phrases.edit')}: ${phrase.text}`}
           >
-            <Pencil {...ICON} />
-            <span>{t('phrases.edit')}</span>
-          </button>
-          <button
-            type="button"
-            className="button"
+            {t('phrases.edit')}
+          </Button>
+          <Button
+            icon="trash"
             onClick={() => handleOpenDelete(phrase)}
             disabled={busy !== null}
             aria-label={`${t('phrases.delete')}: ${phrase.text}`}
           >
-            <Trash2 {...ICON} />
-            <span>{t('phrases.delete')}</span>
-          </button>
+            {t('phrases.delete')}
+          </Button>
         </div>
       </div>
     )
@@ -491,7 +484,7 @@ export default function Phrases() {
           aria-label={t('phrases.add')}
           title={t('phrases.add')}
         >
-          <Plus {...ICON} />
+          <Icon name="plus" />
         </button>
       </header>
 
@@ -499,7 +492,7 @@ export default function Phrases() {
       {totalCount > 0 && (
         <div className="phrases-search">
           <div className="search">
-            <Search className="search-icon" {...ICON} />
+            <Icon name="search" className="search-icon" />
             <input
               type="search"
               value={search}
@@ -510,14 +503,14 @@ export default function Phrases() {
             />
             {search && (
               <button type="button" className="search-clear" onClick={() => setSearch('')} aria-label={t('phrases.searchClear')}>
-                <X {...ICON} />
+                <Icon name="x" />
               </button>
             )}
           </div>
 
           <Chips
             label={t('phrases.contextsLabel')}
-            options={FILTERS.map(([value, labelKey]) => ({ value, label: t(labelKey), dot: value === 'urgent' }))}
+            options={FILTERS.map(([value, labelKey]) => ({ value, label: t(labelKey), mark: value === 'urgent' }))}
             value={activeFilter}
             onChange={setActiveFilter}
           />
@@ -532,10 +525,9 @@ export default function Phrases() {
 
       {error && !phrases && (
         <div className="actions">
-          <button type="button" className="button" onClick={loadPhrases}>
-            <RotateCcw {...ICON} />
-            <span>{t('error.retry')}</span>
-          </button>
+          <Button icon="rotate" onClick={loadPhrases}>
+            {t('error.retry')}
+          </Button>
         </div>
       )}
 
@@ -545,12 +537,10 @@ export default function Phrases() {
           <h2 className="title-2">{t('phrases.empty')}</h2>
           <p className="lede-sm">{t('phrases.emptyBody')}</p>
           <div className="actions">
-            <Pill onClick={handleLoadDefaults} disabled={busy !== null}>
+            <PrimaryButton onClick={handleLoadDefaults} disabled={busy !== null}>
               {t(busy === 'defaults' ? 'phrases.addingDefaults' : 'phrases.addDefaults')}
-            </Pill>
-            <button type="button" className="button" onClick={() => go('/app/enroll')}>
-              {t('phrases.goTeach')}
-            </button>
+            </PrimaryButton>
+            <Button onClick={() => go('/app/enroll')}>{t('phrases.goTeach')}</Button>
           </div>
         </div>
       )}
@@ -564,16 +554,14 @@ export default function Phrases() {
             })}
           </p>
           <p className="lede-sm">{t('phrases.noSearchBody')}</p>
-          <button
-            type="button"
-            className="button"
+          <Button
             onClick={() => {
               setSearch('')
               setActiveFilter('all')
             }}
           >
             {t('phrases.searchClear')}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -591,11 +579,11 @@ export default function Phrases() {
                       {phrase.text}
                     </span>
                     <span className="phrase-meta">
-                      <RecordingDots count={recorded} />
+                      <RecordingMeter count={recorded} />
                       <span>{t('phrases.enrolledStatus', { enrolled: recorded, needed: NEEDED })}</span>
                       {phrase.urgent && (
-                        <span className="badge">
-                          <span className="dot-red" aria-hidden="true" />
+                        <span className="urgent">
+                          <span className="mark-urgent" aria-hidden="true" />
                           {t('speak.urgent')}
                         </span>
                       )}
@@ -612,7 +600,7 @@ export default function Phrases() {
                       ))}
                     </span>
                   </span>
-                  <ChevronRight className="row-chevron" {...ICON} />
+                  <Icon name="chevronRight" className="row-chevron" />
                 </button>
                 <Sheet
                   open={detailsId === phrase.id}

@@ -1,9 +1,8 @@
-import { BookOpen, ChevronRight, Mic, RotateCcw, Square, Trash2, Volume2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
-import { Alert, ICON, Sheet, useGo } from './ui.jsx'
+import { Alert, Button, Icon, Sheet, useGo } from './ui/index.js'
 
 function formatWeekStart(isoDate, currentLang) {
   try {
@@ -43,7 +42,7 @@ function DeleteAccount() {
       </h2>
       <div className="group">
         <button type="button" className="row" onClick={() => setAsking(true)} aria-haspopup="dialog">
-          <Trash2 className="row-icon" {...ICON} />
+          <Icon name="trash" className="row-icon" />
           <span className="row-title">{t('progress.delete')}</span>
         </button>
       </div>
@@ -54,13 +53,12 @@ function DeleteAccount() {
           </p>
           <Alert error={error} />
           <div className="actions stacked">
-            <button type="button" className="button" onClick={() => setAsking(false)} disabled={busy} data-autofocus>
+            <Button onClick={() => setAsking(false)} disabled={busy} data-autofocus>
               {t('progress.deleteNo')}
-            </button>
-            <button type="button" className="button" onClick={remove} disabled={busy}>
-              <Trash2 {...ICON} />
-              <span>{t(busy ? 'progress.deleting' : 'progress.deleteYes')}</span>
-            </button>
+            </Button>
+            <Button icon="trash" onClick={remove} disabled={busy}>
+              {t(busy ? 'progress.deleting' : 'progress.deleteYes')}
+            </Button>
           </div>
         </div>
       </Sheet>
@@ -68,8 +66,9 @@ function DeleteAccount() {
   )
 }
 
-// Confirmed phrases per week, stacked: understood directly (full ink) under assisted (gray),
-// a 2px gap between them, the total above each bar, a hairline grid. Values are in the table view.
+// Confirmed phrases per week, stacked: understood directly (solid ink) under assisted (an ink
+// outline), so the two differ by shape, not color. The total in mono above each bar, a hairline
+// grid. Values are also in the table view.
 function WeeklyChart({ weeks, lang }) {
   const { t } = useLang()
   const max = Math.max(1, ...weeks.map((w) => w.confirmed))
@@ -176,10 +175,9 @@ export default function Progress() {
       <section className="screen narrow">
         <Alert error={error} />
         <div className="actions">
-          <button type="button" className="button" onClick={loadData}>
-            <RotateCcw {...ICON} />
-            <span>{t('error.retry')}</span>
-          </button>
+          <Button icon="rotate" onClick={loadData}>
+            {t('error.retry')}
+          </Button>
         </div>
       </section>
     )
@@ -205,18 +203,16 @@ export default function Progress() {
 
       {stats?.recognitions === 0 && (
         <article className="status-card" aria-labelledby="empty-progress-title">
-          <Mic className="status-icon" {...ICON} />
+          <Icon name="mic" className="status-icon" />
           <h2 id="empty-progress-title">{t('progress.nothing')}</h2>
           <p>{t('progress.guidancePhrases')}</p>
           <div className="actions">
-            <button type="button" className="button" onClick={() => go('/app/speak')}>
-              <Mic {...ICON} />
-              <span>{t('progress.goSpeak')}</span>
-            </button>
-            <button type="button" className="button" onClick={() => go('/app/phrases')}>
-              <BookOpen {...ICON} />
-              <span>{t('progress.goPhrases')}</span>
-            </button>
+            <Button icon="mic" onClick={() => go('/app/speak')}>
+              {t('progress.goSpeak')}
+            </Button>
+            <Button icon="book" onClick={() => go('/app/phrases')}>
+              {t('progress.goPhrases')}
+            </Button>
           </div>
         </article>
       )}
@@ -274,7 +270,7 @@ export default function Progress() {
               return (
                 <li key={phrase.phrase_id} className="row top-phrase-item">
                   <span className="rank" aria-hidden="true">
-                    {idx + 1}
+                    {String(idx + 1).padStart(2, '0')}
                   </span>
                   <span className="row-text">
                     <span className="row-title" lang={user.language}>
@@ -288,7 +284,7 @@ export default function Progress() {
                     onClick={() => handlePlayPhrase(phrase.text)}
                     aria-label={`${t(isPlaying ? 'phrases.stopPlaying' : 'phrases.listen')}: ${phrase.text}`}
                   >
-                    {isPlaying ? <Square fill="currentColor" {...ICON} /> : <Volume2 {...ICON} />}
+                    <Icon name={isPlaying ? 'stop' : 'volume'} />
                   </button>
                 </li>
               )
@@ -372,20 +368,20 @@ export default function Progress() {
         </h2>
         <div className="group">
           <button type="button" className="row" onClick={() => go('/app/phrases')}>
-            <BookOpen className="row-icon" {...ICON} />
+            <Icon name="book" className="row-icon" />
             <span className="row-text">
               <span className="row-title">{t('progress.goPhrases')}</span>
               <span className="row-sub">{t('progress.guidancePhrases')}</span>
             </span>
-            <ChevronRight className="row-chevron" {...ICON} />
+            <Icon name="chevronRight" className="row-chevron" />
           </button>
           <button type="button" className="row" onClick={() => go('/app/enroll')}>
-            <Mic className="row-icon" {...ICON} />
+            <Icon name="mic" className="row-icon" />
             <span className="row-text">
               <span className="row-title">{t('progress.goTeach')}</span>
               <span className="row-sub">{t('progress.guidanceEnroll')}</span>
             </span>
-            <ChevronRight className="row-chevron" {...ICON} />
+            <Icon name="chevronRight" className="row-chevron" />
           </button>
         </div>
       </section>

@@ -1,29 +1,10 @@
-import { BookOpen, ChevronRight, ExternalLink, FileAudio, LogOut, Square, Trash2, Upload, Volume2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { applyPreferences, getPreferences, setPreference } from './prefs.js'
 import { useTheme } from './theme.js'
-import { Alert, Choices, Group, ICON, Pill, Sheet, Switch, Toast, useGo } from './ui.jsx'
-
-// A row with a title, a line of help under it, and a switch at the end.
-function SwitchRow({ id, title, help, note, on, onClick, disabled }) {
-  return (
-    <div className="row settings-row">
-      <span className="row-text">
-        <span className="row-title" id={`${id}-label`}>
-          {title}
-        </span>
-        <span className="row-sub" id={`${id}-help`}>
-          {help}
-        </span>
-        {note && <span className="row-sub">{note}</span>}
-      </span>
-      <Switch on={on} labelledBy={`${id}-label`} describedBy={`${id}-help`} onClick={onClick} disabled={disabled} />
-    </div>
-  )
-}
+import { Alert, Button, Choices, Group, Icon, PrimaryButton, Row as SwitchRow, Sheet, Toast, useGo } from './ui/index.js'
 
 export default function Settings() {
   const { user, signedIn, deleteAccount, logout } = useAuth()
@@ -359,7 +340,7 @@ export default function Settings() {
           />
         )}
         <button type="button" className="row" onClick={handlePlayVoiceSample} disabled={busy !== null}>
-          {playingSample ? <Square className="row-icon" fill="currentColor" {...ICON} /> : <Volume2 className="row-icon" {...ICON} />}
+          <Icon name={playingSample ? 'stop' : 'volume'} className="row-icon" />
           <span className="row-title">{t(playingSample ? 'settings.testVoiceStop' : 'settings.testVoice')}</span>
         </button>
         {user?.has_own_voice && (
@@ -370,7 +351,7 @@ export default function Settings() {
             disabled={busy !== null}
             aria-haspopup="dialog"
           >
-            <Trash2 className="row-icon" {...ICON} />
+            <Icon name="trash" className="row-icon" />
             <span className="row-title">{t('settings.deleteVoice')}</span>
           </button>
         )}
@@ -399,7 +380,7 @@ export default function Settings() {
                 disabled={busy === 'upload'}
               />
               <label htmlFor="voice-file" className="button small file-pick" aria-hidden="true">
-                <FileAudio {...ICON} />
+                <Icon name="fileAudio" />
                 <span>{voiceFile ? voiceFile.name : t('settings.voiceChoose')}</span>
               </label>
             </div>
@@ -417,10 +398,9 @@ export default function Settings() {
             {t('settings.voiceUploadHelp')}
           </p>
           <div className="actions">
-            <button type="submit" className="button" disabled={!voiceConsent || busy !== null}>
-              <Upload {...ICON} />
-              <span>{t(busy === 'upload' ? 'settings.voiceUploading' : 'settings.voiceUpload')}</span>
-            </button>
+            <Button type="submit" icon="upload" disabled={!voiceConsent || busy !== null}>
+              {t(busy === 'upload' ? 'settings.voiceUploading' : 'settings.voiceUpload')}
+            </Button>
           </div>
         </form>
       )}
@@ -430,7 +410,7 @@ export default function Settings() {
         <h2 className="group-title" id="heading-caregiver">
           {t('settings.sectionCaregiver')}
         </h2>
-        <div className="group">
+        <div className="fields plate">
           <div className="field-cell">
             <label htmlFor="caregiver-name" className="field-label">
               {t('settings.caregiverNameLabel')}
@@ -463,12 +443,12 @@ export default function Settings() {
           {t('settings.caregiverDesc')} {t('settings.caregiverPhoneHint')}
         </p>
         <div className="actions">
-          <button type="submit" className="button" disabled={busy === 'caregiver'}>
+          <Button type="submit" disabled={busy === 'caregiver'}>
             {t(busy === 'caregiver' ? 'settings.savingCaregiver' : 'settings.saveCaregiver')}
-          </button>
+          </Button>
           {user?.caregiver_phone && (
             <a href={`https://wa.me/${user.caregiver_phone}`} target="_blank" rel="noopener noreferrer" className="button">
-              <ExternalLink {...ICON} />
+              <Icon name="externalLink" />
               <span>{t('settings.openWhatsApp')}</span>
             </a>
           )}
@@ -478,12 +458,12 @@ export default function Settings() {
       {/* Welcome guide */}
       <Group>
         <button type="button" className="row" onClick={() => go('/app/onboarding')}>
-          <BookOpen className="row-icon" {...ICON} />
+          <Icon name="book" className="row-icon" />
           <span className="row-text">
             <span className="row-title">{t('onboarding.revisitTitle')}</span>
             <span className="row-sub">{t('onboarding.revisitDesc')}</span>
           </span>
-          <ChevronRight className="row-chevron" {...ICON} />
+          <Icon name="chevronRight" className="row-chevron" />
         </button>
       </Group>
 
@@ -507,7 +487,7 @@ export default function Settings() {
 
       <Group>
         <button type="button" className="row" onClick={logout}>
-          <LogOut className="row-icon" {...ICON} />
+          <Icon name="logOut" className="row-icon" />
           <span className="row-title">{t('app.logOut')}</span>
         </button>
         <button
@@ -517,7 +497,7 @@ export default function Settings() {
           disabled={busy !== null}
           aria-haspopup="dialog"
         >
-          <Trash2 className="row-icon" {...ICON} />
+          <Icon name="trash" className="row-icon" />
           <span className="row-title">{t('settings.deleteAccount')}</span>
         </button>
       </Group>
@@ -531,11 +511,11 @@ export default function Settings() {
           <p className="sheet-text">{t('settings.speakLanguageWarning', { language: speakName(confirmSpeak) })}</p>
           <Alert error={error} />
           <div className="actions stacked">
-            <Pill onClick={handleSetSpeakLanguage} disabled={busy === 'language'}>
+            <PrimaryButton onClick={handleSetSpeakLanguage} disabled={busy === 'language'}>
               {busy === 'language'
                 ? t('settings.speakLanguageSwitching')
                 : t('settings.speakLanguageYes', { language: speakName(confirmSpeak) })}
-            </Pill>
+            </PrimaryButton>
             <button
               type="button"
               className="button"
@@ -567,7 +547,7 @@ export default function Settings() {
               {t('settings.deleteVoiceNo')}
             </button>
             <button type="button" className="button" onClick={handleDeleteVoice} disabled={busy === 'voice'}>
-              <Trash2 {...ICON} />
+              <Icon name="trash" />
               <span>{t(busy === 'voice' ? 'settings.deletingVoice' : 'settings.deleteVoiceYes')}</span>
             </button>
           </div>
@@ -592,7 +572,7 @@ export default function Settings() {
               {t('settings.deleteAccountNo')}
             </button>
             <button type="button" className="button" onClick={handleDeleteAccount} disabled={busy === 'account'}>
-              <Trash2 {...ICON} />
+              <Icon name="trash" />
               <span>{t(busy === 'account' ? 'settings.deletingAccount' : 'settings.deleteAccountYes')}</span>
             </button>
           </div>

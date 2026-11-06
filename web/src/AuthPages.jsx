@@ -1,11 +1,10 @@
-import { Check, CircleAlert, Eye, EyeOff } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import * as api from './api.js'
 import { safeNext, useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { isOnboarded } from './prefs.js'
-import { Alert, errorText, ICON, LangToggle, Pill, reducedMotion, ThemeToggle, useGo, Wordmark } from './ui.jsx'
+import { Alert, errorText, Grille, Icon, LangToggle, PrimaryButton, reducedMotion, ThemeToggle, useGo, Wordmark } from './ui/index.js'
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const MIN_PASSWORD = 8
@@ -19,7 +18,7 @@ const FIELD_OF = {
   no_invite_code: 'invite_code',
 }
 
-// One cell of a grouped form: the label above the input, then a hint or this field's error.
+// One field: the label above the input, then a hint and, under it, this field's error with an icon.
 function Field({ id, label, hint, error, children }) {
   const i18n = useLang()
   const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(' ') || undefined
@@ -36,7 +35,7 @@ function Field({ id, label, hint, error, children }) {
       )}
       {error && (
         <p className="field-error" id={`${id}-error`}>
-          <CircleAlert {...ICON} />
+          <Icon name="alert" />
           <span>{errorText(i18n, error)}</span>
         </p>
       )}
@@ -48,7 +47,7 @@ function PasswordInput({ value, onChange, inputRef, autoComplete, ...aria }) {
   const { t } = useLang()
   const [shown, setShown] = useState(false)
   return (
-    <>
+    <div className="input-with-action">
       <input
         ref={inputRef}
         type={shown ? 'text' : 'password'}
@@ -66,10 +65,10 @@ function PasswordInput({ value, onChange, inputRef, autoComplete, ...aria }) {
         aria-label={t(shown ? 'auth.hideLabel' : 'auth.showLabel')}
         onClick={() => setShown(!shown)}
       >
-        {shown ? <EyeOff {...ICON} /> : <Eye {...ICON} />}
+        <Icon name={shown ? 'eyeOff' : 'eye'} />
         <span aria-hidden="true">{t(shown ? 'auth.hide' : 'auth.show')}</span>
       </button>
-    </>
+    </div>
   )
 }
 
@@ -89,20 +88,26 @@ function EmailInput({ value, onChange, inputRef, ...aria }) {
   )
 }
 
-// The shared frame: the wordmark, language and theme at the top, then one centered column.
-function AuthFrame({ title, children }) {
+// The shared frame: the wordmark, language and theme at the top, then a small device panel.
+function AuthFrame({ title, children, footer }) {
   return (
     <div className="auth">
-      <header className="bar">
-        <Wordmark />
-        <div className="bar-end">
-          <LangToggle />
-          <ThemeToggle />
+      <header className="site-nav">
+        <div className="bar">
+          <Wordmark />
+          <div className="bar-end">
+            <LangToggle />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
-      <main className="auth-column">
-        <h1 className="large-title">{title}</h1>
-        {children}
+      <main className="auth-main">
+        <div className="device device-object auth-panel">
+          <Grille className="grille-strip" />
+          <h1 className="large-title">{title}</h1>
+          {children}
+        </div>
+        {footer}
       </main>
     </div>
   )
@@ -166,9 +171,19 @@ export function LoginPage() {
 
   const signupLink = next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'
   return (
-    <AuthFrame title={t('login.title')}>
+    <AuthFrame
+      title={t('login.title')}
+      footer={
+        <p className="auth-switch">
+          {t('login.new')}{' '}
+          <Link to={signupLink} viewTransition={!reducedMotion()}>
+            {t('login.create')}
+          </Link>
+        </p>
+      }
+    >
       <form className="auth-form" onSubmit={submit} noValidate>
-        <div className="group">
+        <div className="fields">
           <Field id="login-email" label={t('auth.email')} error={errors.email}>
             {(aria) => <EmailInput value={email} onChange={setEmail} inputRef={refs.email} {...aria} />}
           </Field>
@@ -185,16 +200,10 @@ export function LoginPage() {
           </Field>
         </div>
         <Alert error={errors.form} />
-        <Pill type="submit" className="block" disabled={busy}>
+        <PrimaryButton type="submit" className="block" disabled={busy}>
           {t(busy ? 'login.busy' : 'login.submit')}
-        </Pill>
+        </PrimaryButton>
       </form>
-      <p className="auth-switch">
-        {t('login.new')}{' '}
-        <Link to={signupLink} viewTransition={!reducedMotion()}>
-          {t('login.create')}
-        </Link>
-      </p>
     </AuthFrame>
   )
 }
@@ -270,9 +279,19 @@ export function SignupPage() {
 
   const loginLink = next ? `/login?next=${encodeURIComponent(next)}` : '/login'
   return (
-    <AuthFrame title={t('signup.title')}>
+    <AuthFrame
+      title={t('signup.title')}
+      footer={
+        <p className="auth-switch">
+          {t('signup.have')}{' '}
+          <Link to={loginLink} viewTransition={!reducedMotion()}>
+            {t('signup.signIn')}
+          </Link>
+        </p>
+      }
+    >
       <form className="auth-form" onSubmit={submit} noValidate>
-        <div className="group">
+        <div className="fields">
           <Field id="signup-name" label={t('signup.name')} error={errors.name}>
             {(aria) => (
               <input
@@ -344,7 +363,7 @@ export function SignupPage() {
                   onChange={() => setSpeaks(code)}
                 />
                 <span className="row-title">{label}</span>
-                <Check className="choice-check" {...ICON} />
+                <Icon name="check" className="choice-check" />
               </label>
             ))}
           </div>
@@ -370,26 +389,20 @@ export function SignupPage() {
         </fieldset>
 
         <Alert error={errors.form} />
-        <Pill
+        <PrimaryButton
           type="submit"
           className="block"
           disabled={!consent || busy}
           aria-describedby={consent ? undefined : 'consent-needed'}
         >
           {t(busy ? 'signup.busy' : 'signup.submit')}
-        </Pill>
+        </PrimaryButton>
         {!consent && (
           <p className="form-hint" id="consent-needed">
             {t('signup.consentNeeded')}
           </p>
         )}
       </form>
-      <p className="auth-switch">
-        {t('signup.have')}{' '}
-        <Link to={loginLink} viewTransition={!reducedMotion()}>
-          {t('signup.signIn')}
-        </Link>
-      </p>
     </AuthFrame>
   )
 }

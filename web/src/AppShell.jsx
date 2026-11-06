@@ -1,22 +1,14 @@
-import { AudioLines, BookOpen, ChartNoAxesColumn, LogOut, Mic, Presentation, Settings as SettingsIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { usePresenterMode } from './prefs.js'
 import PresenterBar from './PresenterBar.jsx'
-import { ICON, LangToggle, reducedMotion, ThemeToggle, Wordmark } from './ui.jsx'
-
-const TABS = [
-  { to: '/app/enroll', key: 'tab.enroll', Icon: AudioLines },
-  { to: '/app/speak', key: 'tab.speak', Icon: Mic },
-  { to: '/app/phrases', key: 'tab.phrases', Icon: BookOpen },
-  { to: '/app/progress', key: 'tab.progress', Icon: ChartNoAxesColumn },
-  { to: '/app/settings', key: 'tab.settings', Icon: SettingsIcon },
-]
+import { Icon, LangToggle, reducedMotion, ThemeToggle, Wordmark } from './ui/index.js'
+import { TabFace, TABS } from './ui/Tabs.jsx'
 
 // Every /app screen: a header (home, presenter mode, language, theme; on wide screens who is
-// signed in and log out, which phones find in Settings) and the bottom tabs.
+// signed in and log out, which phones find in Settings) and the tabs along the bottom.
 export default function AppShell() {
   const { user, logout } = useAuth()
   const { t } = useLang()
@@ -34,7 +26,7 @@ export default function AppShell() {
   }, [togglePresenter])
 
   return (
-    <>
+    <div className="app">
       <header className="app-header">
         <div className="bar">
           <Wordmark />
@@ -47,7 +39,7 @@ export default function AppShell() {
               title={presenterMode ? t('presenter.exit') : t('presenter.enter')}
               aria-label={presenterMode ? t('presenter.exit') : t('presenter.enter')}
             >
-              <Presentation {...ICON} />
+              <Icon name="presentation" />
               <span className="wide-only">{t('presenter.shortLabel')}</span>
             </button>
             <LangToggle />
@@ -57,7 +49,7 @@ export default function AppShell() {
               <span aria-hidden="true">{user.name}</span>
             </span>
             <button type="button" className="button small wide-only" onClick={logout}>
-              <LogOut {...ICON} />
+              <Icon name="logOut" />
               <span>{t('app.logOut')}</span>
             </button>
           </div>
@@ -72,14 +64,13 @@ export default function AppShell() {
 
       <nav className="tabs" aria-label={t('app.nav')}>
         <div className="tabs-inner">
-          {TABS.map(({ to, key, Icon }) => (
+          {TABS.map(({ to, key, icon }) => (
             <NavLink key={to} to={to} className="tab" viewTransition={!reducedMotion()}>
-              <Icon {...ICON} />
-              <span>{t(key)}</span>
+              <TabFace k={key} icon={icon} />
             </NavLink>
           ))}
         </div>
       </nav>
-    </>
+    </div>
   )
 }
