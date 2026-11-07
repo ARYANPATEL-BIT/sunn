@@ -55,7 +55,8 @@ export default {
     { title: 'Consent first', body: 'Nothing is recorded until you agree, and every recording starts with your own tap.' },
     {
       title: 'Used only to understand you',
-      body: "Audio is sent to Gnani's servers to be transcribed. Sunn uses it only to understand this one person.",
+      body:
+        "Audio is sent to Gnani's servers to be transcribed. Sunn uses it only to understand this one person. When turned on, the recognised text (never the audio) may be sent to an AI service to choose between similar phrases.",
     },
     { title: 'Delete anytime', body: 'Delete your account and every recording from inside the app, whenever you want.' },
     { title: 'Not a medical device', body: "Sunn helps with everyday communication. It doesn't diagnose or treat anything." },

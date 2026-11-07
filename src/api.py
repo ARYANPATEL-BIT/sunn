@@ -9,7 +9,8 @@ import subprocess
 import time
 import traceback
 import uuid
-from collections import defaultdict
+from collections import Counter, defaultdict
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -23,9 +24,11 @@ import auth
 import db
 import gnani
 import gnani_mock
+import llm_judge
 import log
 import matcher
 import prisma
+import reranker
 import schemas
 import speak
 
@@ -311,6 +314,8 @@ def trust_proxy():
 
 
 gnani_mock.check_startup(trust_proxy())  # never mock behind a proxy, and say so loudly when on
+gnani.check_startup()  # no key in real mode: fail now, not on the first call
+reranker.load()  # once, and only when RERANKER_ENABLED; a missing model is a warning
 
 
 def client_ip(request):
@@ -746,16 +751,42 @@ def priors_for(user_id):
     return matcher.usage_priors(uses, matcher.time_bucket(datetime.now(timezone.utc)))
 
 
+def history_for(user_id):
+    """(the last 3 phrases the user spoke, newest first; {phrase_id: times used}), for the judge."""
+    uses = db.rows("SELECT u.phrase_id, p.text FROM uses u JOIN phrases p ON p.id = u.phrase_id"
+                   " WHERE u.user_id = ? ORDER BY u.created_at DESC, u.id DESC", (user_id,))
+    return [u["text"] for u in uses[:3]], Counter(u["phrase_id"] for u in uses)
+
+
+@contextmanager
+def timer(timings, step):
+    started = time.monotonic()
+    yield
+    timings[step] = round(1000 * (time.monotonic() - started))
+
+
 @app.post("/me/recognize", response_model=schemas.Recognition)
 def recognize(audio_file: UploadFile = File(alias="audio"), context: schemas.Context | None = Form(None),
               user=Depends(current_user)):
     """Top 3 candidates for a recording. Each has score = similarity + context + freq + time
-    (see matcher.py) with those parts, urgent, and composed: a composed one is a template ×
-    slot word that isn't a phrase yet, with its template_id and slot_word_id."""
-    path, hypothesis = save_and_transcribe(user, audio_file)
-    ranked = matcher.rank(hypothesis, candidates_for(user), context, priors_for(user["id"]))
+    (see matcher.py), + rerank when RERANKER_ENABLED (src/reranker.py), with those parts, urgent,
+    and composed: a composed one is a template × slot word that isn't a phrase yet, with its
+    template_id and slot_word_id. When LLM_ENABLED, the judge (src/llm_judge.py) may put another
+    of the top 5 first: chosen_by says which did, and reason is the judge's when it did."""
+    timings = {"stt": None, "match": None, "rerank": None, "llm": None, "tts": None}  # tts: POST /speak
+    with timer(timings, "stt"):
+        path, hypothesis = save_and_transcribe(user, audio_file)
+    with timer(timings, "match"):
+        ranked = matcher.rank(hypothesis, candidates_for(user), context, priors_for(user["id"]), k=reranker.SHORTLIST)
+    if reranker.on():
+        with timer(timings, "rerank"):
+            ranked = reranker.rescore(hypothesis, ranked)
+    judged = {"shown": ranked[:llm_judge.SHOWN], "chosen_by": "matcher", "reason": None}
+    if llm_judge.should_ask(hypothesis, ranked):
+        with timer(timings, "llm"):
+            judged = llm_judge.judge(hypothesis, ranked, context, *history_for(user["id"]), user["id"])
     candidates = [{key: c[key] for key in ("phrase_id", "text", "score", "parts", "urgent", "composed",
-                                           "template_id", "slot_word_id") if key in c} for c in ranked]
+                                           "template_id", "slot_word_id") if key in c} for c in judged["shown"]]
     sample_id = db.execute(
         "INSERT INTO samples (user_id, audio_path, prisma_hypothesis, top1_phrase_id, created_at, language)"
         " VALUES (?, ?, ?, ?, ?, ?)", (user["id"], path, hypothesis, candidates[0]["phrase_id"] if candidates else None,
@@ -766,6 +797,9 @@ def recognize(audio_file: UploadFile = File(alias="audio"), context: schemas.Con
         "context": context,
         "candidates": candidates,
         "low_confidence": not candidates or candidates[0]["parts"]["similarity"] < matcher.LOW_CONFIDENCE,
+        "chosen_by": judged["chosen_by"],
+        "reason": judged["reason"],
+        "timings_ms": timings,
     }
 
 
@@ -797,14 +831,15 @@ def confirm(body: schemas.Confirm, user=Depends(current_user)):
 @app.post("/speak", response_class=FileResponse, responses={200: {"content": {"audio/wav": {}}}})
 def speak_text(body: schemas.Speak, user=Depends(current_user)):
     """Say text in the user's cloned voice when use_own_voice is on, else in the stock voice
-    for their language. Answers audio/wav."""
-    text = clean_text(body.text)
-    if user["use_own_voice"] and user["voice_embedding"]:
-        path = speak.synthesize(text, user["language"], json.loads(user["voice_embedding"]),
-                                cache_dir=f"{voice_folder(user)}/tts", user_id=user["id"])
-    else:
-        path = speak.synthesize(text, user["language"], user_id=user["id"])
-    return FileResponse(path, media_type="audio/wav")
+    for their language. Answers audio/wav, with how long Timbre took in Server-Timing."""
+    text, timings = clean_text(body.text), {}
+    with timer(timings, "tts"):
+        if user["use_own_voice"] and user["voice_embedding"]:
+            path = speak.synthesize(text, user["language"], json.loads(user["voice_embedding"]),
+                                    cache_dir=f"{voice_folder(user)}/tts", user_id=user["id"])
+        else:
+            path = speak.synthesize(text, user["language"], user_id=user["id"])
+    return FileResponse(path, media_type="audio/wav", headers={"Server-Timing": f"tts;dur={timings['tts']}"})
 
 
 @app.get("/me/stats", response_model=schemas.Stats)

@@ -47,6 +47,9 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       GNANI_MOCK: '1',
+      // No LLM calls and no reranker in the e2e, whatever .env says.
+      LLM_ENABLED: '0',
+      RERANKER_ENABLED: '0',
       TRUST_PROXY: '0',
       DEMO_INVITE_CODE: 'e2e-invite',
       DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'sunn-e2e-data-')),
