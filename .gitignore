@@ -9,6 +9,9 @@ logs/
 # Shared-model adapters and training logs (training/README.md). Learned from people's speech: never committed.
 models/
 training/runs/
+# Vaani audio and anything trained on it: research use only, never committed or shipped.
+ml/data/
+ml/models/
 web/node_modules/
 web/dist/
 web/test-results/
