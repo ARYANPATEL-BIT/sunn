@@ -1,6 +1,7 @@
 import os
 import uuid
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import requests
 
@@ -46,6 +47,132 @@ def test_signup_seeds_building_blocks_in_the_users_language(env):
     assert [(t["text"], t["slot"], t["fixed_part"]) for t in hi.get("/me/templates").json()] == [
         ("{item} चाहिए", "item", "चाहिए"), ("{person} को बुलाओ", "person", "को बुलाओ")]
     assert [t["fixed_part"] for t in en.get("/me/templates").json()] == ["I need", "Call"]
+
+
+def test_google_auth_signup_and_login(env):
+    client = env.client()
+    mock_res = MagicMock()
+    mock_res.status_code = 200
+    mock_res.json.return_value = {
+        "iss": "https://accounts.google.com",
+        "sub": "google-sub-999",
+        "email": "unique_google_user@example.com",
+        "email_verified": "true",
+        "name": "Google Tester",
+    }
+
+    with patch("requests.get", return_value=mock_res):
+        # 1. New user registration via Google
+        res = client.post("/auth/google", json={"id_token": "mock-token-xyz", "language": "hi", "consent": True})
+        assert res.status_code == 200
+        user = res.json()
+        assert user["email"] == "unique_google_user@example.com"
+        assert user["name"] == "Google Tester"
+        assert user["language"] == "hi"
+
+        # Check authenticated session
+        me = client.get("/auth/me")
+        assert me.status_code == 200
+        assert me.json()["id"] == user["id"]
+
+        # 2. Existing user logging in via Google
+        client2 = env.client()
+        res2 = client2.post("/auth/google", json={"id_token": "mock-token-xyz"})
+        assert res2.status_code == 200
+        assert res2.json()["id"] == user["id"]
+
+
+def test_google_auth_invalid_tokens_and_lockout(env, monkeypatch):
+    client = env.client()
+
+    # Empty token
+    assert client.post("/auth/google", json={"id_token": "   "}).status_code == 400
+
+    # Expired / invalid token from Google
+    mock_err = MagicMock()
+    mock_err.status_code = 400
+    mock_err.json.return_value = {"error_description": "Invalid Value"}
+    with patch("requests.get", return_value=mock_err):
+        res = client.post("/auth/google", json={"id_token": "bad-token"})
+        assert res.status_code == 401
+        assert res.json()["error"] == "invalid_google_token"
+
+    # Unverified email
+    mock_unverified = MagicMock()
+    mock_unverified.status_code = 200
+    mock_unverified.json.return_value = {
+        "iss": "https://accounts.google.com",
+        "sub": "sub-111",
+        "email": "unverified@example.com",
+        "email_verified": "false",
+    }
+    with patch("requests.get", return_value=mock_unverified):
+        res = client.post("/auth/google", json={"id_token": "unverified-token", "consent": True})
+        assert res.status_code == 400
+        assert res.json()["error"] == "unverified_email"
+
+    # Audience mismatch when GOOGLE_CLIENT_ID is configured
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "expected-client-id")
+    mock_mismatch = MagicMock()
+    mock_mismatch.status_code = 200
+    mock_mismatch.json.return_value = {
+        "iss": "https://accounts.google.com",
+        "sub": "sub-111",
+        "aud": "wrong-client-id",
+        "email": "aud@example.com",
+        "email_verified": "true",
+    }
+    with patch("requests.get", return_value=mock_mismatch):
+        res = client.post("/auth/google", json={"id_token": "token", "consent": True})
+        assert res.status_code == 401
+        assert res.json()["error"] == "invalid_google_token"
+
+
+def test_google_auth_invite_code_enforcement(env, monkeypatch):
+    monkeypatch.setenv("DEMO_INVITE_CODE", "judge-secret-2026")
+    client = env.client()
+
+    mock_res = MagicMock()
+    mock_res.status_code = 200
+    mock_res.json.return_value = {
+        "iss": "https://accounts.google.com",
+        "sub": "invite-sub-555",
+        "email": "invite_google@example.com",
+        "email_verified": "true",
+        "name": "Invited User",
+    }
+
+    with patch("requests.get", return_value=mock_res):
+        # Missing invite code should be rejected with 403
+        bad = client.post("/auth/google", json={"id_token": "token-1", "consent": True})
+        assert bad.status_code == 403
+        assert bad.json()["error"] == "invite_required"
+
+        # Correct invite code succeeds
+        good = client.post("/auth/google", json={"id_token": "token-1", "invite_code": "judge-secret-2026", "consent": True})
+        assert good.status_code == 200
+        assert good.json()["email"] == "invite_google@example.com"
+
+
+def test_google_auth_password_login_refused_gracefully(env):
+    client = env.client()
+    mock_res = MagicMock()
+    mock_res.status_code = 200
+    mock_res.json.return_value = {
+        "iss": "https://accounts.google.com",
+        "sub": "google-pwd-test",
+        "email": "nopassword@example.com",
+        "email_verified": "true",
+        "name": "No Password",
+    }
+
+    with patch("requests.get", return_value=mock_res):
+        client.post("/auth/google", json={"id_token": "token", "consent": True})
+
+    # User exists with oauth:google hash; password login should fail with bad_login and not 500
+    login_attempt = client.post("/auth/login", json={"email": "nopassword@example.com", "password": "anypassword"})
+    assert login_attempt.status_code == 401
+    assert login_attempt.json()["error"] == "bad_login"
 
 
 def test_default_phrases_get_contexts_and_urgency(env):
