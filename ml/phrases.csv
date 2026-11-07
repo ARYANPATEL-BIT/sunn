@@ -1,0 +1,311 @@
+phrase_id,hindi,latin,meaning_en,place
+1,मदद चाहिए,madad chahiye,I need help,any
+2,पानी चाहिए,paani chahiye,I need water,any
+3,बाथरूम जाना है,bathroom jana hai,I need the bathroom,any
+4,मुझे उठा दो,mujhe utha do,Help me sit up,any
+5,मुझे लिटा दो,mujhe lita do,Help me lie down,any
+6,करवट बदल दो,karvat badal do,Turn me on my side,any
+7,ठंड लग रही है,thand lag rahi hai,I feel cold,any
+8,गर्मी लग रही है,garmi lag rahi hai,I feel hot,any
+9,पंखा चला दो,pankha chala do,Turn on the fan,any
+10,लाइट बंद कर दो,light band kar do,Turn off the light,any
+11,चश्मा दे दो,chashma de do,Give me my glasses,any
+12,दर्द हो रहा है,dard ho raha hai,I'm in pain,hospital
+13,सिर में दर्द है,sir mein dard hai,My head hurts,hospital
+14,पेट में दर्द है,pet mein dard hai,My stomach hurts,hospital
+15,दवाई दे दो,dawai de do,Give me my medicine,hospital
+16,डॉक्टर को बुलाओ,doctor ko bulao,Call the doctor,hospital
+17,सांस लेने में तकलीफ़ है,saans lene mein takleef hai,I can't breathe properly,hospital
+18,चक्कर आ रहे हैं,chakkar aa rahe hain,I feel dizzy,hospital
+19,जी घबरा रहा है,ji ghabra raha hai,I feel uneasy,hospital
+20,थकान हो रही है,thakaan ho rahi hai,I feel tired,hospital
+21,मैं ठीक हूँ,main theek hoon,I'm fine,hospital
+22,भूख लगी है,bhookh lagi hai,I'm hungry,home
+23,खाना दे दो,khana de do,Give me some food,home
+24,चाय पीनी है,chai peeni hai,I want tea,home
+25,दूध चाहिए,doodh chahiye,I need milk,home
+26,थोड़ा और दो,thoda aur do,A little more,home
+27,"बस, पेट भर गया","bas, pet bhar gaya","That's enough, I'm full",home
+28,खाना गरम कर दो,khana garam kar do,Heat up the food,home
+29,नमक कम है,namak kam hai,It needs more salt,home
+30,गरम पानी चाहिए,garam paani chahiye,I need warm water,home
+31,कुछ मीठा दो,kuch meetha do,Give me something sweet,home
+32,माँ को बुलाओ,maa ko bulao,Call my mother,home
+33,पापा को बुलाओ,papa ko bulao,Call my father,home
+34,बेटे को फ़ोन करो,bete ko phone karo,Phone my son,home
+35,बेटी को बुलाओ,beti ko bulao,Call my daughter,home
+36,भैया को बुलाओ,bhaiya ko bulao,Call my brother,home
+37,दीदी को बुलाओ,didi ko bulao,Call my sister,home
+38,सब लोग कहाँ हैं,sab log kahan hain,Where is everyone,home
+39,मेरे पास बैठो,mere paas baitho,Sit with me,home
+40,मुझे अकेला मत छोड़ो,mujhe akela mat chhodo,Don't leave me alone,home
+41,फ़ोन लगा दो,phone laga do,Make a phone call for me,home
+42,नमस्ते,namaste,Hello,any
+43,धन्यवाद,dhanyavaad,Thank you,any
+44,हाँ,haan,Yes,any
+45,नहीं,nahin,No,any
+46,ठीक है,theek hai,Okay,any
+47,माफ़ करना,maaf karna,Sorry,any
+48,एक मिनट रुको,ek minute ruko,Wait a minute,any
+49,शुभ रात्रि,shubh ratri,Good night,any
+50,आप कैसे हो,aap kaise ho,How are you,any
+51,बहुत अच्छा,bahut achha,Very good,any
+52,कंबल ओढ़ा दो,kambal odha do,Cover me with a blanket,home
+53,तकिया ठीक कर दो,takiya theek kar do,Fix my pillow,home
+54,पंखा बंद कर दो,pankha band kar do,Turn off the fan,home
+55,लाइट जला दो,light jala do,Turn on the light,home
+56,खिड़की खोल दो,khidki khol do,Open the window,home
+57,खिड़की बंद कर दो,khidki band kar do,Close the window,home
+58,दरवाज़ा खोल दो,darwaza khol do,Open the door,home
+59,दरवाज़ा बंद कर दो,darwaza band kar do,Close the door,home
+60,मुझे नहाना है,mujhe nahana hai,I want to bathe,home
+61,कपड़े बदलने हैं,kapde badalne hain,I need to change my clothes,home
+62,मुझे सोना है,mujhe sona hai,I want to sleep,home
+63,नींद नहीं आ रही,neend nahin aa rahi,I can't sleep,home
+64,टीवी चला दो,tv chala do,Turn on the TV,home
+65,टीवी बंद कर दो,tv band kar do,Turn off the TV,home
+66,आवाज़ धीमी करो,awaaz dheemi karo,Turn the volume down,home
+67,आवाज़ तेज़ करो,awaaz tez karo,Turn the volume up,home
+68,मुझे बाहर ले चलो,mujhe bahar le chalo,Take me outside,any
+69,व्हीलचेयर ले आओ,wheelchair le aao,Bring the wheelchair,any
+70,पैर दबा दो,pair daba do,Press my legs,home
+71,पीठ खुजा दो,peeth khuja do,Scratch my back,home
+72,बाल बना दो,baal bana do,Comb my hair,home
+73,दाँत साफ़ करने हैं,daant saaf karne hain,I need to brush my teeth,home
+74,मुँह पोंछ दो,munh ponchh do,Wipe my face,home
+75,हाथ धोने हैं,haath dhone hain,I need to wash my hands,home
+76,डायपर बदल दो,diaper badal do,Change my diaper,any
+77,चादर बदल दो,chadar badal do,Change the bedsheet,any
+78,मच्छर काट रहे हैं,machchhar kaat rahe hain,Mosquitoes are biting me,home
+79,बहुत शोर है,bahut shor hai,It's too noisy,any
+80,रेडियो चला दो,radio chala do,Turn on the radio,home
+81,मोबाइल चार्ज कर दो,mobile charge kar do,Charge my phone,any
+82,मेरा मोबाइल कहाँ है,mera mobile kahan hai,Where is my phone,any
+83,चप्पल दे दो,chappal de do,Give me my slippers,home
+84,छड़ी दे दो,chhadi de do,Give me my walking stick,home
+85,अख़बार पढ़ कर सुनाओ,akhbaar padh kar sunao,Read me the newspaper,home
+86,मुझे थूकना है,mujhe thookna hai,I need to spit,any
+87,पर्दे खींच दो,parde kheench do,Draw the curtains,home
+88,हीटर चला दो,heater chala do,Turn on the heater,home
+89,एसी बंद कर दो,ac band kar do,Turn off the AC,home
+90,चश्मा साफ़ कर दो,chashma saaf kar do,Clean my glasses,home
+91,स्ट्रॉ दे दो,straw de do,Give me a straw,any
+92,मुझे धूप में बैठना है,mujhe dhoop mein baithna hai,I want to sit in the sun,home
+93,खिड़की के पास ले चलो,khidki ke paas le chalo,Take me to the window,home
+94,पैर में दर्द है,pair mein dard hai,My leg hurts,hospital
+95,कमर में दर्द है,kamar mein dard hai,My lower back hurts,hospital
+96,छाती में दर्द है,chhati mein dard hai,I have chest pain,hospital
+97,दाँत में दर्द है,daant mein dard hai,I have a toothache,hospital
+98,गले में दर्द है,gale mein dard hai,I have a sore throat,hospital
+99,हाथ में दर्द है,haath mein dard hai,My hand hurts,hospital
+100,घुटने में दर्द है,ghutne mein dard hai,My knee hurts,hospital
+101,कान में दर्द है,kaan mein dard hai,My ear hurts,hospital
+102,आँखों में जलन है,aankhon mein jalan hai,My eyes are burning,hospital
+103,बुखार लग रहा है,bukhaar lag raha hai,I feel feverish,hospital
+104,खांसी आ रही है,khaansi aa rahi hai,I'm coughing,hospital
+105,जुकाम हो गया है,zukaam ho gaya hai,I have a cold,hospital
+106,उल्टी आ रही है,ulti aa rahi hai,I feel like vomiting,hospital
+107,दस्त लग गए हैं,dast lag gaye hain,I have diarrhoea,hospital
+108,पेट साफ़ नहीं हुआ,pet saaf nahin hua,I'm constipated,hospital
+109,खुजली हो रही है,khujli ho rahi hai,I'm itching,any
+110,हाथ सुन्न हो गया है,haath sunn ho gaya hai,My hand has gone numb,hospital
+111,हाथ काँप रहे हैं,haath kaanp rahe hain,My hands are shaking,hospital
+112,बहुत कमज़ोरी है,bahut kamzori hai,I feel very weak,hospital
+113,मैं गिर गया,main gir gaya,I fell down,any
+114,चोट लग गई,chot lag gayi,I got hurt,any
+115,खून निकल रहा है,khoon nikal raha hai,I'm bleeding,any
+116,पट्टी बदल दो,patti badal do,Change the bandage,hospital
+117,दवाई का टाइम हो गया,dawai ka time ho gaya,It's time for my medicine,any
+118,दवाई खा ली है,dawai kha li hai,I've taken my medicine,any
+119,शुगर चेक करो,sugar check karo,Check my sugar,hospital
+120,बीपी चेक करो,bp check karo,Check my blood pressure,hospital
+121,इंजेक्शन मत लगाओ,injection mat lagao,Don't give me an injection,hospital
+122,दर्द कम हुआ है,dard kam hua hai,The pain is less now,hospital
+123,आज बेहतर लग रहा है,aaj behtar lag raha hai,I feel better today,hospital
+124,मेरी तबीयत ठीक नहीं है,meri tabiyat theek nahin hai,I'm not feeling well,hospital
+125,निगलने में तकलीफ़ है,nigalne mein takleef hai,It's hard to swallow,hospital
+126,बोलने में तकलीफ़ है,bolne mein takleef hai,It's hard to speak,hospital
+127,पसीना आ रहा है,paseena aa raha hai,I'm sweating,any
+128,मुँह सूख रहा है,munh sookh raha hai,My mouth is dry,any
+129,पेट फूल गया है,pet phool gaya hai,My stomach feels bloated,hospital
+130,पैर में ऐंठन है,pair mein ainthan hai,I have a cramp in my leg,hospital
+131,एम्बुलेंस बुलाओ,ambulance bulao,Call an ambulance,any
+132,जल्दी आओ,jaldi aao,Come quickly,any
+133,मुझे अस्पताल ले चलो,mujhe aspatal le chalo,Take me to the hospital,any
+134,दिल ज़ोर से धड़क रहा है,dil zor se dhadak raha hai,My heart is racing,hospital
+135,नर्स को बुलाओ,nurse ko bulao,Call the nurse,hospital
+136,ड्रिप ख़त्म हो गई,drip khatam ho gayi,The drip has finished,hospital
+137,सुई चुभ रही है,sui chubh rahi hai,The needle hurts,hospital
+138,बिस्तर ऊपर कर दो,bistar upar kar do,Raise the bed,hospital
+139,बिस्तर नीचे कर दो,bistar neeche kar do,Lower the bed,hospital
+140,रिपोर्ट कब आएगी,report kab aayegi,When will the report come,hospital
+141,डॉक्टर कब आएँगे,doctor kab aayenge,When will the doctor come,hospital
+142,छुट्टी कब मिलेगी,chhutti kab milegi,When will I be discharged,hospital
+143,मुझे घर जाना है,mujhe ghar jana hai,I want to go home,any
+144,ऑक्सीजन लगा दो,oxygen laga do,Put the oxygen on,hospital
+145,मास्क हटा दो,mask hata do,Take off the mask,hospital
+146,यह कौन सी दवाई है,yeh kaun si dawai hai,Which medicine is this,hospital
+147,मुझे इससे एलर्जी है,mujhe isse allergy hai,I'm allergic to this,hospital
+148,ऑपरेशन कब है,operation kab hai,When is the operation,hospital
+149,क्या मैं पानी पी सकता हूँ,kya main paani pee sakta hoon,Can I drink water,hospital
+150,जाँच कब होगी,jaanch kab hogi,When is my test,hospital
+151,एक्सरे कब होगा,xray kab hoga,When is the X-ray,hospital
+152,पेशाब की थैली भर गई,peshab ki thaili bhar gayi,The urine bag is full,hospital
+153,मिलने का टाइम कब है,milne ka time kab hai,When are visiting hours,hospital
+154,ड्रेसिंग कब होगी,dressing kab hogi,When will the dressing be changed,hospital
+155,मेरी फ़ाइल कहाँ है,meri file kahan hai,Where is my file,hospital
+156,नाश्ता कब मिलेगा,nashta kab milega,When is breakfast,any
+157,लिफ़्ट कहाँ है,lift kahan hai,Where is the lift,hospital
+158,घंटी दबा दो,ghanti daba do,Press the call bell,hospital
+159,दादी को बुलाओ,dadi ko bulao,Call my grandmother,home
+160,दादा जी को बुलाओ,dada ji ko bulao,Call my grandfather,home
+161,चाचा को बुलाओ,chacha ko bulao,Call my uncle,home
+162,पत्नी को बुलाओ,patni ko bulao,Call my wife,home
+163,पति को बुलाओ,pati ko bulao,Call my husband,home
+164,बच्चों को बुलाओ,bachchon ko bulao,Call the children,home
+165,बहू को बुलाओ,bahu ko bulao,Call my daughter-in-law,home
+166,पड़ोसी को बुलाओ,padosi ko bulao,Call the neighbour,home
+167,दोस्त को फ़ोन करो,dost ko phone karo,Phone my friend,home
+168,वीडियो कॉल लगाओ,video call lagao,Make a video call,home
+169,बेटा कब आएगा,beta kab aayega,When will my son come,home
+170,सब ठीक हैं ना,sab theek hain na,Is everyone all right,home
+171,बच्चे कहाँ हैं,bachche kahan hain,Where are the children,home
+172,घर पर कौन है,ghar par kaun hai,Who is at home,home
+173,किसका फ़ोन था,kiska phone tha,Who was on the phone,home
+174,कोई आया है क्या,koi aaya hai kya,Has someone come,home
+175,मुझसे बात करो,mujhse baat karo,Talk to me,any
+176,मेरा हाथ पकड़ो,mera haath pakdo,Hold my hand,any
+177,मुझे गले लगाओ,mujhe gale lagao,Hug me,home
+178,कहानी सुनाओ,kahani sunao,Tell me a story,home
+179,भजन लगा दो,bhajan laga do,Play some bhajans,home
+180,गाना चला दो,gaana chala do,Play a song,home
+181,पूजा करनी है,pooja karni hai,I want to pray,home
+182,फ़ोटो दिखाओ,photo dikhao,Show me the photos,home
+183,मेहमान आए हैं,mehmaan aaye hain,Guests have come,home
+184,मैं खुश हूँ,main khush hoon,I'm happy,any
+185,मैं उदास हूँ,main udaas hoon,I'm sad,any
+186,मुझे गुस्सा आ रहा है,mujhe gussa aa raha hai,I'm angry,any
+187,मुझे डर लग रहा है,mujhe dar lag raha hai,I'm scared,any
+188,मैं परेशान हूँ,main pareshaan hoon,I'm worried,any
+189,मैं बोर हो रहा हूँ,main bore ho raha hoon,I'm bored,any
+190,मुझे अकेलापन लग रहा है,mujhe akelapan lag raha hai,I feel lonely,any
+191,मुझे रोना आ रहा है,mujhe rona aa raha hai,I feel like crying,any
+192,तुम्हारी याद आई,tumhari yaad aayi,I missed you,any
+193,मैं तुमसे प्यार करता हूँ,main tumse pyaar karta hoon,I love you,any
+194,चिंता मत करो,chinta mat karo,Don't worry,any
+195,मुझे समझ नहीं आया,mujhe samajh nahin aaya,I didn't understand,any
+196,फिर से बोलो,phir se bolo,Say it again,any
+197,धीरे बोलो,dheere bolo,Speak slowly,any
+198,ज़ोर से बोलो,zor se bolo,Speak louder,any
+199,मुझे परेशान मत करो,mujhe pareshaan mat karo,Don't bother me,any
+200,थोड़ी देर अकेला छोड़ दो,thodi der akela chhod do,Leave me alone for a while,any
+201,मुझे अच्छा लगा,mujhe achha laga,I liked it,any
+202,मुझे यह पसंद नहीं,mujhe yeh pasand nahin,I don't like this,any
+203,बहुत मज़ा आया,bahut maza aaya,That was fun,any
+204,मुझे शर्म आ रही है,mujhe sharm aa rahi hai,I feel embarrassed,any
+205,हिम्मत रखो,himmat rakho,Stay strong,any
+206,यह कितने का है,yeh kitne ka hai,How much is this,market
+207,बहुत महँगा है,bahut mehenga hai,It's too expensive,market
+208,थोड़ा कम करो,thoda kam karo,Lower the price a little,market
+209,एक किलो दे दो,ek kilo de do,Give me one kilo,market
+210,आधा किलो दे दो,aadha kilo de do,Give me half a kilo,market
+211,सब्ज़ी लेनी है,sabzi leni hai,I need to buy vegetables,market
+212,फल लेने हैं,phal lene hain,I need to buy fruit,market
+213,ब्रेड दे दो,bread de do,Give me bread,market
+214,अंडे दे दो,ande de do,Give me eggs,market
+215,आटा चाहिए,aata chahiye,I need flour,market
+216,चावल चाहिए,chawal chahiye,I need rice,market
+217,दाल चाहिए,daal chahiye,I need lentils,market
+218,चीनी चाहिए,cheeni chahiye,I need sugar,market
+219,तेल चाहिए,tel chahiye,I need cooking oil,market
+220,साबुन चाहिए,sabun chahiye,I need soap,market
+221,दवाई की दुकान कहाँ है,dawai ki dukaan kahan hai,Where is the chemist,market
+222,कुल कितना हुआ,kul kitna hua,How much is it in total,market
+223,छुट्टे नहीं हैं,chhutte nahin hain,I don't have change,market
+224,यूपीआई से दूँगा,upi se doonga,I'll pay by UPI,market
+225,कार्ड चलेगा क्या,card chalega kya,Do you take cards,market
+226,थैली दे दो,thaili de do,Give me a bag,market
+227,यह ताज़ा है क्या,yeh taaza hai kya,Is this fresh,market
+228,दूसरा दिखाओ,doosra dikhao,Show me another one,market
+229,बड़ा साइज़ दिखाओ,bada size dikhao,Show me a bigger size,market
+230,यह वापस करना है,yeh wapas karna hai,I want to return this,market
+231,दुकान कब बंद होगी,dukaan kab band hogi,When does the shop close,market
+232,घर पर भेज दो,ghar par bhej do,Deliver it to my home,market
+233,ऑटो बुला दो,auto bula do,Get me an auto,market
+234,यहाँ रोक दो,yahan rok do,Stop here,any
+235,सीधे चलो,seedhe chalo,Go straight,any
+236,बाएँ मुड़ो,baayen mudo,Turn left,any
+237,दाएँ मुड़ो,daayen mudo,Turn right,any
+238,बस स्टैंड कहाँ है,bus stand kahan hai,Where is the bus stand,market
+239,टमाटर दे दो,tamatar de do,Give me tomatoes,market
+240,प्याज़ दे दो,pyaaz de do,Give me onions,market
+241,आलू दे दो,aalu de do,Give me potatoes,market
+242,नारियल पानी दो,nariyal paani do,Give me coconut water,market
+243,रिचार्ज करवाना है,recharge karwana hai,I need a phone recharge,market
+244,एटीएम कहाँ है,atm kahan hai,Where is the ATM,market
+245,शौचालय कहाँ है,shauchalay kahan hai,Where is the toilet,market
+246,शायद,shayad,Maybe,any
+247,पता नहीं,pata nahin,I don't know,any
+248,मुझे नहीं चाहिए,mujhe nahin chahiye,I don't want it,any
+249,जल्दी करो,jaldi karo,Hurry up,any
+250,आराम से,aaram se,Gently,any
+251,कोई बात नहीं,koi baat nahin,No problem,any
+252,अलविदा,alvida,Goodbye,any
+253,सुप्रभात,suprabhat,Good morning,any
+254,आपका स्वागत है,aapka swagat hai,You're welcome,any
+255,मुझे पता है,mujhe pata hai,I know,any
+256,यह ग़लत है,yeh galat hai,That's wrong,any
+257,यह नहीं वह,yeh nahin woh,"Not this one, that one",any
+258,इधर आओ,idhar aao,Come here,any
+259,उधर रख दो,udhar rakh do,Put it over there,any
+260,क्या हुआ,kya hua,What happened,any
+261,आप कौन हैं,aap kaun hain,Who are you,any
+262,आपका नाम क्या है,aapka naam kya hai,What is your name,any
+263,जन्मदिन मुबारक हो,janmdin mubarak ho,Happy birthday,any
+264,बधाई हो,badhai ho,Congratulations,any
+265,चलो चलते हैं,chalo chalte hain,Let's go,any
+266,अभी नहीं,abhi nahin,Not now,any
+267,थोड़ी देर बाद,thodi der baad,After a while,any
+268,मुझे एक बात कहनी है,mujhe ek baat kehni hai,I want to say something,any
+269,धीरे चलो,dheere chalo,Walk slowly,any
+270,कितने बजे हैं,kitne baje hain,What time is it,any
+271,आज कौन सा दिन है,aaj kaun sa din hai,What day is it today,any
+272,आज क्या तारीख़ है,aaj kya tareekh hai,What is the date today,any
+273,क्या सुबह हो गई,kya subah ho gayi,Is it morning yet,any
+274,कल आना,kal aana,Come tomorrow,any
+275,मैं घर पर हूँ,main ghar par hoon,I'm at home,any
+276,मुझे पार्क जाना है,mujhe park jana hai,I want to go to the park,any
+277,मुझे बाज़ार जाना है,mujhe bazaar jana hai,I want to go to the market,any
+278,मुझे बैंक जाना है,mujhe bank jana hai,I want to go to the bank,any
+279,मुझे मंदिर जाना है,mujhe mandir jana hai,I want to go to the temple,any
+280,छत पर ले चलो,chhat par le chalo,Take me up to the roof,home
+281,बालकनी में बैठना है,balcony mein baithna hai,I want to sit on the balcony,home
+282,गाड़ी निकालो,gaadi nikalo,Bring the car out,home
+283,हम कहाँ जा रहे हैं,hum kahan ja rahe hain,Where are we going,any
+284,कितनी दूर है,kitni door hai,How far is it,any
+285,कब पहुँचेंगे,kab pahunchenge,When will we get there,any
+286,क्या बाहर बारिश हो रही है,kya bahar baarish ho rahi hai,Is it raining outside,any
+287,आज मौसम कैसा है,aaj mausam kaisa hai,How is the weather today,any
+288,खाने का टाइम हो गया,khane ka time ho gaya,It's mealtime,home
+289,शाम को टहलने चलें,shaam ko tahalne chalen,Shall we go for an evening walk,home
+290,स्टेशन कहाँ है,station kahan hai,Where is the station,any
+291,यह कौन सी जगह है,yeh kaun si jagah hai,What place is this,any
+292,रोटी दे दो,roti de do,Give me a roti,home
+293,दाल चावल खाना है,daal chawal khana hai,I want dal and rice,home
+294,खिचड़ी बना दो,khichdi bana do,Make me some khichdi,home
+295,फल काट दो,phal kaat do,Cut some fruit for me,home
+296,जूस पीना है,juice peena hai,I want some juice,home
+297,ठंडा पानी चाहिए,thanda paani chahiye,I need cold water,home
+298,कॉफ़ी पीनी है,coffee peeni hai,I want coffee,home
+299,बिस्कुट दे दो,biscuit de do,Give me a biscuit,home
+300,मिर्च ज़्यादा है,mirch zyada hai,It's too spicy,home
+301,मुझे यह नहीं खाना,mujhe yeh nahin khana,I don't want to eat this,home
+302,चम्मच दे दो,chammach de do,Give me a spoon,home
+303,मुझे खाना खिला दो,mujhe khana khila do,Feed me,home
+304,दलिया दे दो,daliya de do,Give me porridge,home
+305,सूप पीना है,soup peena hai,I want soup,home
+306,दही चाहिए,dahi chahiye,I want curd,home
+307,नमक ज़्यादा है,namak zyada hai,It's too salty,home
+308,चीनी कम डालना,cheeni kam daalna,Put in less sugar,home
+309,खाना बहुत अच्छा है,khana bahut achha hai,The food is very good,home
+310,छोटे टुकड़े कर दो,chhote tukde kar do,Cut it into small pieces,home
