@@ -1,3 +1,6 @@
+import csv
+import functools
+import os
 import re
 import unicodedata
 from collections import Counter
@@ -18,6 +21,8 @@ CLEAR_SIMILARITY = 90  # a raw hypothesis this close to the confirmed phrase nee
 CONTEXTS = ("home", "hospital", "market", "any")
 SLOTS = ("item", "person", "place")
 SLOT = re.compile(r"\{(" + "|".join(SLOTS) + r")\}")
+# Hand-written Latin spellings and English meanings of the starter phrases and more.
+GLOSSARY = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "ml", "phrases.csv")
 
 
 def has_devanagari(text):
@@ -32,6 +37,24 @@ def normalize(text):
         text = sanscript.transliterate(text, sanscript.DEVANAGARI, sanscript.ITRANS)
     text = "".join(c for c in text.lower() if c.isspace() or unicodedata.category(c)[0] in "LNM")
     return " ".join(text.split())
+
+
+@functools.cache
+def glossary():
+    """Devanagari phrase -> (Latin spelling, English meaning), from GLOSSARY; {} without it."""
+    try:
+        with open(GLOSSARY, encoding="utf-8") as f:
+            return {unicodedata.normalize("NFC", r["hindi"]): (r["latin"], r["meaning_en"]) for r in csv.DictReader(f)}
+    except OSError:
+        return {}
+
+
+def gloss(text):
+    """(Latin spelling, English meaning) of a phrase, for the reranker and the judge: GLOSSARY's,
+    else its normalized ITRANS spelling and no meaning. An English phrase is both."""
+    if not has_devanagari(text):
+        return text, text
+    return glossary().get(unicodedata.normalize("NFC", text), (normalize(text), ""))
 
 
 def similarity(a, b):
