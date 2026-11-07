@@ -12,6 +12,7 @@ import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
+import requests
 from fastapi import Cookie, Depends, FastAPI, File, Form, Request, Response, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
@@ -382,6 +383,83 @@ def login(body: schemas.Login, response: Response):
     auth.set_session(response, user["id"])
     log.event("login", user_id=user["id"])
     return public(user)
+
+
+@app.post("/auth/google", response_model=schemas.User)
+def auth_google(body: schemas.GoogleAuth, request: Request, response: Response):
+    """Authenticate or register with a Google Identity Services ID token."""
+    token = body.id_token.strip()
+    if not token:
+        raise Refused(400, "invalid_google_token", "Google ID token is required")
+
+    google_client_id = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
+    try:
+        res = requests.get(
+            "https://oauth2.googleapis.com/tokeninfo",
+            params={"id_token": token},
+            timeout=5,
+        )
+    except Exception:
+        log.event("google_auth_failed", level=logging.WARNING, reason="network_error")
+        raise Refused(502, "google_unreachable", "could not reach Google verification services")
+
+    if res.status_code != 200:
+        raise Refused(401, "invalid_google_token", "invalid or expired Google token")
+
+    payload = res.json()
+    issuer = payload.get("iss", "")
+    if issuer not in ("accounts.google.com", "https://accounts.google.com"):
+        raise Refused(401, "invalid_google_token", "unrecognized token issuer")
+
+    aud = payload.get("aud", "")
+    if google_client_id and aud != google_client_id:
+        log.event("google_auth_failed", level=logging.WARNING, reason="audience_mismatch", aud=aud)
+        raise Refused(401, "invalid_google_token", "token was not issued for this application")
+
+    email = (payload.get("email") or "").strip().lower()
+    if not email or not EMAIL.fullmatch(email):
+        raise Refused(400, "bad_email", "invalid email in Google token")
+
+    verified = str(payload.get("email_verified", "")).lower() == "true"
+    if not verified:
+        raise Refused(400, "unverified_email", "Google email is not verified")
+
+    google_id = str(payload.get("sub", "")).strip()
+    name = (payload.get("name") or payload.get("given_name") or email.split("@")[0]).strip()
+
+    user = None
+    if google_id:
+        user = db.row("SELECT * FROM users WHERE google_id = ?", (google_id,))
+    if not user:
+        user = db.row("SELECT * FROM users WHERE email = ?", (email,))
+
+    if user:
+        if google_id and not user["google_id"]:
+            db.execute("UPDATE users SET google_id = ? WHERE id = ?", (google_id, user["id"]))
+            user = get_user(user["id"])
+        auth.set_session(response, user["id"])
+        log.event("login_google", user_id=user["id"])
+        return public(user)
+
+    # New user: check invite and consent
+    check_invite(request, body.invite_code)
+    if not body.consent:
+        raise Refused(400, "consent_required", "consent must be true")
+
+    language = body.language if body.language in ("hi", "en") else "en"
+    try:
+        user_id = db.execute(
+            "INSERT INTO users (name, email, password_hash, language, consent_given_at, google_id) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (name, email, "oauth:google", language, now(), google_id or None),
+        )
+    except sqlite3.IntegrityError:
+        raise Refused(409, "email_taken", "an account with this email already exists")
+
+    add_default_building_blocks(user_id, language)
+    auth.set_session(response, user_id)
+    log.event("signup_google", user_id=user_id)
+    return public(get_user(user_id))
 
 
 @app.post("/auth/logout", response_model=schemas.Ok)
@@ -780,6 +858,12 @@ def usage(user=Depends(current_user)):
         " FROM api_calls GROUP BY kind")}
     sent, limit = sum(r["sent"] for r in by_kind.values()), gnani.call_limit()
     return {"limit": limit, "sent": sent, "remaining": max(0, limit - sent), "by_kind": by_kind}
+
+
+@app.get("/auth/google/config", response_model=schemas.GoogleConfig)
+def google_config():
+    """Google OAuth client ID for Google Identity Services; empty when unconfigured."""
+    return {"client_id": os.environ.get("GOOGLE_CLIENT_ID", "").strip()}
 
 
 @app.get("/config", response_model=schemas.Config)

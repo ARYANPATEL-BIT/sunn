@@ -19,6 +19,7 @@ ErrorCode = Literal[
     # Specific refusals the app words on their own.
     "bad_login", "too_many_attempts", "email_taken", "no_name", "bad_email", "short_password",
     "phrase_exists", "no_voice", "not_owner", "bad_audio", "server_error",
+    "invalid_google_token", "google_unreachable", "unverified_email",
 ]
 
 
@@ -64,6 +65,13 @@ class Login(Request):
     password: str
 
 
+class GoogleAuth(Request):
+    id_token: str
+    invite_code: str | None = None
+    language: Language = "en"
+    consent: bool = True
+
+
 class User(BaseModel):
     model_config = example(id=7, name="सुनीता", email="sunita@example.com", language="hi",
                            consent_given_at="2026-10-01T09:30:00Z", caregiver_name="राहुल",
@@ -90,6 +98,11 @@ class UserUpdate(Request):
 class Config(BaseModel):
     model_config = example(invite_required=False)
     invite_required: bool  # sign-up needs an invite code
+
+
+class GoogleConfig(BaseModel):
+    model_config = example(client_id="")
+    client_id: str  # Google OAuth Client ID for GIS
 
 
 # --- phrases
