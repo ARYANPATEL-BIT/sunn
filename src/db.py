@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS users (
     voice_consent_given_at TEXT,
     use_own_voice INTEGER NOT NULL DEFAULT 0,
     caregiver_name TEXT,
-    caregiver_phone TEXT
+    caregiver_phone TEXT,
+    google_id TEXT
 );
 -- contexts is comma separated: home, hospital, market, or any.
 CREATE TABLE IF NOT EXISTS phrases (
@@ -95,6 +96,7 @@ ADDED_COLUMNS = [
     ("users", "use_own_voice", "INTEGER NOT NULL DEFAULT 0"),
     ("users", "caregiver_name", "TEXT"),
     ("users", "caregiver_phone", "TEXT"),
+    ("users", "google_id", "TEXT"),
     ("phrases", "contexts", "TEXT NOT NULL DEFAULT 'any'"),
     ("phrases", "urgent", "INTEGER NOT NULL DEFAULT 0"),
     ("samples", "slot_word_id", "INTEGER REFERENCES slot_words(id)"),

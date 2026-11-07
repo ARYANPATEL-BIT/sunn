@@ -29,12 +29,13 @@ def hash_password(password):
 
 
 def check_password(password_hash, password):
-    """password_hash is None for an unknown email: it still runs a full verify, then fails."""
+    """password_hash is None (or oauth:...) for an unknown email or oauth user: runs a full verify, then fails."""
+    is_valid_hash = bool(password_hash and not password_hash.startswith("oauth:"))
     try:
-        hasher.verify(password_hash or DUMMY_HASH, password)
-    except VerificationError:
+        hasher.verify(password_hash if is_valid_hash else DUMMY_HASH, password)
+    except Exception:
         return False
-    return password_hash is not None
+    return is_valid_hash
 
 
 def make_token(user_id):
