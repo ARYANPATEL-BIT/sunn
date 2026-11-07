@@ -190,7 +190,13 @@ candidates, best first. `score` = `similarity` (0–100) + `context` (6 when the
 with the context sent) + `freq` (up to 4) + `time` (up to 3). A `composed` candidate is a
 template × slot word that isn't a phrase yet: `phrase_id` is null and `template_id` and
 `slot_word_id` say which. `urgent` ones deserve a louder button. `low_confidence` is true when
-the best similarity is under 60.
+the first candidate's similarity is under 60.
+
+With `RERANKER_ENABLED`, `parts` also has `rerank`: the trained reranker's part, up to
+`RERANKER_WEIGHT`. With `LLM_ENABLED`, the judge may put another of the top 5 first:
+`chosen_by` is `judge` then, with its `reason` in plain English, else `matcher` and `reason` is
+null. `timings_ms` is milliseconds per step, null for one that didn't run; `tts` is always null
+here, since Timbre runs in `POST /speak`.
 
 ```json
 {"sample_id": 412, "hypothesis": "dawai chahie", "context": "hospital", "low_confidence": false,
@@ -200,7 +206,9 @@ the best similarity is under 60.
   {"phrase_id": null, "text": "चाय चाहिए", "score": 71.3, "urgent": false, "composed": true,
    "parts": {"similarity": 71.3, "context": 0, "freq": 0, "time": 0}, "template_id": 1, "slot_word_id": 4},
   {"phrase_id": 2, "text": "दर्द हो रहा है", "score": 48.0, "urgent": true, "composed": false,
-   "parts": {"similarity": 42.0, "context": 6, "freq": 0, "time": 0}, "template_id": null, "slot_word_id": null}]}
+   "parts": {"similarity": 42.0, "context": 6, "freq": 0, "time": 0}, "template_id": null, "slot_word_id": null}],
+ "chosen_by": "judge", "reason": "sounds like dawai chahiye, and they are at hospital",
+ "timings_ms": {"stt": 840, "match": 12, "rerank": null, "llm": 610, "tts": null}}
 ```
 
 Errors: `not_logged_in`, `invalid_input`, `file_too_large`, `bad_audio`, `audio_too_short`,
@@ -222,7 +230,8 @@ Errors: `not_logged_in`, `not_found`, `invalid_input`.
 ### `POST /speak` · real
 
 `{"text": "दवाई चाहिए"}`. Answers `audio/wav`: the user's own voice when `use_own_voice` is on,
-else the stock voice for their language.
+else the stock voice for their language. Its `Server-Timing` header (`tts;dur=<ms>`) says how
+long Timbre took.
 
 Errors: `not_logged_in`, `invalid_input`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`,
 `daily_cap_reached`.

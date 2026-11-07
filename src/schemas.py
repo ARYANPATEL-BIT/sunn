@@ -4,7 +4,7 @@ example, shown in /docs."""
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 Language = Literal["hi", "en"]  # the language the user speaks
 Context = Literal["home", "hospital", "market"]  # where the user is, for POST /me/recognize
@@ -179,6 +179,8 @@ class ScoreParts(BaseModel):
     context: float  # 0 or 6
     freq: float  # 0-4
     time: float  # 0-3
+    # 0 to RERANKER_WEIGHT; left out unless RERANKER_ENABLED
+    rerank: float | None = Field(None, exclude_if=lambda value: value is None)
 
 
 class Candidate(BaseModel):
@@ -193,6 +195,15 @@ class Candidate(BaseModel):
     slot_word_id: int | None = None  # set when composed
 
 
+class Timings(BaseModel):
+    """Milliseconds per step; null for a step that didn't run."""
+    stt: int | None = None  # storing the upload and Prisma
+    match: int | None = None
+    rerank: int | None = None  # RERANKER_ENABLED
+    llm: int | None = None  # the judge, when it was asked
+    tts: int | None = None  # always null here: Timbre runs in POST /speak (its Server-Timing header)
+
+
 class Recognition(BaseModel):
     model_config = example(
         sample_id=412, hypothesis="dawai chahie", context="hospital", low_confidence=False, candidates=[
@@ -204,12 +215,17 @@ class Recognition(BaseModel):
              "template_id": 1, "slot_word_id": 4},
             {"phrase_id": 2, "text": "दर्द हो रहा है", "score": 48.0, "urgent": True, "composed": False,
              "parts": {"similarity": 42.0, "context": 6, "freq": 0, "time": 0},
-             "template_id": None, "slot_word_id": None}])
+             "template_id": None, "slot_word_id": None}],
+        chosen_by="judge", reason="sounds like dawai chahiye, and they are at hospital",
+        timings_ms={"stt": 840, "match": 12, "rerank": None, "llm": 610, "tts": None})
     sample_id: int  # pass to /me/confirm
     hypothesis: str  # what Prisma heard
     context: Context | None
     candidates: list[Candidate]  # best first, at most 3
-    low_confidence: bool  # the best similarity is under 60
+    low_confidence: bool  # the first candidate's similarity is under 60
+    chosen_by: Literal["matcher", "judge"] = "matcher"  # which put the first candidate first
+    reason: str | None = None  # the judge's, in plain English, when chosen_by is judge
+    timings_ms: Timings | None = None
 
 
 class Confirm(Request):
