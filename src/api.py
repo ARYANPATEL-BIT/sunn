@@ -311,6 +311,7 @@ def trust_proxy():
 
 
 gnani_mock.check_startup(trust_proxy())  # never mock behind a proxy, and say so loudly when on
+gnani.check_startup()  # no key in real mode: fail now, not on the first call
 
 
 def client_ip(request):

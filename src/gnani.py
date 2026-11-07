@@ -37,6 +37,14 @@ def daily_cap():
     return int(os.environ.get("DAILY_CALL_CAP_PER_USER", DEFAULT_DAILY_CAP))
 
 
+def check_startup():
+    """Refuse to start in real mode (GNANI_MOCK off) without a Gnani key."""
+    load_dotenv()
+    if not gnani_mock.on() and os.environ.get("GNANI_API_KEY", "").strip() in ("", "your-key-here"):
+        raise RuntimeError("GNANI_API_KEY is not set; add it to .env (see .env.example),"
+                           " or set GNANI_MOCK=1 to test without Gnani")
+
+
 def record(kind, cached, audio_seconds, user_id=None):
     db.execute("INSERT INTO api_calls (kind, cached, audio_seconds, created_at, user_id) VALUES (?, ?, ?, ?, ?)",
                (kind, int(cached), audio_seconds, datetime.now(timezone.utc).isoformat(timespec="seconds"), user_id))
