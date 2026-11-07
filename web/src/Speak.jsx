@@ -310,6 +310,12 @@ export default function Speak() {
                   ) : (
                     <p className="readout-idle">{t('speak.unknown')}</p>
                   )}
+                  {/* Why this phrase came first, when the judge chose it. */}
+                  {top && !typed && result.reason && (
+                    <p className="readout-note" lang="en">
+                      {result.reason}
+                    </p>
+                  )}
                 </ReadoutRow>
               </div>
             ) : (
