@@ -48,6 +48,9 @@ add one field: `seconds` (`audio_too_short`, `audio_too_long`), `retry_after` in
 | `phrase_exists` | 409 | another phrase already has this text |
 | `no_voice` | 409 | `use_own_voice` needs a recorded voice |
 | `not_owner` | 403 | only the server owner can see usage |
+| `invalid_google_token` | 401 | invalid or expired Google ID token |
+| `google_unreachable` | 502 | could not reach Google token verification services |
+| `unverified_email` | 400 | Google account email is not verified |
 | `server_error` | 500 | a bug on our side |
 
 ## Onboarding
@@ -59,6 +62,16 @@ No session needed. Whether sign-up needs an invite code: true when the server se
 
 ```json
 {"invite_required": false}
+```
+
+Errors: none.
+
+### `GET /auth/google/config` · real
+
+No session needed. Returns the Google OAuth Web Client ID for Google Identity Services (GIS). Empty string when unconfigured.
+
+```json
+{"client_id": ""}
 ```
 
 Errors: none.
@@ -104,6 +117,18 @@ Errors: `invite_required`, `too_many_attempts`, `consent_required`, `no_name`, `
 ```
 
 Errors: `bad_login`, `too_many_attempts`, `invalid_input`.
+
+### `POST /auth/google` · real
+
+`{"id_token": "...", "language": "hi", "invite_code": "...", "consent": true}`. Authenticates an existing user or registers a new account using a Google Identity Services ID token. `invite_code` is required when `GET /config` says `invite_required` and the account does not exist yet. Sets the session cookie.
+
+```json
+{"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
+ "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
+ "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true}
+```
+
+Errors: `invalid_google_token`, `google_unreachable`, `unverified_email`, `invite_required`, `too_many_attempts`, `consent_required`, `email_taken`, `invalid_input`.
 
 ### `POST /auth/logout` · real
 

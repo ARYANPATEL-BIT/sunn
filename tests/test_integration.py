@@ -18,7 +18,7 @@ def test_app_router_routes():
 
 
 def test_app_shell_navigation_tabs():
-    shell_code = (ROOT / 'web/src/AppShell.jsx').read_text(encoding='utf-8')
+    tabs_code = (ROOT / 'web/src/ui/Tabs.jsx').read_text(encoding='utf-8')
     expected_tabs = [
         "to: '/app/enroll'",
         "to: '/app/speak'",
@@ -27,7 +27,7 @@ def test_app_shell_navigation_tabs():
         "to: '/app/settings'",
     ]
     for tab in expected_tabs:
-        assert tab in shell_code, f'Missing navigation tab {tab} in AppShell.jsx'
+        assert tab in tabs_code, f'Missing navigation tab {tab} in Tabs.jsx'
 
 
 def test_i18n_total_parity_and_coverage():

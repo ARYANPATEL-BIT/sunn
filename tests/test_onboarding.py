@@ -56,7 +56,7 @@ def test_onboarding_steps_and_accessibility():
     onboarding_code = (ROOT / 'web/src/Onboarding.jsx').read_text(encoding='utf-8')
     assert 'TOTAL_STEPS = 4' in onboarding_code, 'Expected 4 total steps'
     assert 'aria-live="polite"' in onboarding_code, 'Expected aria-live polite announcement'
-    assert 'step-dots' in onboarding_code, 'Expected step-dots indicator'
+    assert 'step-meter' in onboarding_code, 'Expected step-meter indicator'
     assert 'handleFinish' in onboarding_code, 'Expected handleFinish function'
 
 
