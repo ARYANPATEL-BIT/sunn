@@ -912,3 +912,9 @@ def health():
     """Liveness probe verifying server process responsiveness and database connectivity."""
     db.row("SELECT 1")
     return {"status": "ok"}
+
+
+# Last: src/trainings.py takes Refused and current_user from here.
+import trainings  # noqa: E402
+
+app.include_router(trainings.router)
