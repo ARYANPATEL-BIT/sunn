@@ -1,0 +1,8 @@
+export { HonestNote } from './HonestNote.jsx'
+export { TrainingsNav } from './TrainingsNav.jsx'
+export { TrainingsHome } from './TrainingsHome.jsx'
+export { CategoryPage } from './CategoryPage.jsx'
+export { CoursePage } from './CoursePage.jsx'
+export { LessonPlayer } from './LessonPlayer.jsx'
+export { CheckingFeedback } from './CheckingFeedback.jsx'
+export { EasierWays } from './EasierWays.jsx'
