@@ -1,0 +1,91 @@
+[
+  {
+    "id": "p", "label": {"en": "P", "hi": "प"}, "devanagari": ["प"], "latin": ["p"],
+    "examples": [{"text": "पानी", "latin": "paani"}, {"text": "पेड़", "latin": "ped"}, {"text": "पापा", "latin": "papa"}],
+    "practise_lesson_id": "easy-starts-2"
+  },
+  {
+    "id": "b", "label": {"en": "B", "hi": "ब"}, "devanagari": ["ब"], "latin": ["b"],
+    "examples": [{"text": "बस", "latin": "bas"}, {"text": "बाल", "latin": "baal"}, {"text": "बड़ा", "latin": "badaa"}],
+    "practise_lesson_id": "easy-starts-2"
+  },
+  {
+    "id": "t-dental", "label": {"en": "Soft t, tongue on the teeth", "hi": "त"}, "devanagari": ["त"], "latin": ["t"],
+    "examples": [{"text": "तीन", "latin": "teen"}, {"text": "तारा", "latin": "taara"}, {"text": "रात", "latin": "raat"}],
+    "practise_lesson_id": null
+  },
+  {
+    "id": "t-retroflex", "label": {"en": "Hard t, tongue curled back", "hi": "ट"}, "devanagari": ["ट"], "latin": ["t"],
+    "examples": [{"text": "टमाटर", "latin": "tamaatar"}, {"text": "टोपी", "latin": "topi"}, {"text": "पेट", "latin": "pet"}],
+    "practise_lesson_id": null
+  },
+  {
+    "id": "d", "label": {"en": "D", "hi": "द, ड"}, "devanagari": ["द", "ड"], "latin": ["d"],
+    "examples": [{"text": "दाल", "latin": "daal"}, {"text": "दरवाज़ा", "latin": "darvaaza"}, {"text": "डर", "latin": "dar"}],
+    "practise_lesson_id": null
+  },
+  {
+    "id": "k", "label": {"en": "K", "hi": "क"}, "devanagari": ["क"], "latin": ["k"],
+    "examples": [{"text": "काम", "latin": "kaam"}, {"text": "कल", "latin": "kal"}, {"text": "एक", "latin": "ek"}],
+    "practise_lesson_id": null
+  },
+  {
+    "id": "g", "label": {"en": "G", "hi": "ग"}, "devanagari": ["ग"], "latin": ["g"],
+    "examples": [{"text": "गाना", "latin": "gaana"}, {"text": "गाय", "latin": "gaay"}, {"text": "आग", "latin": "aag"}],
+    "practise_lesson_id": null
+  },
+  {
+    "id": "ch", "label": {"en": "Ch", "hi": "च"}, "devanagari": ["च"], "latin": ["ch"],
+    "examples": [{"text": "चाय", "latin": "chaay"}, {"text": "चलो", "latin": "chalo"}, {"text": "बच्चा", "latin": "bachcha"}],
+    "practise_lesson_id": null
+  },
+  {
+    "id": "j", "label": {"en": "J", "hi": "ज"}, "devanagari": ["ज"], "latin": ["j"],
+    "examples": [{"text": "जल्दी", "latin": "jaldi"}, {"text": "जूता", "latin": "joota"}, {"text": "आज", "latin": "aaj"}],
+    "practise_lesson_id": null
+  },
+  {
+    "id": "s", "label": {"en": "S", "hi": "स"}, "devanagari": ["स"], "latin": ["s"],
+    "examples": [{"text": "सब", "latin": "sab"}, {"text": "साल", "latin": "saal"}, {"text": "बस", "latin": "bas"}],
+    "practise_lesson_id": "s-and-sh-1"
+  },
+  {
+    "id": "sh", "label": {"en": "Sh", "hi": "श"}, "devanagari": ["श", "ष"], "latin": ["sh"],
+    "examples": [{"text": "शाम", "latin": "shaam"}, {"text": "शहर", "latin": "shahar"}, {"text": "देश", "latin": "desh"}],
+    "practise_lesson_id": "s-and-sh-2"
+  },
+  {
+    "id": "r", "label": {"en": "R", "hi": "र"}, "devanagari": ["र"], "latin": ["r"],
+    "examples": [{"text": "रोटी", "latin": "roti"}, {"text": "रात", "latin": "raat"}, {"text": "हरा", "latin": "hara"}],
+    "practise_lesson_id": null
+  },
+  {
+    "id": "l", "label": {"en": "L", "hi": "ल"}, "devanagari": ["ल"], "latin": ["l"],
+    "examples": [{"text": "लाल", "latin": "laal"}, {"text": "लड़का", "latin": "ladka"}, {"text": "फल", "latin": "phal"}],
+    "practise_lesson_id": null
+  },
+  {
+    "id": "aspirated", "label": {"en": "Breathy sounds (kh, gh, bh...)", "hi": "हवा वाली आवाज़ें (ख, घ, भ...)"},
+    "devanagari": ["ख", "घ", "छ", "झ", "ठ", "ढ", "थ", "ध", "फ", "भ"],
+    "latin": ["kh", "gh", "chh", "jh", "th", "dh", "ph", "bh"],
+    "examples": [{"text": "खाना", "latin": "khaana"}, {"text": "घर", "latin": "ghar"}, {"text": "भालू", "latin": "bhaalu"}, {"text": "थोड़ा", "latin": "thoda"}],
+    "practise_lesson_id": null
+  },
+  {
+    "id": "nasal", "label": {"en": "Nasal sounds (m, n)", "hi": "नाक वाली आवाज़ें (म, न, ँ)"},
+    "devanagari": ["म", "न", "ण", "ं", "ँ"], "latin": ["m", "n"],
+    "examples": [{"text": "माँ", "latin": "maa"}, {"text": "नाम", "latin": "naam"}, {"text": "नीला", "latin": "neela"}],
+    "practise_lesson_id": null
+  },
+  {
+    "id": "clusters", "label": {"en": "Sounds together (sk, pr, kr...)", "hi": "जुड़े अक्षर (स्क, प्र, क्र...)"},
+    "devanagari": ["स्क", "प्र", "क्र", "स्त", "त्र"], "latin": ["sk", "pr", "kr", "st", "tr"],
+    "examples": [{"text": "स्कूल", "latin": "school"}, {"text": "प्यार", "latin": "pyaar"}, {"text": "रास्ता", "latin": "raasta"}],
+    "practise_lesson_id": null
+  },
+  {
+    "id": "th-english", "label": {"en": "English th", "hi": "अंग्रेज़ी का th"}, "devanagari": [], "latin": ["th"],
+    "examples": [{"text": "Thank you", "latin": "Thank you"}, {"text": "three", "latin": "three"}, {"text": "this", "latin": "this"}],
+    "practise_lesson_id": "introductions-2"
+  }
+]

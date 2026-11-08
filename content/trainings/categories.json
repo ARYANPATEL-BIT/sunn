@@ -1,0 +1,50 @@
+[
+  {
+    "id": "smooth-speaking",
+    "title": {"en": "Smooth speaking", "hi": "सहज बोलना"},
+    "subtitle": {"en": "Gentle starts and a calm pace", "hi": "हल्की शुरुआत, आराम की रफ़्तार"},
+    "description": {
+      "en": "For people who stammer, and anyone who wants to speak with more ease. Practise gentle starts and a calm pace, in your own time.",
+      "hi": "हकलाहट वाले लोगों के लिए, और हर उस व्यक्ति के लिए जो आराम से बोलना चाहता है। हल्की शुरुआत और आराम की रफ़्तार का अभ्यास, अपने समय पर।"
+    },
+    "icon": "waves",
+    "audience": "all",
+    "order": 1
+  },
+  {
+    "id": "clear-sounds",
+    "title": {"en": "Clear sounds", "hi": "साफ़ उच्चारण"},
+    "subtitle": {"en": "One sound at a time", "hi": "एक बार में एक आवाज़"},
+    "description": {
+      "en": "For anyone who finds some sounds hard to say, including a lisp. Listen first, notice where your tongue goes, then say it back.",
+      "hi": "उनके लिए जिन्हें कुछ आवाज़ें बोलना मुश्किल लगता है, तुतलाहट भी। पहले सुनिए, जीभ की जगह पर ध्यान दीजिए, फिर दोहराइए।"
+    },
+    "icon": "audioLines",
+    "audience": "all",
+    "order": 2
+  },
+  {
+    "id": "kids-speaking",
+    "title": {"en": "Speaking games for kids", "hi": "बच्चों के बोलने के खेल"},
+    "subtitle": {"en": "Play together with an adult", "hi": "किसी बड़े के साथ मिलकर खेलें"},
+    "description": {
+      "en": "Short sound games for a child to play with a parent or another adult. There are no scores. Take turns and stop while it is still fun.",
+      "hi": "बच्चों के लिए छोटे खेल, जो वे माता-पिता या किसी बड़े के साथ खेलें। इनमें कोई नंबर नहीं हैं। बारी-बारी से बोलिए और मज़ा रहते-रहते रुक जाइए।"
+    },
+    "icon": "shapes",
+    "audience": "kids",
+    "order": 3
+  },
+  {
+    "id": "everyday-talk",
+    "title": {"en": "Everyday conversations", "hi": "रोज़ की बातचीत"},
+    "subtitle": {"en": "Practise what you say every day", "hi": "रोज़ बोली जाने वाली बातों का अभ्यास"},
+    "description": {
+      "en": "Greetings, small talk and phone calls. Practise them slowly with Sunn before you need them.",
+      "hi": "नमस्ते, छोटी-मोटी बातें और फ़ोन कॉल। ज़रूरत पड़ने से पहले Sunn के साथ आराम से इनका अभ्यास कीजिए।"
+    },
+    "icon": "messages",
+    "audience": "all",
+    "order": 4
+  }
+]
