@@ -51,6 +51,7 @@ export default defineConfig({
       LLM_ENABLED: '0',
       RERANKER_ENABLED: '0',
       TRUST_PROXY: '0',
+      GOOGLE_CLIENT_ID: '',
       DEMO_INVITE_CODE: 'e2e-invite',
       DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'sunn-e2e-data-')),
     },
