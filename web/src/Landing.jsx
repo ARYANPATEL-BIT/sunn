@@ -15,7 +15,7 @@ function useStartSpeaking() {
   const { status, user } = useAuth()
   const go = useGo()
   return async () => {
-    if (status === 'ready' && !user) return go(loginPath('/app/speak'))
+    if (!user) return go(loginPath('/app/speak'))
     const phrases = await api.listPhrases().catch(() => null)
     go(phrases && user && !speakProgress(phrases, user.language).open ? '/app/enroll' : '/app/speak')
   }
@@ -31,6 +31,9 @@ function SiteNav() {
         <ul className="nav-links">
           <li>
             <a href="#how">{t('how.title')}</a>
+          </li>
+          <li>
+            <Link to="/trainings">{t('nav.trainings')}</Link>
           </li>
           <li>
             <a href="#privacy">{t('privacy.title')}</a>
