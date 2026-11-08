@@ -1,0 +1,173 @@
+{
+  "id": "sound-play",
+  "category_id": "kids-speaking",
+  "title": {"en": "Sound play", "hi": "आवाज़ों का खेल"},
+  "summary": {
+    "en": "Animal sounds, counting and a pretend toy shop, played with an adult.",
+    "hi": "जानवरों की आवाज़ें, गिनती और खिलौनों की दुकान का खेल, किसी बड़े के साथ।"
+  },
+  "what_you_practise": {
+    "en": ["Taking turns to speak", "Copying sounds after the adult", "Slow, playful speaking"],
+    "hi": ["बारी-बारी से बोलना", "बड़े के बाद आवाज़ें दोहराना", "धीरे और खेल-खेल में बोलना"]
+  },
+  "level": "beginner",
+  "minutes": 11,
+  "practice_lang": "hi",
+  "lessons": [
+    {
+      "id": "sound-play-1",
+      "title": {"en": "Animal sounds", "hi": "जानवरों की आवाज़ें"},
+      "minutes": 5,
+      "steps": [
+        {
+          "id": "sound-play-1-grown-up",
+          "type": "intro",
+          "title": {"en": "For the grown-up", "hi": "बड़ों के लिए"},
+          "body": {
+            "en": "Sit with your child and take turns. Praise the trying, not only getting it right. Stop while it is still fun.",
+            "hi": "बच्चे के साथ बैठिए और बारी-बारी से बोलिए। सिर्फ़ सही बोलने की नहीं, कोशिश की भी तारीफ़ कीजिए। मज़ा रहते-रहते रुक जाइए।"
+          }
+        },
+        {
+          "id": "sound-play-1-flower",
+          "type": "breathing",
+          "title": {"en": "Smell the flower, blow the candle", "hi": "फूल सूँघो, मोमबत्ती फूँको"},
+          "body": {
+            "en": "Breathe in slowly, like smelling a flower. Breathe out slowly, like blowing on a candle very gently.",
+            "hi": "फूल सूँघने की तरह धीरे से साँस लो। फिर मोमबत्ती पर बहुत हल्के से फूँकने की तरह धीरे से साँस छोड़ो।"
+          },
+          "pattern": {"in_s": 3, "out_s": 4},
+          "rounds": 3
+        },
+        {
+          "id": "sound-play-1-turns",
+          "type": "tip",
+          "title": {"en": "My turn, your turn", "hi": "मेरी बारी, तुम्हारी बारी"},
+          "body": {
+            "en": "Say each line first, slowly and clearly. Then wait. Give your child time, and don't finish words for them.",
+            "hi": "हर लाइन पहले आप धीरे और साफ़ बोलिए। फिर रुकिए। बच्चे को समय दीजिए, और उनके शब्द ख़ुद पूरे मत कीजिए।"
+          },
+          "technique_id": "take-turns"
+        },
+        {
+          "id": "sound-play-1-animals",
+          "type": "listen_repeat",
+          "title": {"en": "Who says this?", "hi": "यह कौन बोलता है?"},
+          "items": [
+            {"id": "cow", "text": "गाय बोले, मू", "latin": "gaay bole, moo", "meaning_en": "The cow says moo.", "focus_sound": "nasal", "audio_key": "sound-play-cow"},
+            {"id": "cat", "text": "बिल्ली बोले, म्याऊँ", "latin": "billi bole, myaaun", "meaning_en": "The cat says meow.", "focus_sound": "nasal", "audio_key": "sound-play-cat"},
+            {"id": "dog", "text": "कुत्ता बोले, भौं भौं", "latin": "kutta bole, bhaun bhaun", "meaning_en": "The dog says woof woof.", "focus_sound": "aspirated", "audio_key": "sound-play-dog"},
+            {"id": "crow", "text": "कौआ बोले, काँव काँव", "latin": "kauaa bole, kaanv kaanv", "meaning_en": "The crow says caw caw.", "focus_sound": "k", "audio_key": "sound-play-crow"}
+          ],
+          "feedback": "none"
+        },
+        {
+          "id": "sound-play-1-pairs",
+          "type": "minimal_pairs",
+          "title": {"en": "Same or different?", "hi": "एक जैसे या अलग?"},
+          "pairs": [
+            {
+              "id": "papa-baba",
+              "a": {"text": "पापा", "latin": "papa", "audio_key": "sound-play-papa"},
+              "b": {"text": "बाबा", "latin": "baba", "audio_key": "sound-play-baba"},
+              "sound_a": "p",
+              "sound_b": "b"
+            },
+            {
+              "id": "gaana-khaana",
+              "a": {"text": "गाना", "latin": "gaana", "audio_key": "sound-play-gaana"},
+              "b": {"text": "खाना", "latin": "khaana", "audio_key": "sound-play-khaana"},
+              "sound_a": "g",
+              "sound_b": "aspirated"
+            }
+          ]
+        },
+        {
+          "id": "sound-play-1-reflect",
+          "type": "reflect",
+          "title": {"en": "How did it go?", "hi": "कैसा रहा?"},
+          "prompt": {"en": "How did your child find the game?", "hi": "बच्चे को यह खेल कैसा लगा?"},
+          "choices": ["easy", "okay", "hard"]
+        }
+      ]
+    },
+    {
+      "id": "sound-play-2",
+      "title": {"en": "Pretend toy shop", "hi": "खिलौनों की दुकान"},
+      "minutes": 6,
+      "steps": [
+        {
+          "id": "sound-play-2-count",
+          "type": "speak_with_me",
+          "title": {"en": "Count together", "hi": "साथ में गिनो"},
+          "text": "एक, दो, तीन, चार, पाँच",
+          "latin": "ek, do, teen, chaar, paanch",
+          "meaning_en": "One, two, three, four, five.",
+          "mode": "choral",
+          "pace_wpm": [40, 70],
+          "audio_key": "sound-play-count",
+          "feedback": "pace"
+        },
+        {
+          "id": "sound-play-2-colours",
+          "type": "listen_repeat",
+          "title": {"en": "Colour words", "hi": "रंगों के नाम"},
+          "items": [
+            {"id": "laal", "text": "लाल", "latin": "laal", "meaning_en": "red", "focus_sound": "l", "audio_key": "sound-play-laal"},
+            {"id": "peela", "text": "पीला", "latin": "peela", "meaning_en": "yellow", "focus_sound": "p", "audio_key": "sound-play-peela"},
+            {"id": "hara", "text": "हरा", "latin": "hara", "meaning_en": "green", "focus_sound": "r", "audio_key": "sound-play-hara"},
+            {"id": "neela", "text": "नीला", "latin": "neela", "meaning_en": "blue", "focus_sound": "nasal", "audio_key": "sound-play-neela"}
+          ],
+          "feedback": "none"
+        },
+        {
+          "id": "sound-play-2-shop",
+          "type": "dialogue",
+          "title": {"en": "Toy shop", "hi": "खिलौनों की दुकान"},
+          "scenario": {
+            "en": "Play shop. Sunn is the shopkeeper. Your child buys a toy, with your help.",
+            "hi": "दुकान-दुकान खेलिए। Sunn दुकानदार है। बच्चा आपकी मदद से एक खिलौना ख़रीदे।"
+          },
+          "turns": [
+            {"speaker": "sunn", "text": "आओ आओ! कौन सा खिलौना चाहिए?", "latin": "aao aao! kaun sa khilauna chaahiye?", "audio_key": "sound-play-shop-1"},
+            {
+              "speaker": "you",
+              "text": "मुझे लाल गेंद चाहिए।",
+              "latin": "mujhe laal gend chaahiye.",
+              "options": [{"text": "मुझे पीली गाड़ी चाहिए।", "latin": "mujhe peeli gaadi chaahiye."}]
+            },
+            {"speaker": "sunn", "text": "यह लो! बहुत अच्छे से माँगा।", "latin": "yeh lo! bahut achchhe se maanga.", "audio_key": "sound-play-shop-2"},
+            {"speaker": "you", "text": "धन्यवाद!", "latin": "dhanyavaad!"}
+          ]
+        },
+        {
+          "id": "sound-play-2-ant",
+          "type": "speak_with_me",
+          "title": {"en": "Slow like an ant", "hi": "चींटी जैसे धीरे"},
+          "text": "चींटी धीरे धीरे चलती है",
+          "latin": "cheenti dheere dheere chalti hai",
+          "meaning_en": "The ant walks slowly.",
+          "mode": "paced",
+          "pace_wpm": [40, 60],
+          "feedback": "none"
+        },
+        {
+          "id": "sound-play-2-story",
+          "type": "read_aloud",
+          "title": {"en": "A tiny story", "hi": "एक छोटी कहानी"},
+          "paragraph": "छोटी चिड़िया ने एक दाना देखा। उसने दाना उठाया और पेड़ पर उड़ गई। पेड़ पर उसके दोस्त उसका इंतज़ार कर रहे थे।",
+          "latin": "chhoti chidiya ne ek daana dekha. usne daana uthaaya aur ped par ud gayi. ped par uske dost uska intazaar kar rahe the.",
+          "audio_key": "sound-play-story",
+          "feedback": "none"
+        },
+        {
+          "id": "sound-play-2-reflect",
+          "type": "reflect",
+          "title": {"en": "How did it go?", "hi": "कैसा रहा?"},
+          "prompt": {"en": "How did your child find the toy shop?", "hi": "बच्चे को खिलौनों की दुकान कैसी लगी?"},
+          "choices": ["easy", "okay", "hard"]
+        }
+      ]
+    }
+  ]
+}
