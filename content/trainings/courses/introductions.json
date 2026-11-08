@@ -1,0 +1,211 @@
+{
+  "id": "introductions",
+  "category_id": "everyday-talk",
+  "title": {"en": "Introduce yourself", "hi": "अपना परिचय"},
+  "summary": {
+    "en": "Say who you are, answer small talk and make a short phone call, in English.",
+    "hi": "अपना परिचय दीजिए, छोटी-मोटी बातों का जवाब दीजिए और अंग्रेज़ी में एक छोटा फ़ोन कॉल कीजिए।"
+  },
+  "what_you_practise": {
+    "en": ["Saying your name and where you live", "Short, polite replies", "Starting and ending a phone call"],
+    "hi": ["अपना नाम और शहर बताना", "छोटे, विनम्र जवाब", "फ़ोन कॉल शुरू और ख़त्म करना"]
+  },
+  "level": "beginner",
+  "minutes": 14,
+  "practice_lang": "en",
+  "lessons": [
+    {
+      "id": "introductions-1",
+      "title": {"en": "Hello and your name", "hi": "नमस्ते और अपना नाम"},
+      "minutes": 7,
+      "steps": [
+        {
+          "id": "introductions-1-welcome",
+          "type": "intro",
+          "title": {"en": "Welcome", "hi": "स्वागत है"},
+          "body": {
+            "en": "Short, everyday English you can use today. Say each line at your own pace. You have all the time you need.",
+            "hi": "रोज़ काम आने वाली छोटी अंग्रेज़ी बातें, जो आज से ही काम आ सकती हैं। हर लाइन अपनी रफ़्तार से बोलिए। आपके पास पूरा समय है।"
+          }
+        },
+        {
+          "id": "introductions-1-breathe",
+          "type": "breathing",
+          "title": {"en": "One calm breath", "hi": "एक शांत साँस"},
+          "body": {
+            "en": "Before you start a conversation, take one slow breath in and let it out gently.",
+            "hi": "बातचीत शुरू करने से पहले एक धीमी साँस लीजिए और आराम से छोड़िए।"
+          },
+          "pattern": {"in_s": 3, "out_s": 4},
+          "rounds": 2
+        },
+        {
+          "id": "introductions-1-replies",
+          "type": "listen_repeat",
+          "title": {"en": "Short replies", "hi": "छोटे जवाब"},
+          "items": [
+            {"id": "good-morning", "text": "Good morning", "latin": "Good morning", "meaning_en": "a greeting before noon", "audio_key": "introductions-good-morning"},
+            {"id": "nice-to-meet-you", "text": "Nice to meet you", "latin": "Nice to meet you", "meaning_en": "said when you meet someone new", "audio_key": "introductions-nice-to-meet-you"},
+            {"id": "how-are-you", "text": "How are you?", "latin": "How are you?", "meaning_en": "asking how someone is", "audio_key": "introductions-how-are-you"},
+            {"id": "fine-thank-you", "text": "I'm fine, thank you", "latin": "I'm fine, thank you", "meaning_en": "a short, polite reply", "focus_sound": "th-english", "audio_key": "introductions-fine-thank-you"},
+            {"id": "see-you-soon", "text": "See you soon", "latin": "See you soon", "meaning_en": "a friendly goodbye", "focus_sound": "s", "audio_key": "introductions-see-you-soon"}
+          ],
+          "feedback": "words"
+        },
+        {
+          "id": "introductions-1-pause",
+          "type": "tip",
+          "title": {"en": "Pause between ideas", "hi": "बातों के बीच रुकिए"},
+          "body": {
+            "en": "After you say your name, pause for a moment. It gives the listener time, and gives you a breath.",
+            "hi": "अपना नाम बताने के बाद एक पल रुकिए। इससे सुनने वाले को समय मिलता है, और आपको एक साँस।"
+          },
+          "technique_id": "pausing"
+        },
+        {
+          "id": "introductions-1-echo",
+          "type": "speak_with_me",
+          "title": {"en": "Sunn first, then you", "hi": "पहले Sunn, फिर आप"},
+          "text": "Hello, I'm Meera. I live in Jaipur.",
+          "latin": "Hello, I'm Meera. I live in Jaipur.",
+          "meaning_en": "Saying your name and where you live.",
+          "mode": "echo",
+          "pace_wpm": [90, 130],
+          "audio_key": "introductions-meera",
+          "feedback": "pace"
+        },
+        {
+          "id": "introductions-1-neighbour",
+          "type": "dialogue",
+          "title": {"en": "Meeting a neighbour", "hi": "पड़ोसी से मुलाक़ात"},
+          "scenario": {"en": "You meet a new neighbour on the stairs.", "hi": "सीढ़ियों पर एक नए पड़ोसी से मुलाक़ात होती है।"},
+          "turns": [
+            {"speaker": "sunn", "text": "Hi! I just moved in next door.", "latin": "Hi! I just moved in next door.", "audio_key": "introductions-neighbour-1"},
+            {
+              "speaker": "you",
+              "text": "Hello, welcome! I'm Meera.",
+              "latin": "Hello, welcome! I'm Meera.",
+              "options": [{"text": "Hi, nice to meet you.", "latin": "Hi, nice to meet you."}]
+            },
+            {"speaker": "sunn", "text": "Nice to meet you too. How long have you lived here?", "latin": "Nice to meet you too. How long have you lived here?", "audio_key": "introductions-neighbour-2"},
+            {
+              "speaker": "you",
+              "text": "About five years.",
+              "latin": "About five years.",
+              "options": [{"text": "Just one year.", "latin": "Just one year."}, {"text": "All my life.", "latin": "All my life."}]
+            },
+            {"speaker": "sunn", "text": "Lovely. See you around!", "latin": "Lovely. See you around!", "audio_key": "introductions-neighbour-3"}
+          ]
+        },
+        {
+          "id": "introductions-1-reflect",
+          "type": "reflect",
+          "title": {"en": "How was that?", "hi": "कैसा लगा?"},
+          "prompt": {"en": "How did introducing yourself feel?", "hi": "अपना परिचय देना कैसा लगा?"},
+          "choices": ["easy", "okay", "hard"]
+        }
+      ]
+    },
+    {
+      "id": "introductions-2",
+      "title": {"en": "On the phone", "hi": "फ़ोन पर"},
+      "minutes": 7,
+      "steps": [
+        {
+          "id": "introductions-2-th",
+          "type": "listen_repeat",
+          "title": {"en": "The th sound", "hi": "th की आवाज़"},
+          "items": [
+            {"id": "thank-you", "text": "Thank you", "latin": "Thank you", "meaning_en": "saying thanks", "focus_sound": "th-english", "audio_key": "introductions-thank-you"},
+            {"id": "thursday", "text": "Thursday", "latin": "Thursday", "meaning_en": "the day after Wednesday", "focus_sound": "th-english", "audio_key": "introductions-thursday"},
+            {"id": "three", "text": "three", "latin": "three", "meaning_en": "the number 3", "focus_sound": "th-english", "audio_key": "introductions-three"},
+            {"id": "this", "text": "this", "latin": "this", "meaning_en": "the one here", "focus_sound": "th-english", "audio_key": "introductions-this"}
+          ],
+          "feedback": "words"
+        },
+        {
+          "id": "introductions-2-tongue",
+          "type": "tip",
+          "title": {"en": "Tongue between the teeth", "hi": "दाँतों के बीच जीभ"},
+          "body": {
+            "en": "For th, rest the tip of your tongue lightly between your teeth and let the air flow out gently.",
+            "hi": "th के लिए जीभ की नोक को हल्के से दाँतों के बीच रखिए और हवा को धीरे से बाहर निकलने दीजिए।"
+          },
+          "technique_id": "tongue-place"
+        },
+        {
+          "id": "introductions-2-pairs",
+          "type": "minimal_pairs",
+          "title": {"en": "Th or s?", "hi": "th या s?"},
+          "pairs": [
+            {
+              "id": "thin-sin",
+              "a": {"text": "thin", "latin": "thin", "audio_key": "introductions-thin"},
+              "b": {"text": "sin", "latin": "sin", "audio_key": "introductions-sin"},
+              "sound_a": "th-english",
+              "sound_b": "s"
+            },
+            {
+              "id": "think-sink",
+              "a": {"text": "think", "latin": "think", "audio_key": "introductions-think"},
+              "b": {"text": "sink", "latin": "sink", "audio_key": "introductions-sink"},
+              "sound_a": "th-english",
+              "sound_b": "s"
+            }
+          ]
+        },
+        {
+          "id": "introductions-2-paced",
+          "type": "speak_with_me",
+          "title": {"en": "Follow the words", "hi": "शब्दों के साथ चलिए"},
+          "text": "Hello, this is Meera. Is this a good time to talk?",
+          "latin": "Hello, this is Meera. Is this a good time to talk?",
+          "meaning_en": "Starting a phone call politely.",
+          "mode": "paced",
+          "pace_wpm": [80, 120],
+          "feedback": "pace"
+        },
+        {
+          "id": "introductions-2-voicemail",
+          "type": "read_aloud",
+          "title": {"en": "Leave a message", "hi": "मैसेज छोड़िए"},
+          "paragraph": "Hi, this is Meera. I'm calling about my appointment on Thursday. Please call me back after three. Thank you.",
+          "latin": "Hi, this is Meera. I'm calling about my appointment on Thursday. Please call me back after three. Thank you.",
+          "audio_key": "introductions-voicemail",
+          "feedback": "words"
+        },
+        {
+          "id": "introductions-2-clinic",
+          "type": "dialogue",
+          "title": {"en": "Calling a clinic", "hi": "क्लिनिक को फ़ोन"},
+          "scenario": {"en": "Call a clinic to move your appointment.", "hi": "क्लिनिक को फ़ोन करके अपना अपॉइंटमेंट बदलिए।"},
+          "turns": [
+            {"speaker": "sunn", "text": "Good morning, City Clinic. How can I help?", "latin": "Good morning, City Clinic. How can I help?", "audio_key": "introductions-clinic-1"},
+            {
+              "speaker": "you",
+              "text": "Hello, I'd like to change my appointment, please.",
+              "latin": "Hello, I'd like to change my appointment, please.",
+              "options": [{"text": "Hi, can I move my appointment to another day?", "latin": "Hi, can I move my appointment to another day?"}]
+            },
+            {"speaker": "sunn", "text": "Of course. Which day suits you?", "latin": "Of course. Which day suits you?", "audio_key": "introductions-clinic-2"},
+            {
+              "speaker": "you",
+              "text": "Thursday afternoon, please.",
+              "latin": "Thursday afternoon, please.",
+              "options": [{"text": "Friday morning, please.", "latin": "Friday morning, please."}]
+            },
+            {"speaker": "sunn", "text": "Done. We will send you a message with the time.", "latin": "Done. We will send you a message with the time.", "audio_key": "introductions-clinic-3"},
+            {"speaker": "you", "text": "Thank you. Bye.", "latin": "Thank you. Bye."}
+          ]
+        },
+        {
+          "id": "introductions-2-reflect",
+          "type": "reflect",
+          "title": {"en": "How was that?", "hi": "कैसा लगा?"},
+          "prompt": {"en": "How did the phone call feel?", "hi": "फ़ोन पर बात करना कैसा लगा?"},
+          "choices": ["easy", "okay", "hard"]
+        }
+      ]
+    }
+  ]
+}

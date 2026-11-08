@@ -13,6 +13,8 @@ after `uv run src/server.py`.
 - **real** means the route works now. **stub** means it answers a realistic example
   and has no real logic yet (`# TODO(v2): stub` in `src/api.py`). Its URL and shape won't change
   when the real logic replaces it. Every route is real now.
+- Trainings, the speaking practice area (`/trainings/...` and `/me/trainings/...`), has its own
+  contract: `docs/TRAININGS_CONTRACT.md`.
 
 ## Errors
 

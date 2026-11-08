@@ -24,6 +24,7 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never \
 COPY --chown=user pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 COPY --chown=user src/ src/
+COPY --chown=user content/ content/
 COPY --chown=user data/default_phrases_en.txt data/default_phrases_hi.txt data/
 COPY --from=web --chown=user /web/dist web/dist
 

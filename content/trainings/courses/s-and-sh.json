@@ -1,0 +1,182 @@
+{
+  "id": "s-and-sh",
+  "category_id": "clear-sounds",
+  "title": {"en": "S and Sh", "hi": "स और श"},
+  "summary": {
+    "en": "Hear the difference between s and sh, then practise each one. Useful practice if you lisp.",
+    "hi": "स और श का फ़र्क़ सुनिए, फिर दोनों का अभ्यास कीजिए। तुतलाहट हो तो यह अभ्यास काम आता है।"
+  },
+  "what_you_practise": {
+    "en": ["Where your tongue goes for s and sh", "Hearing s and sh apart", "Saying words and sentences with both"],
+    "hi": ["स और श के लिए जीभ की जगह", "स और श का फ़र्क़ सुनना", "दोनों आवाज़ों वाले शब्द और वाक्य बोलना"]
+  },
+  "level": "beginner",
+  "minutes": 13,
+  "practice_lang": "hi",
+  "lessons": [
+    {
+      "id": "s-and-sh-1",
+      "title": {"en": "Find the s", "hi": "स को पहचानिए"},
+      "minutes": 6,
+      "steps": [
+        {
+          "id": "s-and-sh-1-welcome",
+          "type": "intro",
+          "title": {"en": "Welcome", "hi": "स्वागत है"},
+          "body": {
+            "en": "In these lessons you listen first, then say each sound. Go slowly. This is practice, not treatment. If you see a speech therapist, follow their advice first.",
+            "hi": "इन पाठों में पहले सुनिए, फिर हर आवाज़ बोलिए। धीरे-धीरे चलिए। यह अभ्यास है, इलाज नहीं। अगर किसी स्पीच थेरेपिस्ट से आपकी बात चल रही है, तो पहले उनकी सलाह मानिए।"
+          }
+        },
+        {
+          "id": "s-and-sh-1-tongue",
+          "type": "tip",
+          "title": {"en": "Where the tongue goes", "hi": "जीभ कहाँ रहे"},
+          "body": {
+            "en": "For s, keep the tip of your tongue just behind your top teeth, not between them. Smile a little and let the air hiss out.",
+            "hi": "स के लिए जीभ की नोक ऊपर के दाँतों के ठीक पीछे रखिए, दाँतों के बीच नहीं। थोड़ा मुस्कुराइए और हवा को 'स्स्स' की तरह निकलने दीजिए।"
+          },
+          "technique_id": "tongue-place"
+        },
+        {
+          "id": "s-and-sh-1-hiss",
+          "type": "breathing",
+          "title": {"en": "A soft sss", "hi": "एक हल्की स्स्स"},
+          "body": {
+            "en": "Breathe in through your nose. As you breathe out, make a soft sss. Stop when it stops feeling comfortable.",
+            "hi": "नाक से साँस लीजिए। साँस छोड़ते हुए हल्की 'स्स्स' बोलिए। जहाँ आराम न लगे, वहीं रुक जाइए।"
+          },
+          "pattern": {"in_s": 3, "out_s": 6},
+          "rounds": 3
+        },
+        {
+          "id": "s-and-sh-1-words",
+          "type": "listen_repeat",
+          "title": {"en": "Words with s", "hi": "स वाले शब्द"},
+          "items": [
+            {"id": "sab", "text": "सब", "latin": "sab", "meaning_en": "all", "focus_sound": "s", "audio_key": "s-and-sh-sab"},
+            {"id": "saal", "text": "साल", "latin": "saal", "meaning_en": "year", "focus_sound": "s", "audio_key": "s-and-sh-saal"},
+            {"id": "sona", "text": "सोना", "latin": "sona", "meaning_en": "to sleep", "focus_sound": "s", "audio_key": "s-and-sh-sona"},
+            {"id": "bas", "text": "बस", "latin": "bas", "meaning_en": "bus", "focus_sound": "s", "audio_key": "s-and-sh-bas"},
+            {"id": "raasta", "text": "रास्ता", "latin": "raasta", "meaning_en": "road", "focus_sound": "s", "audio_key": "s-and-sh-raasta"}
+          ],
+          "feedback": "words"
+        },
+        {
+          "id": "s-and-sh-1-echo",
+          "type": "speak_with_me",
+          "title": {"en": "Sunn first, then you", "hi": "पहले Sunn, फिर आप"},
+          "text": "सोनू सुबह सात बजे स्कूल जाता है",
+          "latin": "sonu subah saat baje school jaata hai",
+          "meaning_en": "Sonu goes to school at seven in the morning.",
+          "mode": "echo",
+          "pace_wpm": [70, 110],
+          "audio_key": "s-and-sh-sonu",
+          "feedback": "words"
+        },
+        {
+          "id": "s-and-sh-1-reflect",
+          "type": "reflect",
+          "title": {"en": "How was that?", "hi": "कैसा लगा?"},
+          "prompt": {"en": "How did the s sound feel today?", "hi": "आज स की आवाज़ कैसी लगी?"},
+          "choices": ["easy", "okay", "hard"]
+        }
+      ]
+    },
+    {
+      "id": "s-and-sh-2",
+      "title": {"en": "S or sh?", "hi": "स या श?"},
+      "minutes": 7,
+      "steps": [
+        {
+          "id": "s-and-sh-2-pairs",
+          "type": "minimal_pairs",
+          "title": {"en": "S or sh?", "hi": "स या श?"},
+          "pairs": [
+            {
+              "id": "saadi-shaadi",
+              "a": {"text": "सादी", "latin": "saadi", "audio_key": "s-and-sh-saadi"},
+              "b": {"text": "शादी", "latin": "shaadi", "audio_key": "s-and-sh-shaadi"},
+              "sound_a": "s",
+              "sound_b": "sh"
+            },
+            {
+              "id": "ser-sher",
+              "a": {"text": "सेर", "latin": "ser", "audio_key": "s-and-sh-ser"},
+              "b": {"text": "शेर", "latin": "sher", "audio_key": "s-and-sh-sher"},
+              "sound_a": "s",
+              "sound_b": "sh"
+            }
+          ]
+        },
+        {
+          "id": "s-and-sh-2-round-lips",
+          "type": "tip",
+          "title": {"en": "Sh is rounder", "hi": "श में होंठ गोल"},
+          "body": {
+            "en": "For sh, move your tongue a little further back and round your lips, like the sound you make to hush a baby.",
+            "hi": "श के लिए जीभ को थोड़ा पीछे ले जाइए और होंठ गोल कीजिए, जैसे किसी बच्चे को 'श्श्श' कहकर चुप कराते हैं।"
+          },
+          "technique_id": "tongue-place"
+        },
+        {
+          "id": "s-and-sh-2-sh-words",
+          "type": "listen_repeat",
+          "title": {"en": "Words with sh", "hi": "श वाले शब्द"},
+          "items": [
+            {"id": "shaam", "text": "शाम", "latin": "shaam", "meaning_en": "evening", "focus_sound": "sh", "audio_key": "s-and-sh-shaam-word"},
+            {"id": "shahar", "text": "शहर", "latin": "shahar", "meaning_en": "city", "focus_sound": "sh", "audio_key": "s-and-sh-shahar"},
+            {"id": "shuru", "text": "शुरू", "latin": "shuru", "meaning_en": "start", "focus_sound": "sh", "audio_key": "s-and-sh-shuru"},
+            {"id": "desh", "text": "देश", "latin": "desh", "meaning_en": "country", "focus_sound": "sh", "audio_key": "s-and-sh-desh"}
+          ],
+          "feedback": "words"
+        },
+        {
+          "id": "s-and-sh-2-together",
+          "type": "speak_with_me",
+          "title": {"en": "Say it together", "hi": "साथ में बोलिए"},
+          "text": "शाम को सब साथ बैठते हैं",
+          "latin": "shaam ko sab saath baithte hain",
+          "meaning_en": "In the evening everyone sits together.",
+          "mode": "choral",
+          "pace_wpm": [70, 110],
+          "audio_key": "s-and-sh-shaam",
+          "feedback": "words"
+        },
+        {
+          "id": "s-and-sh-2-read",
+          "type": "read_aloud",
+          "title": {"en": "Read about the evening", "hi": "शाम के बारे में पढ़िए"},
+          "paragraph": "शाम को शहर की सड़कों पर बहुत शोर होता है। सब लोग अपने घर जाने की जल्दी में रहते हैं।",
+          "latin": "shaam ko shahar ki sadkon par bahut shor hota hai. sab log apne ghar jaane ki jaldi mein rehte hain.",
+          "audio_key": "s-and-sh-evening",
+          "feedback": "words"
+        },
+        {
+          "id": "s-and-sh-2-store",
+          "type": "dialogue",
+          "title": {"en": "At the general store", "hi": "किराने की दुकान पर"},
+          "scenario": {"en": "Ask the shopkeeper for soap and shampoo.", "hi": "दुकानदार से साबुन और शैम्पू माँगिए।"},
+          "turns": [
+            {"speaker": "sunn", "text": "नमस्ते, बताइए क्या चाहिए?", "latin": "namaste, bataaiye kya chaahiye?", "audio_key": "s-and-sh-store-1"},
+            {
+              "speaker": "you",
+              "text": "एक साबुन और एक शैम्पू दीजिए।",
+              "latin": "ek saabun aur ek shampoo deejiye.",
+              "options": [{"text": "सिर्फ़ एक साबुन दीजिए।", "latin": "sirf ek saabun deejiye."}]
+            },
+            {"speaker": "sunn", "text": "यह लीजिए। और कुछ?", "latin": "yeh leejiye. aur kuchh?", "audio_key": "s-and-sh-store-2"},
+            {"speaker": "you", "text": "बस, शुक्रिया।", "latin": "bas, shukriya."}
+          ]
+        },
+        {
+          "id": "s-and-sh-2-reflect",
+          "type": "reflect",
+          "title": {"en": "How was that?", "hi": "कैसा लगा?"},
+          "prompt": {"en": "How did s and sh feel today?", "hi": "आज स और श कैसे लगे?"},
+          "choices": ["easy", "okay", "hard"]
+        }
+      ]
+    }
+  ]
+}

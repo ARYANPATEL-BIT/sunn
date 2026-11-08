@@ -1,5 +1,5 @@
-"""docs/API.md is the contract the app is built against: every route it lists exists, every
-route is in it, every example in it is exactly what its schema gives, and the stubs answer
+"""docs/API.md, with docs/TRAININGS_CONTRACT.md for Trainings, is the contract the app is built
+against: every route they list exists, every route is in one of them, every example in it is exactly what its schema gives, and the stubs answer
 their schema."""
 import json
 import re
@@ -17,20 +17,24 @@ EXAMPLE = re.compile(r"```json\n(.*?)\n```", re.S)
 
 
 def documented():
-    """{(method, path): (real or stub, the example response or None)} from docs/API.md."""
-    parts = HEADING.split((ROOT / "docs/API.md").read_text(encoding="utf-8"))[1:]
+    """{(method, path): (real or stub, the example response or None)} from both docs."""
     endpoints = {}
-    for method, path, status, section in zip(*[iter(parts)] * 4):
-        example = EXAMPLE.search(section)
-        endpoints[method, path] = status, example and json.loads(example.group(1))
+    for doc in ("docs/API.md", "docs/TRAININGS_CONTRACT.md"):
+        parts = HEADING.split((ROOT / doc).read_text(encoding="utf-8"))[1:]
+        for method, path, status, section in zip(*[iter(parts)] * 4):
+            example = EXAMPLE.search(section)
+            assert (method, path) not in endpoints, (method, path)
+            endpoints[method, path] = status, example and json.loads(example.group(1))
     return endpoints
 
 
 def routes():
     import api  # here, not at the top: the env fixture has moved into a folder of its own
+    import trainings
 
-    return {(method, route.path): route for route in api.app.routes if isinstance(route, APIRoute)
-            for method in route.methods}
+    # FastAPI keeps an included router whole, so its routes are listed from the router itself.
+    return {(method, route.path): route for route in [*api.app.routes, *trainings.router.routes]
+            if isinstance(route, APIRoute) for method in route.methods}
 
 
 def same_after_schema(model, example, **dump):
@@ -60,7 +64,9 @@ def test_examples_match_their_schema_exactly(env):
 
 def test_stubs_answer_their_schema(env):
     client, found = env.signup(), routes()
-    stubs = [endpoint for endpoint, (status, _) in documented().items() if status == "stub"]
+    # The ones that take no input; tests/test_trainings.py calls the rest with theirs.
+    stubs = [(method, path) for (method, path), (status, _) in documented().items()
+             if status == "stub" and method == "GET" and "{" not in path]
     for method, path in stubs:
         response = client.request(method, path)
         assert response.status_code == 200, (method, path, response.text)
@@ -77,6 +83,6 @@ def test_every_error_has_one_shape(env):
 
 def test_every_error_code_the_api_sends_is_in_the_schema():
     sent = set()
-    for name in ("api.py", "gnani.py"):
+    for name in ("api.py", "gnani.py", "trainings.py"):
         sent |= set(re.findall(r'(?:Refused\(\d+|GnaniError\()\s*,?\s*"(\w+)"', (ROOT / "src" / name).read_text("utf-8")))
     assert sent and sent <= set(get_args(schemas.ErrorCode)), sent - set(get_args(schemas.ErrorCode))
