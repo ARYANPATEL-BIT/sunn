@@ -203,6 +203,49 @@ microphone and the Secure cookie both work), or run the smoke test against
 Without Docker: `cd web; npm ci; npm run build; cd ..` then `uv run src/server.py` serves the
 same thing on http://127.0.0.1:7860.
 
+## Gnani Speech Integration, Credit Conservation & Smoke Testing
+
+### Strict API Credit Conservation (Priority 0)
+
+Sunn operates under a strict credit conservation policy to protect the limited hackathon credit budget (~5,000 Gnani credits):
+
+1. **Zero Uncontrolled Calls**: Automated unit tests, end-to-end tests, builds, and CI pipelines always run under `GNANI_MOCK=1` or with synthetic mocked responses. No live API calls are ever dispatched by automated suites.
+2. **Batch Generation Safeguards**: The training catalog contains 128 audio keys. Audio files are intentionally NOT generated in bulk. The lesson player handles ungenerated audio gracefully without blocking navigation or checking.
+3. **Multi-Tier Safeguards**:
+   - Per-call caching via SHA-256 hashes of normalized request parameters and audio bytes in `data/cache/prisma/` and `data/cache/tts/`.
+   - Global hard stop: `GNANI_CALL_LIMIT` (default: 4000) prevents total project overage.
+   - Per-user daily cap: `DAILY_CALL_CAP_PER_USER` (default: 60) prevents individual user runaway.
+   - Daily training check cap: `TRAINING_CHECKS_PER_DAY` (default: 20) limits assessment evaluations.
+
+### Controlled Smoke-Test Utility (`scripts/gnani_live_smoke.py`)
+
+A specialized, high-safety utility is provided to verify live connectivity with strictly minimal credit spend (at most 1 STT request and 1 TTS request):
+
+```powershell
+# 1. Inspect configuration and dry-run without network calls (0 credits spent)
+uv run scripts/gnani_live_smoke.py --stt --tts --dry-run
+
+# 2. Safety gate demonstration (stops immediately without explicit confirmation)
+uv run scripts/gnani_live_smoke.py --stt
+
+# 3. Live STT test (consumes exactly 1 request with a synthetic 1-second sine wave)
+uv run scripts/gnani_live_smoke.py --stt --confirm-live-credit-spend
+
+# 4. Live TTS test (consumes exactly 1 request with a 1-word Hindi greeting "नमस्ते")
+uv run scripts/gnani_live_smoke.py --tts --confirm-live-credit-spend
+```
+
+Key safety properties of the smoke-test utility:
+- Requires `--confirm-live-credit-spend` to touch the live network.
+- Automatically masks credentials in stdout (e.g. `vach...354a`).
+- Does not retry on failure: zero retry amplification.
+- Uses synthetic in-memory audio: no microphone access required.
+
+### Mock Mode vs. Real Mode
+
+- **Mock Mode (`GNANI_MOCK=1`)**: Returns deterministic simulated responses from `src/gnani_mock.json` for STT and synthesizes silent WAV buffers for TTS. Used during development, CI, and test execution.
+- **Real Mode (`GNANI_MOCK=0`)**: Validates that both `GNANI_STT_API_KEY` and `GNANI_TTS_API_KEY` are configured. Communicates with `https://api.vachana.ai/stt/v3` for Prisma STT and `https://api.vachana.ai/api/v1/tts/inference` for Timbre TTS. Falls back cleanly to browser speech synthesis (`window.speechSynthesis`) if TTS encounters errors.
+
 ## Live Demo Smoke Test and Failure Recovery Runbook
 
 ### 1. Step-by-Step Live Smoke Test
