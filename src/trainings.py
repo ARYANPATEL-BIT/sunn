@@ -23,6 +23,7 @@ if content.problems(LIBRARY):
     raise RuntimeError("content/trainings/ breaks docs/TRAININGS_CONTRACT.md: run uv run scripts/validate_trainings.py")
 # The Timbre audio for each audio_key in content/trainings/audio.json, made ahead of time.
 AUDIO_DIR = os.path.join(db.DATA_DIR, "trainings", "audio")
+WEB_AUDIO_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web", "public", "training-audio")
 # What a pace check compares against when the step has no pace_wpm of its own.
 DEFAULT_PACE_WPM = (70, 120)
 RECORDED = (content.ListenRepeat, content.SpeakWithMe, content.ReadAloud)  # the steps attempts take
@@ -243,17 +244,24 @@ def lesson(lesson_id: str):
             "practice_lang": found_course.practice_lang, "next_lesson_id": following[0].id if following else None}
 
 
-@router.get("/trainings/audio/{audio_key}", response_class=FileResponse, responses={200: {"content": {"audio/wav": {}}}})
+@router.get("/trainings/audio/{audio_key}", response_class=FileResponse, responses={200: {"content": {"audio/mpeg": {}, "audio/wav": {}, "audio/ogg": {}}}})
 def audio(audio_key: str):
-    """The Timbre audio for an audio_key, made ahead of time into AUDIO_DIR; not_found until it
-    is. With GNANI_MOCK, a listed key that has none answers half a second of silence."""
+    """The Timbre audio for an audio_key. Serves web/public/training-audio/<key>.mp3,
+    then AUDIO_DIR/<key>.wav; not_found until it is generated. With GNANI_MOCK, a listed
+    key without audio answers half a second of silence."""
     find(LIBRARY.audio, audio_key, "audio")  # only listed keys, so the path is always a plain file name
-    path = os.path.join(AUDIO_DIR, f"{audio_key}.wav")
-    if not os.path.exists(path):
-        if not gnani_mock.on():
-            raise Refused(404, "not_found", "audio not made yet")
-        path = gnani_mock.silence()
-    return FileResponse(path, media_type="audio/wav")
+    mp3_path = os.path.join(WEB_AUDIO_DIR, f"{audio_key}.mp3")
+    if os.path.exists(mp3_path):
+        return FileResponse(mp3_path, media_type="audio/mpeg")
+    opus_path = os.path.join(WEB_AUDIO_DIR, f"{audio_key}.opus")
+    if os.path.exists(opus_path):
+        return FileResponse(opus_path, media_type="audio/ogg")
+    wav_path = os.path.join(AUDIO_DIR, f"{audio_key}.wav")
+    if os.path.exists(wav_path):
+        return FileResponse(wav_path, media_type="audio/wav")
+    if not gnani_mock.on():
+        raise Refused(404, "not_found", "audio not made yet")
+    return FileResponse(gnani_mock.silence(), media_type="audio/wav")
 
 
 # --- the user's own practice
