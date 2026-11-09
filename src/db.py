@@ -4,13 +4,19 @@ from contextlib import closing
 
 from dotenv import load_dotenv
 
+import languages
+
 load_dotenv()
 # Everything the app writes: the database, recordings and the Gnani caches.
 DATA_DIR = os.environ.get("DATA_DIR", "data")
 DB_PATH = os.path.join(DATA_DIR, "app.db")
 
+LANGUAGE_CHECK = f"CHECK (language IN ({', '.join(repr(code) for code in languages.CODES)}))"
+OLD_LANGUAGE_CHECK = "CHECK (language IN ('hi', 'en'))"  # before the other eight languages
+
 SCHEMA = """
--- email is stored lowercased; password_hash is argon2. language is "hi" or "en".
+-- email is stored lowercased; password_hash is argon2. language is the one the user speaks
+-- (languages.CODES), what Prisma hears them in and new phrases are written in.
 -- voice_embedding is Gnani's speaker_embedding as JSON, set only after voice consent.
 -- caregiver_phone is digits only, country code first, ready for a wa.me link.
 CREATE TABLE IF NOT EXISTS users (
@@ -18,7 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    language TEXT NOT NULL CHECK (language IN ('hi', 'en')),
+    language TEXT NOT NULL LANGUAGE_CHECK,
     consent_given_at TEXT NOT NULL,
     voice_embedding TEXT,
     voice_consent_given_at TEXT,
@@ -27,13 +33,15 @@ CREATE TABLE IF NOT EXISTS users (
     caregiver_phone TEXT,
     google_id TEXT
 );
--- contexts is comma separated: home, hospital, market, or any.
+-- contexts is comma separated: home, hospital, market, or any. language is the one the phrase
+-- is in: Timbre says it in that language, and it is matched only to recordings in it (or English).
 CREATE TABLE IF NOT EXISTS phrases (
     id INTEGER PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id),
     text TEXT NOT NULL,
     contexts TEXT NOT NULL DEFAULT 'any',
-    urgent INTEGER NOT NULL DEFAULT 0
+    urgent INTEGER NOT NULL DEFAULT 0,
+    language TEXT LANGUAGE_CHECK
 );
 -- A word that fills a template's slot, like पानी in "{item} चाहिए".
 CREATE TABLE IF NOT EXISTS slot_words (
@@ -53,7 +61,7 @@ CREATE TABLE IF NOT EXISTS templates (
 -- which adds it to the phrase bank. top1_phrase_id is the best candidate at
 -- recognition time, kept for the top-1 hit rate. An enrollment belongs to exactly one
 -- of phrase_id, slot_word_id or template_id. language is the user's language when Prisma
--- transcribed it ("hi" or "en"); only samples in the user's current language are matched.
+-- transcribed it; only samples in the user's current language (or English) are matched.
 -- speech_source is where a demo recording came from (pilot, torgo or simulated, see
 -- scripts/load_demo.py); NULL for one recorded in the app.
 CREATE TABLE IF NOT EXISTS samples (
@@ -67,7 +75,7 @@ CREATE TABLE IF NOT EXISTS samples (
     created_at TEXT NOT NULL,
     slot_word_id INTEGER REFERENCES slot_words(id),
     template_id INTEGER REFERENCES templates(id),
-    language TEXT CHECK (language IN ('hi', 'en')),
+    language TEXT LANGUAGE_CHECK,
     speech_source TEXT CHECK (speech_source IN ('pilot', 'torgo', 'simulated'))
 );
 -- One row per confirmed recognition, for the usage priors.
@@ -125,7 +133,7 @@ CREATE TABLE IF NOT EXISTS training_minutes (
     seconds INTEGER NOT NULL,
     UNIQUE (user_id, day)
 );
-"""
+""".replace("LANGUAGE_CHECK", LANGUAGE_CHECK)
 
 # Columns added after the first release, so an existing data/app.db gains them on start.
 ADDED_COLUMNS = [
@@ -137,18 +145,35 @@ ADDED_COLUMNS = [
     ("users", "google_id", "TEXT"),
     ("phrases", "contexts", "TEXT NOT NULL DEFAULT 'any'"),
     ("phrases", "urgent", "INTEGER NOT NULL DEFAULT 0"),
+    ("phrases", "language", f"TEXT {LANGUAGE_CHECK}"),
     ("samples", "slot_word_id", "INTEGER REFERENCES slot_words(id)"),
     ("samples", "template_id", "INTEGER REFERENCES templates(id)"),
-    ("samples", "language", "TEXT CHECK (language IN ('hi', 'en'))"),
+    ("samples", "language", f"TEXT {LANGUAGE_CHECK}"),
     ("samples", "speech_source", "TEXT CHECK (speech_source IN ('pilot', 'torgo', 'simulated'))"),
     ("api_calls", "user_id", "INTEGER"),
 ]
+
+
+def widen_language_checks(conn):
+    """Tables made when only hi and en existed take all of languages.CODES: SQLite can't change a
+    CHECK in place, so each is copied into a new table with the wider one."""
+    for table in ("users", "samples"):
+        sql = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?", (table,)).fetchone()[0]
+        if OLD_LANGUAGE_CHECK not in sql:
+            continue
+        columns = ", ".join(r[1] for r in conn.execute(f"PRAGMA table_info({table})"))
+        conn.execute(f"DROP TABLE IF EXISTS {table}_wide")  # left by a copy that failed
+        conn.execute(sql.replace(OLD_LANGUAGE_CHECK, LANGUAGE_CHECK).replace(table, f"{table}_wide", 1))
+        conn.execute(f"INSERT INTO {table}_wide ({columns}) SELECT {columns} FROM {table}")
+        conn.execute(f"DROP TABLE {table}")
+        conn.execute(f"ALTER TABLE {table}_wide RENAME TO {table}")
 
 
 def init():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     with closing(sqlite3.connect(DB_PATH)) as conn, conn:
         conn.executescript(SCHEMA)
+        widen_language_checks(conn)
         for table, column, declaration in ADDED_COLUMNS:
             if column not in {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}:
                 conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {declaration}")
@@ -156,6 +181,13 @@ def init():
         # which could not change then.
         conn.execute("UPDATE samples SET language = (SELECT language FROM users WHERE users.id = samples.user_id)"
                      " WHERE language IS NULL")
+        # Phrases from before phrases.language: Devanagari ones are Hindi (the only such language
+        # then), the rest are in the language they were recorded in, else their user's.
+        for p in conn.execute("SELECT p.id, p.text, u.language AS user_language, (SELECT s.language FROM samples s"
+                              " WHERE s.phrase_id = p.id LIMIT 1) AS recorded FROM phrases p"
+                              " JOIN users u ON u.id = p.user_id WHERE p.language IS NULL").fetchall():
+            language = "hi" if languages.in_script(p[1], languages.DEVANAGARI) else p[3] or p[2]
+            conn.execute("UPDATE phrases SET language = ? WHERE id = ?", (language, p[0]))
 
 
 def rows(sql, params=()):
