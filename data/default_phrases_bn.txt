@@ -1,0 +1,60 @@
+# Machine-written: the starter phrases in Bengali, with the same meanings as default_phrases_hi.txt,
+# not yet read by a native speaker (REVIEWED in web/src/i18n/languages.js).
+# Each line: the phrase in Bengali script | a Latin spelling | its meaning (default_phrases_en.txt)
+# help
+আমার সাহায্য দরকার | aamaar saahaajjo dorkaar | I need help
+# basic needs
+জল চাই | jol chai | I need water
+বাথরুমে যাব | baathrume jaabo | I need the bathroom
+আমাকে তুলে বসাও | aamaake tule bosaao | Help me sit up
+আমাকে শুইয়ে দাও | aamaake shuiye daao | Help me lie down
+আমাকে পাশ ফিরিয়ে দাও | aamaake paash phiriye daao | Turn me on my side
+ঠান্ডা লাগছে | thaanda laagchhe | I feel cold
+গরম লাগছে | gorom laagchhe | I feel hot
+পাখাটা চালিয়ে দাও | paakhaata chaaliye daao | Turn on the fan
+আলোটা নিভিয়ে দাও | aalota nibhiye daao | Turn off the light
+আমার চশমাটা দাও | aamaar choshmaata daao | Give me my glasses
+# pain and health
+ব্যথা করছে | byatha korchhe | I'm in pain
+মাথা ব্যথা করছে | maatha byatha korchhe | My head hurts
+পেটে ব্যথা করছে | pete byatha korchhe | My stomach hurts
+ওষুধটা দাও | oshudhta daao | Give me my medicine
+ডাক্তার ডাকো | daaktaar daako | Call the doctor
+শ্বাস নিতে কষ্ট হচ্ছে | shaash nite koshto hochchhe | I can't breathe properly
+মাথা ঘুরছে | maatha ghurchhe | I feel dizzy
+অস্থির লাগছে | osthir laagchhe | I feel uneasy
+খুব ক্লান্ত লাগছে | khub klaanto laagchhe | I feel tired
+আমি ঠিক আছি | aami thik aachhi | I'm fine
+# food and drink
+খিদে পেয়েছে | khide peyechhe | I'm hungry
+খাবার দাও | khaabaar daao | Give me some food
+চা খাব | cha khaabo | I want tea
+দুধ চাই | dudh chai | I need milk
+আর একটু দাও | aar ektu daao | A little more
+ব্যস, পেট ভরে গেছে | byas, pet bhore gechhe | That's enough, I'm full
+খাবারটা গরম করে দাও | khaabaarta gorom kore daao | Heat up the food
+নুন কম হয়েছে | nun kom hoyechhe | It needs more salt
+গরম জল চাই | gorom jol chai | I need warm water
+একটু মিষ্টি দাও | ektu mishti daao | Give me something sweet
+# family
+মাকে ডাকো | maake daako | Call my mother
+বাবাকে ডাকো | baabaake daako | Call my father
+ছেলেকে ফোন করো | chheleke phone koro | Phone my son
+মেয়েকে ডাকো | meyeke daako | Call my daughter
+দাদাকে ডাকো | daadaake daako | Call my brother
+দিদিকে ডাকো | didike daako | Call my sister
+সবাই কোথায় | sobaai kothaay | Where is everyone
+আমার কাছে বসো | aamaar kaachhe boso | Sit with me
+আমাকে একা ফেলে যেও না | aamaake eka phele jeo na | Don't leave me alone
+একটা ফোন লাগিয়ে দাও | ekta phone laagiye daao | Make a phone call for me
+# greetings and politeness
+নমস্কার | nomoshkaar | Hello
+ধন্যবাদ | dhonnobaad | Thank you
+হ্যাঁ | hyaan | Yes
+না | na | No
+ঠিক আছে | thik aachhe | Okay
+দুঃখিত | dukkhito | Sorry
+এক মিনিট দাঁড়াও | ek minit daanraao | Wait a minute
+শুভ রাত্রি | shubho raatri | Good night
+কেমন আছ | kemon aachho | How are you
+খুব ভালো | khub bhaalo | Very good

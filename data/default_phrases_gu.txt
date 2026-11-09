@@ -1,0 +1,60 @@
+# Machine-written: the starter phrases in Gujarati, with the same meanings as default_phrases_hi.txt,
+# not yet read by a native speaker (REVIEWED in web/src/i18n/languages.js).
+# Each line: the phrase in Gujarati script | a Latin spelling | its meaning (default_phrases_en.txt)
+# help
+મને મદદ જોઈએ છે | mane madad joie chhe | I need help
+# basic needs
+પાણી જોઈએ છે | paani joie chhe | I need water
+બાથરૂમ જવું છે | bathroom javu chhe | I need the bathroom
+મને બેઠા કરો | mane betha karo | Help me sit up
+મને સુવડાવો | mane suvdaavo | Help me lie down
+મને પડખું ફેરવો | mane padkhu fervo | Turn me on my side
+ઠંડી લાગે છે | thandi laage chhe | I feel cold
+ગરમી લાગે છે | garmi laage chhe | I feel hot
+પંખો ચાલુ કરો | pankho chaalu karo | Turn on the fan
+લાઇટ બંધ કરો | light bandh karo | Turn off the light
+મારા ચશ્મા આપો | maara chashma aapo | Give me my glasses
+# pain and health
+દુખે છે | dukhe chhe | I'm in pain
+માથું દુખે છે | maathu dukhe chhe | My head hurts
+પેટમાં દુખે છે | petmaa dukhe chhe | My stomach hurts
+દવા આપો | dava aapo | Give me my medicine
+ડૉક્ટરને બોલાવો | doctorne bolaavo | Call the doctor
+શ્વાસ લેવામાં તકલીફ થાય છે | shwaas levaamaa takleef thaay chhe | I can't breathe properly
+ચક્કર આવે છે | chakkar aave chhe | I feel dizzy
+ગભરામણ થાય છે | gabhraaman thaay chhe | I feel uneasy
+બહુ થાક લાગે છે | bahu thaak laage chhe | I feel tired
+હું ઠીક છું | hu theek chhu | I'm fine
+# food and drink
+ભૂખ લાગી છે | bhookh laagi chhe | I'm hungry
+જમવાનું આપો | jamvaanu aapo | Give me some food
+ચા પીવી છે | chaa peevi chhe | I want tea
+દૂધ જોઈએ છે | doodh joie chhe | I need milk
+થોડું વધારે આપો | thodu vadhaare aapo | A little more
+બસ, પેટ ભરાઈ ગયું | bas, pet bharaai gayu | That's enough, I'm full
+જમવાનું ગરમ કરો | jamvaanu garam karo | Heat up the food
+મીઠું ઓછું છે | meethu ochhu chhe | It needs more salt
+ગરમ પાણી જોઈએ છે | garam paani joie chhe | I need warm water
+કંઈક ગળ્યું આપો | kaik galyu aapo | Give me something sweet
+# family
+મમ્મીને બોલાવો | mammine bolaavo | Call my mother
+પપ્પાને બોલાવો | pappaane bolaavo | Call my father
+દીકરાને ફોન કરો | deekraane phone karo | Phone my son
+દીકરીને બોલાવો | deekrine bolaavo | Call my daughter
+ભાઈને બોલાવો | bhaaine bolaavo | Call my brother
+બહેનને બોલાવો | bahenne bolaavo | Call my sister
+બધા ક્યાં છે | badha kyaa chhe | Where is everyone
+મારી પાસે બેસો | maari paase beso | Sit with me
+મને એકલા ન મૂકો | mane ekla na mooko | Don't leave me alone
+ફોન લગાવી આપો | phone lagaavi aapo | Make a phone call for me
+# greetings and politeness
+નમસ્તે | namaste | Hello
+આભાર | aabhaar | Thank you
+હા | haa | Yes
+ના | naa | No
+સારું | saaru | Okay
+માફ કરજો | maaf karjo | Sorry
+એક મિનિટ ઊભા રહો | ek minit ubha raho | Wait a minute
+શુભ રાત્રિ | shubh raatri | Good night
+કેમ છો | kem chho | How are you
+બહુ સરસ | bahu saras | Very good

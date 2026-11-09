@@ -1,0 +1,60 @@
+# Machine-written: the starter phrases in Tamil, with the same meanings as default_phrases_hi.txt,
+# not yet read by a native speaker (REVIEWED in web/src/i18n/languages.js).
+# Each line: the phrase in Tamil script | a Latin spelling | its meaning (default_phrases_en.txt)
+# help
+எனக்கு உதவி வேணும் | enakku udhavi venum | I need help
+# basic needs
+தண்ணி வேணும் | thanni venum | I need water
+பாத்ரூம் போகணும் | bathroom poganum | I need the bathroom
+என்னை உட்கார வைங்க | ennai utkaara vainga | Help me sit up
+என்னை படுக்க வைங்க | ennai padukka vainga | Help me lie down
+என்னை ஒருக்களிச்சு படுக்க வைங்க | ennai orukkalichu padukka vainga | Turn me on my side
+குளிருது | kulirudhu | I feel cold
+ரொம்ப சூடா இருக்கு | romba soodaa irukku | I feel hot
+ஃபேன் போடுங்க | fan podunga | Turn on the fan
+லைட்டை அணைங்க | lightai anainga | Turn off the light
+என் கண்ணாடியை குடுங்க | en kannaadiyai kudunga | Give me my glasses
+# pain and health
+வலிக்குது | valikkudhu | I'm in pain
+தலை வலிக்குது | thalai valikkudhu | My head hurts
+வயிறு வலிக்குது | vayiru valikkudhu | My stomach hurts
+மருந்து குடுங்க | marundhu kudunga | Give me my medicine
+டாக்டரை கூப்பிடுங்க | doctorai koopidunga | Call the doctor
+மூச்சு விட கஷ்டமா இருக்கு | moochu vida kashtamaa irukku | I can't breathe properly
+தலை சுத்துது | thalai suthudhu | I feel dizzy
+மனசு படபடன்னு இருக்கு | manasu padapadannu irukku | I feel uneasy
+ரொம்ப களைப்பா இருக்கு | romba kalaippaa irukku | I feel tired
+நான் நல்லா இருக்கேன் | naan nallaa irukken | I'm fine
+# food and drink
+பசிக்குது | pasikkudhu | I'm hungry
+சாப்பாடு குடுங்க | saappaadu kudunga | Give me some food
+டீ குடிக்கணும் | tea kudikkanum | I want tea
+பால் வேணும் | paal venum | I need milk
+இன்னும் கொஞ்சம் குடுங்க | innum konjam kudunga | A little more
+போதும், வயிறு நிறைஞ்சிடுச்சு | podhum, vayiru niranjiduchu | That's enough, I'm full
+சாப்பாட்டை சூடு பண்ணுங்க | saappaattai soodu pannunga | Heat up the food
+உப்பு கம்மியா இருக்கு | uppu kammiyaa irukku | It needs more salt
+சுடு தண்ணி வேணும் | sudu thanni venum | I need warm water
+ஏதாவது இனிப்பா குடுங்க | edhaavadhu inippaa kudunga | Give me something sweet
+# family
+அம்மாவை கூப்பிடுங்க | ammaavai koopidunga | Call my mother
+அப்பாவை கூப்பிடுங்க | appaavai koopidunga | Call my father
+என் பையனுக்கு ஃபோன் பண்ணுங்க | en paiyanukku phone pannunga | Phone my son
+என் பொண்ணை கூப்பிடுங்க | en ponnai koopidunga | Call my daughter
+அண்ணனை கூப்பிடுங்க | annanai koopidunga | Call my brother
+அக்காவை கூப்பிடுங்க | akkaavai koopidunga | Call my sister
+எல்லாரும் எங்கே | ellaarum enge | Where is everyone
+என் பக்கத்துல உட்காருங்க | en pakkathula utkaarunga | Sit with me
+என்னை தனியா விட்டுட்டு போகாதீங்க | ennai thaniyaa vittuttu pogaadheenga | Don't leave me alone
+ஃபோன் போட்டு குடுங்க | phone pottu kudunga | Make a phone call for me
+# greetings and politeness
+வணக்கம் | vanakkam | Hello
+நன்றி | nandri | Thank you
+ஆமா | aamaa | Yes
+இல்லை | illai | No
+சரி | sari | Okay
+மன்னிச்சுக்கோங்க | mannichukkonga | Sorry
+ஒரு நிமிஷம் இருங்க | oru nimisham irunga | Wait a minute
+குட் நைட் | good night | Good night
+எப்படி இருக்கீங்க | eppadi irukkeenga | How are you
+ரொம்ப நல்லது | romba nalladhu | Very good

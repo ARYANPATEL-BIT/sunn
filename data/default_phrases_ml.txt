@@ -1,0 +1,60 @@
+# Machine-written: the starter phrases in Malayalam, with the same meanings as default_phrases_hi.txt,
+# not yet read by a native speaker (REVIEWED in web/src/i18n/languages.js).
+# Each line: the phrase in Malayalam script | a Latin spelling | its meaning (default_phrases_en.txt)
+# help
+എനിക്ക് സഹായം വേണം | enikku sahaayam venam | I need help
+# basic needs
+വെള്ളം വേണം | vellam venam | I need water
+ബാത്ത്റൂമിൽ പോകണം | bathroomil pokanam | I need the bathroom
+എന്നെ എഴുന്നേൽപ്പിച്ച് ഇരുത്തൂ | enne ezhunnelppichu iruthoo | Help me sit up
+എന്നെ കിടത്തൂ | enne kidathoo | Help me lie down
+എന്നെ ചരിച്ചു കിടത്തൂ | enne charichu kidathoo | Turn me on my side
+തണുക്കുന്നു | thanukkunnu | I feel cold
+ചൂടെടുക്കുന്നു | choodedukkunnu | I feel hot
+ഫാൻ ഇടൂ | fan idoo | Turn on the fan
+ലൈറ്റ് ഓഫ് ചെയ്യൂ | light off cheyyoo | Turn off the light
+എന്റെ കണ്ണട തരൂ | ente kannada tharoo | Give me my glasses
+# pain and health
+വേദനിക്കുന്നു | vedanikkunnu | I'm in pain
+തലവേദനയുണ്ട് | thalavedanayundu | My head hurts
+വയറുവേദനയുണ്ട് | vayaruvedanayundu | My stomach hurts
+മരുന്ന് തരൂ | marunnu tharoo | Give me my medicine
+ഡോക്ടറെ വിളിക്കൂ | doctore vilikkoo | Call the doctor
+ശ്വാസം മുട്ടുന്നു | shwaasam muttunnu | I can't breathe properly
+തല കറങ്ങുന്നു | thala karangunnu | I feel dizzy
+എന്തോ വല്ലായ്മ തോന്നുന്നു | entho vallaayma thonnunnu | I feel uneasy
+വല്ലാത്ത ക്ഷീണം | vallaatha ksheenam | I feel tired
+എനിക്ക് കുഴപ്പമില്ല | enikku kuzhappamilla | I'm fine
+# food and drink
+വിശക്കുന്നു | vishakkunnu | I'm hungry
+ഭക്ഷണം തരൂ | bhakshanam tharoo | Give me some food
+ചായ കുടിക്കണം | chaaya kudikkanam | I want tea
+പാൽ വേണം | paal venam | I need milk
+കുറച്ചു കൂടി തരൂ | kurachu koodi tharoo | A little more
+മതി, വയറു നിറഞ്ഞു | mathi, vayaru niranju | That's enough, I'm full
+ഭക്ഷണം ചൂടാക്കൂ | bhakshanam choodaakkoo | Heat up the food
+ഉപ്പ് കുറവാണ് | uppu kuravaanu | It needs more salt
+ചൂടുവെള്ളം വേണം | chooduvellam venam | I need warm water
+എന്തെങ്കിലും മധുരം തരൂ | enthenkilum madhuram tharoo | Give me something sweet
+# family
+അമ്മയെ വിളിക്കൂ | ammaye vilikkoo | Call my mother
+അച്ഛനെ വിളിക്കൂ | achhane vilikkoo | Call my father
+മോനെ ഫോൺ ചെയ്യൂ | mone phone cheyyoo | Phone my son
+മോളെ വിളിക്കൂ | mole vilikkoo | Call my daughter
+ചേട്ടനെ വിളിക്കൂ | chettane vilikkoo | Call my brother
+ചേച്ചിയെ വിളിക്കൂ | chechiye vilikkoo | Call my sister
+എല്ലാവരും എവിടെ | ellaavarum evide | Where is everyone
+എന്റെ അടുത്ത് ഇരിക്കൂ | ente aduthu irikkoo | Sit with me
+എന്നെ ഒറ്റയ്ക്ക് വിടല്ലേ | enne ottaykku vidalle | Don't leave me alone
+ഒന്ന് ഫോൺ ചെയ്തു തരൂ | onnu phone cheythu tharoo | Make a phone call for me
+# greetings and politeness
+നമസ്കാരം | namaskaaram | Hello
+നന്ദി | nandi | Thank you
+അതെ | athe | Yes
+ഇല്ല | illa | No
+ശരി | shari | Okay
+ക്ഷമിക്കണം | kshamikkanam | Sorry
+ഒരു മിനിറ്റ് നിൽക്കൂ | oru minute nilkkoo | Wait a minute
+ശുഭരാത്രി | shubharaathri | Good night
+സുഖമാണോ | sukhamaano | How are you
+വളരെ നല്ലത് | valare nallathu | Very good
