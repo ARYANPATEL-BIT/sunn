@@ -28,7 +28,7 @@ def test_category_lists_its_courses(env):
     assert set(found) == CATEGORY | {"courses"}
     [course] = found["courses"]
     assert set(course) == {"id", "title", "summary", "level", "minutes", "practice_lang", "lesson_count", "percent"}
-    assert (course["id"], course["lesson_count"], course["percent"]) == ("s-and-sh", 2, None)
+    assert (course["id"], course["lesson_count"], course["percent"]) == ("s-and-sh", 4, None)
     assert env.client().get("/trainings/categories/nowhere").json()["error"] == "not_found"
 
 
@@ -37,7 +37,7 @@ def test_course_lists_its_lessons(env):
     assert set(found) == {"id", "category_id", "title", "summary", "what_you_practise", "level", "minutes",
                           "practice_lang", "percent", "lessons"}
     assert all(set(lesson) == {"id", "title", "minutes", "step_count", "completed"} for lesson in found["lessons"])
-    assert [lesson["completed"] for lesson in found["lessons"]] == [True, False] and found["percent"] == 50
+    assert [lesson["completed"] for lesson in found["lessons"]] == [True, False, False, False] and found["percent"] == 25
     assert env.client().get("/trainings/courses/nowhere").status_code == 404
 
 
@@ -54,10 +54,10 @@ def test_lesson_has_every_step_with_every_field(env):
 
 def test_audio_is_served_once_made(env, monkeypatch):
     client = env.client()
-    assert client.get("/trainings/audio/easy-starts-aam").json()["error"] == "not_found"  # not made yet
+    assert client.get("/trainings/audio/easy-starts-1-vowels-aam").json()["error"] == "not_found"  # not made yet
     assert client.get("/trainings/audio/not-listed").status_code == 404
     monkeypatch.setenv("GNANI_MOCK", "1")
-    assert client.get("/trainings/audio/easy-starts-aam").headers["content-type"] == "audio/wav"
+    assert client.get("/trainings/audio/easy-starts-1-vowels-aam").headers["content-type"] == "audio/wav"
 
 
 def test_progress(env):
@@ -71,7 +71,7 @@ def test_save_progress(env):
     client = env.signup()
     found = client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-2", "step_index": 6, "completed": True})
     assert found.json() == {"lesson_id": "easy-starts-2", "course_id": "easy-starts", "step_index": 6,
-                            "completed": True, "course_percent": 100}
+                            "completed": True, "course_percent": 50}
     past_the_end = client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-2", "step_index": 7,
                                                                "completed": False})
     assert past_the_end.json()["error"] == "invalid_input"

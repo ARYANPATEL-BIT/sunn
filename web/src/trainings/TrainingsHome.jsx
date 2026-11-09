@@ -10,12 +10,20 @@ import { TrainingsNav } from './TrainingsNav.jsx'
 const LESSON_ROUTES = {
   'easy-starts-1': '/trainings/smooth-speaking/easy-starts/easy-starts-1',
   'easy-starts-2': '/trainings/smooth-speaking/easy-starts/easy-starts-2',
+  'easy-starts-3': '/trainings/smooth-speaking/easy-starts/easy-starts-3',
+  'easy-starts-4': '/trainings/smooth-speaking/easy-starts/easy-starts-4',
   's-and-sh-1': '/trainings/clear-sounds/s-and-sh/s-and-sh-1',
   's-and-sh-2': '/trainings/clear-sounds/s-and-sh/s-and-sh-2',
-  'introductions-1': '/trainings/everyday-talk/introductions/introductions-1',
-  'introductions-2': '/trainings/everyday-talk/introductions/introductions-2',
+  's-and-sh-3': '/trainings/clear-sounds/s-and-sh/s-and-sh-3',
+  's-and-sh-4': '/trainings/clear-sounds/s-and-sh/s-and-sh-4',
   'sound-play-1': '/trainings/kids-speaking/sound-play/sound-play-1',
   'sound-play-2': '/trainings/kids-speaking/sound-play/sound-play-2',
+  'sound-play-3': '/trainings/kids-speaking/sound-play/sound-play-3',
+  'sound-play-4': '/trainings/kids-speaking/sound-play/sound-play-4',
+  'introductions-1': '/trainings/everyday-talk/introductions/introductions-1',
+  'introductions-2': '/trainings/everyday-talk/introductions/introductions-2',
+  'introductions-3': '/trainings/everyday-talk/introductions/introductions-3',
+  'introductions-4': '/trainings/everyday-talk/introductions/introductions-4',
 }
 
 export function TrainingsHome() {
