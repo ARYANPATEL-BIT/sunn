@@ -301,6 +301,7 @@ export default {
   'settings.voiceStatusLabel': 'ఇప్పటి గొంతు',
   'settings.voiceRecorded': 'మీ సొంత గొంతు నకలు',
   'settings.voiceStandard': 'సాధారణ సహజ గొంతు',
+  'settings.voiceNotInLanguage': 'మీ సొంత గొంతు ప్రస్తుతం హిందీలో మాత్రమే పనిచేస్తుంది. {language}లో Sunn ఒక సాధారణ గొంతుతో మాట్లాడుతుంది.',
   'settings.useOwnVoiceLabel': 'మాటలను నా సొంత గొంతులో చెప్పు',
   'settings.useOwnVoiceHelp': 'రికార్డ్ చేసిన సొంత గొంతు కావాలి.',
   'settings.voiceNotRecordedHelp': 'ఇంకా సొంత గొంతు లేదు, అందుకే Sunn సాధారణ గొంతు వాడుతుంది.',

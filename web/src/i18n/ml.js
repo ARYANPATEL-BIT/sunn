@@ -301,6 +301,7 @@ export default {
   'settings.voiceStatusLabel': 'ഇപ്പോഴത്തെ ശബ്ദം',
   'settings.voiceRecorded': 'നിങ്ങളുടെ സ്വന്തം ശബ്ദത്തിന്റെ പകർപ്പ്',
   'settings.voiceStandard': 'സാധാരണ സ്വാഭാവിക ശബ്ദം',
+  'settings.voiceNotInLanguage': 'നിങ്ങളുടെ സ്വന്തം ശബ്ദം ഇപ്പോൾ ഹിന്ദിയിൽ മാത്രമേ പ്രവർത്തിക്കൂ. {language} ഭാഷയിൽ Sunn ഒരു സാധാരണ ശബ്ദത്തിൽ സംസാരിക്കും.',
   'settings.useOwnVoiceLabel': 'വാചകങ്ങൾ എന്റെ സ്വന്തം ശബ്ദത്തിൽ പറയൂ',
   'settings.useOwnVoiceHelp': 'റെക്കോർഡ് ചെയ്ത സ്വന്തം ശബ്ദം വേണം.',
   'settings.voiceNotRecordedHelp': 'ഇതുവരെ സ്വന്തം ശബ്ദമില്ല, അതിനാൽ Sunn സാധാരണ ശബ്ദം ഉപയോഗിക്കുന്നു.',

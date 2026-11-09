@@ -14,7 +14,8 @@ export const LANGUAGES = [
   { code: 'pa', native: 'ਪੰਜਾਬੀ', english: 'Punjabi', locale: 'pa-IN', font: 'Noto Sans Gurmukhi' },
 ]
 
-// Read by a native speaker. The rest were machine-translated and show "beta" in the picker.
+// Read by a native speaker: the interface strings and the starter phrases
+// (data/default_phrases_<code>.txt). The rest were machine-written and show "beta" in the picker.
 export const REVIEWED = new Set(['en', 'hi'])
 
 export const language = (code) => LANGUAGES.find((l) => l.code === code) ?? LANGUAGES[0]
