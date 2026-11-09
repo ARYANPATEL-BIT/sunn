@@ -108,15 +108,15 @@ for (const lang of LANGS) {
       const practiseAgainBtn = page.locator('.practise-again-btn')
       await expect(checkBtn).toBeVisible()
       await expect(practiseAgainBtn).toBeVisible()
-      await expect(page.locator('.checks-counter-meta')).toContainText(t(lang, 'check.checksLeft', { count: 24 }))
+      await expect(page.locator('.checks-counter-meta')).toContainText(t(lang, 'check.checksLeft', { count: 20 }))
 
       // Click "Check my reading"
       await checkBtn.click()
 
       // Results display words feedback and practise tags
       await expect(page.locator('.words-check-grid')).toBeVisible()
-      await expect(page.locator('.word-practise-tag')).toBeVisible()
-      await expect(page.locator('.checks-counter-meta')).toContainText(t(lang, 'check.checksLeft', { count: 23 }))
+      await expect(page.locator('.word-practise-tag').first()).toBeVisible()
+      await expect(page.locator('.checks-counter-meta')).toContainText(t(lang, 'check.checksLeft', { count: 19 }))
 
       // Practise again resets to record state
       await practiseAgainBtn.click()
@@ -205,8 +205,12 @@ for (const lang of LANGS) {
       await openSpeak(page.request, user)
       await markOnboarded(page, user)
 
-      // sound-play-2 starts with sound-play-2-count in kids-speaking
-      await page.goto('/trainings/kids-speaking/sound-play/sound-play-2')
+      // sound-play-1 step 5 is sound-play-1-choral in kids-speaking
+      await page.goto('/trainings/kids-speaking/sound-play/sound-play-1')
+      const nextBtn = page.locator('.player-next-btn')
+      while (!(await page.locator('.step-speak-with-me').isVisible())) {
+        await nextBtn.click()
+      }
 
       await expect(page.locator('.step-speak-with-me')).toBeVisible()
       await expect(page.locator('.step-container')).toHaveClass(/is-kids/)
