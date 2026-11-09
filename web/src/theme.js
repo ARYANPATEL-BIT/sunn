@@ -1,14 +1,13 @@
 // Light, dark or automatic (the device's). index.html sets <html data-theme> before the first
 // paint; this keeps it, color-scheme (in the CSS) and <meta name="theme-color"> in step.
-import { useCallback, useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 
 const KEY = 'sunn.theme'
 export const THEMES = ['light', 'dark', 'system']
-const CHANGE = 'sunn:theme'
 
 const darkQuery = () => matchMedia('(prefers-color-scheme: dark)')
 
-export function getTheme() {
+function readSaved() {
   try {
     const saved = localStorage.getItem(KEY)
     if (THEMES.includes(saved)) return saved
@@ -17,6 +16,14 @@ export function getTheme() {
   }
   return 'system'
 }
+
+// The one theme value for the page: read from storage once, at startup, then kept here. Storage
+// can be blocked (private windows, some webviews), so nothing reads it again: a toggle mounting
+// on another page, or the device changing color, must never turn light or dark back into system.
+let current = readSaved()
+const listeners = new Set()
+
+export const getTheme = () => current
 
 // 'light' or 'dark': what the screen actually shows for this choice.
 export const resolveTheme = (theme) => (theme === 'system' ? (darkQuery().matches ? 'dark' : 'light') : theme)
@@ -27,20 +34,24 @@ export function syncThemeColor() {
   if (meta) meta.content = getComputedStyle(document.body).backgroundColor
 }
 
-export function applyTheme(theme = getTheme()) {
-  document.documentElement.dataset.theme = resolveTheme(theme)
+function applyTheme() {
+  document.documentElement.dataset.theme = resolveTheme(current)
   syncThemeColor()
 }
 
 export function setTheme(theme) {
+  current = theme
   try {
     localStorage.setItem(KEY, theme)
   } catch {
     // storage blocked: the choice lasts until the page is closed
   }
-  applyTheme(theme)
-  dispatchEvent(new CustomEvent(CHANGE, { detail: theme }))
+  applyTheme()
+  listeners.forEach((changed) => changed())
 }
+
+// The device's light or dark matters only while the choice is "system".
+darkQuery().addEventListener('change', () => current === 'system' && applyTheme())
 
 // The nav button steps system → the opposite of what the device shows → back to it → system,
 // so every press changes either the screen or, once, only the label.
@@ -51,21 +62,10 @@ export function nextTheme(theme) {
   return theme === opposite ? device : 'system'
 }
 
-// [the choice, set it]; every toggle on screen (nav, Settings) stays in step.
-export function useTheme() {
-  const [theme, setState] = useState(getTheme)
-
-  useEffect(() => {
-    const changed = (e) => setState(e.detail)
-    const device = () => getTheme() === 'system' && applyTheme('system')
-    const query = darkQuery()
-    addEventListener(CHANGE, changed)
-    query.addEventListener('change', device)
-    return () => {
-      removeEventListener(CHANGE, changed)
-      query.removeEventListener('change', device)
-    }
-  }, [])
-
-  return [theme, useCallback(setTheme, [])]
+const subscribe = (changed) => {
+  listeners.add(changed)
+  return () => listeners.delete(changed)
 }
+
+// [the choice, set it]: every toggle on screen (nav, Settings) reads the same value.
+export const useTheme = () => [useSyncExternalStore(subscribe, getTheme), setTheme]
