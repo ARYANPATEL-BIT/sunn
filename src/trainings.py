@@ -3,16 +3,24 @@ Training progress, reflections and attempts are stored in the database.
 docs/TRAININGS_CONTRACT.md is the contract. Browsing the content (content/trainings/,
 read through src/trainings_content.py) needs no session; everything under /me does."""
 import os
+import re
+import subprocess
+import tempfile
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Cookie, Depends, File, Form, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
+from rapidfuzz.distance import Levenshtein
 
+import audio as audio_utils
 import auth
 import db
+import gnani
 import gnani_mock
+import matcher
+import prisma
 import schemas
 import trainings_content as content
 from api import Refused, current_user, get_user
@@ -27,6 +35,9 @@ WEB_AUDIO_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__f
 # What a pace check compares against when the step has no pace_wpm of its own.
 DEFAULT_PACE_WPM = (70, 120)
 RECORDED = (content.ListenRepeat, content.SpeakWithMe, content.ReadAloud)  # the steps attempts take
+TRAINING_CHECKS_PER_DAY = int(os.environ.get("TRAINING_CHECKS_PER_DAY", 20))
+WORD_CLEAR_THRESHOLD = float(os.environ.get("WORD_CLEAR_THRESHOLD", 0.70))
+MAX_AUDIO_BYTES = 10 * 1024 * 1024  # 10 MB upload cap
 
 router = APIRouter()
 
@@ -132,7 +143,7 @@ class Attempt(BaseModel):
     wpm: int | None  # feedback pace only
     pace: Literal["slower", "good", "faster"] | None  # what to try next time; feedback pace only
     message_key: Literal["practised", "no_checks_left", "pace_good", "pace_slower", "pace_faster",
-                         "words_clear", "words_practise"]
+                         "words_clear", "words_practise", "nice_work", "take_your_time", "try_slower", "great_pace"]
     checks_left_today: int
 
 
@@ -397,20 +408,73 @@ def reflect(body: Reflection, user=Depends(current_user)):
     return {"ok": True}
 
 
-def attempted(step_id, item_id):
-    """(the step, the text it asks the user to say) for an attempt."""
-    _, _, step = find(LIBRARY.steps, step_id, "step")
-    if not isinstance(step, RECORDED):
-        raise Refused(400, "invalid_input", "step_id: attempts are for listen_repeat, speak_with_me and read_aloud")
-    if isinstance(step, content.ListenRepeat):
-        return step, find({item.id: item for item in step.items}, item_id, "item").text
-    return step, step.paragraph if isinstance(step, content.ReadAloud) else step.text
+def normalize_for_align(text: str) -> str:
+    norm = matcher.normalize(text)
+    # Collapse repeating vowels for colloquial Latin / ITRANS alignment tolerance
+    return re.sub(r"([aeiou])\1+", r"\1", norm)
+
+
+def align_words(target_text: str, hypo_text: str, threshold: float = WORD_CLEAR_THRESHOLD) -> list[AttemptWord]:
+    """Align hypothesis words to target words and return word statuses."""
+    target_words = [w.strip("।,?!'\"") for w in target_text.split() if w.strip("।,?!'\"")]
+    hypo_words = [w.strip("।,?!'\"") for w in hypo_text.split() if w.strip("।,?!'\"")]
+
+    if not target_words:
+        return []
+    if not hypo_words:
+        return [AttemptWord(text=w, status="practise") for w in target_words]
+
+    n, m = len(target_words), len(hypo_words)
+    t_norm = [normalize_for_align(w) for w in target_words]
+    h_norm = [normalize_for_align(w) for w in hypo_words]
+
+    dp = [[0.0] * (m + 1) for _ in range(n + 1)]
+    back = [[None] * (m + 1) for _ in range(n + 1)]
+
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            sim = Levenshtein.normalized_similarity(t_norm[i - 1], h_norm[j - 1])
+            match_score = dp[i - 1][j - 1] + sim
+            skip_t = dp[i - 1][j]
+            skip_h = dp[i][j - 1]
+
+            best = max(match_score, skip_t, skip_h)
+            dp[i][j] = best
+            if best == match_score:
+                back[i][j] = (i - 1, j - 1, sim)
+            elif best == skip_t:
+                back[i][j] = (i - 1, j, 0.0)
+            else:
+                back[i][j] = (i, j - 1, 0.0)
+
+    i, j = n, m
+    matched_sim = [0.0] * n
+    while i > 0 and j > 0:
+        prev_i, prev_j, sim = back[i][j]
+        if prev_i == i - 1 and prev_j == j - 1:
+            matched_sim[i - 1] = sim
+            i, j = prev_i, prev_j
+        elif prev_i == i - 1:
+            matched_sim[i - 1] = 0.0
+            i, j = prev_i, prev_j
+        else:
+            i, j = prev_i, prev_j
+
+    return [
+        AttemptWord(text=w, status="clear" if matched_sim[idx] >= threshold else "practise")
+        for idx, w in enumerate(target_words)
+    ]
 
 
 @router.post("/me/trainings/attempts", response_model=Attempt)
-def attempt(audio_file: UploadFile = File(alias="audio"), step_id: str = Form(), item_id: str | None = Form(None),
-            check: bool = Form(False), user=Depends(current_user)):
-    """One try at a step (item_id names the item of a listen_repeat step). With check and a step
+def attempt(
+    audio_file: UploadFile = File(alias="audio"),
+    step_id: str = Form(),
+    item_id: str | None = Form(None),
+    check: bool = Form(False),
+    user=Depends(current_user),
+):
+    """One try at a step (item_id names the item of a listen_repeat step). With check=true and a step
     whose feedback isn't none, Prisma hears it and it is scored; the recording is never kept."""
     found_course, found_lesson, step = find(LIBRARY.steps, step_id, "step")
     if not isinstance(step, RECORDED):
@@ -420,27 +484,169 @@ def attempt(audio_file: UploadFile = File(alias="audio"), step_id: str = Form(),
     else:
         text = step.paragraph if isinstance(step, content.ReadAloud) else step.text
 
-    unchecked = {"checked": False, "words": None, "similarity": None, "wpm": None, "pace": None,
-                 "message_key": "practised", "checks_left_today": 24}
-    res = unchecked
-    if check and step.feedback != "none":
-        if step.feedback == "pace":
-            res = {**unchecked, "checked": True, "wpm": 84, "pace": "good", "message_key": "pace_good"}
-        else:
-            words = [word.strip("।,.?!'\"") for word in text.split()]
-            statuses = ["clear"] * (len(words) - 1) + ["practise" if len(words) > 1 else "clear"]
-            res = {**unchecked, "checked": True, "words": [{"text": w, "status": s} for w, s in zip(words, statuses)],
-                   "similarity": 0.82 if len(words) > 1 else 0.93,
-                   "message_key": "words_practise" if len(words) > 1 else "words_clear", "checks_left_today": 23}
-
+    # Calculate remaining checks today
+    today_str = datetime.now(timezone.utc).date().isoformat()
     now_str = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    transcript = None if found_course.category_id == "kids-speaking" else text
-    db.execute(
-        "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (user["id"], found_lesson.id, step_id, item_id, transcript, res.get("similarity"), res.get("wpm"), int(res["checked"]), now_str)
-    )
-    return res
+    used_today = db.row(
+        "SELECT COUNT(*) AS n FROM training_attempts WHERE user_id = ? AND checked = 1 AND created_at >= ?",
+        (user["id"], today_str),
+    )["n"]
+    checks_left = max(0, TRAINING_CHECKS_PER_DAY - used_today)
+
+    # Read and convert uploaded audio to 16kHz mono WAV for validation and Prisma
+    data = audio_file.file.read(MAX_AUDIO_BYTES + 1)
+    if len(data) > MAX_AUDIO_BYTES:
+        raise Refused(413, "file_too_large", "the audio file is too large")
+
+    with tempfile.NamedTemporaryFile(suffix=".raw", delete=False) as raw_f, \
+         tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as wav_f:
+        raw_path = raw_f.name
+        wav_path = wav_f.name
+        raw_f.write(data)
+
+    try:
+        try:
+            audio_utils.to_wav(raw_path, wav_path)
+        except subprocess.CalledProcessError:
+            raise Refused(400, "bad_audio", "could not read the audio file")
+
+        audio_seconds = audio_utils.seconds(wav_path) or 0.0
+        if audio_seconds < 0.3:
+            raise Refused(400, "audio_too_short",
+                          f"the recording is {audio_seconds:.1f} s; it needs 0.3 to 30 s",
+                          seconds=round(audio_seconds, 1))
+        if audio_seconds > 30.0:
+            raise Refused(400, "audio_too_long",
+                          f"the recording is {audio_seconds:.1f} s; it needs 0.3 to 30 s",
+                          seconds=round(audio_seconds, 1))
+
+        # 1. Not checked (check=False) or step feedback is "none"
+        if not check or step.feedback == "none":
+            # If check requested on feedback="none" step:
+            if check and checks_left > 0:
+                lang = getattr(found_course, "practice_lang", "hi")
+                try:
+                    hypothesis = prisma.transcribe(wav_path, language=lang, user_id=user["id"])
+                except gnani.GnaniError as ge:
+                    if ge.code in ("daily_cap_reached", "credit_limit_reached"):
+                        return Attempt(
+                            checked=False, words=None, similarity=None, wpm=None, pace=None,
+                            message_key="no_checks_left", checks_left_today=0,
+                        )
+                    raise
+                stored_transcript = None if found_course.category_id == "kids-speaking" else hypothesis
+                db.execute(
+                    "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (user["id"], found_lesson.id, step_id, item_id, stored_transcript, None, None, 1, now_str),
+                )
+                return Attempt(
+                    checked=True, words=None, similarity=None, wpm=None, pace=None,
+                    message_key="practised", checks_left_today=max(0, checks_left - 1),
+                )
+
+            # Plain practice without check
+            stored_transcript = None if found_course.category_id == "kids-speaking" else text
+            db.execute(
+                "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (user["id"], found_lesson.id, step_id, item_id, stored_transcript, None, None, 0, now_str),
+            )
+            return Attempt(
+                checked=False, words=None, similarity=None, wpm=None, pace=None,
+                message_key="practised", checks_left_today=checks_left,
+            )
+
+        # 2. Check requested, but daily check cap reached
+        if checks_left <= 0:
+            stored_transcript = None if found_course.category_id == "kids-speaking" else text
+            db.execute(
+                "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (user["id"], found_lesson.id, step_id, item_id, stored_transcript, None, None, 0, now_str),
+            )
+            return Attempt(
+                checked=False, words=None, similarity=None, wpm=None, pace=None,
+                message_key="no_checks_left", checks_left_today=0,
+            )
+
+        # 3. Check requested and cap available: transcribe with Prisma
+        lang = getattr(found_course, "practice_lang", "hi")
+        try:
+            hypothesis = prisma.transcribe(wav_path, language=lang, user_id=user["id"])
+        except gnani.GnaniError as ge:
+            if ge.code in ("daily_cap_reached", "credit_limit_reached"):
+                return Attempt(
+                    checked=False, words=None, similarity=None, wpm=None, pace=None,
+                    message_key="no_checks_left", checks_left_today=0,
+                )
+            raise
+
+        if not hypothesis or not hypothesis.strip():
+            raise Refused(422, "no_speech", "no speech was heard in the recording")
+
+        # Compute WPM and pace
+        target_words = [w.strip("।,?!'\"") for w in text.split() if w.strip("।,?!'\"")]
+        wpm = round(60 * len(target_words) / audio_seconds) if audio_seconds > 0 else 0
+        pace_min, pace_max = step.pace_wpm if getattr(step, "pace_wpm", None) else DEFAULT_PACE_WPM
+        if wpm > pace_max:
+            pace = "slower"
+        elif wpm < pace_min:
+            pace = "faster"
+        else:
+            pace = "good"
+
+        # Apply feedback rule: smooth-speaking and kids-speaking never return words
+        is_speech_restricted = found_course.category_id in ("smooth-speaking", "kids-speaking")
+        effective_feedback = "pace" if (is_speech_restricted and step.feedback == "words") else step.feedback
+
+        if effective_feedback == "words":
+            words_scored = align_words(text, hypothesis)
+            overall_sim = round(Levenshtein.normalized_similarity(matcher.normalize(text), matcher.normalize(hypothesis)), 2)
+            all_clear = all(w.status == "clear" for w in words_scored)
+            message_key = "words_clear" if all_clear else "words_practise"
+            res_words = words_scored
+            res_similarity = overall_sim
+            res_wpm = None
+            res_pace = None
+        elif effective_feedback == "pace":
+            res_words = None
+            res_similarity = None
+            res_wpm = wpm
+            res_pace = pace
+            message_key = f"pace_{pace}"
+        else:  # none
+            res_words = None
+            res_similarity = None
+            res_wpm = None
+            res_pace = None
+            message_key = "practised"
+
+        # Store attempt (never store audio; for kids-speaking store no transcript at all)
+        stored_transcript = None if found_course.category_id == "kids-speaking" else hypothesis
+        db.execute(
+            "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (user["id"], found_lesson.id, step_id, item_id, stored_transcript, res_similarity, res_wpm, 1, now_str),
+        )
+
+        return Attempt(
+            checked=True,
+            words=res_words,
+            similarity=res_similarity,
+            wpm=res_wpm,
+            pace=res_pace,
+            message_key=message_key,
+            checks_left_today=max(0, checks_left - 1),
+        )
+
+    finally:
+        for p in (raw_path, wav_path):
+            if os.path.exists(p):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
 
 
 @router.get("/me/trainings/tricky-sounds", response_model=list[TrickySound])
