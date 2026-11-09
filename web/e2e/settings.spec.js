@@ -20,43 +20,48 @@ for (const lang of LANGS) {
       await expect(page.getByRole('heading', { level: 1, name: t(lang, 'settings.title') })).toBeVisible()
       await expectNoLeaks(page, lang)
 
-      // --- own voice: upload with consent, preview, use it on Speak, remove it
+      // --- own voice: upload with consent, preview, use it on Speak, remove it. Only Hindi offers it.
       await expect(page.getByText(t(lang, 'settings.voiceStandard'))).toBeVisible()
-      const upload = page.getByRole('button', { name: t(lang, 'settings.voiceUpload') })
-      await expect(upload).toBeDisabled() // consent first
-      await page.getByLabel(t(lang, 'settings.voiceFile')).setInputFiles({
-        name: 'voice.wav', mimeType: 'audio/wav', buffer: wav(6, 180),
-      })
-      await page.getByRole('checkbox', { name: t(lang, 'settings.voiceConsent') }).check()
-      const cloned = page.waitForResponse((r) => r.url().endsWith('/api/me/voice'))
-      await upload.click()
-      expect((await cloned).status()).toBe(200)
-      await expect(page.getByText(t(lang, 'settings.voiceRecorded'))).toBeVisible()
+      if (lang === 'en') {
+        await expect(page.getByText(t(lang, 'settings.voiceNotInLanguage', { language: speakName(lang, 'en') }))).toBeVisible()
+        await expect(page.getByLabel(t(lang, 'settings.voiceFile'))).toHaveCount(0)
+      } else {
+        const upload = page.getByRole('button', { name: t(lang, 'settings.voiceUpload') })
+        await expect(upload).toBeDisabled() // consent first
+        await page.getByLabel(t(lang, 'settings.voiceFile')).setInputFiles({
+          name: 'voice.wav', mimeType: 'audio/wav', buffer: wav(6, 180),
+        })
+        await page.getByRole('checkbox', { name: t(lang, 'settings.voiceConsent') }).check()
+        const cloned = page.waitForResponse((r) => r.url().endsWith('/api/me/voice'))
+        await upload.click()
+        expect((await cloned).status()).toBe(200)
+        await expect(page.getByText(t(lang, 'settings.voiceRecorded'))).toBeVisible()
 
-      const ownVoice = page.locator('.settings-row', { hasText: t(lang, 'settings.useOwnVoiceLabel') }).getByRole('button')
-      await expect(ownVoice).toHaveAttribute('aria-pressed', 'false')
-      await ownVoice.click()
-      await expect(ownVoice).toHaveAttribute('aria-pressed', 'true')
-      expect(patches.at(-1)).toEqual({ use_own_voice: true })
-      const preview = page.waitForResponse((r) => r.url().endsWith('/api/speak'))
-      await page.getByRole('button', { name: t(lang, 'settings.testVoice') }).click()
-      expect((await preview).status()).toBe(200)
-      await expectNoLeaks(page, lang)
+        const ownVoice = page.locator('.settings-row', { hasText: t(lang, 'settings.useOwnVoiceLabel') }).getByRole('button')
+        await expect(ownVoice).toHaveAttribute('aria-pressed', 'false')
+        await ownVoice.click()
+        await expect(ownVoice).toHaveAttribute('aria-pressed', 'true')
+        expect(patches.at(-1)).toEqual({ use_own_voice: true })
+        const preview = page.waitForResponse((r) => r.url().endsWith('/api/speak'))
+        await page.getByRole('button', { name: t(lang, 'settings.testVoice') }).click()
+        expect((await preview).status()).toBe(200)
+        await expectNoLeaks(page, lang)
 
-      await page.getByRole('link', { name: t(lang, 'tab.speak') }).click()
-      await record(page, lang)
-      const spoken = page.waitForResponse((r) => r.url().endsWith('/api/speak'))
-      await page.locator('.candidate').first().click()
-      expect((await spoken).status()).toBe(200) // the server speaks in the cloned voice while it is on
-      await expect(page.getByText(t(lang, 'speak.played'))).toBeVisible()
+        await page.getByRole('link', { name: t(lang, 'tab.speak') }).click()
+        await record(page, lang)
+        const spoken = page.waitForResponse((r) => r.url().endsWith('/api/speak'))
+        await page.locator('.candidate').first().click()
+        expect((await spoken).status()).toBe(200) // the server speaks in the cloned voice while it is on
+        await expect(page.getByText(t(lang, 'speak.played'))).toBeVisible()
 
-      await page.getByRole('link', { name: t(lang, 'tab.settings') }).first().click()
-      await page.getByRole('button', { name: t(lang, 'settings.deleteVoice') }).click()
-      const forgotten = page.waitForResponse((r) => r.url().endsWith('/api/me/voice') && r.request().method() === 'DELETE')
-      await page.getByRole('button', { name: t(lang, 'settings.deleteVoiceYes') }).click()
-      expect((await forgotten).status()).toBe(200)
-      await expect(page.getByText(t(lang, 'settings.voiceStandard'))).toBeVisible()
-      await expect(page.getByLabel(t(lang, 'settings.voiceFile'))).toBeVisible()
+        await page.getByRole('link', { name: t(lang, 'tab.settings') }).first().click()
+        await page.getByRole('button', { name: t(lang, 'settings.deleteVoice') }).click()
+        const forgotten = page.waitForResponse((r) => r.url().endsWith('/api/me/voice') && r.request().method() === 'DELETE')
+        await page.getByRole('button', { name: t(lang, 'settings.deleteVoiceYes') }).click()
+        expect((await forgotten).status()).toBe(200)
+        await expect(page.getByText(t(lang, 'settings.voiceStandard'))).toBeVisible()
+        await expect(page.getByLabel(t(lang, 'settings.voiceFile'))).toBeVisible()
+      }
 
       // --- the app's language is this device's only: no request to the server
       const appLanguage = page.getByRole('radiogroup', { name: t(lang, 'settings.languageLabel') })
@@ -74,7 +79,7 @@ for (const lang of LANGS) {
       // --- the language spoken is the account's: asked first, then PATCH /me and the new phrases
       const speaks = other(lang)
       await page.getByRole('radiogroup', { name: t(lang, 'settings.speakLanguageLabel') })
-        .getByRole('radio', { name: speakName(lang, speaks) }).click()
+        .getByRole('radio', { name: nativeName(speaks) }).click() // the picker lists each in its own script
       await expect(page.getByText(t(lang, 'settings.speakLanguageConfirm', { language: speakName(lang, speaks) }))).toBeVisible()
       await expect(page.getByText(t(lang, 'settings.speakLanguageWarning', { language: speakName(lang, speaks) }))).toBeVisible()
       await expectNoLeaks(page, lang)
@@ -83,13 +88,14 @@ for (const lang of LANGS) {
       expect((await seeded).status()).toBe(200)
       expect(patches.at(-1)).toEqual({ language: speaks })
       await expect(page.getByRole('radiogroup', { name: t(lang, 'settings.speakLanguageLabel') })
-        .getByRole('radio', { name: speakName(lang, speaks) })).toHaveAttribute('aria-checked', 'true')
+        .getByRole('radio', { name: nativeName(speaks) })).toHaveAttribute('aria-checked', 'true')
 
-      // The phrases recorded in the old language now need recording again.
+      // The phrases recorded in the old language now need recording again; English ones stay
+      // usable in every language.
       await page.getByRole('link', { name: t(lang, 'tab.phrases') }).click()
       await page.getByRole('searchbox').fill(QUICK_START[lang][0])
       const old = phraseCard(page, QUICK_START[lang][0])
-      await expect(old.getByText(t(lang, 'phrases.rerecord'), { exact: true })).toBeVisible()
+      await expect(old.getByText(t(lang, 'phrases.rerecord'), { exact: true })).toHaveCount(lang === 'en' ? 0 : 1)
       await expectNoLeaks(page, lang)
       await page.getByRole('link', { name: t(lang, 'tab.speak') }).click()
       await expect(page.getByRole('heading', { name: t(lang, 'speak.none') })).toBeVisible()

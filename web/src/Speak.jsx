@@ -28,7 +28,7 @@ function isSameCandidate(a, b) {
 }
 
 export default function Speak() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const { user } = useAuth()
   const go = useGo()
   const [context, setContext] = useState('any')
@@ -48,7 +48,7 @@ export default function Speak() {
   const recorder = useRecorder((blob) => {
     const recordId = ++activeRecordIdRef.current
     run('listening', async () => {
-      const response = await api.recognize(blob, context)
+      const response = await api.recognize(blob, context, lang)
       if (!isMountedRef.current || recordId !== activeRecordIdRef.current) return
       if (!response.hypothesis?.trim()) throw failure('silent')
       setResult(response)

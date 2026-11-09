@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
-import { formatDate } from './i18n/languages.js'
+import { formatDate, language } from './i18n/languages.js'
 import { applyPreferences, getPreferences, setPreference } from './prefs.js'
+import { waterPhrase } from './quickstart.js'
 import { useTheme } from './theme.js'
 import {
   Alert, Button, Choices, Group, Icon, languageOptions, PrimaryButton, Row as SwitchRow, Sheet, Toast, useGo,
@@ -73,7 +74,15 @@ export default function Settings() {
   // The language the user speaks is the account's: Prisma and Timbre follow it, and recordings
   // in the old one stop counting, so it is asked first. The new language's everyday phrases are
   // added next to the old ones (docs/API.md, PATCH /me).
-  const speakName = (code) => t(code === 'hi' ? 'settings.speakHindi' : 'settings.speakEnglish')
+  // Named in the interface language, so the sentence around it reads in one language.
+  const speakName = (code) => {
+    if (code === 'hi' || code === 'en') return t(code === 'hi' ? 'settings.speakHindi' : 'settings.speakEnglish')
+    try {
+      return new Intl.DisplayNames([locale], { type: 'language' }).of(code)
+    } catch {
+      return language(code).english
+    }
+  }
   const handleSetSpeakLanguage = async () => {
     setBusy('language')
     setError(null)
@@ -199,7 +208,8 @@ export default function Settings() {
     setPlayingSample(true)
     setError(null)
     // In the language the user speaks: that is the language Timbre is asked to speak in.
-    const sampleText = user?.language === 'en' ? 'Hello, I need some water.' : 'नमस्ते, मुझे पानी चाहिए।'
+    const sampleText = { en: 'Hello, I need some water.', hi: 'नमस्ते, मुझे पानी चाहिए।' }[user?.language]
+      ?? waterPhrase(user?.language)
 
     try {
       await api.say(sampleText)
@@ -264,7 +274,7 @@ export default function Settings() {
       <Group bare title={t('settings.speakLanguageLabel')} titleId="speak-language-label" footer={t('settings.speakLanguageHelp')}>
         <Choices
           labelledBy="speak-language-label"
-          options={['hi', 'en'].map((code) => ({ value: code, label: speakName(code) }))}
+          options={languageOptions()}
           value={user?.language}
           onChange={(code) => setConfirmSpeak(code === user?.language ? null : code)}
           disabled={busy !== null}
@@ -329,7 +339,11 @@ export default function Settings() {
             <span className="row-sub">{t(user?.has_own_voice ? 'settings.voiceRecorded' : 'settings.voiceStandard')}</span>
           </span>
         </div>
-        {user?.has_own_voice && (
+        {/* Gnani's voice cloning is only shown working in Hindi (src/speak.py, CLONE_LANGUAGES). */}
+        {!user?.can_clone_voice && (
+          <p className="row row-note">{t('settings.voiceNotInLanguage', { language: speakName(user?.language) })}</p>
+        )}
+        {user?.has_own_voice && user?.can_clone_voice && (
           <SwitchRow
             id="own-voice"
             title={t('settings.useOwnVoiceLabel')}
@@ -357,7 +371,7 @@ export default function Settings() {
         )}
       </Group>
 
-      {!user?.has_own_voice && (
+      {!user?.has_own_voice && user?.can_clone_voice && (
         <form className="group-wrap" onSubmit={handleUploadVoice} aria-labelledby="voice-upload-title">
           <h2 className="group-title" id="voice-upload-title">
             {t('settings.voiceUploadLabel')}
