@@ -1,171 +1,603 @@
 {
   "id": "sound-play",
   "category_id": "kids-speaking",
-  "title": {"en": "Sound play", "hi": "आवाज़ों का खेल"},
+  "title": {
+    "en": "Fun with sounds",
+    "hi": "आवाज़ों से खेल"
+  },
   "summary": {
-    "en": "Animal sounds, counting and a pretend toy shop, played with an adult.",
-    "hi": "जानवरों की आवाज़ें, गिनती और खिलौनों की दुकान का खेल, किसी बड़े के साथ।"
+    "en": "Short, playful sound games for children to explore together with an adult, completely free of pressure or scoring.",
+    "hi": "किसी बड़े के साथ मिलकर खेलने के लिए छोटे खेल, बिना किसी दबाव या अंकों के।"
   },
   "what_you_practise": {
-    "en": ["Taking turns to speak", "Copying sounds after the adult", "Slow, playful speaking"],
-    "hi": ["बारी-बारी से बोलना", "बड़े के बाद आवाज़ें दोहराना", "धीरे और खेल-खेल में बोलना"]
+    "en": [
+      "Imitating fun animal and vehicle sounds",
+      "Rhyming words and silly voices",
+      "Robot and lion character play",
+      "Reading a gentle short story together"
+    ],
+    "hi": [
+      "जानवरों और गाड़ियों की आवाज़ों की नकल",
+      "तुकबंदी और मज़ाकिया आवाज़ें",
+      "रोबोट और शेर के मजेदार खेल",
+      "साथ मिलकर एक प्यारी कहानी पढ़ना"
+    ]
   },
   "level": "beginner",
-  "minutes": 11,
+  "minutes": 32,
   "practice_lang": "hi",
   "lessons": [
     {
       "id": "sound-play-1",
-      "title": {"en": "Animal sounds", "hi": "जानवरों की आवाज़ें"},
-      "minutes": 5,
+      "title": {
+        "en": "Animal and vehicle sounds",
+        "hi": "जानवरों और गाड़ियों की आवाज़ें"
+      },
+      "minutes": 8,
       "steps": [
         {
-          "id": "sound-play-1-grown-up",
+          "id": "sound-play-1-intro",
           "type": "intro",
-          "title": {"en": "For the grown-up", "hi": "बड़ों के लिए"},
+          "title": {
+            "en": "Tips for the adult",
+            "hi": "साथी बड़े के लिए सुझाव"
+          },
           "body": {
-            "en": "Sit with your child and take turns. Praise the trying, not only getting it right. Stop while it is still fun.",
-            "hi": "बच्चे के साथ बैठिए और बारी-बारी से बोलिए। सिर्फ़ सही बोलने की नहीं, कोशिश की भी तारीफ़ कीजिए। मज़ा रहते-रहते रुक जाइए।"
+            "en": "Be patient, praise every try, and keep it short. There are no scores here. Follow the child's natural pace.",
+            "hi": "धैर्य रखिए, हर कोशिश की तारीफ कीजिए, और छोटा रखिए। यहाँ कोई नंबर नहीं हैं। बच्चे की अपनी गति के साथ चलिए।"
           }
         },
         {
-          "id": "sound-play-1-flower",
+          "id": "sound-play-1-breathe",
           "type": "breathing",
-          "title": {"en": "Smell the flower, blow the candle", "hi": "फूल सूँघो, मोमबत्ती फूँको"},
-          "body": {
-            "en": "Breathe in slowly, like smelling a flower. Breathe out slowly, like blowing on a candle very gently.",
-            "hi": "फूल सूँघने की तरह धीरे से साँस लो। फिर मोमबत्ती पर बहुत हल्के से फूँकने की तरह धीरे से साँस छोड़ो।"
+          "title": {
+            "en": "Bunny breathing",
+            "hi": "प्यारा खरगोश साँस"
           },
-          "pattern": {"in_s": 3, "out_s": 4},
+          "body": {
+            "en": "Sniff in like a gentle bunny for 3 seconds, then breathe out softly for 5 seconds.",
+            "hi": "खरगोश की तरह 3 सेकंड नाक से साँस लीजिए, फिर 5 सेकंड में आराम से छोड़िए।"
+          },
+          "pattern": {
+            "in_s": 3,
+            "out_s": 5
+          },
           "rounds": 3
-        },
-        {
-          "id": "sound-play-1-turns",
-          "type": "tip",
-          "title": {"en": "My turn, your turn", "hi": "मेरी बारी, तुम्हारी बारी"},
-          "body": {
-            "en": "Say each line first, slowly and clearly. Then wait. Give your child time, and don't finish words for them.",
-            "hi": "हर लाइन पहले आप धीरे और साफ़ बोलिए। फिर रुकिए। बच्चे को समय दीजिए, और उनके शब्द ख़ुद पूरे मत कीजिए।"
-          },
-          "technique_id": "take-turns"
         },
         {
           "id": "sound-play-1-animals",
           "type": "listen_repeat",
-          "title": {"en": "Who says this?", "hi": "यह कौन बोलता है?"},
+          "title": {
+            "en": "Animal friends",
+            "hi": "प्यारे जानवर"
+          },
           "items": [
-            {"id": "cow", "text": "गाय बोले, मू", "latin": "gaay bole, moo", "meaning_en": "The cow says moo.", "focus_sound": "nasal", "audio_key": "sound-play-cow"},
-            {"id": "cat", "text": "बिल्ली बोले, म्याऊँ", "latin": "billi bole, myaaun", "meaning_en": "The cat says meow.", "focus_sound": "nasal", "audio_key": "sound-play-cat"},
-            {"id": "dog", "text": "कुत्ता बोले, भौं भौं", "latin": "kutta bole, bhaun bhaun", "meaning_en": "The dog says woof woof.", "focus_sound": "aspirated", "audio_key": "sound-play-dog"},
-            {"id": "crow", "text": "कौआ बोले, काँव काँव", "latin": "kauaa bole, kaanv kaanv", "meaning_en": "The crow says caw caw.", "focus_sound": "k", "audio_key": "sound-play-crow"}
+            {
+              "id": "lion",
+              "text": "शेर बोला दहाड़",
+              "latin": "sher bola dahaad",
+              "meaning_en": "the lion roared",
+              "audio_key": "sound-play-1-animals-lion"
+            },
+            {
+              "id": "cow",
+              "text": "गाय बोली मूँ-मूँ",
+              "latin": "gaay boli moo-moo",
+              "meaning_en": "the cow says moo",
+              "audio_key": "sound-play-1-animals-cow"
+            },
+            {
+              "id": "bird",
+              "text": "चिड़िया बोली चीं-चीं",
+              "latin": "chidiya boli cheen-cheen",
+              "meaning_en": "the bird chirps",
+              "audio_key": "sound-play-1-animals-bird"
+            },
+            {
+              "id": "cat",
+              "text": "बिल्ली बोली म्याऊँ",
+              "latin": "billi boli myaaoon",
+              "meaning_en": "the cat says meow",
+              "audio_key": "sound-play-1-animals-cat"
+            }
           ],
           "feedback": "none"
         },
         {
-          "id": "sound-play-1-pairs",
-          "type": "minimal_pairs",
-          "title": {"en": "Same or different?", "hi": "एक जैसे या अलग?"},
-          "pairs": [
+          "id": "sound-play-1-tip",
+          "type": "tip",
+          "title": {
+            "en": "Take turns",
+            "hi": "बारी-बारी बोलिए"
+          },
+          "body": {
+            "en": "Say the line first and smile. Then invite the child to say it with you.",
+            "hi": "पहले आप बोलिए और मुस्कुराइए। फिर बच्चे को साथ बोलने के लिए कहिए।"
+          },
+          "technique_id": "take-turns"
+        },
+        {
+          "id": "sound-play-1-vehicles",
+          "type": "listen_repeat",
+          "title": {
+            "en": "Speedy vehicles",
+            "hi": "तेज़ गाड़ियाँ"
+          },
+          "items": [
             {
-              "id": "papa-baba",
-              "a": {"text": "पापा", "latin": "papa", "audio_key": "sound-play-papa"},
-              "b": {"text": "बाबा", "latin": "baba", "audio_key": "sound-play-baba"},
-              "sound_a": "p",
-              "sound_b": "b"
+              "id": "train",
+              "text": "छुक-छुक रेल",
+              "latin": "chhuk-chhuk rel",
+              "meaning_en": "chug-chug train",
+              "audio_key": "sound-play-1-vehicles-train"
             },
             {
-              "id": "gaana-khaana",
-              "a": {"text": "गाना", "latin": "gaana", "audio_key": "sound-play-gaana"},
-              "b": {"text": "खाना", "latin": "khaana", "audio_key": "sound-play-khaana"},
+              "id": "car",
+              "text": "पी-पी कार",
+              "latin": "pee-pee car",
+              "meaning_en": "honk-honk car",
+              "audio_key": "sound-play-1-vehicles-car"
+            },
+            {
+              "id": "bus",
+              "text": "पूँ-पूँ बस",
+              "latin": "poon-poon bas",
+              "meaning_en": "beep-beep bus",
+              "audio_key": "sound-play-1-vehicles-bus"
+            }
+          ],
+          "feedback": "none"
+        },
+        {
+          "id": "sound-play-1-choral",
+          "type": "speak_with_me",
+          "title": {
+            "en": "Train song together",
+            "hi": "रेल की सवारी"
+          },
+          "text": "छुक-छुक रेल चली, पी-पी हॉर्न बजा",
+          "latin": "chhuk-chhuk rel chali, pee-pee horn baja",
+          "meaning_en": "The train rolls chug-chug, the horn goes beep-beep.",
+          "mode": "choral",
+          "pace_wpm": [
+            60,
+            90
+          ],
+          "audio_key": "sound-play-1-choral-train",
+          "feedback": "pace"
+        },
+        {
+          "id": "sound-play-1-reflect",
+          "type": "reflect",
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "Did you both have fun playing with animal and vehicle sounds?",
+            "hi": "क्या आप दोनों को जानवरों और गाड़ियों की आवाज़ों में मज़ा आया?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sound-play-2",
+      "title": {
+        "en": "Rhymes and silly games",
+        "hi": "तुकबंदी और मज़ाकिया खेल"
+      },
+      "minutes": 8,
+      "steps": [
+        {
+          "id": "sound-play-2-intro",
+          "type": "intro",
+          "title": {
+            "en": "Playful rhymes",
+            "hi": "हँसते-गाते तुकबंदी"
+          },
+          "body": {
+            "en": "Rhyming words help children tune in to sounds easily without feeling tested.",
+            "hi": "तुकबंदी वाले शब्दों से बच्चे खेल-खेल में आवाज़ों को पहचानना सीखते हैं।"
+          }
+        },
+        {
+          "id": "sound-play-2-rhyme",
+          "type": "read_aloud",
+          "title": {
+            "en": "The little butterfly",
+            "hi": "नन्हीं तितली"
+          },
+          "paragraph": "तितली उड़ी बस पर चढ़ी, सीट ना मिली तो रोने लगी। ड्राइवर ने बोला आजा मेरे पास, तितली बोली ना बाबा ना!",
+          "latin": "titli udi bas par chadhi, seat na mili to rone lagi. driver ne bola aaja mere paas, titli boli na baba na!",
+          "audio_key": "sound-play-2-rhyme-butterfly",
+          "feedback": "pace"
+        },
+        {
+          "id": "sound-play-2-tip",
+          "type": "tip",
+          "title": {
+            "en": "Silly voices",
+            "hi": "मज़ाकिया आवाज़"
+          },
+          "body": {
+            "en": "Try saying lines in a tiny whisper or a funny big voice to keep it joyful.",
+            "hi": "धीमी फुसफुसाहट या मज़ाकिया आवाज़ में बोलिए ताकि खेल में हँसी बनी रहे।"
+          },
+          "technique_id": "slow-pace"
+        },
+        {
+          "id": "sound-play-2-shop",
+          "type": "dialogue",
+          "title": {
+            "en": "Pretend toy shop",
+            "hi": "खिलौनों की दुकान"
+          },
+          "scenario": {
+            "en": "You and Sunn are visiting a magical toy shop.",
+            "hi": "आप और Sunn खिलौनों की एक जादुई दुकान में हैं।"
+          },
+          "turns": [
+            {
+              "speaker": "sunn",
+              "text": "नमस्ते दोस्त! आपको कौन सा खिलौना चाहिए?",
+              "latin": "namaste dost! aapko kaun sa khilauna chaahiye?",
+              "audio_key": "sound-play-2-shop-1"
+            },
+            {
+              "speaker": "you",
+              "text": "मुझे वो नीली कार चाहिए।",
+              "latin": "mujhe wo neeli car chaahiye.",
+              "options": [
+                {
+                  "text": "मुझे वो लाल गेंद चाहिए।",
+                  "latin": "mujhe wo laal gend chaahiye."
+                }
+              ]
+            },
+            {
+              "speaker": "sunn",
+              "text": "ये लीजिए! बहुत प्यारा खिलौना है।",
+              "latin": "ye leejiye! bahut pyaara khilauna hai.",
+              "audio_key": "sound-play-2-shop-2"
+            },
+            {
+              "speaker": "you",
+              "text": "शुक्रिया भैया, बहुत मज़ा आया!",
+              "latin": "shukriya bhaiya, bahut maza aaya!"
+            }
+          ]
+        },
+        {
+          "id": "sound-play-2-echo",
+          "type": "speak_with_me",
+          "title": {
+            "en": "Playful monkey echo",
+            "hi": "नटखट बंदर"
+          },
+          "text": "नटखट बंदर डाल पर कूदा",
+          "latin": "natkhat bandar daal par kooda",
+          "meaning_en": "The playful monkey leaped on the branch.",
+          "mode": "echo",
+          "pace_wpm": [
+            55,
+            85
+          ],
+          "audio_key": "sound-play-2-echo-monkey",
+          "feedback": "pace"
+        },
+        {
+          "id": "sound-play-2-reflect",
+          "type": "reflect",
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did the playful toy shop and rhyme feel?",
+            "hi": "खिलौनों की दुकान और तुकबंदी में कैसा लगा?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sound-play-3",
+      "title": {
+        "en": "Robot and lion game",
+        "hi": "रोबोट और शेर का खेल"
+      },
+      "minutes": 8,
+      "steps": [
+        {
+          "id": "sound-play-3-intro",
+          "type": "intro",
+          "title": {
+            "en": "Characters game",
+            "hi": "मज़ेदार किरदार"
+          },
+          "body": {
+            "en": "Playing characters like a robot or a friendly lion lets children speak without worrying about making mistakes.",
+            "hi": "रोबोट या प्यारे शेर का किरदार निभाकर बच्चे बिना झिझक के मजे से बोलते हैं।"
+          }
+        },
+        {
+          "id": "sound-play-3-tip",
+          "type": "tip",
+          "title": {
+            "en": "Big lion breath",
+            "hi": "शेर जैसी साँस"
+          },
+          "body": {
+            "en": "Take a big easy breath before roaring. No pressure, just big smiles.",
+            "hi": "बोलने से पहले एक गहरी और आरामदेह साँस लीजिए। मुस्कान बनाए रखिए।"
+          },
+          "technique_id": "easy-start"
+        },
+        {
+          "id": "sound-play-3-pairs",
+          "type": "minimal_pairs",
+          "title": {
+            "en": "Fun sound pairs",
+            "hi": "मज़ेदार आवाज़ों के जोड़े"
+          },
+          "pairs": [
+            {
+              "id": "gaay-bhaalu",
+              "a": {
+                "text": "गाय",
+                "latin": "gaay",
+                "audio_key": "sound-play-3-pairs-gaay"
+              },
+              "b": {
+                "text": "भालू",
+                "latin": "bhaalu",
+                "audio_key": "sound-play-3-pairs-bhaalu"
+              },
               "sound_a": "g",
               "sound_b": "aspirated"
             }
           ]
         },
         {
-          "id": "sound-play-1-reflect",
-          "type": "reflect",
-          "title": {"en": "How did it go?", "hi": "कैसा रहा?"},
-          "prompt": {"en": "How did your child find the game?", "hi": "बच्चे को यह खेल कैसा लगा?"},
-          "choices": ["easy", "okay", "hard"]
-        }
-      ]
-    },
-    {
-      "id": "sound-play-2",
-      "title": {"en": "Pretend toy shop", "hi": "खिलौनों की दुकान"},
-      "minutes": 6,
-      "steps": [
-        {
-          "id": "sound-play-2-count",
-          "type": "speak_with_me",
-          "title": {"en": "Count together", "hi": "साथ में गिनो"},
-          "text": "एक, दो, तीन, चार, पाँच",
-          "latin": "ek, do, teen, chaar, paanch",
-          "meaning_en": "One, two, three, four, five.",
-          "mode": "choral",
-          "pace_wpm": [40, 70],
-          "audio_key": "sound-play-count",
-          "feedback": "pace"
-        },
-        {
-          "id": "sound-play-2-colours",
+          "id": "sound-play-3-robot",
           "type": "listen_repeat",
-          "title": {"en": "Colour words", "hi": "रंगों के नाम"},
+          "title": {
+            "en": "Talk like a robot",
+            "hi": "रोबोट की आवाज़"
+          },
           "items": [
-            {"id": "laal", "text": "लाल", "latin": "laal", "meaning_en": "red", "focus_sound": "l", "audio_key": "sound-play-laal"},
-            {"id": "peela", "text": "पीला", "latin": "peela", "meaning_en": "yellow", "focus_sound": "p", "audio_key": "sound-play-peela"},
-            {"id": "hara", "text": "हरा", "latin": "hara", "meaning_en": "green", "focus_sound": "r", "audio_key": "sound-play-hara"},
-            {"id": "neela", "text": "नीला", "latin": "neela", "meaning_en": "blue", "focus_sound": "nasal", "audio_key": "sound-play-neela"}
+            {
+              "id": "hello",
+              "text": "ह-लो दो-स्त",
+              "latin": "ha-lo do-st",
+              "meaning_en": "hel-lo friend",
+              "audio_key": "sound-play-3-robot-hello"
+            },
+            {
+              "id": "namaste",
+              "text": "न-म-स्ते",
+              "latin": "na-ma-ste",
+              "meaning_en": "greetings",
+              "audio_key": "sound-play-3-robot-namaste"
+            },
+            {
+              "id": "super",
+              "text": "सु-प-र रो-बो-ट",
+              "latin": "su-pa-r ro-bo-t",
+              "meaning_en": "super robot",
+              "audio_key": "sound-play-3-robot-super"
+            }
           ],
           "feedback": "none"
         },
         {
-          "id": "sound-play-2-shop",
+          "id": "sound-play-3-lion",
+          "type": "speak_with_me",
+          "title": {
+            "en": "Lion roar together",
+            "hi": "शेर की दहाड़"
+          },
+          "text": "शेर बोला आहा, आज बड़ा मज़ा आया",
+          "latin": "sher bola aaha, aaj bada maza aaya",
+          "meaning_en": "The lion said aha, today was great fun.",
+          "mode": "echo",
+          "pace_wpm": [
+            55,
+            85
+          ],
+          "audio_key": "sound-play-3-lion-roar",
+          "feedback": "pace"
+        },
+        {
+          "id": "sound-play-3-dialogue",
           "type": "dialogue",
-          "title": {"en": "Toy shop", "hi": "खिलौनों की दुकान"},
+          "title": {
+            "en": "The friendly robot chat",
+            "hi": "रोबोट की बातचीत"
+          },
           "scenario": {
-            "en": "Play shop. Sunn is the shopkeeper. Your child buys a toy, with your help.",
-            "hi": "दुकान-दुकान खेलिए। Sunn दुकानदार है। बच्चा आपकी मदद से एक खिलौना ख़रीदे।"
+            "en": "A friendly robot asks about your favorite game.",
+            "hi": "एक प्यारा रोबोट आपके पसंदीदा खेल के बारे में पूछ रहा है।"
           },
           "turns": [
-            {"speaker": "sunn", "text": "आओ आओ! कौन सा खिलौना चाहिए?", "latin": "aao aao! kaun sa khilauna chaahiye?", "audio_key": "sound-play-shop-1"},
+            {
+              "speaker": "sunn",
+              "text": "बीप-बीप! आज हम क्या खेलेंगे?",
+              "latin": "beep-beep! aaj hum kya khelenge?",
+              "audio_key": "sound-play-3-dialogue-1"
+            },
             {
               "speaker": "you",
-              "text": "मुझे लाल गेंद चाहिए।",
-              "latin": "mujhe laal gend chaahiye.",
-              "options": [{"text": "मुझे पीली गाड़ी चाहिए।", "latin": "mujhe peeli gaadi chaahiye."}]
+              "text": "हम शेर और जंगल का खेल खेलेंगे।",
+              "latin": "hum sher aur jangal ka khel khelenge.",
+              "options": [
+                {
+                  "text": "हम दौड़ लगाने का खेल खेलेंगे।",
+                  "latin": "hum daud lagaane ka khel khelenge."
+                }
+              ]
             },
-            {"speaker": "sunn", "text": "यह लो! बहुत अच्छे से माँगा।", "latin": "yeh lo! bahut achchhe se maanga.", "audio_key": "sound-play-shop-2"},
-            {"speaker": "you", "text": "धन्यवाद!", "latin": "dhanyavaad!"}
+            {
+              "speaker": "sunn",
+              "text": "वाह! बीप-बीप, चलो शुरू करते हैं!",
+              "latin": "waah! beep-beep, chalo shuru karte hain!",
+              "audio_key": "sound-play-3-dialogue-2"
+            },
+            {
+              "speaker": "you",
+              "text": "चलो रोबोट दोस्त!",
+              "latin": "chalo robot dost!"
+            }
           ]
         },
         {
-          "id": "sound-play-2-ant",
-          "type": "speak_with_me",
-          "title": {"en": "Slow like an ant", "hi": "चींटी जैसे धीरे"},
-          "text": "चींटी धीरे धीरे चलती है",
-          "latin": "cheenti dheere dheere chalti hai",
-          "meaning_en": "The ant walks slowly.",
-          "mode": "paced",
-          "pace_wpm": [40, 60],
-          "feedback": "none"
-        },
-        {
-          "id": "sound-play-2-story",
-          "type": "read_aloud",
-          "title": {"en": "A tiny story", "hi": "एक छोटी कहानी"},
-          "paragraph": "छोटी चिड़िया ने एक दाना देखा। उसने दाना उठाया और पेड़ पर उड़ गई। पेड़ पर उसके दोस्त उसका इंतज़ार कर रहे थे।",
-          "latin": "chhoti chidiya ne ek daana dekha. usne daana uthaaya aur ped par ud gayi. ped par uske dost uska intazaar kar rahe the.",
-          "audio_key": "sound-play-story",
-          "feedback": "none"
-        },
-        {
-          "id": "sound-play-2-reflect",
+          "id": "sound-play-3-reflect",
           "type": "reflect",
-          "title": {"en": "How did it go?", "hi": "कैसा रहा?"},
-          "prompt": {"en": "How did your child find the toy shop?", "hi": "बच्चे को खिलौनों की दुकान कैसी लगी?"},
-          "choices": ["easy", "okay", "hard"]
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "Did you like speaking like a robot and a lion?",
+            "hi": "क्या रोबोट और शेर की आवाज़ में बोलने में मज़ा आया?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sound-play-4",
+      "title": {
+        "en": "The little squirrel's tree",
+        "hi": "नन्हीं गिलहरी का पेड़"
+      },
+      "minutes": 8,
+      "steps": [
+        {
+          "id": "sound-play-4-intro",
+          "type": "intro",
+          "title": {
+            "en": "Storytime together",
+            "hi": "कहानी का समय"
+          },
+          "body": {
+            "en": "Here is a gentle story to read together. Read one sentence each and pause to look at what happens next.",
+            "hi": "यहाँ साथ मिलकर पढ़ने के लिए एक छोटी कहानी है। बारी-बारी से पढ़िए और आनंद लीजिए।"
+          }
+        },
+        {
+          "id": "sound-play-4-tip",
+          "type": "tip",
+          "title": {
+            "en": "Praise the effort",
+            "hi": "प्रयास की सराहना"
+          },
+          "body": {
+            "en": "Every word your child tries is worth celebrating. Give a cheerful high five at the end.",
+            "hi": "बच्चे के हर बोले गए शब्द की सराहना कीजिए। कहानी के अंत में शाबाशी दीजिए।"
+          },
+          "technique_id": "take-turns"
+        },
+        {
+          "id": "sound-play-4-story",
+          "type": "read_aloud",
+          "title": {
+            "en": "Munnu the little squirrel",
+            "hi": "मुन्नू नन्हीं गिलहरी"
+          },
+          "paragraph": "एक नन्हीं गिलहरी थी। उसका नाम मुन्नू था। मुन्नू को हरे-भरे आम के पेड़ पर चढ़ना बहुत पसंद था। वह रोज़ नए दोस्त बनाती थी।",
+          "latin": "ek nanhin gilahri thi. uska naam munnu tha. munnu ko hare-bhare aam ke ped par chadhna bahut pasand tha. wah roz naye dost banaati thi.",
+          "audio_key": "sound-play-4-story-munnu",
+          "feedback": "pace"
+        },
+        {
+          "id": "sound-play-4-dialogue",
+          "type": "dialogue",
+          "title": {
+            "en": "What did Munnu find?",
+            "hi": "मुन्नू को क्या मिला?"
+          },
+          "scenario": {
+            "en": "Sunn asks you what Munnu found on the tree branch.",
+            "hi": "Sunn पूछ रहा है कि मुन्नू को पेड़ की डाल पर क्या मिला।"
+          },
+          "turns": [
+            {
+              "speaker": "sunn",
+              "text": "पेड़ पर मुन्नू को क्या मिला होगा?",
+              "latin": "ped par munnu ko kya mila hoga?",
+              "audio_key": "sound-play-4-dialogue-1"
+            },
+            {
+              "speaker": "you",
+              "text": "मुन्नू को एक मीठा पीला आम मिला।",
+              "latin": "munnu ko ek meetha peela aam mila.",
+              "options": [
+                {
+                  "text": "मुन्नू को एक नन्ही चिड़िया दोस्त मिली।",
+                  "latin": "munnu ko ek nanhi chidiya dost mili."
+                }
+              ]
+            },
+            {
+              "speaker": "sunn",
+              "text": "अरे वाह! दोनों ने मिलकर खुशी मनाई।",
+              "latin": "are waah! dono ne milkar khushi manaai.",
+              "audio_key": "sound-play-4-dialogue-2"
+            },
+            {
+              "speaker": "you",
+              "text": "और फिर सब मिलकर हँसने लगे।",
+              "latin": "aur phir sab milkar hansne lage."
+            }
+          ]
+        },
+        {
+          "id": "sound-play-4-paced",
+          "type": "speak_with_me",
+          "title": {
+            "en": "Celebration line",
+            "hi": "खुशी का गीत"
+          },
+          "text": "मुन्नू गिलहरी हँसी और ताली बजाई",
+          "latin": "munnu gilahri hansi aur taali bajaai",
+          "meaning_en": "Munnu squirrel laughed and clapped her hands.",
+          "mode": "paced",
+          "pace_wpm": [
+            50,
+            75
+          ],
+          "feedback": "pace"
+        },
+        {
+          "id": "sound-play-4-reflect",
+          "type": "reflect",
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did reading Munnu's story together feel?",
+            "hi": "मुन्नू की कहानी साथ में पढ़कर कैसा लगा?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
         }
       ]
     }

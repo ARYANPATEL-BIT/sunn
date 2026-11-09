@@ -1,209 +1,766 @@
 {
   "id": "introductions",
   "category_id": "everyday-talk",
-  "title": {"en": "Introduce yourself", "hi": "अपना परिचय"},
+  "title": {
+    "en": "Introductions",
+    "hi": "परिचय"
+  },
   "summary": {
-    "en": "Say who you are, answer small talk and make a short phone call, in English.",
-    "hi": "अपना परिचय दीजिए, छोटी-मोटी बातों का जवाब दीजिए और अंग्रेज़ी में एक छोटा फ़ोन कॉल कीजिए।"
+    "en": "Practise real-world conversations: greetings, shop requests, phone calls, doctor visits, and easier ways to say words.",
+    "hi": "नमस्ते, दुकान पर बात, फ़ोन कॉल, डॉक्टर के पास और अटकने पर आसान विकल्प चुनने का अभ्यास।"
   },
   "what_you_practise": {
-    "en": ["Saying your name and where you live", "Short, polite replies", "Starting and ending a phone call"],
-    "hi": ["अपना नाम और शहर बताना", "छोटे, विनम्र जवाब", "फ़ोन कॉल शुरू और ख़त्म करना"]
+    "en": [
+      "Greeting and introducing yourself",
+      "Shop conversations and phone etiquette",
+      "Describing how you feel at a clinic",
+      "Switching to easier alternatives when a word feels stuck"
+    ],
+    "hi": [
+      "नमस्ते कहना और अपना परिचय देना",
+      "दुकान पर बातचीत और फ़ोन कॉल",
+      "डॉक्टर के पास अपनी बात समझाना",
+      "अटकने पर आसान शब्दों का चुनाव करना"
+    ]
   },
   "level": "beginner",
-  "minutes": 14,
-  "practice_lang": "en",
+  "minutes": 32,
+  "practice_lang": "hi",
   "lessons": [
     {
       "id": "introductions-1",
-      "title": {"en": "Hello and your name", "hi": "नमस्ते और अपना नाम"},
-      "minutes": 7,
+      "title": {
+        "en": "Hello and your name",
+        "hi": "नमस्ते और आपका नाम"
+      },
+      "minutes": 8,
       "steps": [
         {
           "id": "introductions-1-welcome",
           "type": "intro",
-          "title": {"en": "Welcome", "hi": "स्वागत है"},
+          "title": {
+            "en": "Simple greetings",
+            "hi": "साधारण नमस्ते"
+          },
           "body": {
-            "en": "Short, everyday English you can use today. Say each line at your own pace. You have all the time you need.",
-            "hi": "रोज़ काम आने वाली छोटी अंग्रेज़ी बातें, जो आज से ही काम आ सकती हैं। हर लाइन अपनी रफ़्तार से बोलिए। आपके पास पूरा समय है।"
+            "en": "Meeting someone starts with a calm greeting. Practise saying hello and giving your name with ease.",
+            "hi": "किसी से मिलना एक शांत नमस्ते से शुरू होता है। आराम से अपना नाम बताने का अभ्यास कीजिए।"
           }
         },
         {
           "id": "introductions-1-breathe",
           "type": "breathing",
-          "title": {"en": "One calm breath", "hi": "एक शांत साँस"},
-          "body": {
-            "en": "Before you start a conversation, take one slow breath in and let it out gently.",
-            "hi": "बातचीत शुरू करने से पहले एक धीमी साँस लीजिए और आराम से छोड़िए।"
+          "title": {
+            "en": "Calm breath before greeting",
+            "hi": "नमस्ते से पहले शांत साँस"
           },
-          "pattern": {"in_s": 3, "out_s": 4},
-          "rounds": 2
+          "body": {
+            "en": "Take 4 slow breaths in and out before beginning your greeting.",
+            "hi": "अभिवादन शुरू करने से पहले 4 सहज साँसें लीजिए और छोड़िए।"
+          },
+          "pattern": {
+            "in_s": 4,
+            "out_s": 6
+          },
+          "rounds": 4
         },
         {
-          "id": "introductions-1-replies",
+          "id": "introductions-1-tip",
+          "type": "tip",
+          "title": {
+            "en": "Gentle breath first",
+            "hi": "पहले एक हल्की साँस"
+          },
+          "body": {
+            "en": "Many people find it helpful to take a small breath before greeting someone. There is no rush.",
+            "hi": "नमस्ते कहने से पहले एक हल्की साँस लेना मददगार होता है। कोई जल्दबाज़ी नहीं है।"
+          },
+          "technique_id": "easy-start"
+        },
+        {
+          "id": "introductions-1-pairs",
+          "type": "minimal_pairs",
+          "title": {
+            "en": "Gentle greeting pairs",
+            "hi": "मिलते-जुलते शब्द"
+          },
+          "pairs": [
+            {
+              "id": "baat-bhaat",
+              "a": {
+                "text": "बात",
+                "latin": "baat",
+                "audio_key": "introductions-1-pairs-baat"
+              },
+              "b": {
+                "text": "भात",
+                "latin": "bhaat",
+                "audio_key": "introductions-1-pairs-bhaat"
+              },
+              "sound_a": "b",
+              "sound_b": "aspirated"
+            }
+          ]
+        },
+        {
+          "id": "introductions-1-greetings",
           "type": "listen_repeat",
-          "title": {"en": "Short replies", "hi": "छोटे जवाब"},
+          "title": {
+            "en": "Common greetings",
+            "hi": "रोज़ के अभिवादन"
+          },
           "items": [
-            {"id": "good-morning", "text": "Good morning", "latin": "Good morning", "meaning_en": "a greeting before noon", "audio_key": "introductions-good-morning"},
-            {"id": "nice-to-meet-you", "text": "Nice to meet you", "latin": "Nice to meet you", "meaning_en": "said when you meet someone new", "audio_key": "introductions-nice-to-meet-you"},
-            {"id": "how-are-you", "text": "How are you?", "latin": "How are you?", "meaning_en": "asking how someone is", "audio_key": "introductions-how-are-you"},
-            {"id": "fine-thank-you", "text": "I'm fine, thank you", "latin": "I'm fine, thank you", "meaning_en": "a short, polite reply", "focus_sound": "th-english", "audio_key": "introductions-fine-thank-you"},
-            {"id": "see-you-soon", "text": "See you soon", "latin": "See you soon", "meaning_en": "a friendly goodbye", "focus_sound": "s", "audio_key": "introductions-see-you-soon"}
+            {
+              "id": "namaste",
+              "text": "नमस्ते",
+              "latin": "namaste",
+              "meaning_en": "hello",
+              "audio_key": "introductions-1-greetings-namaste"
+            },
+            {
+              "id": "suprabhaat",
+              "text": "सुप्रभात",
+              "latin": "suprabhaat",
+              "meaning_en": "good morning",
+              "audio_key": "introductions-1-greetings-suprabhaat"
+            },
+            {
+              "id": "aap-kaise-hain",
+              "text": "आप कैसे हैं?",
+              "latin": "aap kaise hain?",
+              "meaning_en": "how are you?",
+              "audio_key": "introductions-1-greetings-aap-kaise-hain"
+            },
+            {
+              "id": "main-theek-hoon",
+              "text": "मैं ठीक हूँ",
+              "latin": "main theek hoon",
+              "meaning_en": "I am well",
+              "audio_key": "introductions-1-greetings-main-theek-hoon"
+            }
           ],
           "feedback": "words"
         },
         {
-          "id": "introductions-1-pause",
-          "type": "tip",
-          "title": {"en": "Pause between ideas", "hi": "बातों के बीच रुकिए"},
-          "body": {
-            "en": "After you say your name, pause for a moment. It gives the listener time, and gives you a breath.",
-            "hi": "अपना नाम बताने के बाद एक पल रुकिए। इससे सुनने वाले को समय मिलता है, और आपको एक साँस।"
+          "id": "introductions-1-dialogue",
+          "type": "dialogue",
+          "title": {
+            "en": "Meeting for the first time",
+            "hi": "पहली मुलाक़ात"
           },
-          "technique_id": "pausing"
+          "scenario": {
+            "en": "You are meeting a new colleague or neighbor.",
+            "hi": "आप किसी नए साथी या पड़ोसी से मिल रहे हैं।"
+          },
+          "turns": [
+            {
+              "speaker": "sunn",
+              "text": "नमस्ते! मेरा नाम रोहन है।",
+              "latin": "namaste! mera naam rohan hai.",
+              "audio_key": "introductions-1-dialogue-1"
+            },
+            {
+              "speaker": "you",
+              "text": "नमस्ते, मेरा नाम कबीर है।",
+              "latin": "namaste, mera naam kabir hai.",
+              "options": [
+                {
+                  "text": "नमस्ते, आपसे मिलकर बहुत खुशी हुई।",
+                  "latin": "namaste, aap se milkar bahut khushi hui."
+                }
+              ]
+            },
+            {
+              "speaker": "sunn",
+              "text": "आपसे मिलकर बहुत अच्छा लगा!",
+              "latin": "aap se milkar bahut achchha laga!",
+              "audio_key": "introductions-1-dialogue-2"
+            },
+            {
+              "speaker": "you",
+              "text": "धन्यवाद, मुझे भी बहुत अच्छा लगा।",
+              "latin": "dhanyavaad, mujhe bhi bahut achchha laga."
+            }
+          ]
         },
         {
           "id": "introductions-1-echo",
           "type": "speak_with_me",
-          "title": {"en": "Sunn first, then you", "hi": "पहले Sunn, फिर आप"},
-          "text": "Hello, I'm Meera. I live in Jaipur.",
-          "latin": "Hello, I'm Meera. I live in Jaipur.",
-          "meaning_en": "Saying your name and where you live.",
+          "title": {
+            "en": "Introducing yourself",
+            "hi": "अपना परिचय"
+          },
+          "text": "नमस्ते, मेरा नाम राहुल है",
+          "latin": "namaste, mera naam rahul hai",
+          "meaning_en": "Hello, my name is Rahul.",
           "mode": "echo",
-          "pace_wpm": [90, 130],
-          "audio_key": "introductions-meera",
-          "feedback": "pace"
+          "pace_wpm": [
+            60,
+            90
+          ],
+          "audio_key": "introductions-1-echo-rahul",
+          "feedback": "words"
         },
         {
-          "id": "introductions-1-neighbour",
-          "type": "dialogue",
-          "title": {"en": "Meeting a neighbour", "hi": "पड़ोसी से मुलाक़ात"},
-          "scenario": {"en": "You meet a new neighbour on the stairs.", "hi": "सीढ़ियों पर एक नए पड़ोसी से मुलाक़ात होती है।"},
-          "turns": [
-            {"speaker": "sunn", "text": "Hi! I just moved in next door.", "latin": "Hi! I just moved in next door.", "audio_key": "introductions-neighbour-1"},
-            {
-              "speaker": "you",
-              "text": "Hello, welcome! I'm Meera.",
-              "latin": "Hello, welcome! I'm Meera.",
-              "options": [{"text": "Hi, nice to meet you.", "latin": "Hi, nice to meet you."}]
-            },
-            {"speaker": "sunn", "text": "Nice to meet you too. How long have you lived here?", "latin": "Nice to meet you too. How long have you lived here?", "audio_key": "introductions-neighbour-2"},
-            {
-              "speaker": "you",
-              "text": "About five years.",
-              "latin": "About five years.",
-              "options": [{"text": "Just one year.", "latin": "Just one year."}, {"text": "All my life.", "latin": "All my life."}]
-            },
-            {"speaker": "sunn", "text": "Lovely. See you around!", "latin": "Lovely. See you around!", "audio_key": "introductions-neighbour-3"}
-          ]
+          "id": "introductions-1-read",
+          "type": "read_aloud",
+          "title": {
+            "en": "Self introduction paragraph",
+            "hi": "परिचय का छोटा वाक्य"
+          },
+          "paragraph": "नमस्ते, मेरा नाम समीर है। मैं दिल्ली में रहता हूँ। मुझे नई किताबें पढ़ना और संगीत सुनना पसंद है।",
+          "latin": "namaste, mera naam sameer hai. main dilli mein rahta hoon. mujhe nayi kitaabein padhna aur sangeet sunna pasand hai.",
+          "audio_key": "introductions-1-read-intro",
+          "feedback": "words"
         },
         {
           "id": "introductions-1-reflect",
           "type": "reflect",
-          "title": {"en": "How was that?", "hi": "कैसा लगा?"},
-          "prompt": {"en": "How did introducing yourself feel?", "hi": "अपना परिचय देना कैसा लगा?"},
-          "choices": ["easy", "okay", "hard"]
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did introducing yourself feel today?",
+            "hi": "आज अपना परिचय देना कैसा लगा?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
         }
       ]
     },
     {
       "id": "introductions-2",
-      "title": {"en": "On the phone", "hi": "फ़ोन पर"},
-      "minutes": 7,
+      "title": {
+        "en": "At the shop and on the phone",
+        "hi": "दुकान पर और फ़ोन पर"
+      },
+      "minutes": 8,
       "steps": [
         {
-          "id": "introductions-2-th",
-          "type": "listen_repeat",
-          "title": {"en": "The th sound", "hi": "th की आवाज़"},
-          "items": [
-            {"id": "thank-you", "text": "Thank you", "latin": "Thank you", "meaning_en": "saying thanks", "focus_sound": "th-english", "audio_key": "introductions-thank-you"},
-            {"id": "thursday", "text": "Thursday", "latin": "Thursday", "meaning_en": "the day after Wednesday", "focus_sound": "th-english", "audio_key": "introductions-thursday"},
-            {"id": "three", "text": "three", "latin": "three", "meaning_en": "the number 3", "focus_sound": "th-english", "audio_key": "introductions-three"},
-            {"id": "this", "text": "this", "latin": "this", "meaning_en": "the one here", "focus_sound": "th-english", "audio_key": "introductions-this"}
-          ],
-          "feedback": "words"
-        },
-        {
-          "id": "introductions-2-tongue",
+          "id": "introductions-2-tip",
           "type": "tip",
-          "title": {"en": "Tongue between the teeth", "hi": "दाँतों के बीच जीभ"},
-          "body": {
-            "en": "For th, rest the tip of your tongue lightly between your teeth and let the air flow out gently.",
-            "hi": "th के लिए जीभ की नोक को हल्के से दाँतों के बीच रखिए और हवा को धीरे से बाहर निकलने दीजिए।"
+          "title": {
+            "en": "Pause before replying",
+            "hi": "बोलने से पहले ठहराव"
           },
-          "technique_id": "tongue-place"
+          "body": {
+            "en": "Many people find it comfortable to pause for one beat when answering the phone or a shopkeeper.",
+            "hi": "फ़ोन उठाते समय या दुकानदार से बात करते समय एक पल का ठहराव लेना बहुत मददगार होता है।"
+          },
+          "technique_id": "pausing"
         },
         {
-          "id": "introductions-2-pairs",
-          "type": "minimal_pairs",
-          "title": {"en": "Th or s?", "hi": "th या s?"},
-          "pairs": [
+          "id": "introductions-2-shop-dialogue",
+          "type": "dialogue",
+          "title": {
+            "en": "Asking for something at a shop",
+            "hi": "दुकान पर सामान माँगना"
+          },
+          "scenario": {
+            "en": "You are at the corner grocery shop asking for supplies.",
+            "hi": "आप किराने की दुकान पर सामान ले रहे हैं।"
+          },
+          "turns": [
             {
-              "id": "thin-sin",
-              "a": {"text": "thin", "latin": "thin", "audio_key": "introductions-thin"},
-              "b": {"text": "sin", "latin": "sin", "audio_key": "introductions-sin"},
-              "sound_a": "th-english",
-              "sound_b": "s"
+              "speaker": "sunn",
+              "text": "नमस्ते जी, क्या चाहिए?",
+              "latin": "namaste ji, kya chaahiye?",
+              "audio_key": "introductions-2-shop-1"
             },
             {
-              "id": "think-sink",
-              "a": {"text": "think", "latin": "think", "audio_key": "introductions-think"},
-              "b": {"text": "sink", "latin": "sink", "audio_key": "introductions-sink"},
-              "sound_a": "th-english",
-              "sound_b": "s"
+              "speaker": "you",
+              "text": "दूध का एक पैकेट दीजिए।",
+              "latin": "doodh ka ek packet deejiye.",
+              "options": [
+                {
+                  "text": "एक ब्रेड और मक्खन का पैकेट दीजिए।",
+                  "latin": "ek bread aur makkhan ka packet deejiye."
+                }
+              ]
+            },
+            {
+              "speaker": "sunn",
+              "text": "यह लीजिए। कुल तीस रुपये हुए।",
+              "latin": "yeh leejiye. kul tees rupaye hue.",
+              "audio_key": "introductions-2-shop-2"
+            },
+            {
+              "speaker": "you",
+              "text": "धन्यवाद भैया।",
+              "latin": "dhanyavaad bhaiya."
             }
           ]
         },
         {
-          "id": "introductions-2-paced",
-          "type": "speak_with_me",
-          "title": {"en": "Follow the words", "hi": "शब्दों के साथ चलिए"},
-          "text": "Hello, this is Meera. Is this a good time to talk?",
-          "latin": "Hello, this is Meera. Is this a good time to talk?",
-          "meaning_en": "Starting a phone call politely.",
-          "mode": "paced",
-          "pace_wpm": [80, 120],
-          "feedback": "pace"
+          "id": "introductions-2-phone-dialogue",
+          "type": "dialogue",
+          "title": {
+            "en": "A brief phone call",
+            "hi": "एक छोटी फ़ोन कॉल"
+          },
+          "scenario": {
+            "en": "You receive a phone call from an office.",
+            "hi": "आपको किसी दफ़्तर से फ़ोन आया है।"
+          },
+          "turns": [
+            {
+              "speaker": "sunn",
+              "text": "हेलो, क्या मेरी बात अमित जी से हो रही है?",
+              "latin": "hello, kya meri baat amit ji se ho rahi hai?",
+              "audio_key": "introductions-2-phone-1"
+            },
+            {
+              "speaker": "you",
+              "text": "हाँ, मैं अमित बोल रहा हूँ।",
+              "latin": "haan, main amit bol raha hoon.",
+              "options": [
+                {
+                  "text": "हाँ, बताइए मैं क्या मदद कर सकता हूँ?",
+                  "latin": "haan, bataaiye main kya madad kar sakta hoon?"
+                }
+              ]
+            },
+            {
+              "speaker": "sunn",
+              "text": "आपका पार्सल आ गया है, नीचे आकर ले लीजिए।",
+              "latin": "aapka parcel aa gaya hai, neeche aakar le leejiye.",
+              "audio_key": "introductions-2-phone-2"
+            },
+            {
+              "speaker": "you",
+              "text": "ठीक है, मैं दो मिनट में आता हूँ। धन्यवाद!",
+              "latin": "theek hai, main do minute mein aata hoon. dhanyavaad!"
+            }
+          ]
         },
         {
-          "id": "introductions-2-voicemail",
-          "type": "read_aloud",
-          "title": {"en": "Leave a message", "hi": "मैसेज छोड़िए"},
-          "paragraph": "Hi, this is Meera. I'm calling about my appointment on Thursday. Please call me back after three. Thank you.",
-          "latin": "Hi, this is Meera. I'm calling about my appointment on Thursday. Please call me back after three. Thank you.",
-          "audio_key": "introductions-voicemail",
+          "id": "introductions-2-english",
+          "type": "listen_repeat",
+          "title": {
+            "en": "Polite English phrases",
+            "hi": "अंग्रेज़ी में विनम्र वाक्य"
+          },
+          "items": [
+            {
+              "id": "thank-you",
+              "text": "Thank you very much",
+              "latin": "Thank you very much",
+              "meaning_en": "polite thanks",
+              "focus_sound": "th-english",
+              "audio_key": "introductions-2-english-thank-you"
+            },
+            {
+              "id": "three-please",
+              "text": "Three items please",
+              "latin": "Three items please",
+              "meaning_en": "ordering three",
+              "focus_sound": "th-english",
+              "audio_key": "introductions-2-english-three-please"
+            },
+            {
+              "id": "this-one",
+              "text": "I would like this one",
+              "latin": "I would like this one",
+              "meaning_en": "pointing to item",
+              "focus_sound": "th-english",
+              "audio_key": "introductions-2-english-this-one"
+            }
+          ],
           "feedback": "words"
         },
         {
-          "id": "introductions-2-clinic",
-          "type": "dialogue",
-          "title": {"en": "Calling a clinic", "hi": "क्लिनिक को फ़ोन"},
-          "scenario": {"en": "Call a clinic to move your appointment.", "hi": "क्लिनिक को फ़ोन करके अपना अपॉइंटमेंट बदलिए।"},
-          "turns": [
-            {"speaker": "sunn", "text": "Good morning, City Clinic. How can I help?", "latin": "Good morning, City Clinic. How can I help?", "audio_key": "introductions-clinic-1"},
-            {
-              "speaker": "you",
-              "text": "Hello, I'd like to change my appointment, please.",
-              "latin": "Hello, I'd like to change my appointment, please.",
-              "options": [{"text": "Hi, can I move my appointment to another day?", "latin": "Hi, can I move my appointment to another day?"}]
-            },
-            {"speaker": "sunn", "text": "Of course. Which day suits you?", "latin": "Of course. Which day suits you?", "audio_key": "introductions-clinic-2"},
-            {
-              "speaker": "you",
-              "text": "Thursday afternoon, please.",
-              "latin": "Thursday afternoon, please.",
-              "options": [{"text": "Friday morning, please.", "latin": "Friday morning, please."}]
-            },
-            {"speaker": "sunn", "text": "Done. We will send you a message with the time.", "latin": "Done. We will send you a message with the time.", "audio_key": "introductions-clinic-3"},
-            {"speaker": "you", "text": "Thank you. Bye.", "latin": "Thank you. Bye."}
-          ]
+          "id": "introductions-2-choral",
+          "type": "speak_with_me",
+          "title": {
+            "en": "Polite closing together",
+            "hi": "विनम्र समापन"
+          },
+          "text": "धन्यवाद, आपका दिन शुभ हो",
+          "latin": "dhanyavaad, aapka din shubh ho",
+          "meaning_en": "Thank you, have a good day.",
+          "mode": "choral",
+          "pace_wpm": [
+            60,
+            90
+          ],
+          "audio_key": "introductions-2-choral-day",
+          "feedback": "words"
         },
         {
           "id": "introductions-2-reflect",
           "type": "reflect",
-          "title": {"en": "How was that?", "hi": "कैसा लगा?"},
-          "prompt": {"en": "How did the phone call feel?", "hi": "फ़ोन पर बात करना कैसा लगा?"},
-          "choices": ["easy", "okay", "hard"]
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did phone and shop dialogues feel?",
+            "hi": "दुकान और फ़ोन की बातचीत कैसी लगी?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "introductions-3",
+      "title": {
+        "en": "At the clinic",
+        "hi": "डॉक्टर के पास"
+      },
+      "minutes": 8,
+      "steps": [
+        {
+          "id": "introductions-3-intro",
+          "type": "intro",
+          "title": {
+            "en": "Explaining discomfort",
+            "hi": "तकलीफ़ बताना"
+          },
+          "body": {
+            "en": "At a clinic, doctors listen attentively. Take steady breaths while explaining where it hurts.",
+            "hi": "डॉक्टर के पास अपनी परेशानी आराम से बताइए। साँस को शांत रखिए और धीरे-धीरे बोलिए।"
+          }
+        },
+        {
+          "id": "introductions-3-tip",
+          "type": "tip",
+          "title": {
+            "en": "Light touches on words",
+            "hi": "शब्दों पर हल्का दबाव"
+          },
+          "body": {
+            "en": "Many people find it easier to speak clearly when staying relaxed, especially when feeling unwell.",
+            "hi": "तबीयत खराब होने पर भी शरीर को ढीला रखकर बोलने से शब्द आसानी से निकलते हैं।"
+          },
+          "technique_id": "light-touch"
+        },
+        {
+          "id": "introductions-3-phrases",
+          "type": "listen_repeat",
+          "title": {
+            "en": "Describing symptoms",
+            "hi": "तकलीफ़ के वाक्य"
+          },
+          "items": [
+            {
+              "id": "sir-dard",
+              "text": "सिर में दर्द है",
+              "latin": "sir mein dard hai",
+              "meaning_en": "I have a headache",
+              "audio_key": "introductions-3-phrases-sir-dard"
+            },
+            {
+              "id": "pet-dard",
+              "text": "पेट में दर्द है",
+              "latin": "pet mein dard hai",
+              "meaning_en": "my stomach hurts",
+              "audio_key": "introductions-3-phrases-pet-dard"
+            },
+            {
+              "id": "dawa-chaahiye",
+              "text": "मुझे दवा चाहिए",
+              "latin": "mujhe dawa chaahiye",
+              "meaning_en": "I need medicine",
+              "audio_key": "introductions-3-phrases-dawa-chaahiye"
+            },
+            {
+              "id": "aaraam-karoonga",
+              "text": "मैं थोड़ा आराम करूँगा",
+              "latin": "main thoda aaraam karoonga",
+              "meaning_en": "I will rest a little",
+              "audio_key": "introductions-3-phrases-aaraam-karoonga"
+            }
+          ],
+          "feedback": "words"
+        },
+        {
+          "id": "introductions-3-clinic-dialogue",
+          "type": "dialogue",
+          "title": {
+            "en": "Talking with the doctor",
+            "hi": "डॉक्टर से बातचीत"
+          },
+          "scenario": {
+            "en": "You are explaining your health concern to the doctor.",
+            "hi": "आप डॉक्टर को अपनी तकलीफ़ बता रहे हैं।"
+          },
+          "turns": [
+            {
+              "speaker": "sunn",
+              "text": "नमस्ते, बताइए क्या परेशानी है?",
+              "latin": "namaste, bataaiye kya pareshaani hai?",
+              "audio_key": "introductions-3-clinic-1"
+            },
+            {
+              "speaker": "you",
+              "text": "मुझे कल रात से सिर में दर्द है।",
+              "latin": "mujhe kal raat se sir mein dard hai.",
+              "options": [
+                {
+                  "text": "मुझे हल्का बुखार और थकान लग रही है।",
+                  "latin": "mujhe halka bukhaar aur thakaan lag rahi hai."
+                }
+              ]
+            },
+            {
+              "speaker": "sunn",
+              "text": "चिंता मत कीजिए, यह दवा ले लीजिए और आराम कीजिए।",
+              "latin": "chinta mat kijiye, yeh dawa le leejiye aur aaraam kijiye.",
+              "audio_key": "introductions-3-clinic-2"
+            },
+            {
+              "speaker": "you",
+              "text": "धन्यवाद डॉक्टर साहब।",
+              "latin": "dhanyavaad doctor sahab."
+            }
+          ]
+        },
+        {
+          "id": "introductions-3-wait-dialogue",
+          "type": "dialogue",
+          "title": {
+            "en": "Asking someone to wait or repeat",
+            "hi": "रुकने या दोहराने के लिए कहना"
+          },
+          "scenario": {
+            "en": "Someone is speaking quickly and you ask them to repeat.",
+            "hi": "कोई जल्दी-जल्दी बोल रहा है और आप उन्हें दोहराने को कहते हैं।"
+          },
+          "turns": [
+            {
+              "speaker": "sunn",
+              "text": "फॉर्म भरकर काउंटर नंबर तीन पर जमा करा दीजिए।",
+              "latin": "form bharkar counter number teen par jama kara deejiye.",
+              "audio_key": "introductions-3-wait-1"
+            },
+            {
+              "speaker": "you",
+              "text": "कृपया एक पल रुकिए, ज़रा फिर से कहिए।",
+              "latin": "kripya ek pal rukiye, zara phir se kahiye.",
+              "options": [
+                {
+                  "text": "एक मिनट रुकिए, मैं समझ नहीं पाया।",
+                  "latin": "ek minute rukiye, main samajh nahin paaya."
+                }
+              ]
+            },
+            {
+              "speaker": "sunn",
+              "text": "ज़रूर, काउंटर नंबर तीन पर फॉर्म देना है।",
+              "latin": "zaroor, counter number teen par form dena hai.",
+              "audio_key": "introductions-3-wait-2"
+            },
+            {
+              "speaker": "you",
+              "text": "समझ गया, बहुत शुक्रिया।",
+              "latin": "samajh gaya, bahut shukriya."
+            }
+          ]
+        },
+        {
+          "id": "introductions-3-echo",
+          "type": "speak_with_me",
+          "title": {
+            "en": "Asking politely to wait",
+            "hi": "विनम्रता से रुकने को कहना"
+          },
+          "text": "कृपया एक पल रुकिए, मैं फिर से बताता हूँ",
+          "latin": "kripya ek pal rukiye, main phir se bataata hoon",
+          "meaning_en": "Please wait a moment, I will explain again.",
+          "mode": "echo",
+          "pace_wpm": [
+            55,
+            85
+          ],
+          "audio_key": "introductions-3-echo-wait",
+          "feedback": "words"
+        },
+        {
+          "id": "introductions-3-reflect",
+          "type": "reflect",
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did explaining symptoms and asking someone to wait feel?",
+            "hi": "अपनी बात समझाना और रुकने के लिए कहना कैसा लगा?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "introductions-4",
+      "title": {
+        "en": "Easy alternatives when stuck",
+        "hi": "अटकने पर आसान शब्द"
+      },
+      "minutes": 8,
+      "steps": [
+        {
+          "id": "introductions-4-intro",
+          "type": "intro",
+          "title": {
+            "en": "If a word gets stuck, use another one",
+            "hi": "शब्द अटके तो दूसरा चुनिए"
+          },
+          "body": {
+            "en": "If a word feels tricky in the moment, you can always choose another word with the same meaning. You are always in control of your words.",
+            "hi": "अगर बोलते समय कोई शब्द मुश्किल लगे, तो उसी मतलब का कोई दूसरा आसान शब्द चुन लीजिए। चुनाव हमेशा आपका है।"
+          }
+        },
+        {
+          "id": "introductions-4-tip",
+          "type": "tip",
+          "title": {
+            "en": "Switching words smoothly",
+            "hi": "सहजता से शब्द बदलना"
+          },
+          "body": {
+            "en": "Many people find that keeping 2 or 3 favorite ways to say everyday needs makes conversations feel relaxed.",
+            "hi": "रोज़ की ज़रूरतों को कहने के दो-तीन आसान तरीके याद रखने से बातचीत आसान हो जाती है।"
+          },
+          "technique_id": "slow-pace"
+        },
+        {
+          "id": "introductions-4-pairs",
+          "type": "listen_repeat",
+          "title": {
+            "en": "Equivalent phrasing pairs",
+            "hi": "मिलते-जुलते शब्द"
+          },
+          "items": [
+            {
+              "id": "water-1",
+              "text": "पानी चाहिए",
+              "latin": "paani chaahiye",
+              "meaning_en": "I need water",
+              "audio_key": "introductions-4-pairs-water-1"
+            },
+            {
+              "id": "water-2",
+              "text": "पानी मिलेगा?",
+              "latin": "paani milega?",
+              "meaning_en": "can I get water?",
+              "audio_key": "introductions-4-pairs-water-2"
+            },
+            {
+              "id": "thanks-1",
+              "text": "धन्यवाद",
+              "latin": "dhanyavaad",
+              "meaning_en": "thank you",
+              "audio_key": "introductions-4-pairs-thanks-1"
+            },
+            {
+              "id": "thanks-2",
+              "text": "शुक्रिया",
+              "latin": "shukriya",
+              "meaning_en": "thanks",
+              "audio_key": "introductions-4-pairs-thanks-2"
+            }
+          ],
+          "feedback": "words"
+        },
+        {
+          "id": "introductions-4-dialogue",
+          "type": "dialogue",
+          "title": {
+            "en": "Using an easier word in conversation",
+            "hi": "बातचीत में आसान विकल्प चुनना"
+          },
+          "scenario": {
+            "en": "You are asking for a drink and choose an alternative that feels completely easy to say.",
+            "hi": "आप पानी माँग रहे हैं और जो शब्द सबसे आसान लगे उसे चुनते हैं।"
+          },
+          "turns": [
+            {
+              "speaker": "sunn",
+              "text": "बताइए, आपके लिए क्या लाऊँ?",
+              "latin": "bataaiye, aapke liye kya laaoon?",
+              "audio_key": "introductions-4-dialogue-1"
+            },
+            {
+              "speaker": "you",
+              "text": "मुझे थोड़ा पानी मिलेगा?",
+              "latin": "mujhe thoda paani milega?",
+              "options": [
+                {
+                  "text": "एक गिलास पानी दीजिए।",
+                  "latin": "ek glass paani deejiye."
+                }
+              ]
+            },
+            {
+              "speaker": "sunn",
+              "text": "अभी लाता हूँ, एक मिनट रुकिए।",
+              "latin": "abhi laata hoon, ek minute rukiye.",
+              "audio_key": "introductions-4-dialogue-2"
+            },
+            {
+              "speaker": "you",
+              "text": "बहुत शुक्रिया।",
+              "latin": "bahut shukriya."
+            }
+          ]
+        },
+        {
+          "id": "introductions-4-paced",
+          "type": "speak_with_me",
+          "title": {
+            "en": "Paced freedom phrase",
+            "hi": "आज़ादी से अपनी बात कहना"
+          },
+          "text": "अगर एक शब्द अटक जाए तो दूसरा शब्द चुन लीजिए",
+          "latin": "agar ek shabd atak jaaye to doosra shabd chun leejiye",
+          "meaning_en": "If a word gets stuck, pick another one.",
+          "mode": "paced",
+          "pace_wpm": [
+            50,
+            75
+          ],
+          "feedback": "words"
+        },
+        {
+          "id": "introductions-4-read",
+          "type": "read_aloud",
+          "title": {
+            "en": "Speaking flexibly",
+            "hi": "सहज बातचीत का नियम"
+          },
+          "paragraph": "बोलते समय शब्द बदलना बिल्कुल स्वाभाविक है। सबसे ज़रूरी बात यह है कि आप अपनी बात आराम से कह सकें।",
+          "latin": "bolte samay shabd badalna bilkul swaabhaavik hai. sabse zaroori baat yeh hai ki aap apni बात aaraam se kah sakein.",
+          "audio_key": "introductions-4-read-flexibility",
+          "feedback": "words"
+        },
+        {
+          "id": "introductions-4-reflect",
+          "type": "reflect",
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did having easier ways to say things feel?",
+            "hi": "आसान शब्दों के विकल्प चुनना कैसा लगा?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
         }
       ]
     }
