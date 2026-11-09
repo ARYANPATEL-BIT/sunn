@@ -142,7 +142,7 @@ Expected output: Lists the tracked deployment files and reports `checks passed: 
 | Issue / Error | Likely Root Cause | Verified Resolution |
 | :--- | :--- | :--- |
 | **Microphone blocked / red icon** | Non-secure origin on mobile, or permission denied in browser | On desktop, use `http://localhost:7860` (treated as secure origin). On mobile, access via HTTPS direct URL. Check browser site permissions to allow microphone access. |
-| **502 `gnani_unreachable`** | Gnani didn't answer, or `GNANI_API_KEY` is not set | The API fails safely without crashing. Playback falls back to browser speech synthesis (`window.speechSynthesis`), with an on-screen notice; recognition waits for Prisma. |
+| **502 `gnani_unreachable`** | Gnani didn't answer, or `GNANI_STT_API_KEY` / `GNANI_TTS_API_KEY` is not set | The API fails safely without crashing. Playback falls back to browser speech synthesis (`window.speechSynthesis`), with an on-screen notice; recognition waits for Prisma. |
 | **502 `gnani_rejected`** | Gnani refused the request, for example an invalid key (HTTP 401) | Check the key in the Space's secrets. |
 | **403 `invite_required`** | Sign-up attempted without invite code when `DEMO_INVITE_CODE` is set | Enter the designated evaluator invite code in the signup form. |
 | **429 `too_many_attempts`** | 5 wrong invite codes from one address, or 5 failed logins for one email, within 15 minutes | Locked for up to 15 minutes; the message says how long. |

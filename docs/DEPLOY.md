@@ -12,7 +12,10 @@ Everything comes from environment variables. Locally they live in `.env` (copy
 
 | name | needed | what it does |
 | - | - | - |
-| `GNANI_API_KEY` | yes, secret | the Gnani API key |
+| `GNANI_STT_API_KEY` | yes, secret | the Gnani Prisma Speech-to-Text API key |
+| `GNANI_TTS_API_KEY` | yes, secret | the Gnani Timbre Text-to-Speech API key |
+| `GROQ_API_KEY` | optional, secret | the Groq Cloud API key for AI assistant features |
+| `GROQ_MODEL` | no (default `openai/gpt-oss-120b`) | the Groq model identifier |
 | `JWT_SECRET` | yes, secret | signs session cookies. Make a long random one: `uv run python -c "import secrets; print(secrets.token_urlsafe(48))"`. Changing it signs everyone out |
 | `DEMO_INVITE_CODE` | yes on a public Space, secret | sign-up needs this code. Make it long and random too (see TRUST_PROXY below), and give it only to the people who should try the demo |
 | `TRUST_PROXY` | `1` on the Space, `0` locally | see below |
@@ -68,8 +71,8 @@ address, so the proxy doesn't affect them.
    SDK with the **Blank** template, and the free **CPU basic** hardware. Make it **Public**, so
    judges can open it without an account. Create it.
 3. In the Space, open **Settings → Variables and secrets** and add:
-   - **New secret**: `GNANI_API_KEY`, `JWT_SECRET`, `DEMO_INVITE_CODE`
-   - **New variable**: `TRUST_PROXY` = `1`, `GNANI_CALL_LIMIT`, `DAILY_CALL_CAP_PER_USER`, and
+   - **New secret**: `GNANI_STT_API_KEY`, `GNANI_TTS_API_KEY`, `JWT_SECRET`, `GROQ_API_KEY`, `DEMO_INVITE_CODE`
+   - **New variable**: `TRUST_PROXY` = `1`, `GNANI_CALL_LIMIT`, `DAILY_CALL_CAP_PER_USER`, `GROQ_MODEL`, and
      optionally `OWNER_EMAIL`
 
    Secrets and variables reach the container as environment variables when it runs. Nothing
@@ -222,7 +225,7 @@ This verifies:
 
 | Symptom / HTTP Code | Root Cause | Recovery Action |
 | - | - | - |
-| **502 `gnani_unreachable`** | `GNANI_API_KEY` missing or invalid in Space secrets | Open Space Settings -> Variables and secrets, verify `GNANI_API_KEY`. Audio playback will fall back to browser speech synthesis. |
+| **502 `gnani_unreachable`** | `GNANI_STT_API_KEY` or `GNANI_TTS_API_KEY` missing or invalid in Space secrets | Open Space Settings -> Variables and secrets, verify the Gnani keys. Audio playback will fall back to browser speech synthesis. |
 | **429 `credit_limit_reached`** | Global `GNANI_CALL_LIMIT` reached | Previously cached phrases continue to play. To increase limit, update `GNANI_CALL_LIMIT` variable in Space settings. |
 | **403 `invite_required`** | Sign-up attempted without valid code | Verify `DEMO_INVITE_CODE` in Space secrets and ensure presenter enters the code on sign-up. |
 | **404 on page reload** | Reverse proxy misconfiguration | Use direct URL `https://<you>-sunn.hf.space`, not the framed Hugging Face preview page. |

@@ -220,7 +220,7 @@ Needs [uv](https://docs.astral.sh/uv/) and Node 20.19+ (or 22.12+), on Windows P
 
 ```powershell
 uv sync
-Copy-Item .env.example .env   # then fill in GNANI_API_KEY and a JWT_SECRET:
+Copy-Item .env.example .env   # then fill in GNANI_STT_API_KEY, GNANI_TTS_API_KEY and a JWT_SECRET:
 uv run python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 cd web; npm ci; npm run build; cd ..
