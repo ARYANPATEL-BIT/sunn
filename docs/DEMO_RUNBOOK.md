@@ -73,6 +73,39 @@ Open `http://localhost:7860` in a desktop browser (Chrome, Edge, or Firefox). De
 - **Expected Result**: Metrics cards and top phrases display cleanly; deletion confirmation dialog is accessible.
 - **Recovery Plan**: Clarify that if progress has no uses recorded yet, the screen displays a helpful empty state guiding the user to speak their first phrase.
 
+### Step 6: Trainings, Lesson Player and Easier Ways (Optional Extension: 4:30 to 5:30)
+- **Route**: `/app/trainings` (browse courses) -> `/app/trainings/courses/easy-starts` -> `/app/trainings/lessons/easy-starts-1`
+- **Action**: Walk through Easy Starts Lesson 1 (Breath and a gentle start). Demonstrate the Listen & Repeat step with pre-synthesized audio, the Speak With Me pacing bar, and open the Easier Ways tool (`/app/trainings/easier-ways`) for "पानी चाहिए".
+- **Presenter Script**:
+  > "Sunn Trainings provides structured, clinically informed speaking practice across four categories: Easy Starts, Everyday Words, Speech Clarity, and Kids Fun. In Easy Starts Lesson 1, users practice gentle vocal onset with vowel sounds. When a sound feels difficult, the Easier Ways assistant suggests simpler phonetic alternatives while preserving urgency and communicative intent."
+- **Expected Result**: The lesson steps advance smoothly; ungenerated audio falls back cleanly to synthetic timing; Easier Ways presents simpler alternatives with one-click addition to the phrase library.
+- **Recovery Plan**: If network is offline, the lesson player continues with local timer pacing, and Easier Ways serves pre-curated alternatives from `alternatives.json`.
+
+---
+
+## Live API Credit Budget & Real-Time Monitoring
+
+Sunn is configured to preserve the majority of the ~5,000 Gnani credit budget for presentation:
+
+1. **Credit Ceilings**:
+   - `GNANI_CALL_LIMIT=4000`: Hard stop protecting the final 1,000 credit demo buffer.
+   - `DAILY_CALL_CAP_PER_USER=60`: Prevents presenter account runaway during rehearsals.
+   - `TRAINING_CHECKS_PER_DAY=20`: Limits live STT scoring checks per user per day.
+2. **Real-Time Usage Monitoring**:
+   - The owner account (`OWNER_EMAIL`) can query `GET /api/me/usage` to inspect live call counts and cache hit ratios.
+   - Inspect SQLite call records:
+     ```powershell
+     uv run python -c "import db; print(db.row('SELECT COUNT(*) as live FROM api_calls WHERE cached = 0'))"
+     ```
+3. **Emergency Fallback Matrix**:
+
+| Component | Failure Condition | Automatic Platform Response | Presenter Talking Point |
+| :--- | :--- | :--- | :--- |
+| **Gnani Prisma STT** | Network timeout or quota error | Falls back to cached fingerprints and client notice | "Sunn handles connectivity drops gracefully without interrupting user intent." |
+| **Gnani Timbre TTS** | Provider 500 or unreachable | Plays audio via browser `window.speechSynthesis` | "Sunn includes instant browser speech fallback so the user is never left without a voice." |
+| **Groq AI Judge** | Rate limit or API error | Retains local phonetic matcher ranking without delay | "AI assists when confident, but local deterministic matching always guarantees speed." |
+| **Lesson Audio** | Missing 404 audio file | Visual rhythmic highlighting via synthetic timer | "The curriculum supports audio-free practice with visual pacing bars." |
+
 ---
 
 ## Post-Demo Cleanup
