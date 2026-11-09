@@ -1,11 +1,9 @@
 """Trainings: speaking practice in short course-style lessons, a practice and confidence tool that
-never claims to treat anything. docs/TRAININGS_CONTRACT.md is the contract. Browsing the content
-(content/trainings/, read through src/trainings_content.py) needs no session; everything under
-/me does.
-
-The /me routes are stubs (TODO(person A)): each checks its ids against the content and answers
-made-up data of exactly the contract's shape, but hears, stores and remembers nothing."""
+Training progress, reflections and attempts are stored in the database.
+docs/TRAININGS_CONTRACT.md is the contract. Browsing the content (content/trainings/,
+read through src/trainings_content.py) needs no session; everything under /me does."""
 import os
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Cookie, Depends, File, Form, UploadFile
@@ -182,9 +180,14 @@ def first_course():
 
 
 def done_lessons(user):
-    """TODO(person A): the lessons user completed, from the database. Until then everyone signed
-    in has done the first lesson of the first course."""
-    return {first_course().lessons[0].id} if user else set()
+    """The set of lesson ids user has completed, from the database."""
+    if not user:
+        return set()
+    result = db.rows(
+        "SELECT lesson_id FROM training_progress WHERE user_id = ? AND completed_at IS NOT NULL",
+        (user["id"],)
+    )
+    return {r["lesson_id"] for r in result if r["lesson_id"] in LIBRARY.lessons}
 
 
 def percent(lessons, done):
@@ -253,14 +256,66 @@ def audio(audio_key: str):
     return FileResponse(path, media_type="audio/wav")
 
 
-# --- the user's own practice: stubs, TODO(person A)
+# --- the user's own practice
 
 @router.get("/me/trainings/progress", response_model=Progress)
 def progress(user=Depends(current_user)):
-    course = first_course()
-    return {"courses": [{"id": course.id, "percent": percent(course.lessons, done_lessons(user))}],
-            "resume": {"course_id": course.id, "lesson_id": course.lessons[-1].id, "step_index": 2},
-            "lessons_done": 1, "minutes_practised": 9, "days_this_week": 2}
+    done = done_lessons(user)
+
+    # Every course the user has started (has any row in training_progress)
+    prog_rows = db.rows(
+        "SELECT lesson_id, updated_at FROM training_progress WHERE user_id = ? ORDER BY updated_at DESC",
+        (user["id"],)
+    )
+    started_courses = set()
+    for r in prog_rows:
+        if r["lesson_id"] in LIBRARY.lessons:
+            c, _ = LIBRARY.lessons[r["lesson_id"]]
+            started_courses.add(c.id)
+
+    courses = [
+        {"id": c.id, "percent": percent(c.lessons, done)}
+        for c in LIBRARY.courses.values()
+        if c.id in started_courses
+    ]
+
+    # Resume: the most recently updated unfinished lesson
+    unfinished = db.row(
+        "SELECT lesson_id, step_index FROM training_progress WHERE user_id = ? AND completed_at IS NULL ORDER BY updated_at DESC, rowid DESC LIMIT 1",
+        (user["id"],)
+    )
+    resume = None
+    if unfinished and unfinished["lesson_id"] in LIBRARY.lessons:
+        c, _ = LIBRARY.lessons[unfinished["lesson_id"]]
+        resume = {"course_id": c.id, "lesson_id": unfinished["lesson_id"], "step_index": unfinished["step_index"]}
+
+    # Minutes practised: sum of seconds across all days in training_minutes, rounded to nearest minute
+    min_row = db.row(
+        "SELECT COALESCE(SUM(seconds), 0) AS total_seconds FROM training_minutes WHERE user_id = ?",
+        (user["id"],)
+    )
+    total_seconds = min_row["total_seconds"] if min_row else 0
+    minutes_practised = round(total_seconds / 60)
+
+    # Days this week: distinct days with any activity in the last 7 days
+    cutoff = (datetime.now(timezone.utc).date() - timedelta(days=6)).isoformat()
+    day_row = db.row(
+        "SELECT COUNT(DISTINCT day) AS cnt FROM ("
+        "  SELECT day FROM training_minutes WHERE user_id = ? AND day >= ? AND seconds > 0"
+        "  UNION"
+        "  SELECT substr(updated_at, 1, 10) AS day FROM training_progress WHERE user_id = ? AND updated_at >= ?"
+        ")",
+        (user["id"], cutoff, user["id"], cutoff)
+    )
+    days_this_week = day_row["cnt"] if day_row else 0
+
+    return {
+        "courses": courses,
+        "resume": resume,
+        "lessons_done": len(done),
+        "minutes_practised": minutes_practised,
+        "days_this_week": days_this_week,
+    }
 
 
 @router.post("/me/trainings/progress", response_model=LessonProgress)
