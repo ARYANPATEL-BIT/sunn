@@ -1,11 +1,13 @@
 """Trainings (docs/TRAININGS_CONTRACT.md): each route answers the contract's shape, and the
 content in content/trainings/ passes scripts/validate_trainings.py."""
+from datetime import datetime, timedelta, timezone
 import json
 import os
 import shutil
 
 import pytest
 
+import db
 import trainings_content
 import validate_trainings
 
@@ -33,11 +35,16 @@ def test_category_lists_its_courses(env):
 
 
 def test_course_lists_its_lessons(env):
-    found = env.signup().get("/trainings/courses/easy-starts").json()
+    client = env.signup()
+    found = client.get("/trainings/courses/easy-starts").json()
     assert set(found) == {"id", "category_id", "title", "summary", "what_you_practise", "level", "minutes",
                           "practice_lang", "percent", "lessons"}
     assert all(set(lesson) == {"id", "title", "minutes", "step_count", "completed"} for lesson in found["lessons"])
-    assert [lesson["completed"] for lesson in found["lessons"]] == [True, False, False, False] and found["percent"] == 25
+    assert [lesson["completed"] for lesson in found["lessons"]] == [False, False, False, False] and found["percent"] == 0
+    # After completing the first lesson
+    client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-1", "step_index": 5, "completed": True})
+    updated = client.get("/trainings/courses/easy-starts").json()
+    assert [lesson["completed"] for lesson in updated["lessons"]] == [True, False, False, False] and updated["percent"] == 25
     assert env.client().get("/trainings/courses/nowhere").status_code == 404
 
 
@@ -61,17 +68,25 @@ def test_audio_is_served_once_made(env, monkeypatch):
 
 
 def test_progress(env):
-    found = env.signup().get("/me/trainings/progress").json()
+    client = env.signup()
+    empty = client.get("/me/trainings/progress").json()
+    assert set(empty) == {"courses", "resume", "lessons_done", "minutes_practised", "days_this_week"}
+    assert empty["courses"] == []
+    assert empty["resume"] is None
+    assert empty["lessons_done"] == 0
+
+    client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-1", "step_index": 2, "completed": False})
+    found = client.get("/me/trainings/progress").json()
     assert set(found) == {"courses", "resume", "lessons_done", "minutes_practised", "days_this_week"}
     assert all(set(c) == {"id", "percent"} for c in found["courses"])
-    assert set(found["resume"]) == {"course_id", "lesson_id", "step_index"}
+    assert found["resume"] == {"course_id": "easy-starts", "lesson_id": "easy-starts-1", "step_index": 2}
 
 
 def test_save_progress(env):
     client = env.signup()
     found = client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-2", "step_index": 6, "completed": True})
     assert found.json() == {"lesson_id": "easy-starts-2", "course_id": "easy-starts", "step_index": 6,
-                            "completed": True, "course_percent": 50}
+                            "completed": True, "course_percent": 25}
     past_the_end = client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-2", "step_index": 7,
                                                                "completed": False})
     assert past_the_end.json()["error"] == "invalid_input"
@@ -84,6 +99,10 @@ def test_reflect(env):
     not_a_reflect_step = client.post("/me/trainings/reflect", json={**body, "step_id": "easy-starts-1-welcome"})
     assert not_a_reflect_step.status_code == 404
     assert client.post("/me/trainings/reflect", json={**body, "feeling": "great"}).status_code == 422
+    # Verify reflection row was stored
+    row = db.row("SELECT feeling FROM training_reflections WHERE lesson_id = ? AND step_id = ?",
+                 ("easy-starts-1", "easy-starts-1-reflect"))
+    assert row and row["feeling"] == "okay"
 
 
 def test_attempts(env):
@@ -141,3 +160,109 @@ def test_the_validator_finds_words_feedback_in_smooth_speaking(tmp_path):
     found = validate_trainings.check(os.fspath(root))
     assert any("feedback none or pace" in p for p in found), found
     assert any("unlisted is not listed" in p for p in found), found
+
+
+def test_progress_upsert_never_goes_backwards(env):
+    client = env.signup()
+    first = client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-1", "step_index": 5, "completed": True}).json()
+    assert first["completed"] is True
+    assert first["course_percent"] == 25
+
+    revisit = client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-1", "step_index": 2, "completed": False}).json()
+    assert revisit["completed"] is True
+    assert revisit["step_index"] == 2
+    assert revisit["course_percent"] == 25
+
+    course_data = client.get("/trainings/courses/easy-starts").json()
+    assert course_data["lessons"][0]["completed"] is True
+
+
+def test_resume_picks_the_right_lesson(env):
+    client = env.signup()
+    assert client.get("/me/trainings/progress").json()["resume"] is None
+
+    # Start lesson 1 (unfinished)
+    client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-1", "step_index": 1, "completed": False})
+    p1 = client.get("/me/trainings/progress").json()
+    assert p1["resume"] == {"course_id": "easy-starts", "lesson_id": "easy-starts-1", "step_index": 1}
+
+    # Start lesson 2 (unfinished) - becomes most recently updated unfinished lesson
+    client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-2", "step_index": 3, "completed": False})
+    p2 = client.get("/me/trainings/progress").json()
+    assert p2["resume"] == {"course_id": "easy-starts", "lesson_id": "easy-starts-2", "step_index": 3}
+
+    # Complete lesson 2 - resume falls back to lesson 1 which is still unfinished
+    client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-2", "step_index": 6, "completed": True})
+    p3 = client.get("/me/trainings/progress").json()
+    assert p3["resume"] == {"course_id": "easy-starts", "lesson_id": "easy-starts-1", "step_index": 1}
+
+    # Complete lesson 1 - no unfinished lessons left
+    client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-1", "step_index": 5, "completed": True})
+    p4 = client.get("/me/trainings/progress").json()
+    assert p4["resume"] is None
+
+
+def test_days_this_week(env):
+    import auth
+    client = env.signup()
+    uid = auth.user_id_from_token(client.cookies.get("sunn_session"))
+    assert client.get("/me/trainings/progress").json()["days_this_week"] == 0
+
+    client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-1", "step_index": 0, "completed": False})
+    assert client.get("/me/trainings/progress").json()["days_this_week"] == 1
+
+    today = datetime.now(timezone.utc).date()
+    d1 = (today - timedelta(days=2)).isoformat()
+    d2 = (today - timedelta(days=5)).isoformat()
+    d_old = (today - timedelta(days=12)).isoformat()
+    db.execute("INSERT INTO training_minutes (user_id, day, seconds) VALUES (?, ?, ?)", (uid, d1, 180))
+    db.execute("INSERT INTO training_minutes (user_id, day, seconds) VALUES (?, ?, ?)", (uid, d2, 240))
+    db.execute("INSERT INTO training_minutes (user_id, day, seconds) VALUES (?, ?, ?)", (uid, d_old, 300))
+
+    assert client.get("/me/trainings/progress").json()["days_this_week"] == 3
+
+
+def test_percent_math(env):
+    client = env.signup()
+    assert client.get("/trainings/courses/easy-starts").json()["percent"] == 0
+
+    client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-1", "step_index": 5, "completed": True})
+    assert client.get("/trainings/courses/easy-starts").json()["percent"] == 25
+
+    client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-2", "step_index": 6, "completed": True})
+    assert client.get("/trainings/courses/easy-starts").json()["percent"] == 50
+
+    client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-3", "step_index": 6, "completed": True})
+    assert client.get("/trainings/courses/easy-starts").json()["percent"] == 75
+
+    client.post("/me/trainings/progress", json={"lesson_id": "easy-starts-4", "step_index": 5, "completed": True})
+    assert client.get("/trainings/courses/easy-starts").json()["percent"] == 100
+
+
+def test_unknown_lesson_ids_rejected(env):
+    client = env.signup()
+    res = client.post("/me/trainings/progress", json={"lesson_id": "non-existent-lesson", "step_index": 0, "completed": False})
+    assert res.status_code == 404 and res.json()["error"] == "not_found"
+
+    res_reflect = client.post("/me/trainings/reflect", json={"lesson_id": "non-existent-lesson", "step_id": "easy-starts-1-reflect", "feeling": "okay"})
+    assert res_reflect.status_code == 404 and res_reflect.json()["error"] == "not_found"
+
+    res_reflect_step = client.post("/me/trainings/reflect", json={"lesson_id": "easy-starts-1", "step_id": "non-existent-step", "feeling": "okay"})
+    assert res_reflect_step.status_code == 404 and res_reflect_step.json()["error"] == "not_found"
+
+
+def test_browsing_works_logged_out(env):
+    client = env.client()
+    cats = client.get("/trainings/categories").json()
+    assert len(cats) == 4
+    assert all(c["percent"] is None for c in cats)
+
+    cat = client.get("/trainings/categories/smooth-speaking").json()
+    assert cat["courses"][0]["percent"] is None
+
+    course_data = client.get("/trainings/courses/easy-starts").json()
+    assert course_data["percent"] is None
+    assert all(l["completed"] is False for l in course_data["lessons"])
+
+    lesson_data = client.get("/trainings/lessons/easy-starts-1").json()
+    assert lesson_data["id"] == "easy-starts-1"
