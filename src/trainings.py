@@ -924,8 +924,8 @@ def tricky_sounds(user=Depends(current_user)):
 def call_groq_alternatives(text: str, lang: str, tricky_ids: list[str]) -> Alternatives | None:
     try:
         base = llm_judge.setting("LLM_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
-        model = llm_judge.setting("LLM_MODEL", "llama-3.3-70b-versatile")
-        key = llm_judge.setting("LLM_API_KEY")
+        model = llm_judge.setting("GROQ_MODEL") or llm_judge.setting("LLM_MODEL", "openai/gpt-oss-120b")
+        key = llm_judge.setting("GROQ_API_KEY") or llm_judge.setting("LLM_API_KEY")
         timeout = float(llm_judge.setting("LLM_TIMEOUT_S", "3"))
 
         sounds_dict = {s.id: s for s in LIBRARY.sounds}

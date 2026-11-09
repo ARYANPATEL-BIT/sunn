@@ -38,11 +38,16 @@ def daily_cap():
 
 
 def check_startup():
-    """Refuse to start in real mode (GNANI_MOCK off) without a Gnani key."""
+    """Refuse to start in real mode (GNANI_MOCK off) when neither STT nor TTS key is configured."""
     load_dotenv()
-    if not gnani_mock.on() and os.environ.get("GNANI_API_KEY", "").strip() in ("", "your-key-here"):
-        raise RuntimeError("GNANI_API_KEY is not set; add it to .env (see .env.example),"
-                           " or set GNANI_MOCK=1 to test without Gnani")
+    if not gnani_mock.on():
+        stt_key = os.environ.get("GNANI_STT_API_KEY", "").strip()
+        tts_key = os.environ.get("GNANI_TTS_API_KEY", "").strip()
+        stt_valid = stt_key not in ("", "your-key-here", "your-stt-key-here")
+        tts_valid = tts_key not in ("", "your-key-here", "your-tts-key-here")
+        if not stt_valid and not tts_valid:
+            raise RuntimeError("Neither GNANI_STT_API_KEY nor GNANI_TTS_API_KEY is configured in .env (see .env.example);"
+                               " set GNANI_MOCK=1 to test without Gnani")
 
 
 def record(kind, cached, audio_seconds, user_id=None):
@@ -69,9 +74,17 @@ def post(kind, url, audio_seconds=None, user_id=None, **request):
     load_dotenv()
     if gnani_mock.on():  # prisma.py and speak.py answer mock calls before they get here
         raise GnaniError("gnani_rejected", "GNANI_MOCK is on; no request is sent to Gnani")
-    api_key = os.environ.get("GNANI_API_KEY")
-    if not api_key or api_key == "your-key-here":
-        raise GnaniError("gnani_unreachable", "GNANI_API_KEY is not configured in .env", status=502)
+
+    if kind == "stt":
+        api_key = os.environ.get("GNANI_STT_API_KEY", "").strip()
+        if not api_key or api_key in ("your-key-here", "your-stt-key-here"):
+            raise GnaniError("gnani_unreachable", "GNANI_STT_API_KEY is not configured in .env", status=502)
+    elif kind in ("tts", "clone"):
+        api_key = os.environ.get("GNANI_TTS_API_KEY", "").strip()
+        if not api_key or api_key in ("your-key-here", "your-tts-key-here"):
+            raise GnaniError("gnani_unreachable", "GNANI_TTS_API_KEY is not configured in .env", status=502)
+    else:
+        raise GnaniError("gnani_unreachable", f"Unknown Gnani service kind: {kind}", status=502)
 
     limit = call_limit()
     if db.row("SELECT COUNT(*) AS n FROM api_calls WHERE cached = 0")["n"] >= limit:

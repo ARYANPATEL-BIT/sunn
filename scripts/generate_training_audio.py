@@ -130,6 +130,10 @@ def main():
         print("Run again with --yes to generate them.")
         sys.exit(1)
 
+    if not gnani_mock.on() and os.environ.get("GNANI_TTS_API_KEY", "").strip() in ("", "your-key-here", "your-tts-key-here"):
+        print("Error: GNANI_TTS_API_KEY is not configured in .env (see .env.example).", file=sys.stderr)
+        sys.exit(1)
+
     to_process = missing[:args.max]
     print(f"Generating up to {len(to_process)} audio files (cap: {args.max})...")
 

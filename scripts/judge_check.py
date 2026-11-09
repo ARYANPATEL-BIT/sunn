@@ -46,7 +46,8 @@ def main():
 
     llm_judge.httpx.post = counted
     candidates = starter_candidates()
-    print(f"model {os.environ.get('LLM_MODEL')}, reasoning_effort {os.environ.get('LLM_REASONING_EFFORT') or '-'}\n")
+    model = os.environ.get("GROQ_MODEL") or os.environ.get("LLM_MODEL", "openai/gpt-oss-120b")
+    print(f"model {model}, reasoning_effort {os.environ.get('LLM_REASONING_EFFORT') or '-'}\n")
     print("| heard | place | matcher top 3 (score) | judge choice | confidence | reason | used | match ms | llm ms | tokens |")
     print("|---|---|---|---|---|---|---|---|---|---|")
     for heard, place in LINES:

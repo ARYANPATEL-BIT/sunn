@@ -29,13 +29,17 @@ BLOCKED = [".env*", "*/.env*", "data/*", "logs/*", "web/certs/*", "web/reference
 # Tracked on purpose: the template with placeholder values, and the default phrase lists the
 # image needs (the same exceptions as .gitignore and .dockerignore).
 ALLOWED = [".env.example", "data/default_phrases_*.txt"]
-SECRETS = ["GNANI_API_KEY", "JWT_SECRET"]
+SECRETS = ["GNANI_STT_API_KEY", "GNANI_TTS_API_KEY", "GNANI_API_KEY", "JWT_SECRET", "GROQ_API_KEY", "LLM_API_KEY"]
 # Safe default placeholders from .env.example that should not be flagged as real secrets.
 SAFE_PLACEHOLDERS = {
     "your-key-here",
+    "your-stt-key-here",
+    "your-tts-key-here",
+    "your-groq-key-here",
     "generate-one-with-the-command-above",
     "change-me",
     "placeholder",
+    "",
 }
 
 
@@ -138,5 +142,5 @@ if __name__ == "__main__":
     print(f"open it at {api.space_info(args.space).host} (follow the build in the Logs tab of "
           f"https://huggingface.co/spaces/{args.space})")
     print("the Space needs these in Settings > Variables and secrets:\n"
-          "  secrets:   GNANI_API_KEY, JWT_SECRET, DEMO_INVITE_CODE\n"
-          "  variables: TRUST_PROXY=1, GNANI_CALL_LIMIT, DAILY_CALL_CAP_PER_USER")
+          "  secrets:   GNANI_STT_API_KEY, GNANI_TTS_API_KEY, JWT_SECRET, GROQ_API_KEY, DEMO_INVITE_CODE\n"
+          "  variables: TRUST_PROXY=1, GNANI_CALL_LIMIT, DAILY_CALL_CAP_PER_USER, GROQ_MODEL")

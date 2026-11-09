@@ -125,33 +125,46 @@ def test_deploy_space_secret_and_blocked_path_validation(tmp_path):
     (test_folder / "clean_file.py").write_text("API_KEY = 'your-key-here'")
 
     env_file = tmp_path / ".env"
-    env_file.write_text("GNANI_API_KEY=real-secret-token-xyz\nJWT_SECRET=generate-one-with-the-command-above")
+    env_file.write_text("GNANI_STT_API_KEY=real-secret-token-xyz\nJWT_SECRET=generate-one-with-the-command-above")
 
     leaks = deploy_space.files_with_secrets(["file_with_secret.py", "clean_file.py"], test_folder, env_file)
     assert len(leaks) == 1
-    assert "file_with_secret.py (GNANI_API_KEY)" in leaks
+    assert "file_with_secret.py (GNANI_STT_API_KEY)" in leaks
     assert "clean_file.py" not in leaks[0]
 
 
 def test_missing_or_placeholder_gnani_key_fails_safely(env, monkeypatch):
-    """When GNANI_API_KEY is unset or set to placeholder, API answers 502 gnani_unreachable safely."""
+    """When GNANI_STT_API_KEY or GNANI_TTS_API_KEY is unset or set to placeholder, API answers 502 safely."""
     import gnani
     import pytest
 
-    # 1. Test with default template placeholder
-    monkeypatch.setenv("GNANI_API_KEY", "your-key-here")
+    # 1. Test STT with placeholder and empty string
+    monkeypatch.setenv("GNANI_STT_API_KEY", "your-stt-key-here")
     with pytest.raises(gnani.GnaniError) as exc_info:
-        gnani.post("tts", "https://api.vachana.ai/test", user_id=1, json={"text": "test"})
+        gnani.post("stt", "https://api.vachana.ai/stt/v3", data={}, files={})
     assert exc_info.value.status == 502
     assert exc_info.value.code == "gnani_unreachable"
-    assert "GNANI_API_KEY is not configured" in exc_info.value.detail
+    assert "GNANI_STT_API_KEY is not configured" in exc_info.value.detail
 
-    # 2. Test with empty string
-    monkeypatch.setenv("GNANI_API_KEY", "")
+    monkeypatch.setenv("GNANI_STT_API_KEY", "")
     with pytest.raises(gnani.GnaniError) as exc_info2:
-        gnani.post("tts", "https://api.vachana.ai/test", user_id=1, json={"text": "test"})
+        gnani.post("stt", "https://api.vachana.ai/stt/v3", data={}, files={})
     assert exc_info2.value.status == 502
-    assert exc_info2.value.code == "gnani_unreachable"
+    assert "GNANI_STT_API_KEY is not configured" in exc_info2.value.detail
+
+    # 2. Test TTS with placeholder and empty string
+    monkeypatch.setenv("GNANI_TTS_API_KEY", "your-tts-key-here")
+    with pytest.raises(gnani.GnaniError) as exc_info3:
+        gnani.post("tts", "https://api.vachana.ai/test", user_id=1, json={"text": "test"})
+    assert exc_info3.value.status == 502
+    assert exc_info3.value.code == "gnani_unreachable"
+    assert "GNANI_TTS_API_KEY is not configured" in exc_info3.value.detail
+
+    monkeypatch.setenv("GNANI_TTS_API_KEY", "")
+    with pytest.raises(gnani.GnaniError) as exc_info4:
+        gnani.post("tts", "https://api.vachana.ai/test", user_id=1, json={"text": "test"})
+    assert exc_info4.value.status == 502
+    assert "GNANI_TTS_API_KEY is not configured" in exc_info4.value.detail
 
 
 def test_database_custom_data_dir_and_persistence_isolation(tmp_path, monkeypatch):
@@ -283,9 +296,9 @@ def test_deployment_dry_run_preflight_check():
         "scripts/deploy_space.py",
         "--check-only",
     ]
-    # Without conftest's fake secrets: "test-key" is in conftest.py itself, so the script would
-    # flag it whenever .env doesn't set a real GNANI_API_KEY.
-    env = {k: v for k, v in os.environ.items() if k not in ("GNANI_API_KEY", "JWT_SECRET")}
+    # Without conftest's fake secrets: test keys are in conftest.py itself, so the script would
+    # flag them whenever .env doesn't set real keys.
+    env = {k: v for k, v in os.environ.items() if k not in ("GNANI_STT_API_KEY", "GNANI_TTS_API_KEY", "GNANI_API_KEY", "JWT_SECRET", "GROQ_API_KEY", "LLM_API_KEY")}
     res = subprocess.run(cmd, cwd=root, capture_output=True, text=True, env=env)
     assert res.returncode == 0, f"deploy_space.py --check-only failed: {res.stdout}{res.stderr}"
     assert "checks passed:" in res.stdout

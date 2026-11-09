@@ -13,7 +13,10 @@ import soundfile
 # Set before the app is imported: auth refuses to start without a JWT secret, and load_dotenv
 # never overrides a variable that is already set, so the real key in .env is never used here.
 os.environ["JWT_SECRET"] = "a-test-secret-long-enough-for-hs256-keys"
-os.environ["GNANI_API_KEY"] = "test-key"
+os.environ["GNANI_STT_API_KEY"] = "test-stt-key"
+os.environ["GNANI_TTS_API_KEY"] = "test-tts-key"
+os.environ["GROQ_API_KEY"] = "test-groq-key"
+os.environ["GROQ_MODEL"] = "openai/gpt-oss-120b"
 os.environ["DATA_DIR"] = "data"  # relative, so each test's data lands in its own folder
 # The judge and the reranker are off, and the LLM is unreachable, unless a test sets them.
 os.environ["LLM_ENABLED"] = "0"
@@ -57,8 +60,9 @@ class FakeGnani:
         self.transcripts, self.failures, self.requests = [], [], []
 
     def __call__(self, url, headers, timeout, **request):
-        assert headers["X-API-Key-ID"] == "test-key" and timeout == gnani.TIMEOUT
         kind = {prisma.URL: "stt", speak.URL: "tts", speak.CLONE_URL: "clone"}[url]
+        expected_key = "test-stt-key" if kind == "stt" else "test-tts-key"
+        assert headers["X-API-Key-ID"] == expected_key and timeout == gnani.TIMEOUT
         self.requests.append((kind, request))
         if self.failures:
             failure = self.failures.pop(0)

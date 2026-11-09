@@ -32,7 +32,9 @@ This document tracks all submission deliverables for the Gnani Great Indian AI I
   - Script available: `python scripts/deploy_space.py`
   - Prerequisites: Hugging Face account and Space token configured.
   - Required Space Secrets:
-    - `GNANI_API_KEY`: Active API key for Gnani Prisma and Timbre services.
+    - `GNANI_STT_API_KEY`: Active API key for Gnani Prisma Speech-to-Text service.
+    - `GNANI_TTS_API_KEY`: Active API key for Gnani Timbre Text-to-Speech service.
+    - `GROQ_API_KEY`: Optional API key for Groq AI assistant features.
     - `JWT_SECRET`: Random 48-byte URL-safe string.
     - `TRUST_PROXY`: `1` (required for correct client IP detection behind HF proxy).
     - `DEMO_INVITE_CODE`: Optional invite code to prevent unauthorized traffic.

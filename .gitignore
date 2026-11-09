@@ -1,4 +1,6 @@
 .env
+.env.*
+!.env.example
 .venv/
 __pycache__/
 # Everything the app writes (database, recordings, caches, demo audio). Only the default
@@ -17,5 +19,7 @@ web/dist/
 web/test-results/
 web/playwright-report/
 web/.env
+web/.env.*
+!web/.env.example
 web/reference/
 web/certs/
