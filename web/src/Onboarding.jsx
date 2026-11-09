@@ -21,8 +21,8 @@ export default function Onboarding() {
   const [seeding, setSeeding] = useState(false)
 
   const hasPhrases = phrases && phrases.length > 0
-  // Ready means Speak is open: the quick-start phrases recorded in the language spoken now.
-  const ready = hasPhrases && speakProgress(phrases, user.language).open
+  // Ready means Speak is open: the target phrases recorded in the language spoken now.
+  const ready = hasPhrases && speakProgress(phrases, user?.language, user?.phrase_goal).open
 
   const handleLoadDefaults = async () => {
     setSeeding(true)

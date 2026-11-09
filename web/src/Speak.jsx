@@ -60,7 +60,7 @@ export default function Speak() {
   useEffect(() => {
     isMountedRef.current = true
     api.listPhrases().then((phrases) => {
-      if (isMountedRef.current) setLearned(speakProgress(phrases, user.language))
+      if (isMountedRef.current) setLearned(speakProgress(phrases, user?.language, user?.phrase_goal))
     }, (err) => {
       if (isMountedRef.current) setError(err)
     })
