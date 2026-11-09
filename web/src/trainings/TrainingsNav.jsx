@@ -1,7 +1,8 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { loginPath, useAuth } from '../auth.jsx'
 import { useLang } from '../i18n/index.jsx'
-import { Icon, LangToggle, reducedMotion, ThemeToggle, Wordmark } from '../ui/index.js'
+import { Icon, LanguagePicker, reducedMotion, ThemeToggle, Wordmark } from '../ui/index.js'
+import { LessonsLangNote } from './HonestNote.jsx'
 import { TabFace, TABS } from '../ui/Tabs.jsx'
 
 export function TrainingsNav({ backTo, backLabel }) {
@@ -28,7 +29,7 @@ export function TrainingsNav({ backTo, backLabel }) {
             )}
           </div>
           <div className="bar-end">
-            <LangToggle />
+            <LanguagePicker />
             <ThemeToggle />
             {user ? (
               <>
@@ -52,6 +53,7 @@ export function TrainingsNav({ backTo, backLabel }) {
           </div>
         </nav>
       </header>
+      <LessonsLangNote />
 
       {user && (
         <nav className="tabs" aria-label={t('app.nav')}>

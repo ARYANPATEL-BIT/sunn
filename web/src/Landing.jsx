@@ -6,7 +6,7 @@ import Example from './Example.jsx'
 import { useLang } from './i18n/index.jsx'
 import { speakProgress } from './quickstart.js'
 import {
-  Band, CONTEXT_BAND, Grille, Icon, LangToggle, Label, PrimaryButton, PushButton, RankedFace, RankedList, Readout,
+  Band, CONTEXT_BAND, Grille, Icon, Label, LanguagePicker, PrimaryButton, PushButton, RankedFace, RankedList, Readout,
   ReadoutRow, reducedMotion, ThemeToggle, useGo, Wordmark,
 } from './ui/index.js'
 import { TabFace, TABS } from './ui/Tabs.jsx'
@@ -55,7 +55,7 @@ function SiteNav() {
           </li>
         </ul>
         <div className="bar-end">
-          <LangToggle />
+          <LanguagePicker />
           <ThemeToggle />
           <Link className="nav-link" to={user ? '/app/speak' : '/login'} viewTransition={!reducedMotion()}>
             {t(user ? 'nav.openApp' : 'nav.signIn')}
@@ -133,17 +133,18 @@ function SiteNav() {
   )
 }
 
+// The headline is always the English one; under it, the interface language's (Hindi under English).
 function Hero({ onStart }) {
-  const { t, bi, lang } = useLang()
-  const other = lang === 'hi' ? 'en' : 'hi'
+  const { t, bi } = useLang()
+  const headline = bi('hero.headline')
   return (
     <section className="hero" aria-labelledby="hero-title">
       <div className="hero-copy">
-        <h1 className="display" id="hero-title">
-          {t('hero.headline')}
+        <h1 className="display" id="hero-title" lang="en">
+          {headline.en}
         </h1>
-        <p className="display-other" lang={other}>
-          {bi('hero.headline')[other]}
+        <p className="display-other" lang={headline.second}>
+          {headline.local}
         </p>
         <p className="lede">{t('hero.line2')}</p>
         <div className="hero-actions">
@@ -183,6 +184,7 @@ function Specs() {
 }
 
 // Made-up, in the language the account would speak: the Speak screen as it looks after a phrase.
+// Phrases are Hindi or English for now, so other interface languages show the English one.
 const PHONE = {
   hi: { raw: 'baani chaiye', phrase: 'पानी चाहिए', alternates: ['मदद चाहिए', 'दवाई दे दो'] },
   en: { raw: 'ai nee waw', phrase: 'I need water', alternates: ['I need help', 'Give me my medicine'] },
@@ -191,7 +193,8 @@ const PHONE = {
 // The phone: the app's own Speak screen, still, in a phone frame. A picture, so aria-hidden.
 function Phone() {
   const { lang } = useLang()
-  const example = PHONE[lang]
+  const spoken = lang in PHONE ? lang : 'en'
+  const example = PHONE[spoken]
   return (
     <div className="phone" aria-hidden="true">
       <div className="phone-screen">
@@ -208,12 +211,12 @@ function Phone() {
           <Readout blobState="rest" top={<Label k="device.status_result" inline className="readout-status" />}>
             <ReadoutRow label="device.heard">
               <p className="readout-heard">
-                <span lang={lang === 'hi' ? 'hi-Latn' : 'en'}>“{example.raw}”</span>
+                <span lang={spoken === 'hi' ? 'hi-Latn' : 'en'}>“{example.raw}”</span>
               </p>
             </ReadoutRow>
             <ReadoutRow label="device.understood">
               <div className="candidate top">
-                <span className="candidate-text" lang={lang}>
+                <span className="candidate-text" lang={spoken}>
                   {example.phrase}
                 </span>
               </div>
@@ -223,7 +226,7 @@ function Phone() {
             {example.alternates.map((text, i) => (
               <div key={text} className="ranked-row">
                 <RankedFace n={i + 2} icon="volume">
-                  <span className="candidate-text" lang={lang}>
+                  <span className="candidate-text" lang={spoken}>
                     {text}
                   </span>
                 </RankedFace>
@@ -275,7 +278,7 @@ function Pocket() {
 }
 
 function OwnVoice() {
-  const { t, lang } = useLang()
+  const { t } = useLang()
   return (
     <section className="section text-section" aria-labelledby="voice-title">
       <h2 className="section-title" id="voice-title">
@@ -285,7 +288,7 @@ function OwnVoice() {
         <p className="lede">{t('voice.body')}</p>
         <p className="small-print">
           {t('voice.status')}
-          {lang === 'hi' ? '। ' : '. '}
+          {t('sentence.end')}
           {t('voice.statusNote')}
         </p>
       </div>
