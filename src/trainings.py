@@ -775,15 +775,153 @@ def attempt(
                     pass
 
 
+def get_user_tricky_sounds(user: dict) -> list[TrickySound]:
+    """Collects evidence across speak, practice, and self reflections for the user."""
+    user_id = user["id"]
+    sounds_dict = {s.id: s for s in LIBRARY.sounds}
+
+    # 1. Speak evidence: count consistent substitutions
+    speak_counts: dict[str, int] = defaultdict(int)
+    samples = db.rows(
+        "SELECT s.prisma_hypothesis, p.text FROM samples s JOIN phrases p ON s.phrase_id = p.id WHERE s.user_id = ?",
+        (user_id,)
+    )
+    for sample in samples:
+        target = sample["text"] or ""
+        hypo = sample["prisma_hypothesis"] or ""
+        if not target or not hypo:
+            continue
+        ops = Levenshtein.editops(target, hypo)
+        for op, s1, _ in ops:
+            if op == "replace" and s1 < len(target):
+                ch = target[s1]
+                if ch in DEV_CHAR_TO_SOUND:
+                    sound_id = DEV_CHAR_TO_SOUND[ch]
+                    speak_counts[sound_id] += 1
+                elif ch.lower() in ("m", "n"):
+                    speak_counts["nasal"] += 1
+                elif ch in ("\u0902", "\u0901"):
+                    speak_counts["nasal"] += 1
+
+    # 2. Practice evidence: checked attempts word alignments
+    practice_words_practise: dict[str, int] = defaultdict(int)
+    practice_words_total: dict[str, int] = defaultdict(int)
+    attempts = db.rows(
+        "SELECT step_id, item_id, transcript FROM training_attempts WHERE user_id = ? AND checked = 1",
+        (user_id,)
+    )
+    for att in attempts:
+        step_id = att["step_id"]
+        item_id = att["item_id"]
+        transcript = att["transcript"]
+        if step_id not in LIBRARY.steps or not transcript:
+            continue
+        _, _, step = LIBRARY.steps[step_id]
+
+        target_text = ""
+        if isinstance(step, content.ListenRepeat):
+            if item_id:
+                for it in step.items:
+                    if it.id == item_id:
+                        target_text = it.text
+                        break
+        elif isinstance(step, (content.SpeakWithMe, content.ReadAloud)):
+            target_text = step.text
+
+        if not target_text:
+            continue
+
+        aligned = align_words(target_text, transcript)
+        for w_item in aligned:
+            w_sounds = extract_word_sounds(w_item.text)
+            for sid in w_sounds:
+                practice_words_total[sid] += 1
+                if w_item.status == "practise":
+                    practice_words_practise[sid] += 1
+
+    # 3. Self evidence: "hard" reflections on steps that have focus_sound
+    self_counts: dict[str, int] = defaultdict(int)
+    reflections = db.rows(
+        "SELECT step_id, feeling FROM training_reflections WHERE user_id = ? AND feeling = 'hard'",
+        (user_id,)
+    )
+    for ref in reflections:
+        step_id = ref["step_id"]
+        if step_id not in LIBRARY.steps:
+            continue
+        found_course, found_lesson, step = LIBRARY.steps[step_id]
+        step_sounds = set()
+        if getattr(step, "focus_sound", None):
+            step_sounds.add(step.focus_sound)
+        if getattr(step, "sound_a", None):
+            step_sounds.add(step.sound_a)
+        if getattr(step, "sound_b", None):
+            step_sounds.add(step.sound_b)
+        if not step_sounds:
+            for s in found_lesson.steps:
+                if getattr(s, "focus_sound", None):
+                    step_sounds.add(s.focus_sound)
+                if getattr(s, "items", None):
+                    for it in s.items:
+                        if getattr(it, "focus_sound", None):
+                            step_sounds.add(it.focus_sound)
+        for sid in step_sounds:
+            self_counts[sid] += 1
+
+    # 4. Filter by thresholds:
+    # at least 5 speak substitutions, OR 8 practice words with >40% practise rate, OR 2 "hard" reflections
+    qualifying = []
+    for sid, sound in sounds_dict.items():
+        spk = speak_counts.get(sid, 0)
+        prc = practice_words_practise.get(sid, 0)
+        prc_tot = practice_words_total.get(sid, 0)
+        slf = self_counts.get(sid, 0)
+
+        prc_rate = (prc / prc_tot) if prc_tot > 0 else 0.0
+
+        qualifies = (spk >= 5) or (prc_tot >= 8 and prc_rate > 0.40) or (slf >= 2)
+        if not qualifies:
+            continue
+
+        if spk >= prc and spk >= slf:
+            why = "heard_in_speak"
+        elif prc >= slf:
+            why = "heard_in_practice"
+        else:
+            why = "you_said_hard"
+
+        total_evidence = spk + prc + slf
+        qualifying.append({
+            "sound_id": sid,
+            "label": sound.label,
+            "why_key": why,
+            "evidence": Evidence(speak=spk, practice=prc, self=slf),
+            "practise_lesson_id": sound.practise_lesson_id,
+            "total_score": total_evidence,
+        })
+
+    qualifying.sort(key=lambda x: x["total_score"], reverse=True)
+    top3 = qualifying[:3]
+    return [
+        TrickySound(
+            sound_id=item["sound_id"],
+            label=item["label"],
+            why_key=item["why_key"],
+            evidence=item["evidence"],
+            practise_lesson_id=item["practise_lesson_id"],
+        )
+        for item in top3
+    ]
+
+
 @router.get("/me/trainings/tricky-sounds", response_model=list[TrickySound])
 def tricky_sounds(user=Depends(current_user)):
     """Sounds the user might like to practise, with the evidence for each. A suggestion, never a
     diagnosis."""
-    sounds = {s.id: s for s in LIBRARY.sounds}
-    made_up = [("s", "heard_in_practice", {"speak": 2, "practice": 5, "self": 1}),
-               ("sh", "heard_in_speak", {"speak": 4, "practice": 1, "self": 0})]
-    return [{"sound_id": i, "label": sounds[i].label, "why_key": why, "evidence": evidence,
-             "practise_lesson_id": sounds[i].practise_lesson_id} for i, why, evidence in made_up if i in sounds]
+    return get_user_tricky_sounds(user)
+
+
+
 
 
 @router.post("/me/trainings/alternatives", response_model=Alternatives)
