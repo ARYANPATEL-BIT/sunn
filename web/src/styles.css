@@ -3274,6 +3274,20 @@ input:focus-visible + .file-pick {
   text-underline-offset: 6px;
 }
 
+.nav-links a.active,
+.mobile-nav-list a.active {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 6px;
+  color: var(--ink);
+}
+
+#how,
+#privacy,
+#faq {
+  scroll-margin-top: calc(var(--header-height, 64px) + 24px);
+}
+
 .nav-link {
   display: inline-flex;
   align-items: center;
