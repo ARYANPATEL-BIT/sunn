@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import * as api from './api.js'
 import { loginPath, useAuth } from './auth.jsx'
@@ -24,6 +25,17 @@ function useStartSpeaking() {
 function SiteNav() {
   const { t } = useLang()
   const { user } = useAuth()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setMobileMenuOpen(false)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [mobileMenuOpen])
+
   return (
     <header className="site-nav">
       <nav className="bar" aria-label={t('nav.main')}>
@@ -45,11 +57,78 @@ function SiteNav() {
         <div className="bar-end">
           <LangToggle />
           <ThemeToggle />
-          <Link className="nav-link" to={user ? '/app/speak' : '/login'} viewTransition={!reducedMotion()}>
+          <Link className="nav-link wide-only" to={user ? '/app/speak' : '/login'} viewTransition={!reducedMotion()}>
             {t(user ? 'nav.openApp' : 'nav.signIn')}
           </Link>
+          <button
+            type="button"
+            className="icon-button mobile-nav-toggle narrow-only"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="landing-mobile-menu"
+            aria-label={t(mobileMenuOpen ? 'nav.closeMenu' : 'nav.openMenu')}
+          >
+            <Icon name={mobileMenuOpen ? 'x' : 'bars'} />
+          </button>
         </div>
       </nav>
+
+      {mobileMenuOpen && (
+        <div
+          id="landing-mobile-menu"
+          className="mobile-nav-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('nav.menu')}
+        >
+          <div className="mobile-nav-backdrop" onClick={() => setMobileMenuOpen(false)} aria-hidden="true" />
+          <div className="mobile-nav-panel">
+            <div className="mobile-nav-header">
+              <Wordmark />
+              <button
+                type="button"
+                className="icon-button close-drawer-btn"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label={t('nav.closeMenu')}
+              >
+                <Icon name="x" />
+              </button>
+            </div>
+            <ul className="mobile-nav-list">
+              <li>
+                <a href="#how" onClick={() => setMobileMenuOpen(false)}>
+                  {t('how.title')}
+                </a>
+              </li>
+              <li>
+                <Link to="/trainings" onClick={() => setMobileMenuOpen(false)} viewTransition={!reducedMotion()}>
+                  {t('nav.trainings')}
+                </Link>
+              </li>
+              <li>
+                <a href="#privacy" onClick={() => setMobileMenuOpen(false)}>
+                  {t('privacy.title')}
+                </a>
+              </li>
+              <li>
+                <a href="#faq" onClick={() => setMobileMenuOpen(false)}>
+                  {t('nav.faq')}
+                </a>
+              </li>
+            </ul>
+            <div className="mobile-nav-footer">
+              <Link
+                className="button primary mobile-nav-auth-btn"
+                to={user ? '/app/speak' : '/login'}
+                onClick={() => setMobileMenuOpen(false)}
+                viewTransition={!reducedMotion()}
+              >
+                {t(user ? 'nav.openApp' : 'nav.signIn')}
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   )
 }
