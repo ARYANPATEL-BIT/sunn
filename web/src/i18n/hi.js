@@ -400,6 +400,17 @@ export default {
   'presenter.stepProgressTitle': '5. प्रगति एवं डेटा सुरक्षा',
   'presenter.stepProgressCue':
     'स्पष्ट करें कि यह चिकित्सीय सुधार नहीं बल्कि पहचान की निरंतरता मापता है। खाता मिटाने की सुविधा दिखाएँ।',
+  'presenter.finish': 'टूर समाप्त करें',
+  'presenter.completedTitle': 'डेमो वॉकथ्रू पूरा हुआ',
+  'presenter.completedDesc':
+    'आपने सुन्न के सभी 5 मुख्य मॉड्यूल देख लिए हैं: ऑनबोर्डिंग, वाक्यांश, वाणी पहचान, एक्सेसिबिलिटी और गोपनीयता।',
+  'presenter.interactiveHint': 'नीचे हाइलाइट की गई सुविधा को आज़माएं या आगे बढ़ने के लिए अगला क्लिक करें।',
+  'presenter.stepShort_1': 'ऑनबोर्डिंग',
+  'presenter.stepShort_2': 'वाक्यांश',
+  'presenter.stepShort_3': 'बोलें',
+  'presenter.stepShort_4': 'सेटिंग्स',
+  'presenter.stepShort_5': 'प्रगति',
+  'presenter.keyboardHint': 'आगे-पीछे जाने के लिए Left/Right और बाहर निकलने के लिए Esc दबाएं',
 
   'demo.sourceBadge_pilot': 'डेमो (पायलट)',
   'demo.sourceDesc_pilot': 'सहमति देने वाले डिस्आर्थ्रिया प्रतिभागी द्वारा रिकॉर्ड किया गया',

@@ -400,6 +400,17 @@ export default {
   'presenter.stepProgressTitle': '5. પ્રગતિના આંકડા અને ગોપનીયતા',
   'presenter.stepProgressCue':
     'આંકડા બોલીની ઓળખમાં સાતત્ય બતાવે છે, તબીબી સુધારો નહીં, તે સમજાવો. ખાતું પૂરેપૂરું કાઢી નાખવાની ખાતરી બતાવો.',
+  'presenter.finish': 'ટૂર પૂર્ણ કરો',
+  'presenter.completedTitle': 'વોકથ્રુ પૂર્ણ થયું',
+  'presenter.completedDesc':
+    'તમે સુન્નના તમામ ૫ મુખ્ય મોડ્યુલ જોઈ લીધા છે: ઓનબોર્ડિંગ, શબ્દસમૂહો, વાણી ઓળખ, ઍક્સેસિબિલિટી અને ગોપનીયતા.',
+  'presenter.interactiveHint': 'નીચે હાઇલાઇટ કરેલ સુવિધા અજમાવો અથવા આગળ વધવા માટે આગળ ક્લિક કરો.',
+  'presenter.stepShort_1': 'ઓનબોર્ડિંગ',
+  'presenter.stepShort_2': 'શબ્દસમૂહો',
+  'presenter.stepShort_3': 'બોલો',
+  'presenter.stepShort_4': 'સેટિંગ્સ',
+  'presenter.stepShort_5': 'પ્રગતિ',
+  'presenter.keyboardHint': 'આગળ-પાછળ જવા માટે એરો અને બહાર નીકળવા માટે Esc દબાવો',
 
   'demo.sourceBadge_pilot': 'ડેમો (પાયલટ)',
   'demo.sourceDesc_pilot': 'સંમતિ આપનાર, ડિસાર્થ્રિયા ધરાવતા એક પાયલટ સહભાગીએ રેકોર્ડ કરેલું',

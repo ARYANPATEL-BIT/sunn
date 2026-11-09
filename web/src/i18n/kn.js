@@ -400,6 +400,17 @@ export default {
   'presenter.stepProgressTitle': '5. ಪ್ರಗತಿ ಅಂಕಿಗಳು ಮತ್ತು ಗೌಪ್ಯತೆ',
   'presenter.stepProgressCue':
     'ಅಂಕಿಗಳು ಮಾತಿನ ಗುರುತಿಸುವಿಕೆಯ ಸ್ಥಿರತೆಯನ್ನು ತೋರಿಸುತ್ತವೆ, ವೈದ್ಯಕೀಯ ಸುಧಾರಣೆಯನ್ನಲ್ಲ ಎಂದು ವಿವರಿಸಿ. ಖಾತೆಯನ್ನು ಪೂರ್ತಿಯಾಗಿ ಅಳಿಸುವ ಭರವಸೆ ತೋರಿಸಿ.',
+  'presenter.finish': 'ಪ್ರವಾಸ ಮುಗಿಸಿ',
+  'presenter.completedTitle': 'ಡೆಮೊ ಪೂರ್ಣಗೊಂಡಿದೆ',
+  'presenter.completedDesc':
+    'ನೀವು ಸುನ್ನ್‌ನ ಎಲ್ಲಾ ೫ ಪ್ರಮುಖ ಮಾಡ್ಯೂಲ್‌ಗಳನ್ನು ಪರಿಶೀಲಿಸಿದ್ದೀರಿ: ಆನ್‌ಬೋರ್ಡಿಂಗ್, ನುಡಿಗಟ್ಟುಗಳು, ಧ್ವನಿ ಗುರುತಿಸುವಿಕೆ, ಪ್ರವೇಶಸಾಧ್ಯತೆ ಮತ್ತು ಗೌಪ್ಯತೆ.',
+  'presenter.interactiveHint': 'ಕೆಳಗೆ ಹೈಲೈಟ್ ಮಾಡಲಾದ ವೈಶಿಷ್ಟ್ಯವನ್ನು ಬಳಸಿ ನೋಡಿ ಅಥವಾ ಮುಂದುವರಿಯಲು ಮುಂದಿನ ಕ್ಲಿಕ್ ಮಾಡಿ.',
+  'presenter.stepShort_1': 'ಆನ್‌ಬೋರ್ಡಿಂಗ್',
+  'presenter.stepShort_2': 'ನುಡಿಗಟ್ಟುಗಳು',
+  'presenter.stepShort_3': 'ಮಾತನಾಡಿ',
+  'presenter.stepShort_4': 'ಸೆಟ್ಟಿಂಗ್ಸ್',
+  'presenter.stepShort_5': 'ಪ್ರಗತಿ',
+  'presenter.keyboardHint': 'ಹಂತ ಬದಲಾಯಿಸಲು ಬಾಣದ ಗುರುತುಗಳು ಮತ್ತು ನಿರ್ಗಮಿಸಲು Esc ಒತ್ತಿರಿ',
 
   'demo.sourceBadge_pilot': 'ಡೆಮೋ (ಪೈಲಟ್)',
   'demo.sourceDesc_pilot': 'ಒಪ್ಪಿಗೆ ಕೊಟ್ಟ, ಡಿಸಾರ್ಥ್ರಿಯಾ ಇರುವ ಒಬ್ಬ ಪೈಲಟ್ ಭಾಗವಹಿಸುವವರು ರೆಕಾರ್ಡ್ ಮಾಡಿದ್ದು',

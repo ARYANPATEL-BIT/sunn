@@ -400,6 +400,17 @@ export default {
   'presenter.stepProgressTitle': '5. ప్రగతి అంకెలు, గోప్యత',
   'presenter.stepProgressCue':
     'అంకెలు మాటల గుర్తింపు నిలకడను చూపిస్తాయి, వైద్య కోలుకోవడాన్ని కాదని వివరించండి. ఖాతాను పూర్తిగా తొలగించే హామీని చూపించండి.',
+  'presenter.finish': 'టూర్ పూర్తి చేయండి',
+  'presenter.completedTitle': 'వాక్‌త్రూ పూర్తయింది',
+  'presenter.completedDesc':
+    'మీరు సున్ యొక్క 5 ప్రధాన విభాగాలను చూసారు: ఆన్‌బోర్డింగ్, పదబంధాలు, సంభాషణ గుర్తింపు, ప్రాప్యత మరియు గోప్యత.',
+  'presenter.interactiveHint': 'క్రింద హైలైట్ చేసిన విభాగాన్ని ప్రయత్నించండి లేదా కొనసాగడానికి తర్వాత క్లిక్ చేయండి.',
+  'presenter.stepShort_1': 'ఆన్‌బోర్డింగ్',
+  'presenter.stepShort_2': 'పదబంధాలు',
+  'presenter.stepShort_3': 'మాట్లాడండి',
+  'presenter.stepShort_4': 'సెట్టింగ్‌లు',
+  'presenter.stepShort_5': 'పురోగతి',
+  'presenter.keyboardHint': 'దశల మార్పుకు బాణాలు మరియు నిష్క్రమించడానికి Esc నొక్కండి',
 
   'demo.sourceBadge_pilot': 'డెమో (పైలట్)',
   'demo.sourceDesc_pilot': 'అనుమతి ఇచ్చిన, డిసార్థ్రియా ఉన్న ఒక పైలట్ పాల్గొనేవారు రికార్డ్ చేసింది',

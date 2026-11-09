@@ -400,6 +400,17 @@ export default {
   'presenter.stepProgressTitle': '5. অগ্রগতির সংখ্যা আর গোপনীয়তা',
   'presenter.stepProgressCue':
     'সংখ্যাগুলো কথা চেনার ধারাবাহিকতা দেখায়, ডাক্তারি সেরে ওঠা নয়, তা বুঝিয়ে বলুন। পুরো অ্যাকাউন্ট মুছে ফেলার নিশ্চয়তা দেখান।',
+  'presenter.finish': 'ট্যুর শেষ করুন',
+  'presenter.completedTitle': 'ওয়াকথ্রু সম্পন্ন হয়েছে',
+  'presenter.completedDesc':
+    'আপনি সুন্ন-এর ৫টি মূল মডিউল দেখেছেন: অনবোর্ডিং, বাক্যাংশ, বাক স্বীকৃতি, অ্যাক্সেসিবিলিটি এবং গোপনীয়তা।',
+  'presenter.interactiveHint': 'নীচে হাইলাইট করা অংশটি ব্যবহার করে দেখুন অথবা এগিয়ে যেতে পরবর্তী ক্লিক করুন।',
+  'presenter.stepShort_1': 'অনবোর্ডিং',
+  'presenter.stepShort_2': 'বাক্যাংশ',
+  'presenter.stepShort_3': 'বলুন',
+  'presenter.stepShort_4': 'সেটিংস',
+  'presenter.stepShort_5': 'অগ্রগতি',
+  'presenter.keyboardHint': 'ধাপ পরিবর্তনের জন্য তীরচিহ্ন এবং বের হতে Esc চাপুন',
 
   'demo.sourceBadge_pilot': 'ডেমো (পাইলট)',
   'demo.sourceDesc_pilot': 'ডিসার্থ্রিয়া থাকা একজন পাইলট অংশগ্রহণকারী, সম্মতি দিয়ে রেকর্ড করেছেন',
