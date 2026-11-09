@@ -1,5 +1,5 @@
 import {
-  expect, expectNoLeaks, LANGS, markOnboarded, openSpeak, phraseCard, QUICK_START, record, signUp, t, test, wav,
+  expect, expectNoLeaks, LANGS, markOnboarded, nativeName, openSpeak, phraseCard, QUICK_START, record, signUp, t, test, wav,
 } from './helpers.js'
 
 const other = (code) => (code === 'en' ? 'hi' : 'en')
@@ -61,12 +61,12 @@ for (const lang of LANGS) {
       // --- the app's language is this device's only: no request to the server
       const appLanguage = page.getByRole('radiogroup', { name: t(lang, 'settings.languageLabel') })
       const sent = patches.length
-      await appLanguage.getByRole('radio', { name: t(lang, other(lang) === 'en' ? 'settings.langEnglish' : 'settings.langHindi') }).click()
+      await appLanguage.getByRole('radio', { name: nativeName(other(lang)) }).click()
       await expect(page.locator('html')).toHaveAttribute('lang', other(lang))
       await expect(page.getByRole('heading', { level: 1, name: t(other(lang), 'settings.title') })).toBeVisible()
       await expectNoLeaks(page, other(lang), [user.name]) // the name is the user's, in their script
       await page.getByRole('radiogroup', { name: t(other(lang), 'settings.languageLabel') })
-        .getByRole('radio', { name: t(other(lang), lang === 'en' ? 'settings.langEnglish' : 'settings.langHindi') }).click()
+        .getByRole('radio', { name: nativeName(lang) }).click()
       await expect(page.locator('html')).toHaveAttribute('lang', lang)
       expect(patches.length).toBe(sent)
       expect(await page.evaluate(() => localStorage.getItem('sunn.lang'))).toBe(lang)
@@ -82,7 +82,8 @@ for (const lang of LANGS) {
       await page.getByRole('button', { name: t(lang, 'settings.speakLanguageYes', { language: speakName(lang, speaks) }) }).click()
       expect((await seeded).status()).toBe(200)
       expect(patches.at(-1)).toEqual({ language: speaks })
-      await expect(page.getByRole('radio', { name: speakName(lang, speaks) })).toHaveAttribute('aria-checked', 'true')
+      await expect(page.getByRole('radiogroup', { name: t(lang, 'settings.speakLanguageLabel') })
+        .getByRole('radio', { name: speakName(lang, speaks) })).toHaveAttribute('aria-checked', 'true')
 
       // The phrases recorded in the old language now need recording again.
       await page.getByRole('link', { name: t(lang, 'tab.phrases') }).click()

@@ -1,13 +1,26 @@
 import { test as base, expect } from '@playwright/test'
+import bn from '../src/i18n/bn.js'
 import en from '../src/i18n/en.js'
+import gu from '../src/i18n/gu.js'
 import hi from '../src/i18n/hi.js'
+import kn from '../src/i18n/kn.js'
+import { language } from '../src/i18n/languages.js'
+import ml from '../src/i18n/ml.js'
+import mr from '../src/i18n/mr.js'
+import pa from '../src/i18n/pa.js'
+import ta from '../src/i18n/ta.js'
+import te from '../src/i18n/te.js'
 import { wav } from './audio.js'
 
 export { expect, wav }
+// The interface languages the full journeys run in; languages.spec.js covers the other eight.
 export const LANGS = ['en', 'hi']
 export const INVITE = 'e2e-invite'
 export const PASSWORD = 'e2e-password-1'
-const STRINGS = { en, hi }
+const STRINGS = { en, hi, ta, te, kn, ml, mr, gu, bn, pa }
+
+// A language's name in its own script, as the language lists print it.
+export const nativeName = (code) => language(code).native
 
 // The same quick-start phrases as src/quickstart.js, for the language the account speaks.
 export const QUICK_START = {
@@ -126,9 +139,10 @@ export async function record(page, lang, seconds = 1.5) {
   await stop.click()
 }
 
-// No interface text in the other language: Latin words in Hindi mode, Devanagari in English
-// mode. Text marked with another lang (the user's own phrases, the EN / हिं toggle, the wordmark)
-// is data or a name and is skipped, as are product names and `data`, like the user's name.
+// No interface text in the wrong language: Latin words in an Indian-language interface, Indian
+// scripts in English. Text marked with another lang (the user's own phrases, language names, the
+// wordmark) is data or a name and is skipped, as are product names and `data`, like the user's
+// name. A key missing from a language file falls back to English, so this also finds those.
 const NAMES = new Set(['Sunn', 'Gnani', 'Prisma', 'Timbre', 'WhatsApp', 'English', 'Hindi', 'TORGO', 'Google',
   'Great', 'Indian', 'AI', 'Internship', 'Challenge']) // the challenge's name
 export async function expectNoLeaks(page, lang, data = []) {
@@ -153,10 +167,10 @@ export async function expectNoLeaks(page, lang, data = []) {
     // Email addresses and anything in “quotes” (a phrase, what Prisma heard) are data.
     let stripped = text.replace(/[\w.+-]+@[\w.-]+/g, '').replace(/“[^”]*”/g, '')
     for (const value of data) stripped = stripped.replaceAll(value, '')
-    if (lang === 'hi') {
+    if (lang !== 'en') {
       const words = (stripped.match(/[A-Za-z][A-Za-z'’]+/g) || []).filter((w) => !NAMES.has(w))
       if (words.length) leaks.push(`${text}  [${words.join(', ')}]`)
-    } else if (/[ऀ-ॿ]/.test(stripped)) {
+    } else if (/[ऀ-ൿ]/.test(stripped)) {
       leaks.push(text)
     }
   }

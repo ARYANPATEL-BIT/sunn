@@ -1,4 +1,4 @@
-import { enroll, expect, expectNoLeaks, LANGS, openSpeak, QUICK_START, signUp, t, test } from './helpers.js'
+import { enroll, expect, expectNoLeaks, LANGS, nativeName, openSpeak, QUICK_START, signUp, t, test } from './helpers.js'
 
 const other = (code) => (code === 'en' ? 'hi' : 'en')
 
@@ -19,10 +19,11 @@ for (const lang of LANGS) {
       await toStep(page, lang, 2)
       await expect(page.getByRole('heading', { name: t(lang, 'onboarding.langHeading') })).toBeVisible()
 
-      const card = (ui, code) => page.getByRole('radio', { name: t(ui, code === 'hi' ? 'onboarding.langHindi' : 'onboarding.langEnglish') })
-      await card(lang, other(lang)).click()
+      const card = (code) => page.getByRole('radio', { name: nativeName(code) })
+      await expect(page.getByRole('radio')).toHaveCount(10)
+      await card(other(lang)).click()
       await expect(page.locator('html')).toHaveAttribute('lang', other(lang))
-      await card(other(lang), lang).click()
+      await card(lang).click()
       await expect(page.locator('html')).toHaveAttribute('lang', lang)
 
       expect(patches).toEqual([])
