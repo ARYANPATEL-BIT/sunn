@@ -927,13 +927,81 @@ def tricky_sounds(user=Depends(current_user)):
 @router.post("/me/trainings/alternatives", response_model=Alternatives)
 def alternatives(body: AlternativesRequest, user=Depends(current_user)):
     """Other ways to say text that leave out the user's tricky sounds."""
-    if body.lang == "en":
-        return {"meaning_en": "thank you", "alternatives": [
-            {"text": "Much appreciated", "latin": "Much appreciated", "meaning_en": "thank you",
-             "avoids": ["th-english"], "source": "library"},
-            {"text": "Cheers", "latin": "Cheers", "meaning_en": "thanks, said casually", "avoids": ["th-english"],
-             "source": "assistant"}]}
-    return {"meaning_en": "thank you", "alternatives": [
-        {"text": "धन्यवाद", "latin": "dhanyavaad", "meaning_en": "thank you", "avoids": ["sh"], "source": "library"},
-        {"text": "बहुत मेहरबानी", "latin": "bahut meharbaani", "meaning_en": "thank you very much", "avoids": ["sh"],
-         "source": "assistant"}]}
+    user_tricky = get_user_tricky_sounds(user)
+    tricky_ids = [ts.sound_id for ts in user_tricky]
+    tricky_set = set(tricky_ids)
+
+    norm_input = matcher.normalize(body.text)
+
+    # 1. Search in Library: exact match or fuzzy match >= 0.85
+    best_meaning = None
+    best_variant = None
+    best_sim = 0.0
+
+    for m in TAGGED_ALTERNATIVES:
+        for v in m["variants"]:
+            if norm_input == v["norm"] or norm_input == v["norm_latin"]:
+                best_meaning = m
+                best_variant = v
+                best_sim = 1.0
+                break
+        if best_meaning:
+            break
+
+    if not best_meaning:
+        for m in TAGGED_ALTERNATIVES:
+            for v in m["variants"]:
+                sim1 = Levenshtein.normalized_similarity(norm_input, v["norm"])
+                sim2 = Levenshtein.normalized_similarity(norm_input, v["norm_latin"])
+                sim = max(sim1, sim2)
+                if sim > best_sim:
+                    best_sim = sim
+                    best_meaning = m
+                    best_variant = v
+
+    if best_meaning and best_sim >= 0.85:
+        other_variants = [v for v in best_meaning["variants"] if v["text"] != body.text and v["norm"] != norm_input]
+        if not other_variants:
+            other_variants = best_meaning["variants"]
+
+        def rank_key(v):
+            tricky_contained = len(v["sounds"] & tricky_set)
+            return (tricky_contained, len(v["text"]), v["index"])
+
+        sorted_variants = sorted(other_variants, key=rank_key)
+        alts = []
+        for v in sorted_variants[:4]:
+            avoids = [s for s in tricky_ids if s not in v["sounds"]]
+            alts.append(Alternative(
+                text=v["text"],
+                latin=v["latin"],
+                meaning_en=best_meaning["meaning_en"],
+                avoids=avoids,
+                source="library",
+            ))
+        return Alternatives(meaning_en=best_meaning["meaning_en"], alternatives=alts)
+
+    # Fallback to closest library results if similarity >= 0.60
+    if best_meaning and best_sim >= 0.60:
+        other_variants = [v for v in best_meaning["variants"] if v["text"] != body.text and v["norm"] != norm_input]
+        if not other_variants:
+            other_variants = best_meaning["variants"]
+
+        def rank_key(v):
+            tricky_contained = len(v["sounds"] & tricky_set)
+            return (tricky_contained, len(v["text"]), v["index"])
+
+        sorted_variants = sorted(other_variants, key=rank_key)
+        alts = []
+        for v in sorted_variants[:4]:
+            avoids = [s for s in tricky_ids if s not in v["sounds"]]
+            alts.append(Alternative(
+                text=v["text"],
+                latin=v["latin"],
+                meaning_en=best_meaning["meaning_en"],
+                avoids=avoids,
+                source="library",
+            ))
+        return Alternatives(meaning_en=best_meaning["meaning_en"], alternatives=alts)
+
+    return Alternatives(meaning_en="practice", alternatives=[])
