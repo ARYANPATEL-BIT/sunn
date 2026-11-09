@@ -223,15 +223,20 @@ A specialized, high-safety utility is provided to verify live connectivity with 
 
 ```powershell
 # 1. Inspect configuration and dry-run without network calls (0 credits spent)
-uv run scripts/gnani_live_smoke.py --stt --tts --dry-run
+uv run scripts/gnani_live_smoke.py --dry-run
+uv run scripts/gnani_live_smoke.py --speech-loop --dry-run
 
 # 2. Safety gate demonstration (stops immediately without explicit confirmation)
-uv run scripts/gnani_live_smoke.py --stt
+uv run scripts/gnani_live_smoke.py --speech-loop
 
-# 3. Live STT test (consumes exactly 1 request with a synthetic 1-second sine wave)
+# 3. Live bidirectional speech loop (synthesizes 1 TTS WAV, then feeds it directly to STT)
+# Consumes exactly 1 TTS call + 1 STT call: verifies end-to-end audio pipeline
+uv run scripts/gnani_live_smoke.py --speech-loop --confirm-live-credit-spend
+
+# 4. Live STT test alone (consumes exactly 1 request with a synthetic 1-second sine wave)
 uv run scripts/gnani_live_smoke.py --stt --confirm-live-credit-spend
 
-# 4. Live TTS test (consumes exactly 1 request with a 1-word Hindi greeting "नमस्ते")
+# 5. Live TTS test alone (consumes exactly 1 request with a Hindi phrase)
 uv run scripts/gnani_live_smoke.py --tts --confirm-live-credit-spend
 ```
 
@@ -239,7 +244,43 @@ Key safety properties of the smoke-test utility:
 - Requires `--confirm-live-credit-spend` to touch the live network.
 - Automatically masks credentials in stdout (e.g. `vach...354a`).
 - Does not retry on failure: zero retry amplification.
-- Uses synthetic in-memory audio: no microphone access required.
+- Inspects audio format (sample rate, mono channels, duration, PCM subtype).
+- Verifies exact Devanagari transcript return matching.
+
+### Training Audio Asset Strategy & Prioritization
+
+The Sunn Trainings curriculum defines 128 audio keys in `content/trainings/audio_manifest.json`.
+To protect the hackathon API credit budget, bulk synthesis of all 128 keys is avoided.
+Instead, keys are prioritized into three distinct operational tiers:
+
+| Tier | Priority | Asset Count | Description & Scope | Fallback Mechanism |
+| :--- | :--- | :--- | :--- | :--- |
+| **Tier A** | **Demo-Critical** | 13 keys | Course 1 Lesson 1 (`easy-starts-1`) and Course 2 Lesson 1 (`introductions-1`) core phrases | Pre-generated or synthesized once on demand |
+| **Tier B** | **Important** | 65 keys | Foundation lessons across Easy Starts, Introductions, and initial sound lessons | Browser Web Speech API or server-side cache |
+| **Tier C** | **Optional** | 50 keys | Advanced tongue-twisters, sound play steps, and extended dialogues | Synthetic timing and visual rhythm highlights |
+
+#### Pre-Generating Priority Assets Safely
+
+The generator utility (`scripts/generate_training_audio.py`) allows fine-grained target selection:
+
+```powershell
+# Inspect missing files across all tiers without making API calls
+uv run scripts/generate_training_audio.py --dry-run
+
+# Generate only Priority A demo-critical audio assets (13 calls total)
+uv run scripts/generate_training_audio.py --priority A --yes
+
+# Generate a single specific key
+uv run scripts/generate_training_audio.py --key easy-starts-1-vowels-aam --yes
+
+# Generate all 128 assets in mock mode (0 credits consumed, for local UI testing)
+GNANI_MOCK=1 uv run scripts/generate_training_audio.py --yes
+```
+
+#### Audio Caching & Serving
+- Audio assets are served from `/trainings/audio/{audio_key}`.
+- Responses set `Cache-Control: public, max-age=86400, immutable` headers for browser caching.
+- If an asset is ungenerated, the API returns HTTP 404, which the lesson player catches gracefully to fall back to synthetic visual timing without freezing.
 
 ### Mock Mode vs. Real Mode
 
