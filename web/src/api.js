@@ -231,3 +231,75 @@ export function stopAudio() {
 
 // Totals, top 5 phrases, and 8-week clear_without_help_rate trend
 export const stats = () => request('/me/stats').then(json)
+
+// --- Trainings ---
+
+// List the categories in order with course counts
+export const listTrainingsCategories = () => request('/trainings/categories').then(json)
+
+// Get a single category and its courses
+export const getTrainingsCategory = (categoryId) =>
+  request(`/trainings/categories/${encodeURIComponent(categoryId)}`).then(json)
+
+// Get a course and its lessons
+export const getTrainingsCourse = (courseId) =>
+  request(`/trainings/courses/${encodeURIComponent(courseId)}`).then(json)
+
+// Get a single lesson with steps
+export const getTrainingsLesson = (lessonId) =>
+  request(`/trainings/lessons/${encodeURIComponent(lessonId)}`).then(json)
+
+// Get user trainings progress (courses, resume lesson, totals); returns null when signed out
+export const getTrainingsProgress = async () => {
+  try {
+    const res = await request('/me/trainings/progress')
+    return await res.json()
+  } catch {
+    return null
+  }
+}
+
+// Save lesson progress: lesson_id, step_index (0-based), completed
+export const saveTrainingsProgress = (lessonId, stepIndex, completed = false) =>
+  post('/me/trainings/progress', { lesson_id: lessonId, step_index: stepIndex, completed }).then(json)
+
+// Post a feeling reflection on a reflect step
+export const postTrainingsReflection = (lessonId, stepId, feeling) =>
+  post('/me/trainings/reflect', { lesson_id: lessonId, step_id: stepId, feeling }).then(json)
+
+// Send an attempt for a step
+export const postTrainingsAttempt = async (audioBlob, stepId, itemId = null, check = false) => {
+  const form = new FormData()
+  form.append('audio', audioBlob, 'attempt.wav')
+  form.append('step_id', stepId)
+  if (itemId) form.append('item_id', itemId)
+  form.append('check', String(check))
+  const res = await request('/me/trainings/attempts', { method: 'POST', body: form })
+  return json(res)
+}
+
+// Get sounds the user might like to practise
+export const getTrickySounds = () => request('/me/trainings/tricky-sounds').then(json)
+
+// Get easier alternatives for a text
+export const getAlternatives = (text, lang) =>
+  post('/me/trainings/alternatives', { text, lang }).then(json)
+
+// Fetch audio blob for an audio key
+export const fetchAudioBlob = async (audioKey) => {
+  if (!audioKey) return null
+  const res = await request(`/trainings/audio/${encodeURIComponent(audioKey)}`)
+  return res.blob()
+}
+
+// Play pre-recorded Timbre audio for an audio_key
+export const playAudioKey = async (audioKey) => {
+  if (!audioKey) return
+  try {
+    const blob = await fetchAudioBlob(audioKey)
+    if (blob) await play(blob)
+  } catch (err) {
+    if (err?.name === 'AbortError') return
+  }
+}
+

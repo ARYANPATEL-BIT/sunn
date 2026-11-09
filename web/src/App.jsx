@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, ScrollRestoration, useLocation } from 'react-router-dom'
 import AppShell from './AppShell.jsx'
 import { AuthProvider, RequireAuth } from './auth.jsx'
@@ -13,6 +13,12 @@ import Progress from './Progress.jsx'
 import Settings from './Settings.jsx'
 import Speak from './Speak.jsx'
 import { syncThemeColor } from './theme.js'
+
+const TrainingsHome = lazy(() => import('./trainings/TrainingsHome.jsx').then((m) => ({ default: m.TrainingsHome })))
+const EasierWays = lazy(() => import('./trainings/EasierWays.jsx').then((m) => ({ default: m.EasierWays })))
+const CategoryPage = lazy(() => import('./trainings/CategoryPage.jsx').then((m) => ({ default: m.CategoryPage })))
+const CoursePage = lazy(() => import('./trainings/CoursePage.jsx').then((m) => ({ default: m.CoursePage })))
+const LessonPlayer = lazy(() => import('./trainings/LessonPlayer.jsx').then((m) => ({ default: m.LessonPlayer })))
 
 function Root() {
   const { pathname } = useLocation()
@@ -30,7 +36,9 @@ function Root() {
   return (
     <>
       <div ref={main} tabIndex={-1} className="page">
-        <Outlet />
+        <Suspense fallback={null}>
+          <Outlet />
+        </Suspense>
       </div>
       <ScrollRestoration />
     </>
@@ -44,6 +52,11 @@ const router = createBrowserRouter([
       { path: '/', element: <Landing /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/signup', element: <SignupPage /> },
+      { path: '/trainings', element: <TrainingsHome /> },
+      { path: '/trainings/easier-ways', element: <EasierWays /> },
+      { path: '/trainings/:categoryId', element: <CategoryPage /> },
+      { path: '/trainings/:categoryId/:courseId', element: <CoursePage /> },
+      { path: '/trainings/:categoryId/:courseId/:lessonId', element: <LessonPlayer /> },
       {
         path: '/app',
         element: (
@@ -55,6 +68,7 @@ const router = createBrowserRouter([
           { index: true, element: <Navigate replace to="/app/speak" /> },
           { path: 'enroll', element: <Enroll /> },
           { path: 'speak', element: <Speak /> },
+          { path: 'trainings', element: <Navigate replace to="/trainings" /> },
           { path: 'phrases', element: <Phrases /> },
           { path: 'progress', element: <Progress /> },
           { path: 'settings', element: <Settings /> },

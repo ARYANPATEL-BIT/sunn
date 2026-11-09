@@ -31,6 +31,9 @@ export default function AppShell() {
         <div className="bar">
           <Wordmark />
           <div className="bar-end">
+            <NavLink to="/trainings" className="nav-link wide-only" viewTransition={!reducedMotion()}>
+              {t('nav.trainings')}
+            </NavLink>
             <button
               type="button"
               className="icon-button presenter-toggle"
