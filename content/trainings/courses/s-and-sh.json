@@ -1,180 +1,776 @@
 {
   "id": "s-and-sh",
   "category_id": "clear-sounds",
-  "title": {"en": "S and Sh", "hi": "स और श"},
+  "title": {
+    "en": "S and Sh",
+    "hi": "स और श"
+  },
   "summary": {
-    "en": "Hear the difference between s and sh, then practise each one. Useful practice if you lisp.",
-    "hi": "स और श का फ़र्क़ सुनिए, फिर दोनों का अभ्यास कीजिए। तुतलाहट हो तो यह अभ्यास काम आता है।"
+    "en": "Hear the differences between clear sounds, practice tongue placement, and build clear pronunciation step by step.",
+    "hi": "स, श, र, ल और अन्य ध्वनियों का फ़र्क़ समझिए और साफ़ उच्चारण का अभ्यास कीजिए।"
   },
   "what_you_practise": {
-    "en": ["Where your tongue goes for s and sh", "Hearing s and sh apart", "Saying words and sentences with both"],
-    "hi": ["स और श के लिए जीभ की जगह", "स और श का फ़र्क़ सुनना", "दोनों आवाज़ों वाले शब्द और वाक्य बोलना"]
+    "en": [
+      "Tongue placement for s and sh",
+      "Differences between r and l sounds",
+      "Dental versus retroflex consonants",
+      "Gentle airflow for aspirated sounds"
+    ],
+    "hi": [
+      "स और श के लिए जीभ की सही जगह",
+      "र और ल की आवाज़ों में फ़र्क़",
+      "दाँत और तालू के अक्षरों का अभ्यास",
+      "हवा वाली आवाज़ों में सहज प्रवाह"
+    ]
   },
   "level": "beginner",
-  "minutes": 13,
+  "minutes": 32,
   "practice_lang": "hi",
   "lessons": [
     {
       "id": "s-and-sh-1",
-      "title": {"en": "Find the s", "hi": "स को पहचानिए"},
-      "minutes": 6,
+      "title": {
+        "en": "S and Sh sounds",
+        "hi": "स और श की आवाज़ें"
+      },
+      "minutes": 8,
       "steps": [
         {
           "id": "s-and-sh-1-welcome",
           "type": "intro",
-          "title": {"en": "Welcome", "hi": "स्वागत है"},
+          "title": {
+            "en": "Clear S and Sh",
+            "hi": "स और श का अभ्यास"
+          },
           "body": {
-            "en": "In these lessons you listen first, then say each sound. Go slowly and take all the time you need. Practise at your own pace.",
-            "hi": "इन पाठों में पहले सुनिए, फिर हर आवाज़ बोलिए। धीरे-धीरे और आराम से अभ्यास कीजिए। अपनी रफ़्तार से आगे बढ़िए।"
+            "en": "Many people find it helpful to notice where the tongue rests. For s, the tip stays behind your front teeth. For sh, the tongue pulls back slightly.",
+            "hi": "स के लिए जीभ की नोक सामने के दाँतों के पीछे रहती है। श के लिए जीभ थोड़ी पीछे चली जाती है।"
           }
+        },
+        {
+          "id": "s-and-sh-1-breathe",
+          "type": "breathing",
+          "title": {
+            "en": "Steady breath",
+            "hi": "संतुलित साँस"
+          },
+          "body": {
+            "en": "Take 4 calm breaths in and out before practising sounds.",
+            "hi": "आवाज़ों का अभ्यास करने से पहले 4 सहज साँसें लीजिए और छोड़िए।"
+          },
+          "pattern": {
+            "in_s": 4,
+            "out_s": 6
+          },
+          "rounds": 4
         },
         {
           "id": "s-and-sh-1-tongue",
           "type": "tip",
-          "title": {"en": "Where the tongue goes", "hi": "जीभ कहाँ रहे"},
+          "title": {
+            "en": "Tongue place",
+            "hi": "जीभ की जगह"
+          },
           "body": {
-            "en": "For s, keep the tip of your tongue just behind your top teeth, not between them. Smile a little and let the air hiss out.",
-            "hi": "स के लिए जीभ की नोक ऊपर के दाँतों के ठीक पीछे रखिए, दाँतों के बीच नहीं। थोड़ा मुस्कुराइए और हवा को 'स्स्स' की तरह निकलने दीजिए।"
+            "en": "Smile gently for s. Round your lips a little for sh.",
+            "hi": "स बोलते समय हल्की मुस्कान रखिए। श बोलते समय होंठों को थोड़ा गोल कीजिए।"
           },
           "technique_id": "tongue-place"
         },
         {
-          "id": "s-and-sh-1-hiss",
-          "type": "breathing",
-          "title": {"en": "A soft sss", "hi": "एक हल्की स्स्स"},
-          "body": {
-            "en": "Breathe in through your nose. As you breathe out, make a soft sss. Stop when it stops feeling comfortable.",
-            "hi": "नाक से साँस लीजिए। साँस छोड़ते हुए हल्की 'स्स्स' बोलिए। जहाँ आराम न लगे, वहीं रुक जाइए।"
-          },
-          "pattern": {"in_s": 3, "out_s": 6},
-          "rounds": 3
-        },
-        {
           "id": "s-and-sh-1-words",
           "type": "listen_repeat",
-          "title": {"en": "Words with s", "hi": "स वाले शब्द"},
+          "title": {
+            "en": "Listen and repeat S words",
+            "hi": "स वाले शब्द सुनिए और दोहराइए"
+          },
           "items": [
-            {"id": "sab", "text": "सब", "latin": "sab", "meaning_en": "all", "focus_sound": "s", "audio_key": "s-and-sh-sab"},
-            {"id": "saal", "text": "साल", "latin": "saal", "meaning_en": "year", "focus_sound": "s", "audio_key": "s-and-sh-saal"},
-            {"id": "sona", "text": "सोना", "latin": "sona", "meaning_en": "to sleep", "focus_sound": "s", "audio_key": "s-and-sh-sona"},
-            {"id": "bas", "text": "बस", "latin": "bas", "meaning_en": "bus", "focus_sound": "s", "audio_key": "s-and-sh-bas"},
-            {"id": "raasta", "text": "रास्ता", "latin": "raasta", "meaning_en": "road", "focus_sound": "s", "audio_key": "s-and-sh-raasta"}
+            {
+              "id": "sab",
+              "text": "सब",
+              "latin": "sab",
+              "meaning_en": "all",
+              "focus_sound": "s",
+              "audio_key": "s-and-sh-1-words-sab"
+            },
+            {
+              "id": "saal",
+              "text": "साल",
+              "latin": "saal",
+              "meaning_en": "year",
+              "focus_sound": "s",
+              "audio_key": "s-and-sh-1-words-saal"
+            },
+            {
+              "id": "sona",
+              "text": "सोना",
+              "latin": "sona",
+              "meaning_en": "gold or sleep",
+              "focus_sound": "s",
+              "audio_key": "s-and-sh-1-words-sona"
+            },
+            {
+              "id": "bas",
+              "text": "बस",
+              "latin": "bas",
+              "meaning_en": "bus",
+              "focus_sound": "s",
+              "audio_key": "s-and-sh-1-words-bas"
+            },
+            {
+              "id": "raasta",
+              "text": "रास्ता",
+              "latin": "raasta",
+              "meaning_en": "path",
+              "focus_sound": "s",
+              "audio_key": "s-and-sh-1-words-raasta"
+            }
           ],
           "feedback": "words"
         },
         {
-          "id": "s-and-sh-1-echo",
-          "type": "speak_with_me",
-          "title": {"en": "Sunn first, then you", "hi": "पहले Sunn, फिर आप"},
-          "text": "सोनू सुबह सात बजे स्कूल जाता है",
-          "latin": "sonu subah saat baje school jaata hai",
-          "meaning_en": "Sonu goes to school at seven in the morning.",
-          "mode": "echo",
-          "pace_wpm": [70, 110],
-          "audio_key": "s-and-sh-sonu",
-          "feedback": "words"
-        },
-        {
-          "id": "s-and-sh-1-reflect",
-          "type": "reflect",
-          "title": {"en": "How was that?", "hi": "कैसा लगा?"},
-          "prompt": {"en": "How did the s sound feel today?", "hi": "आज स की आवाज़ कैसी लगी?"},
-          "choices": ["easy", "okay", "hard"]
-        }
-      ]
-    },
-    {
-      "id": "s-and-sh-2",
-      "title": {"en": "S or sh?", "hi": "स या श?"},
-      "minutes": 7,
-      "steps": [
-        {
-          "id": "s-and-sh-2-pairs",
+          "id": "s-and-sh-1-pairs",
           "type": "minimal_pairs",
-          "title": {"en": "S or sh?", "hi": "स या श?"},
+          "title": {
+            "en": "S versus Sh pairs",
+            "hi": "स और श के जोड़े"
+          },
           "pairs": [
             {
               "id": "saadi-shaadi",
-              "a": {"text": "सादी", "latin": "saadi", "audio_key": "s-and-sh-saadi"},
-              "b": {"text": "शादी", "latin": "shaadi", "audio_key": "s-and-sh-shaadi"},
+              "a": {
+                "text": "सादी",
+                "latin": "saadi",
+                "audio_key": "s-and-sh-1-pairs-saadi"
+              },
+              "b": {
+                "text": "शादी",
+                "latin": "shaadi",
+                "audio_key": "s-and-sh-1-pairs-shaadi"
+              },
               "sound_a": "s",
               "sound_b": "sh"
             },
             {
               "id": "ser-sher",
-              "a": {"text": "सेर", "latin": "ser", "audio_key": "s-and-sh-ser"},
-              "b": {"text": "शेर", "latin": "sher", "audio_key": "s-and-sh-sher"},
+              "a": {
+                "text": "सेर",
+                "latin": "ser",
+                "audio_key": "s-and-sh-1-pairs-ser"
+              },
+              "b": {
+                "text": "शेर",
+                "latin": "sher",
+                "audio_key": "s-and-sh-1-pairs-sher"
+              },
               "sound_a": "s",
               "sound_b": "sh"
             }
           ]
         },
         {
-          "id": "s-and-sh-2-round-lips",
-          "type": "tip",
-          "title": {"en": "Sh is rounder", "hi": "श में होंठ गोल"},
+          "id": "s-and-sh-1-echo",
+          "type": "speak_with_me",
+          "title": {
+            "en": "Sentence full of S",
+            "hi": "स से भरा वाक्य"
+          },
+          "text": "सोनू सुबह सात बजे स्कूल जाता है",
+          "latin": "sonu subah saat baje school jaata hai",
+          "meaning_en": "Sonu goes to school at seven in the morning.",
+          "mode": "echo",
+          "pace_wpm": [
+            60,
+            90
+          ],
+          "audio_key": "s-and-sh-1-echo-sonu",
+          "feedback": "words"
+        },
+        {
+          "id": "s-and-sh-1-read",
+          "type": "read_aloud",
+          "title": {
+            "en": "Read the evening note",
+            "hi": "शाम का वाक्य पढ़िए"
+          },
+          "paragraph": "शाम को शहर की सड़कों पर बहुत चहल-पहल होती है। सब लोग आराम से घर लौटते हैं।",
+          "latin": "shaam ko shahar ki sadkon par bahut chahal-pahal hoti hai. sab log aaraam se ghar laut-te hain.",
+          "audio_key": "s-and-sh-1-read-evening",
+          "feedback": "words"
+        },
+        {
+          "id": "s-and-sh-1-reflect",
+          "type": "reflect",
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did hearing the difference between s and sh feel?",
+            "hi": "स और श के बीच का फ़र्क़ कैसा लगा?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s-and-sh-2",
+      "title": {
+        "en": "R and L sounds",
+        "hi": "र और ल की आवाज़ें"
+      },
+      "minutes": 8,
+      "steps": [
+        {
+          "id": "s-and-sh-2-intro",
+          "type": "intro",
+          "title": {
+            "en": "Tongue movement for R and L",
+            "hi": "र और ल के लिए जीभ"
+          },
           "body": {
-            "en": "For sh, move your tongue a little further back and round your lips, like the sound you make to hush a baby.",
-            "hi": "श के लिए जीभ को थोड़ा पीछे ले जाइए और होंठ गोल कीजिए, जैसे किसी बच्चे को 'श्श्श' कहकर चुप कराते हैं।"
+            "en": "For l, the tongue tip rests firmly behind your upper front teeth while air escapes from the sides. For r, the tongue taps lightly against the palate.",
+            "hi": "ल के लिए जीभ की नोक ऊपर के दाँतों के ठीक पीछे लगती है। र के लिए जीभ तालू पर हल्का सा छूती है।"
+          }
+        },
+        {
+          "id": "s-and-sh-2-tip",
+          "type": "tip",
+          "title": {
+            "en": "Light tap for R",
+            "hi": "र पर हल्का स्पर्श"
+          },
+          "body": {
+            "en": "Many people find it helpful to keep the mouth relaxed so the tongue can tap lightly for r without tension.",
+            "hi": "मुँह को ढीला रखने से जीभ र बोलते समय आराम से छू सकती है।"
           },
           "technique_id": "tongue-place"
         },
         {
-          "id": "s-and-sh-2-sh-words",
+          "id": "s-and-sh-2-words",
           "type": "listen_repeat",
-          "title": {"en": "Words with sh", "hi": "श वाले शब्द"},
+          "title": {
+            "en": "Repeat R and L words",
+            "hi": "र और ल वाले शब्द"
+          },
           "items": [
-            {"id": "shaam", "text": "शाम", "latin": "shaam", "meaning_en": "evening", "focus_sound": "sh", "audio_key": "s-and-sh-shaam-word"},
-            {"id": "shahar", "text": "शहर", "latin": "shahar", "meaning_en": "city", "focus_sound": "sh", "audio_key": "s-and-sh-shahar"},
-            {"id": "shuru", "text": "शुरू", "latin": "shuru", "meaning_en": "start", "focus_sound": "sh", "audio_key": "s-and-sh-shuru"},
-            {"id": "desh", "text": "देश", "latin": "desh", "meaning_en": "country", "focus_sound": "sh", "audio_key": "s-and-sh-desh"}
+            {
+              "id": "roti",
+              "text": "रोटी",
+              "latin": "roti",
+              "meaning_en": "flatbread",
+              "focus_sound": "r",
+              "audio_key": "s-and-sh-2-words-roti"
+            },
+            {
+              "id": "raat",
+              "text": "रात",
+              "latin": "raat",
+              "meaning_en": "night",
+              "focus_sound": "r",
+              "audio_key": "s-and-sh-2-words-raat"
+            },
+            {
+              "id": "laal",
+              "text": "लाल",
+              "latin": "laal",
+              "meaning_en": "red",
+              "focus_sound": "l",
+              "audio_key": "s-and-sh-2-words-laal"
+            },
+            {
+              "id": "ladka",
+              "text": "लड़का",
+              "latin": "ladka",
+              "meaning_en": "boy",
+              "focus_sound": "l",
+              "audio_key": "s-and-sh-2-words-ladka"
+            },
+            {
+              "id": "rang",
+              "text": "रंग",
+              "latin": "rang",
+              "meaning_en": "colour",
+              "focus_sound": "r",
+              "audio_key": "s-and-sh-2-words-rang"
+            },
+            {
+              "id": "log",
+              "text": "लोग",
+              "latin": "log",
+              "meaning_en": "people",
+              "focus_sound": "l",
+              "audio_key": "s-and-sh-2-words-log"
+            }
           ],
           "feedback": "words"
         },
         {
-          "id": "s-and-sh-2-together",
+          "id": "s-and-sh-2-pairs",
+          "type": "minimal_pairs",
+          "title": {
+            "en": "R and L word pairs",
+            "hi": "र और ल के जोड़े"
+          },
+          "pairs": [
+            {
+              "id": "raat-laat",
+              "a": {
+                "text": "रात",
+                "latin": "raat",
+                "audio_key": "s-and-sh-2-pairs-raat"
+              },
+              "b": {
+                "text": "लात",
+                "latin": "laat",
+                "audio_key": "s-and-sh-2-pairs-laat"
+              },
+              "sound_a": "r",
+              "sound_b": "l"
+            },
+            {
+              "id": "roop-loop",
+              "a": {
+                "text": "रोल",
+                "latin": "rol",
+                "audio_key": "s-and-sh-2-pairs-rol"
+              },
+              "b": {
+                "text": "लोल",
+                "latin": "lol",
+                "audio_key": "s-and-sh-2-pairs-lol"
+              },
+              "sound_a": "r",
+              "sound_b": "l"
+            }
+          ]
+        },
+        {
+          "id": "s-and-sh-2-choral",
           "type": "speak_with_me",
-          "title": {"en": "Say it together", "hi": "साथ में बोलिए"},
-          "text": "शाम को सब साथ बैठते हैं",
-          "latin": "shaam ko sab saath baithte hain",
-          "meaning_en": "In the evening everyone sits together.",
+          "title": {
+            "en": "Choral sentence with R and L",
+            "hi": "र और ल का मिलाजुला वाक्य"
+          },
+          "text": "रेल गाड़ी रात को लाल बत्ती देखकर रुकी",
+          "latin": "rel gaadi raat ko laal batti dekhkar ruki",
+          "meaning_en": "The train stopped at night seeing the red signal.",
           "mode": "choral",
-          "pace_wpm": [70, 110],
-          "audio_key": "s-and-sh-shaam",
+          "pace_wpm": [
+            60,
+            90
+          ],
+          "audio_key": "s-and-sh-2-choral-train",
           "feedback": "words"
         },
         {
           "id": "s-and-sh-2-read",
           "type": "read_aloud",
-          "title": {"en": "Read about the evening", "hi": "शाम के बारे में पढ़िए"},
-          "paragraph": "शाम को शहर की सड़कों पर बहुत शोर होता है। सब लोग अपने घर जाने की जल्दी में रहते हैं।",
-          "latin": "shaam ko shahar ki sadkon par bahut shor hota hai. sab log apne ghar jaane ki jaldi mein rehte hain.",
-          "audio_key": "s-and-sh-evening",
+          "title": {
+            "en": "Short paragraph with R and L",
+            "hi": "र और ल का छोटा गद्यांश"
+          },
+          "paragraph": "रमेश बाज़ार से लाल टमाटर लाया। उसने रोटी के साथ दाल और सलाद खाया। सब लोगों ने मिलकर भोजन किया।",
+          "latin": "ramesh baazaar se laal tamaatar laaya. usne roti ke saath daal aur salaad khaaya. sab logon ne milkar bhojan kiya.",
+          "audio_key": "s-and-sh-2-read-meal",
           "feedback": "words"
-        },
-        {
-          "id": "s-and-sh-2-store",
-          "type": "dialogue",
-          "title": {"en": "At the general store", "hi": "किराने की दुकान पर"},
-          "scenario": {"en": "Ask the shopkeeper for soap and shampoo.", "hi": "दुकानदार से साबुन और शैम्पू माँगिए।"},
-          "turns": [
-            {"speaker": "sunn", "text": "नमस्ते, बताइए क्या चाहिए?", "latin": "namaste, bataaiye kya chaahiye?", "audio_key": "s-and-sh-store-1"},
-            {
-              "speaker": "you",
-              "text": "एक साबुन और एक शैम्पू दीजिए।",
-              "latin": "ek saabun aur ek shampoo deejiye.",
-              "options": [{"text": "सिर्फ़ एक साबुन दीजिए।", "latin": "sirf ek saabun deejiye."}]
-            },
-            {"speaker": "sunn", "text": "यह लीजिए। और कुछ?", "latin": "yeh leejiye. aur kuchh?", "audio_key": "s-and-sh-store-2"},
-            {"speaker": "you", "text": "बस, शुक्रिया।", "latin": "bas, shukriya."}
-          ]
         },
         {
           "id": "s-and-sh-2-reflect",
           "type": "reflect",
-          "title": {"en": "How was that?", "hi": "कैसा लगा?"},
-          "prompt": {"en": "How did s and sh feel today?", "hi": "आज स और श कैसे लगे?"},
-          "choices": ["easy", "okay", "hard"]
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did distinguishing r and l feel?",
+            "hi": "र और ल के बीच फ़र्क़ समझना कैसा लगा?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s-and-sh-3",
+      "title": {
+        "en": "Dental and retroflex sounds",
+        "hi": "त-द और ट-ड की आवाज़ें"
+      },
+      "minutes": 8,
+      "steps": [
+        {
+          "id": "s-and-sh-3-intro",
+          "type": "intro",
+          "title": {
+            "en": "Soft dental versus curled retroflex",
+            "hi": "दाँत और तालू का फ़र्क़"
+          },
+          "body": {
+            "en": "Dental sounds (त, द) touch the front teeth gently. Retroflex sounds (ट, ड) touch higher up as the tongue curls back slightly.",
+            "hi": "त और द बोलते समय जीभ सामने के दाँतों को छूती है। ट और ड बोलते समय जीभ थोड़ा पीछे मुड़कर तालू को छूती है।"
+          }
+        },
+        {
+          "id": "s-and-sh-3-tip",
+          "type": "tip",
+          "title": {
+            "en": "Noticing tooth contact",
+            "hi": "दाँतों के स्पर्श पर ध्यान"
+          },
+          "body": {
+            "en": "Many people find it helpful to place the tongue gently against the back of the top teeth for त and द.",
+            "hi": "त और द के लिए जीभ को ऊपर के दाँतों के पीछे हल्के से लगाने का अभ्यास कीजिए।"
+          },
+          "technique_id": "tongue-place"
+        },
+        {
+          "id": "s-and-sh-3-pairs",
+          "type": "minimal_pairs",
+          "title": {
+            "en": "Dental versus retroflex pairs",
+            "hi": "त और ट के जोड़े"
+          },
+          "pairs": [
+            {
+              "id": "taala-taala",
+              "a": {
+                "text": "ताल",
+                "latin": "taal",
+                "audio_key": "s-and-sh-3-pairs-taal"
+              },
+              "b": {
+                "text": "टाल",
+                "latin": "taal",
+                "audio_key": "s-and-sh-3-pairs-ttaal"
+              },
+              "sound_a": "t-dental",
+              "sound_b": "t-retroflex"
+            },
+            {
+              "id": "daal-daal",
+              "a": {
+                "text": "दाल",
+                "latin": "daal",
+                "audio_key": "s-and-sh-3-pairs-daal"
+              },
+              "b": {
+                "text": "डाल",
+                "latin": "daal",
+                "audio_key": "s-and-sh-3-pairs-ddaal"
+              },
+              "sound_a": "d",
+              "sound_b": "t-retroflex"
+            }
+          ]
+        },
+        {
+          "id": "s-and-sh-3-words",
+          "type": "listen_repeat",
+          "title": {
+            "en": "Repeat dental and retroflex words",
+            "hi": "त, द, ट, ड वाले शब्द"
+          },
+          "items": [
+            {
+              "id": "teen",
+              "text": "तीन",
+              "latin": "teen",
+              "meaning_en": "three",
+              "focus_sound": "t-dental",
+              "audio_key": "s-and-sh-3-words-teen"
+            },
+            {
+              "id": "taara",
+              "text": "तारा",
+              "latin": "taara",
+              "meaning_en": "star",
+              "focus_sound": "t-dental",
+              "audio_key": "s-and-sh-3-words-taara"
+            },
+            {
+              "id": "tamaatar",
+              "text": "टमाटर",
+              "latin": "tamaatar",
+              "meaning_en": "tomato",
+              "focus_sound": "t-retroflex",
+              "audio_key": "s-and-sh-3-words-tamaatar"
+            },
+            {
+              "id": "topi",
+              "text": "टोपी",
+              "latin": "topi",
+              "meaning_en": "cap",
+              "focus_sound": "t-retroflex",
+              "audio_key": "s-and-sh-3-words-topi"
+            },
+            {
+              "id": "darvaaza",
+              "text": "दरवाज़ा",
+              "latin": "darvaaza",
+              "meaning_en": "door",
+              "focus_sound": "d",
+              "audio_key": "s-and-sh-3-words-darvaaza"
+            }
+          ],
+          "feedback": "words"
+        },
+        {
+          "id": "s-and-sh-3-echo",
+          "type": "speak_with_me",
+          "title": {
+            "en": "Echo sentence",
+            "hi": "सुनकर दोहराइए"
+          },
+          "text": "छोटे बच्चे ने टोकरी में टमाटर डाले",
+          "latin": "chhote bachche ne tokri mein tamaatar daale",
+          "meaning_en": "The little child put tomatoes into the basket.",
+          "mode": "echo",
+          "pace_wpm": [
+            60,
+            90
+          ],
+          "audio_key": "s-and-sh-3-echo-basket",
+          "feedback": "words"
+        },
+        {
+          "id": "s-and-sh-3-dialogue",
+          "type": "dialogue",
+          "title": {
+            "en": "At the vegetable shop",
+            "hi": "सब्ज़ी की दुकान पर"
+          },
+          "scenario": {
+            "en": "You are shopping for fresh vegetables.",
+            "hi": "आप ताज़ा सब्ज़ियाँ खरीद रहे हैं।"
+          },
+          "turns": [
+            {
+              "speaker": "sunn",
+              "text": "नमस्ते! आज क्या सब्ज़ी लेंगे?",
+              "latin": "namaste! aaj kya sabzi lenge?",
+              "audio_key": "s-and-sh-3-dialogue-1"
+            },
+            {
+              "speaker": "you",
+              "text": "एक किलो लाल टमाटर और ताज़ा मटर दीजिए।",
+              "latin": "ek kilo laal tamaatar aur taaza matar deejiye.",
+              "options": [
+                {
+                  "text": "दो किलो आलू और आधा किलो टमाटर।",
+                  "latin": "do kilo aalu aur aadha kilo tamaatar."
+                }
+              ]
+            },
+            {
+              "speaker": "sunn",
+              "text": "बिल्कुल, टोकरी में रख दिया है।",
+              "latin": "bilkul, tokri mein rakh diya hai.",
+              "audio_key": "s-and-sh-3-dialogue-2"
+            },
+            {
+              "speaker": "you",
+              "text": "बहुत धन्यवाद भैया।",
+              "latin": "bahut dhanyavaad bhaiya."
+            }
+          ]
+        },
+        {
+          "id": "s-and-sh-3-reflect",
+          "type": "reflect",
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did dental and retroflex sounds feel?",
+            "hi": "दाँत और तालू के अक्षरों का अभ्यास कैसा लगा?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s-and-sh-4",
+      "title": {
+        "en": "Plain and aspirated sounds",
+        "hi": "साधारण और हवा वाली आवाज़ें"
+      },
+      "minutes": 8,
+      "steps": [
+        {
+          "id": "s-and-sh-4-intro",
+          "type": "intro",
+          "title": {
+            "en": "The gentle puff of air",
+            "hi": "हवा का हल्का झोंका"
+          },
+          "body": {
+            "en": "Some Hindi sounds have extra breath (ख, घ, फ, भ). Plain sounds (क, ग, प, ब) release gently with minimal breath.",
+            "hi": "ख, घ, फ, भ बोलते समय मुँह से थोड़ी हवा निकलती है। क, ग, प, ब बोलते समय हवा बहुत कम निकलती है।"
+          }
+        },
+        {
+          "id": "s-and-sh-4-tip",
+          "type": "tip",
+          "title": {
+            "en": "Feeling the breath",
+            "hi": "हवा को महसूस करना"
+          },
+          "body": {
+            "en": "Many people hold a hand in front of their mouth. You can feel a warm puff of air on फ and ख.",
+            "hi": "हाथ को मुँह के आगे रखकर देखिए। फ और ख बोलते समय हथेली पर हवा का अहसास होता है।"
+          },
+          "technique_id": "easy-start"
+        },
+        {
+          "id": "s-and-sh-4-pairs",
+          "type": "minimal_pairs",
+          "title": {
+            "en": "Plain and aspirated pairs",
+            "hi": "साधारण और हवा वाले जोड़े"
+          },
+          "pairs": [
+            {
+              "id": "pal-phal",
+              "a": {
+                "text": "पल",
+                "latin": "pal",
+                "audio_key": "s-and-sh-4-pairs-pal"
+              },
+              "b": {
+                "text": "फल",
+                "latin": "phal",
+                "audio_key": "s-and-sh-4-pairs-phal"
+              },
+              "sound_a": "p",
+              "sound_b": "aspirated"
+            },
+            {
+              "id": "kal-khal",
+              "a": {
+                "text": "कल",
+                "latin": "kal",
+                "audio_key": "s-and-sh-4-pairs-kal"
+              },
+              "b": {
+                "text": "खल",
+                "latin": "khal",
+                "audio_key": "s-and-sh-4-pairs-khal"
+              },
+              "sound_a": "k",
+              "sound_b": "aspirated"
+            }
+          ]
+        },
+        {
+          "id": "s-and-sh-4-words",
+          "type": "listen_repeat",
+          "title": {
+            "en": "Aspirated words",
+            "hi": "हवा वाली आवाज़ों का अभ्यास"
+          },
+          "items": [
+            {
+              "id": "khaana",
+              "text": "खाना",
+              "latin": "khaana",
+              "meaning_en": "food",
+              "focus_sound": "aspirated",
+              "audio_key": "s-and-sh-4-words-khaana"
+            },
+            {
+              "id": "ghar",
+              "text": "घर",
+              "latin": "ghar",
+              "meaning_en": "home",
+              "focus_sound": "aspirated",
+              "audio_key": "s-and-sh-4-words-ghar"
+            },
+            {
+              "id": "bhaalu",
+              "text": "भालू",
+              "latin": "bhaalu",
+              "meaning_en": "bear",
+              "focus_sound": "aspirated",
+              "audio_key": "s-and-sh-4-words-bhaalu"
+            },
+            {
+              "id": "thoda",
+              "text": "थोड़ा",
+              "latin": "thoda",
+              "meaning_en": "a little",
+              "focus_sound": "aspirated",
+              "audio_key": "s-and-sh-4-words-thoda"
+            },
+            {
+              "id": "kheer",
+              "text": "खीर",
+              "latin": "kheer",
+              "meaning_en": "sweet pudding",
+              "focus_sound": "aspirated",
+              "audio_key": "s-and-sh-4-words-kheer"
+            }
+          ],
+          "feedback": "words"
+        },
+        {
+          "id": "s-and-sh-4-choral",
+          "type": "speak_with_me",
+          "title": {
+            "en": "Choral sentence",
+            "hi": "साथ मिलकर बोलिए"
+          },
+          "text": "कमल ने फल खाकर पानी पिया",
+          "latin": "kamal ne phal khaakar paani piya",
+          "meaning_en": "Kamal ate fruit and drank water.",
+          "mode": "choral",
+          "pace_wpm": [
+            60,
+            90
+          ],
+          "audio_key": "s-and-sh-4-choral-fruit",
+          "feedback": "words"
+        },
+        {
+          "id": "s-and-sh-4-read",
+          "type": "read_aloud",
+          "title": {
+            "en": "Short read with aspirated sounds",
+            "hi": "हवा वाली आवाज़ों का पाठ"
+          },
+          "paragraph": "आज घर में गरमा-गरम खाना बना है। थाली में खीर और फल भी रखे हैं। सबने खुशी-खुशी भोजन किया।",
+          "latin": "aaj ghar mein garma-garam khaana bana hai. thaali mein kheer aur phal bhi rakhe hain. sabne khushi-khushi bhojan kiya.",
+          "audio_key": "s-and-sh-4-read-dinner",
+          "feedback": "words"
+        },
+        {
+          "id": "s-and-sh-4-reflect",
+          "type": "reflect",
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did balancing plain and breathy sounds feel?",
+            "hi": "साधारण और हवा वाली आवाज़ों का संतुलन कैसा लगा?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
         }
       ]
     }
