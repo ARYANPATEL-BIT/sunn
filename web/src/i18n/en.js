@@ -682,6 +682,10 @@ export default {
   'check.message_pace_faster': 'A little slow. Try moving a little faster.',
   'check.message_words_clear': 'Every word was clear. Well done.',
   'check.message_words_practise': 'Good try. A couple words to practise.',
+  'check.message_nice_work': 'Nice work! Keep practising.',
+  'check.message_take_your_time': 'Take your time. There is no rush.',
+  'check.message_try_slower': 'Try speaking slightly slower.',
+  'check.message_great_pace': 'Great pace! Calm and steady.',
 
   'kids.greatTry': 'Great try!',
   'kids.youDidIt': 'You did it!',

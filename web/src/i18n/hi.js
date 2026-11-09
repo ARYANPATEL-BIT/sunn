@@ -683,6 +683,10 @@ export default {
   'check.message_pace_faster': 'थोड़ा धीमा रहा। थोड़ा और गति से बोलने की कोशिश करें।',
   'check.message_words_clear': 'हर शब्द साफ़ था। बहुत बढ़िया।',
   'check.message_words_practise': 'अच्छी कोशिश। कुछ शब्दों पर फिर ध्यान दें।',
+  'check.message_nice_work': 'बहुत बढ़िया! अभ्यास जारी रखें।',
+  'check.message_take_your_time': 'आराम से बोलें। कोई जल्दी नहीं है।',
+  'check.message_try_slower': 'थोड़ा और धीरे बोलने का प्रयास करें।',
+  'check.message_great_pace': 'शानदार रफ़्तार! शांत और सहज।',
 
   'kids.greatTry': 'शानदार कोशिश!',
   'kids.youDidIt': 'कर दिखाया!',

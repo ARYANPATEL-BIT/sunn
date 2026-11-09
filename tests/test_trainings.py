@@ -108,20 +108,41 @@ def test_reflect(env):
 def test_attempts(env):
     client, keys = env.signup(), {"checked", "words", "similarity", "wpm", "pace", "message_key", "checks_left_today"}
 
-    def attempt(**form):
-        response = client.post("/me/trainings/attempts", data=form, files=env.recording())
+    def attempt(rec=None, **form):
+        response = client.post("/me/trainings/attempts", data=form, files=rec or env.recording())
         assert set(response.json()) == keys or response.status_code != 200, response.text
         return response.json()
 
+    # Checked attempt with words feedback (clear-sounds)
+    env.fake.transcripts.append("सोनू सुबह सात बजे उठा")
     words = attempt(step_id="s-and-sh-1-echo", check="true")
     assert words["checked"] and words["wpm"] is None and {w["status"] for w in words["words"]} <= {"clear", "practise"}
+    assert words["checks_left_today"] == 19
+    stt_count = len(env.fake.sent("stt"))
+    assert stt_count == 1
+
+    # Checked attempt with pace feedback (smooth-speaking)
+    env.fake.transcripts.append("आज मौसम अच्छा है")
     pace = attempt(step_id="easy-starts-1-together", check="true")
-    assert pace["pace"] in ("slower", "good", "faster") and pace["words"] is None
+    assert pace["checked"] and pace["pace"] in ("slower", "good", "faster") and pace["words"] is None
+    assert pace["checks_left_today"] == 18
+    assert len(env.fake.sent("stt")) == 2
+
+    # Unchecked attempt (check=false): Prisma is NOT called
     unchecked = attempt(step_id="easy-starts-1-vowels", item_id="aam", check="false")
     assert not unchecked["checked"] and unchecked["message_key"] == "practised"
+    assert unchecked["checks_left_today"] == 18  # Not decremented
+    assert len(env.fake.sent("stt")) == 2  # No additional STT call
+
+    # Bad step / item validations
     assert attempt(step_id="easy-starts-1-vowels", item_id="nowhere")["error"] == "not_found"
     assert attempt(step_id="easy-starts-1-welcome")["error"] == "invalid_input"  # an intro takes no recording
-    assert not env.fake.sent("stt")  # the stub hears nothing
+
+    # Audio length limits: 0.2 s is too short, 31 s is too long
+    too_short = attempt(rec=env.recording(seconds=0.2), step_id="easy-starts-1-vowels", item_id="aam", check="false")
+    assert too_short["error"] == "audio_too_short"
+    too_long = attempt(rec=env.recording(seconds=31.0), step_id="easy-starts-1-vowels", item_id="aam", check="false")
+    assert too_long["error"] == "audio_too_long"
 
 
 def test_tricky_sounds(env):
@@ -266,3 +287,125 @@ def test_browsing_works_logged_out(env):
 
     lesson_data = client.get("/trainings/lessons/easy-starts-1").json()
     assert lesson_data["id"] == "easy-starts-1"
+
+
+def test_feedback_rules_per_category(env):
+    client = env.signup()
+
+    # 1. smooth-speaking never returns words, only pace
+    env.fake.transcripts.append("आज मौसम अच्छा है")
+    smooth = client.post("/me/trainings/attempts", data={"step_id": "easy-starts-1-together", "check": "true"},
+                         files=env.recording()).json()
+    assert smooth["checked"] is True and smooth["words"] is None and smooth["wpm"] is not None
+
+    # 2. kids-speaking never returns words
+    env.fake.transcripts.append("शेर दहाड़ता है")
+    kids = client.post("/me/trainings/attempts", data={"step_id": "sound-play-1-choral", "check": "true"},
+                       files=env.recording()).json()
+    assert kids["checked"] is True and kids["words"] is None
+
+    # 3. clear-sounds (feedback=words) returns words and similarity, wpm is None
+    env.fake.transcripts.append("सोनू सुबह सात बजे उठा")
+    clear = client.post("/me/trainings/attempts", data={"step_id": "s-and-sh-1-echo", "check": "true"},
+                        files=env.recording()).json()
+    assert clear["checked"] is True and clear["words"] is not None and clear["similarity"] is not None
+    assert clear["wpm"] is None and clear["pace"] is None
+
+
+def test_attempts_cap_reaching_zero(env):
+    import auth
+    client = env.signup()
+    uid = auth.user_id_from_token(client.cookies.get("sunn_session"))
+    today = datetime.now(timezone.utc).date().isoformat()
+    now_str = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+    # Insert 20 checks today to exhaust daily allowance
+    for i in range(20):
+        db.execute(
+            "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (uid, "easy-starts-1", "easy-starts-1-together", None, "test", None, 80, 1, now_str),
+        )
+
+    # Calling with check=true when cap is 0 returns checked=false with friendly message
+    env.fake.transcripts.append("आज मौसम अच्छा है")
+    res = client.post("/me/trainings/attempts", data={"step_id": "easy-starts-1-together", "check": "true"},
+                      files=env.recording())
+    assert res.status_code == 200
+    data = res.json()
+    assert data["checked"] is False
+    assert data["message_key"] == "no_checks_left"
+    assert data["checks_left_today"] == 0
+    # STT should not have been called because cap was already 0
+    assert not env.fake.sent("stt")
+
+
+def test_kids_attempts_store_no_transcript(env):
+    client = env.signup()
+
+    # Kids attempt
+    env.fake.transcripts.append("हाथी धीरे चलता है")
+    client.post("/me/trainings/attempts", data={"step_id": "sound-play-1-choral", "check": "true"},
+                files=env.recording())
+    kids_row = db.row("SELECT transcript FROM training_attempts WHERE step_id = 'sound-play-1-choral' ORDER BY id DESC LIMIT 1")
+    assert kids_row is not None and kids_row["transcript"] is None
+
+    # Adult attempt
+    env.fake.transcripts.append("सोनू सुबह सात बजे उठा")
+    client.post("/me/trainings/attempts", data={"step_id": "s-and-sh-1-echo", "check": "true"},
+                files=env.recording())
+    adult_row = db.row("SELECT transcript FROM training_attempts WHERE step_id = 's-and-sh-1-echo' ORDER BY id DESC LIMIT 1")
+    assert adult_row is not None and adult_row["transcript"] == "सोनू सुबह सात बजे उठा"
+
+
+def test_alignment_hindi_and_hinglish():
+    from trainings import align_words
+
+    # Exact Hindi
+    exact = align_words("सोनू सुबह सात बजे उठा", "सोनू सुबह सात बजे उठा")
+    assert all(w.status == "clear" for w in exact)
+
+    # Missing word
+    partial = align_words("सोनू सुबह सात बजे उठा", "सोनू सात बजे उठा")
+    statuses = {w.text: w.status for w in partial}
+    assert statuses["सुबह"] == "practise"
+    assert statuses["सोनू"] == "clear" and statuses["सात"] == "clear"
+
+    # Hinglish romanized transcript aligns to Devanagari target
+    hinglish = align_words("सोनू सुबह सात", "sonu subah saat")
+    assert all(w.status == "clear" for w in hinglish)
+
+    # Mispronounced word gets marked practise
+    mispronounced = align_words("सोनू सुबह सात", "सोनू सुबह खात")
+    m_statuses = {w.text: w.status for w in mispronounced}
+    assert m_statuses["सात"] == "practise"
+    assert m_statuses["सोनू"] == "clear"
+
+    # English sentence
+    eng = align_words("I need a glass of water", "I want a cup of water")
+    e_statuses = {w.text: w.status for w in eng}
+    assert e_statuses["I"] == "clear" and e_statuses["water"] == "clear"
+    assert e_statuses["need"] == "practise" and e_statuses["glass"] == "practise"
+
+
+def test_pace_math(env):
+    client = env.signup()
+
+    # Step easy-starts-2-paced has pace_wpm [50, 80] and 8 words
+    # 8 words in 2.0 s -> WPM = 8 / 2.0 * 60 = 240 (> 80) -> pace is slower
+    env.fake.transcripts.append("मेरे पास बोलने के लिए पूरा समय है")
+    fast = client.post("/me/trainings/attempts", data={"step_id": "easy-starts-2-paced", "check": "true"},
+                       files=env.recording(seconds=2.0)).json()
+    assert fast["wpm"] == 240 and fast["pace"] == "slower"
+
+    # 8 words in 7.0 s -> WPM = 8 / 7.0 * 60 = 69 (50 <= 69 <= 80) -> pace is good
+    env.fake.transcripts.append("मेरे पास बोलने के लिए पूरा समय है")
+    good = client.post("/me/trainings/attempts", data={"step_id": "easy-starts-2-paced", "check": "true"},
+                       files=env.recording(seconds=7.0)).json()
+    assert good["wpm"] == 69 and good["pace"] == "good"
+
+    # 8 words in 15.0 s -> WPM = 8 / 15.0 * 60 = 32 (< 50) -> pace is faster
+    env.fake.transcripts.append("मेरे पास बोलने के लिए पूरा समय है")
+    slow = client.post("/me/trainings/attempts", data={"step_id": "easy-starts-2-paced", "check": "true"},
+                       files=env.recording(seconds=15.0)).json()
+    assert slow["wpm"] == 32 and slow["pace"] == "faster"

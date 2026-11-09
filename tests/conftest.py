@@ -66,7 +66,8 @@ class FakeGnani:
                 raise failure
             return reply(failure, {"success": False, "error": {"type": "X", "message": "refused"}})
         if kind == "stt":
-            return reply(200, {"success": True, "transcript": self.transcripts.pop(0)})
+            transcript = self.transcripts.pop(0) if self.transcripts else "नमस्ते"
+            return reply(200, {"success": True, "transcript": transcript})
         if kind == "clone":
             return reply(200, {"success": True, "data": {"voice_clone_embedding": EMBEDDING}})
         return reply(200, content=wav(0.5, rate=44100))
