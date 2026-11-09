@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { usePresenterMode } from './prefs.js'
@@ -12,21 +12,29 @@ import { TabFace, TABS } from './ui/Tabs.jsx'
 export default function AppShell() {
   const { user, logout } = useAuth()
   const { t } = useLang()
+  const navigate = useNavigate()
   const [presenterMode, togglePresenter] = usePresenterMode()
+
+  function handleTogglePresenter() {
+    if (!presenterMode) {
+      navigate('/app/onboarding', { viewTransition: !reducedMotion() })
+    }
+    togglePresenter()
+  }
 
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.altKey && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault()
-        togglePresenter()
+        handleTogglePresenter()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [togglePresenter])
+  }, [presenterMode, togglePresenter])
 
   return (
-    <div className="app">
+    <div className={`app ${presenterMode ? 'presenter-active' : ''}`}>
       <header className="app-header">
         <div className="bar">
           <Wordmark />
@@ -37,7 +45,7 @@ export default function AppShell() {
             <button
               type="button"
               className="icon-button presenter-toggle"
-              onClick={togglePresenter}
+              onClick={handleTogglePresenter}
               aria-pressed={presenterMode}
               title={presenterMode ? t('presenter.exit') : t('presenter.enter')}
               aria-label={presenterMode ? t('presenter.exit') : t('presenter.enter')}

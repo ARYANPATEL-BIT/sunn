@@ -25,7 +25,16 @@ Open `http://localhost:7860` in a desktop browser (Chrome, Edge, or Firefox). De
 ### Evaluator Account Setup and Invite Code
 1. Navigate to `/signup`. If `DEMO_INVITE_CODE` is configured on the server, enter the designated evaluator invite code in the demo code field.
 2. Enter Name, Email, Password, select language (Hindi or English), and check the consent box.
-3. Once registered, click the **Demo** pill in the top header (or press **Alt + P** / **Option + P** on macOS) to activate the Presenter Bar.
+3. Once registered, click the **Demo** pill in the top header (or press **Alt + P** / **Option + P** on macOS) to activate the Presenter Bar. Fresh launch automatically starts at Step 1 (`/app/onboarding`).
+
+### Redesigned Presenter Demo Walkthrough & Navigation
+- **Step 1 Initialization**: Opening Presenter Mode from any screen always opens at Step 1 (Onboarding), resetting stale state.
+- **Interactive Spotlight**: Automatically scrolls to and highlights the target component with an animated non-blocking focus ring (`.presenter-target-highlight`), allowing full click-through interaction.
+- **Keyboard Shortcuts**: Use **Arrow Right** for Next, **Arrow Left** for Previous, and **Escape** to Exit.
+- **Collapsible HUD**: Click the collapse button (chevron) to minimize into a compact single-line indicator when viewing full-screen interfaces.
+- **Completion View**: After Step 5, displays a celebratory overview card summarizing the 5 pillars, with options to Restart Walkthrough or Finish & Exit.
+- **Credit Protection**: The walkthrough never makes automatic background calls to Gnani STT/TTS. All live API limits remain strictly enforced.
+- **10-Language Support**: All HUD elements, titles, and cues adapt seamlessly to English, Hindi, Bengali, Gujarati, Kannada, Malayalam, Marathi, Punjabi, Tamil, and Telugu without layout overflow.
 
 ---
 

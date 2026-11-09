@@ -399,6 +399,17 @@ export default {
   'presenter.stepProgressTitle': '5. Progress metrics and privacy',
   'presenter.stepProgressCue':
     'Explain that metrics track speech recognition consistency, not medical recovery. Highlight the complete account deletion guarantee.',
+  'presenter.finish': 'Finish walkthrough',
+  'presenter.completedTitle': 'Walkthrough Completed',
+  'presenter.completedDesc':
+    'You have explored all 5 core modules of Sunn: onboarding, phrases, speech recognition, accessibility, and privacy.',
+  'presenter.interactiveHint': 'Interact with the highlighted feature below, or click Next to advance.',
+  'presenter.stepShort_1': 'Onboarding',
+  'presenter.stepShort_2': 'Phrases',
+  'presenter.stepShort_3': 'Speak',
+  'presenter.stepShort_4': 'Settings',
+  'presenter.stepShort_5': 'Progress',
+  'presenter.keyboardHint': 'Use Left/Right arrows to step, Esc to exit',
 
   'demo.sourceBadge_pilot': 'Demo (Pilot)',
   'demo.sourceDesc_pilot': 'Recorded by a pilot participant with dysarthria who consented',

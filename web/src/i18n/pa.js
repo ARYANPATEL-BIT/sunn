@@ -400,6 +400,17 @@ export default {
   'presenter.stepProgressTitle': '5. ਤਰੱਕੀ ਦੇ ਅੰਕੜੇ ਅਤੇ ਪਰਦੇਦਾਰੀ',
   'presenter.stepProgressCue':
     'ਸਮਝਾਓ ਕਿ ਅੰਕੜੇ ਬੋਲੀ ਦੀ ਪਛਾਣ ਦੀ ਲਗਾਤਾਰਤਾ ਦਿਖਾਉਂਦੇ ਹਨ, ਡਾਕਟਰੀ ਸੁਧਾਰ ਨਹੀਂ। ਪੂਰਾ ਖਾਤਾ ਮਿਟਾਉਣ ਦੀ ਗਾਰੰਟੀ ਦਿਖਾਓ।',
+  'presenter.finish': 'ਟੂਰ ਖਤਮ ਕਰੋ',
+  'presenter.completedTitle': 'ਵਾਕਥਰੂ ਪੂਰਾ ਹੋਇਆ',
+  'presenter.completedDesc':
+    'ਤੁਸੀਂ ਸੁੰਨ ਦੇ ਸਾਰੇ 5 ਮੁੱਖ ਮਾਡਿਊਲ ਦੇਖ ਲਏ ਹਨ: ਆਨਬੋਰਡਿੰਗ, ਵਾਕੰਸ਼, ਬੋਲ ਪਛਾਣ, ਪਹੁੰਚਯੋਗਤਾ ਅਤੇ ਪਰਦੇਦਾਰੀ।',
+  'presenter.interactiveHint': 'ਹੇਠਾਂ ਉਭਾਰੀ ਗਈ ਵਿਸ਼ੇਸ਼ਤਾ ਅਜ਼ਮਾਓ ਜਾਂ ਅੱਗੇ ਵਧਣ ਲਈ ਅਗਲਾ ਕਲਿੱਕ ਕਰੋ।',
+  'presenter.stepShort_1': 'ਆਨਬੋਰਡਿੰਗ',
+  'presenter.stepShort_2': 'ਵਾਕੰਸ਼',
+  'presenter.stepShort_3': 'ਬੋਲੋ',
+  'presenter.stepShort_4': 'ਸੈਟਿੰਗਾਂ',
+  'presenter.stepShort_5': 'ਤਰੱਕੀ',
+  'presenter.keyboardHint': 'ਕਦਮ ਬਦਲਣ ਲਈ ਤੀਰ ਅਤੇ ਬਾਹਰ ਨਿਕਲਣ ਲਈ Esc ਦਬਾਓ',
 
   'demo.sourceBadge_pilot': 'ਡੈਮੋ (ਪਾਇਲਟ)',
   'demo.sourceDesc_pilot': 'ਡਿਸਾਰਥ੍ਰੀਆ ਵਾਲੇ ਇੱਕ ਪਾਇਲਟ ਭਾਗੀਦਾਰ ਨੇ ਸਹਿਮਤੀ ਨਾਲ ਰਿਕਾਰਡ ਕੀਤਾ',

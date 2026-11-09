@@ -400,6 +400,17 @@ export default {
   'presenter.stepProgressTitle': '5. प्रगतीचे आकडे आणि गोपनीयता',
   'presenter.stepProgressCue':
     'आकडे बोलण्याच्या ओळखीतील सातत्य दाखवतात, वैद्यकीय सुधारणा नाही, हे समजावा. खाते पूर्ण हटवण्याची हमी दाखवा.',
+  'presenter.finish': 'टूर पूर्ण करा',
+  'presenter.completedTitle': 'वॉकथ्रू पूर्ण झाले',
+  'presenter.completedDesc':
+    'तुम्ही सुन्नचे सर्व ५ मुख्य मॉड्युल्स पाहिले आहेत: ऑनबोर्डिंग, वाक्ये, आवाज ओळख, सुलभता आणि गोपनीयता.',
+  'presenter.interactiveHint': 'खाली हायलाइट केलेले वैशिष्ट्य वापरून पहा किंवा पुढे जाण्यासाठी पुढील क्लिक करा.',
+  'presenter.stepShort_1': 'ऑनबोर्डिंग',
+  'presenter.stepShort_2': 'वाक्ये',
+  'presenter.stepShort_3': 'बोला',
+  'presenter.stepShort_4': 'सेटिंग्ज',
+  'presenter.stepShort_5': 'प्रगती',
+  'presenter.keyboardHint': 'पुढे-मागे जाण्यासाठी ॲरो आणि बाहेर पडण्यासाठी Esc दाबा',
 
   'demo.sourceBadge_pilot': 'डेमो (पायलट)',
   'demo.sourceDesc_pilot': 'संमती दिलेल्या, डिसार्थ्रिया असलेल्या एका पायलट सहभागीने रेकॉर्ड केलेले',
