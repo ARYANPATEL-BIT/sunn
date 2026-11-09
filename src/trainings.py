@@ -25,6 +25,7 @@ import auth
 import db
 import gnani
 import gnani_mock
+import languages
 import llm_judge
 import log
 import matcher
@@ -292,7 +293,7 @@ class TrickySound(BaseModel):
 
 class AlternativesRequest(schemas.Request):
     text: str = Field(min_length=1)
-    lang: content.Lang
+    lang: schemas.Language  # the library is Hindi and English; the other languages only ask Groq
 
 
 class Alternative(BaseModel):
@@ -953,7 +954,7 @@ def call_groq_alternatives(text: str, lang: str, tricky_ids: list[str]) -> Alter
         else:
             sounds_str = "none"
 
-        lang_name = "Hindi" if lang == "hi" else "English"
+        lang_name = languages.LANGUAGES[lang].name
         system_prompt = (
             f"you help a person who finds some speech sounds hard. give 3 short, natural ways to say the same thing in {lang_name}, "
             f"keeping exactly the same meaning and urgency. avoid these sounds where you can: {sounds_str}. "
@@ -1080,13 +1081,14 @@ def alternatives(body: AlternativesRequest, user=Depends(current_user)):
     tricky_set = set(tricky_ids)
 
     norm_input = matcher.normalize(body.text)
+    library = TAGGED_ALTERNATIVES if body.lang in ("hi", "en") else []  # other languages: Groq only
 
     # 1. Search in Library: exact match or fuzzy match >= 0.85
     best_meaning = None
     best_variant = None
     best_sim = 0.0
 
-    for m in TAGGED_ALTERNATIVES:
+    for m in library:
         for v in m["variants"]:
             if norm_input == v["norm"] or norm_input == v["norm_latin"]:
                 best_meaning = m
@@ -1097,7 +1099,7 @@ def alternatives(body: AlternativesRequest, user=Depends(current_user)):
             break
 
     if not best_meaning:
-        for m in TAGGED_ALTERNATIVES:
+        for m in library:
             for v in m["variants"]:
                 sim1 = Levenshtein.normalized_similarity(norm_input, v["norm"])
                 sim2 = Levenshtein.normalized_similarity(norm_input, v["norm_latin"])
