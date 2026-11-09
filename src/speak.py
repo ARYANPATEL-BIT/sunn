@@ -14,9 +14,15 @@ import gnani_mock
 URL = "https://api.vachana.ai/api/v1/tts/inference"
 # From https://docs.gnani.ai/api/VC/voice-clone-embeddings.md
 CLONE_URL = "https://api.vachana.ai/api/v1/tts/voice-clone/embeddings"
-# A user's language ("hi" or "en") -> (Timbre language, voice). The docs list no default voice;
-# Nalini is their Hindi example and Kaveri their English one, both timbre-v2.5.
-VOICES = {"hi": ("hi-IN", "Nalini"), "en": ("en-IN", "Kaveri")}
+# A phrase's language -> its stock voice, one whose preferred language it is in
+# docs.gnani.ai/api/TTS/available-voices.md (Timbre v2.5). Nalini and Kaveri are the docs' Hindi
+# and English examples; the rest are female voices, like them.
+MODEL = os.environ.get("TIMBRE_MODEL", "").strip() or "timbre-v2.5"
+VOICES = {"en": "Kaveri", "hi": "Nalini", "ta": "Noopur", "te": "Lavanya", "kn": "Saanvi", "ml": "Reshma",
+          "mr": "Zahira", "gu": "Falak", "bn": "Kirra", "pa": "Mehuli"}
+# The docs give no language list for voice cloning (vachana-vc-v1 takes no language); every
+# example they give is Hindi, so only Hindi offers the user's own voice.
+CLONE_LANGUAGES = {"hi"}
 CACHE_DIR = os.path.join(db.DATA_DIR, "cache", "tts")
 OUT = "results/tts_test.wav"
 
@@ -32,12 +38,11 @@ def request_body(text, language, embedding=None):
                                  "encoding": "linear_pcm", "container": "wav"}}
     if language not in VOICES:
         raise ValueError(f"unsupported language '{language}'; supported languages are {sorted(VOICES)}")
-    code, voice = VOICES[language]
     return {
         "text": text,
-        "voice": voice,
-        "model": "timbre-v2.5",
-        "language": code,
+        "voice": VOICES[language],
+        "model": MODEL,
+        "language": f"{language}-IN",
         "audio_config": {"sample_rate": 48000, "num_channels": 1, "sample_width": 2,
                          "encoding": "linear_pcm", "container": "wav"},
     }
