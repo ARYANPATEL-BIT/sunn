@@ -33,7 +33,17 @@
   --focus: #111214;
   --shadow-device: 0 28px 56px -30px rgb(17 18 20 / 0.5);
 
-  --font: 'IBM Plex Sans', 'IBM Plex Sans Devanagari', system-ui, sans-serif;
+  /* One stack per script. Devanagari stays in every stack: phrases are Hindi in any interface. */
+  --font-latn: 'IBM Plex Sans', 'IBM Plex Sans Devanagari', system-ui, sans-serif;
+  --font-deva: var(--font-latn);
+  --font-taml: 'IBM Plex Sans', 'Noto Sans Tamil', 'IBM Plex Sans Devanagari', system-ui, sans-serif;
+  --font-telu: 'IBM Plex Sans', 'Noto Sans Telugu', 'IBM Plex Sans Devanagari', system-ui, sans-serif;
+  --font-knda: 'IBM Plex Sans', 'Noto Sans Kannada', 'IBM Plex Sans Devanagari', system-ui, sans-serif;
+  --font-mlym: 'IBM Plex Sans', 'Noto Sans Malayalam', 'IBM Plex Sans Devanagari', system-ui, sans-serif;
+  --font-gujr: 'IBM Plex Sans', 'Noto Sans Gujarati', 'IBM Plex Sans Devanagari', system-ui, sans-serif;
+  --font-beng: 'IBM Plex Sans', 'Noto Sans Bengali', 'IBM Plex Sans Devanagari', system-ui, sans-serif;
+  --font-guru: 'IBM Plex Sans', 'Noto Sans Gurmukhi', 'IBM Plex Sans Devanagari', system-ui, sans-serif;
+  --font: var(--font-latn);
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
 
   --r-panel: 28px;
@@ -105,13 +115,45 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Devanagari: never tight tracking, always room above and below for matras. */
-:lang(hi) {
+/* The interface language picks its script's font (src/i18n/languages.js). */
+:root:lang(hi),
+:root:lang(mr) {
+  --font: var(--font-deva);
+}
+:root:lang(ta) {
+  --font: var(--font-taml);
+}
+:root:lang(te) {
+  --font: var(--font-telu);
+}
+:root:lang(kn) {
+  --font: var(--font-knda);
+}
+:root:lang(ml) {
+  --font: var(--font-mlym);
+}
+:root:lang(gu) {
+  --font: var(--font-gujr);
+}
+:root:lang(bn) {
+  --font: var(--font-beng);
+}
+:root:lang(pa) {
+  --font: var(--font-guru);
+}
+
+/* Indian scripts: never tight tracking, always room above and below for vowel signs. */
+:not(:lang(en)) {
   letter-spacing: 0;
 }
 
-:root:lang(hi) body {
+:root:not(:lang(en)) body {
   line-height: 1.6;
+}
+
+/* Kannada, Telugu, Malayalam and Tamil stack signs deeper below the line. */
+:root:is(:lang(kn), :lang(te), :lang(ml), :lang(ta)) body {
+  line-height: 1.7;
 }
 
 h1,
@@ -255,8 +297,8 @@ label.row:has(:focus-visible) {
   line-height: 1.25;
 }
 
-.large-title:lang(hi),
-.title-2:lang(hi) {
+.large-title:not(:lang(en)),
+.title-2:not(:lang(en)) {
   letter-spacing: 0;
   line-height: 1.4;
 }
@@ -291,7 +333,7 @@ label.row:has(:focus-visible) {
   column-gap: 6px;
 }
 
-.label-hi {
+.label-local {
   font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.35;
@@ -417,8 +459,8 @@ label.row:has(:focus-visible) {
   overflow-wrap: anywhere;
 }
 
-.readout-phrase:lang(hi),
-.readout .candidate-text:lang(hi) {
+.readout-phrase:not(:lang(en)),
+.readout .candidate-text:not(:lang(en)) {
   letter-spacing: 0;
   line-height: 1.45;
 }
@@ -634,7 +676,8 @@ button.ranked-row:hover:not(:disabled) {
 .band-well {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
+  /* Equal keys, except a long word (மருத்துவமனை) takes the room it needs from the short ones. */
+  grid-auto-columns: minmax(min-content, 1fr);
   gap: 4px;
   padding: 4px;
   border-radius: var(--r-well);
@@ -663,7 +706,7 @@ button.ranked-row:hover:not(:disabled) {
   border-color: var(--edge);
 }
 
-.band-hi {
+.band-local {
   font-size: 0.9375rem;
   font-weight: 600;
   line-height: 1.3;
@@ -871,7 +914,7 @@ button.record:disabled .push-key {
 
 /* In the app every target reaches 64px: header keys 48px to see, 64px to hit. */
 .app-header .icon-button::after,
-.app-header .lang-toggle button::after {
+.app-header .lang-button::after {
   content: '';
   position: absolute;
   inset: -8px -3px;
@@ -911,30 +954,135 @@ button.record:disabled .push-key {
   text-decoration-thickness: 2px;
 }
 
-/* EN / हिं: two keys in a well, the one in use raised. */
-.lang-toggle {
-  display: inline-flex;
-  padding: 3px;
-  border-radius: 12px;
-  background: var(--well);
+/* The language key: the current language's own name in a well. It opens the list of all ten:
+   a small menu under it on wide screens, a bottom sheet on phones. */
+.lang-picker {
+  position: relative;
 }
 
-.lang-toggle button {
+.lang-button {
   position: relative;
-  min-width: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   min-height: 2.625rem;
-  padding: 0 8px;
+  max-width: 9rem;
+  padding: 0 8px 0 10px;
   border: 1px solid transparent;
-  border-radius: 9px;
-  background: transparent;
+  border-radius: 12px;
+  background: var(--well);
   color: var(--ink);
   font-size: 0.9375rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
-.lang-toggle button[aria-pressed='true'] {
+.lang-button > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lang-button .icon {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+}
+
+.lang-button[aria-expanded='true'] {
   background: var(--raised);
   border-color: var(--edge);
+}
+
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  width: 17rem;
+  max-height: min(34rem, 80dvh);
+  overflow: auto;
+  border-radius: var(--r-well);
+  background: var(--panel);
+  box-shadow: var(--shadow-device);
+}
+
+.lang-list {
+  display: grid;
+}
+
+.sheet .lang-list {
+  border-radius: var(--r-well);
+  background: var(--raised);
+}
+
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 3.5rem;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.sheet .lang-option {
+  min-height: 4rem;
+}
+
+.lang-option + .lang-option {
+  border-top: 1px solid var(--line);
+}
+
+.lang-option:hover {
+  background: var(--well);
+}
+
+.lang-option:focus-visible {
+  outline-offset: -4px;
+}
+
+.lang-name {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.lang-native {
+  font-size: 1.0625rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.lang-english {
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.lang-option[aria-selected='true'] .lang-native {
+  font-weight: 700;
+}
+
+.lang-option[aria-selected='true'] .choice-check {
+  visibility: visible;
+}
+
+.lang-note {
+  padding: 12px 16px 14px;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.sheet .lang-note {
+  padding: 12px 4px 0;
+}
+
+/* Trainings: lessons are English and Hindi only for now. */
+.trainings-lang-note {
+  width: min(100% - 2 * var(--gutter), 80rem - 2 * var(--gutter));
+  margin: 12px auto 0;
+  color: var(--ink-2);
+  font-size: 0.875rem;
 }
 
 /* Filters: keys in a well, sideways scroll when they don't fit. */
@@ -1226,6 +1374,12 @@ button.row:disabled {
 .row-title {
   font-weight: 500;
   overflow-wrap: anywhere;
+}
+
+/* A label beside a long value (an email address) keeps its words whole; the value wraps. */
+.row-title:has(+ .row-value) {
+  flex-shrink: 0;
+  overflow-wrap: normal;
 }
 
 .row-sub {
@@ -1532,8 +1686,8 @@ input:focus-visible + .file-pick {
   font-size: 1.75rem;
 }
 
-.sheet-title:lang(hi),
-.details-title:lang(hi) {
+.sheet-title:not(:lang(en)),
+.details-title:not(:lang(en)) {
   letter-spacing: 0;
   line-height: 1.45;
 }
@@ -1607,6 +1761,7 @@ input:focus-visible + .file-pick {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .wordmark {
@@ -1717,11 +1872,19 @@ input:focus-visible + .file-pick {
 
 .tab-label {
   align-items: center;
+  width: 100%;
   text-align: center;
-  max-width: 100%;
 }
 
-.tab-label .label-hi {
+/* Long words (Malayalam, Tamil) shrink to an ellipsis inside their own tab, never into the next. */
+.tab-label > span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab-label .label-local {
   font-size: 0.75rem;
 }
 
@@ -1767,14 +1930,10 @@ input:focus-visible + .file-pick {
     padding: 0 4px;
   }
 
-  .lang-toggle {
-    padding: 2px;
-  }
-
-  .lang-toggle button {
-    min-width: 2rem;
+  .lang-button {
     min-height: 2.25rem;
-    padding: 0 4px;
+    max-width: 6.5rem;
+    padding: 0 4px 0 6px;
     font-size: 0.8125rem;
   }
 
@@ -1801,11 +1960,17 @@ input:focus-visible + .file-pick {
     gap: 4px;
   }
 
-  .nav-link {
-    padding: 0 8px;
+  /* .bar-end: the base .nav-link rule comes later in this file. */
+  .bar-end .nav-link {
+    padding: 2px 8px;
     margin-left: 2px;
     font-size: 0.8125rem;
     min-height: 2.25rem;
+    /* "Open app" is two long words in some languages: two short lines, not a wider bar. */
+    max-width: 7rem;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
   }
 
   .wordmark {
@@ -1827,12 +1992,17 @@ input:focus-visible + .file-pick {
     height: 1.15rem;
   }
 
-  .tab-label .label-hi {
+  .tab-label .label-local {
     font-size: 0.6875rem;
     line-height: 1.1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  /* Tamil and Malayalam letters are wide and tall: one step smaller so the tab words fit. */
+  :root:is(:lang(ta), :lang(ml)) .tab-label .label-local {
+    font-size: 0.625rem;
   }
 
   .tab-label .label-en {
@@ -1860,7 +2030,7 @@ input:focus-visible + .file-pick {
     height: 1.25rem;
   }
 
-  .tab-label .label-hi {
+  .tab-label .label-local {
     font-size: 0.71875rem;
   }
 
@@ -1874,7 +2044,7 @@ input:focus-visible + .file-pick {
   color: var(--ink);
 }
 
-.tab.active .label-hi {
+.tab.active .label-local {
   font-weight: 700;
 }
 
@@ -2946,7 +3116,7 @@ input:focus-visible + .file-pick {
   text-wrap: balance;
 }
 
-.display:lang(hi) {
+.display:not(:lang(en)) {
   letter-spacing: 0;
   line-height: 1.25;
 }
@@ -2960,7 +3130,7 @@ input:focus-visible + .file-pick {
   line-height: 1.35;
 }
 
-.display-other:lang(hi) {
+.display-other:not(:lang(en)) {
   letter-spacing: 0;
 }
 
@@ -3111,7 +3281,7 @@ input:focus-visible + .file-pick {
   line-height: 1.35;
 }
 
-.spec dd:lang(hi) {
+.spec dd:not(:lang(en)) {
   letter-spacing: 0;
 }
 
@@ -3140,7 +3310,7 @@ input:focus-visible + .file-pick {
   text-wrap: balance;
 }
 
-.section-title:lang(hi) {
+.section-title:not(:lang(en)) {
   letter-spacing: 0;
   line-height: 1.3;
 }
@@ -5979,7 +6149,12 @@ input:focus-visible + .file-pick {
   border: 1px solid var(--edge);
   background: var(--well);
   color: var(--ink);
-  white-space: nowrap;
+  /* Two short lines when the words are long (Malayalam, Tamil), so the phrase keeps its room. */
+  flex: none;
+  max-width: 7.5rem;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.2;
 }
 
 /* Progress tab Trainings section */

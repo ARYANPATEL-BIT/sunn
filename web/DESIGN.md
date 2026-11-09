@@ -102,8 +102,11 @@ Inside the readout the ring turns screen-text. "High-contrast focus" in Settings
 ## Type
 One family, IBM Plex, from Google Fonts.
 - IBM Plex Sans 400 / 500 / 600: interface and English.
-- IBM Plex Sans Devanagari 400 to 700: Hindi and every phrase. It is second in the stack, so
+- IBM Plex Sans Devanagari 400 to 700: Hindi, Marathi and every phrase. It is in every stack, so
   Devanagari glyphs fall through to it inside any element.
+- Noto Sans Tamil, Telugu, Kannada, Malayalam, Gujarati, Bengali and Gurmukhi: only the active
+  interface language's font is fetched (`src/i18n/index.jsx`). One `--font-<script>` stack per
+  script; `:root:lang(xx)` picks it.
 - IBM Plex Mono 500: printed device labels (uppercase, 0.08em tracking, 11px), step numbers,
   candidate ranks, recording counts, progress numbers. Never used for sentences.
 
@@ -117,8 +120,11 @@ One family, IBM Plex, from Google Fonts.
 | Printed label, Latin | 11px mono | 500 | 0.08em uppercase | 1.2 |
 | Printed label, Devanagari | 13px | 500 | 0 | 1.35 |
 
-Devanagari never gets negative tracking and never a line height under 1.35, so matras are not
-clipped. Text size "Large" scales the root to 118.75%; everything is in rem.
+Indian scripts never get negative tracking and never a line height under 1.35, so vowel signs
+are not clipped (`:not(:lang(en))` resets tracking). Body text is 1.6 in Indian scripts and 1.7 in
+Tamil, Telugu, Kannada and Malayalam, whose signs stack deeper. Long words shrink inside their
+own key (tabs ellipsize, band keys take the width their longest word needs) and never spill into
+the next one. Text size "Large" scales the root to 118.75%; everything is in rem.
 
 ## Shape, depth, texture
 - Radii: device panels 28px, readout and wells 14px, buttons 10px, the push button round.
@@ -131,8 +137,9 @@ clipped. Text size "Large" scales the root to 118.75%; everything is in rem.
   The only radial-gradient allowed.
 
 ## Components (`src/ui/`)
-- `Label`: a stacked bilingual printed label, English mono on top, Hindi under it. The language
-  that is not the interface language is `aria-hidden`, so screen readers hear one.
+- `Label`: a stacked bilingual printed label: the interface language on top (Hindi when the
+  interface is English) and English mono under it. The language that is not the interface
+  language is `aria-hidden`, so screen readers hear one.
 - `Grille`: the speaker strip. Decorative.
 - `Led`: the listening light. Off is a dark lens; on is signal orange with a 1px rim. The
   status text next to it carries the meaning.
@@ -153,7 +160,8 @@ clipped. Text size "Large" scales the root to 118.75%; everything is in rem.
   - `aria-hidden`; the light and the status text are the accessible signal
 - `PushButton`: the orange key in its well, the listening light beside it and the label under
   it ("Tap to speak", "Tap to stop · 2 of 8 seconds", "Record again"). Class `record`.
-- `Band`: a segmented selector in a well. Each key prints Hindi on top and English mono under it.
+- `Band`: a segmented selector in a well. Each key prints the interface language (Hindi under
+  English) on top and English mono under it.
   Keys: सभी / ANY, घर / HOME, अस्पताल / HOSPITAL, बाज़ार / MARKET. The selected key is raised.
   ANY stays because Speak can send no context; the brief listed the other three.
 - `RankedList`: alternates as rows on a panel, mono ranks 02 03 04, a chevron, hairlines.
@@ -176,7 +184,7 @@ a 40ms stagger. Reduced motion (system or Settings) removes wobble, blur, spring
 stagger and sheet slides; theme changes are instant.
 
 ## Screens
-- Landing: left-aligned 12-column hero (headline, the other language's headline under it, one
+- Landing: left-aligned 12-column hero (the English headline, the interface language's under it, one
   lede, solid ink button, underlined link) and the device object on the right, cycling three
   made-up examples marked "EXAMPLE / उदाहरण" on the device, its blob driven by a fake level
   curve. Then a four-cell spec strip divided by hairlines, "The same object in your pocket"
@@ -191,7 +199,12 @@ stagger and sheet slides; theme changes are instant.
   decoration. Charts are solid ink and outlined bars with values, never gradients.
 - Sign in, create account: a small device panel with a grille strip, labels above fields,
   errors under fields, one ink submit button.
-- Interface text follows EN / हिं. Only printed device labels are always bilingual.
+- Interface text follows the language picker (ten languages, `src/i18n/languages.js`; the
+  machine-translated ones say "beta" until a native speaker has read them). Only printed device
+  labels are always bilingual.
+- `LanguagePicker`: a key in a well printed with the current language's own name. It opens a
+  listbox of all ten, each in its own script with the English name under it: a bottom sheet on
+  phones, a small menu on wider screens. Arrow keys, Enter, Escape; focus returns to the key.
 
 ## Accessibility floor
 - 64px targets in the app, 48px on the landing page; 8px or more between targets.
