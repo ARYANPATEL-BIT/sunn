@@ -57,12 +57,12 @@ function SiteNav() {
         <div className="bar-end">
           <LangToggle />
           <ThemeToggle />
-          <Link className="nav-link wide-only" to={user ? '/app/speak' : '/login'} viewTransition={!reducedMotion()}>
+          <Link className="nav-link" to={user ? '/app/speak' : '/login'} viewTransition={!reducedMotion()}>
             {t(user ? 'nav.openApp' : 'nav.signIn')}
           </Link>
           <button
             type="button"
-            className="icon-button mobile-nav-toggle narrow-only"
+            className="icon-button mobile-nav-toggle"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-expanded={mobileMenuOpen}
             aria-controls="landing-mobile-menu"
