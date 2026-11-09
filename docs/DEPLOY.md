@@ -246,6 +246,64 @@ Key safety properties of the smoke-test utility:
 - **Mock Mode (`GNANI_MOCK=1`)**: Returns deterministic simulated responses from `src/gnani_mock.json` for STT and synthesizes silent WAV buffers for TTS. Used during development, CI, and test execution.
 - **Real Mode (`GNANI_MOCK=0`)**: Validates that both `GNANI_STT_API_KEY` and `GNANI_TTS_API_KEY` are configured. Communicates with `https://api.vachana.ai/stt/v3` for Prisma STT and `https://api.vachana.ai/api/v1/tts/inference` for Timbre TTS. Falls back cleanly to browser speech synthesis (`window.speechSynthesis`) if TTS encounters errors.
 
+## Groq Cloud AI Integration, Model Compatibility & Smoke Testing
+
+### Overview & Selected Model
+
+Sunn uses Groq Cloud's low-latency inference infrastructure for reasoning and language assistance features:
+- **Provider Base URL**: `https://api.groq.com/openai/v1`
+- **Selected Model**: `openai/gpt-oss-120b` (120B open-weight Mixture-of-Experts architecture)
+- **Primary Use Cases**:
+  1. **Phrase Judgement (`src/llm_judge.py`)**: Re-ranks ambiguous candidate phrases when local phonetic matcher confidence is uncertain.
+  2. **Easier Ways Assistant (`src/trainings.py`)**: Suggests simpler conversational alternatives that avoid a user's tricky sounds while strictly preserving communicative intent and urgency.
+
+### Configuration & Runtime Settings
+
+All LLM behavior is controlled via environment variables:
+
+| Variable | Default | Purpose |
+| :--- | :--- | :--- |
+| `GROQ_API_KEY` | (secret) | Groq Cloud API authentication key (server-side only) |
+| `GROQ_MODEL` | `openai/gpt-oss-120b` | Model identifier on Groq |
+| `LLM_ENABLED` | `true` | Master switch (`true`/`false`) for AI reasoning features |
+| `LLM_REASONING_EFFORT` | `low` | Reasoning depth for GPT-OSS models (`low`, `medium`, `high`) |
+| `LLM_MODE` | `uncertain` | `uncertain` (invoked only on ambiguous cases) or `always` |
+| `LLM_MARGIN` | `0.15` | Score gap threshold between top 2 candidates triggering judge |
+| `LLM_MIN_SCORE` | `0.6` | Minimum top candidate score below which judge is consulted |
+| `LLM_TIMEOUT_S` | `3` | Maximum HTTP timeout before falling back to local logic |
+| `LLM_RATE_PER_MIN` | `10` | Per-user sliding window call limit protecting rate caps |
+
+### Reasoning Effort & Latency Trade-offs
+
+- The `openai/gpt-oss-120b` model supports `reasoning_effort` with values `low`, `medium`, or `high`.
+- In Sunn, `LLM_REASONING_EFFORT=low` is standard. Low reasoning effort completes inference in 300 to 500 ms on Groq LPUs, safely within the 3-second application timeout while providing accurate judgements and alternatives.
+- The pipeline includes automatic compatibility fallback: if an unsupported parameter error (HTTP 400) occurs, the request retries once without `reasoning_effort`.
+
+### Graceful Fallback Architecture
+
+If Groq is unreachable, disabled, or rate-limited:
+1. **Phrase Judgement**: Keeps the matcher's original phonetic ranking without delay; the application never crashes.
+2. **Easier Ways**: Falls back to the pre-curated local phrase variant library (`content/trainings/alternatives.json`).
+3. **Tenant & Data Privacy**: Requests contain text hypotheses and candidate IDs only: never user names, emails, audio, or passwords.
+
+### Safe Groq Smoke-Test Utility (`scripts/groq_live_smoke.py`)
+
+A safe CLI verification utility verifies Groq connectivity and model compatibility with zero Gnani impact:
+
+```powershell
+# 1. Dry run (inspect configuration, 0 live requests sent):
+uv run scripts/groq_live_smoke.py --dry-run
+
+# 2. Safety gate demonstration (stops immediately without confirmation flag):
+uv run scripts/groq_live_smoke.py --model-check
+
+# 3. Model compatibility verification (exactly 1 live Groq request):
+uv run scripts/groq_live_smoke.py --model-check --confirm-live-call
+
+# 4. Feature workflow verification (exactly 1 live Groq request):
+uv run scripts/groq_live_smoke.py --feature-check --confirm-live-call
+```
+
 ## Live Demo Smoke Test and Failure Recovery Runbook
 
 ### 1. Step-by-Step Live Smoke Test
