@@ -1,0 +1,2287 @@
+[
+  {
+    "meaning_id": "need-water",
+    "meaning_en": "I need water",
+    "category": "needs",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "पानी चाहिए",
+        "latin": "paani chaahiye",
+        "lang": "hi"
+      },
+      {
+        "text": "पानी दो",
+        "latin": "paani do",
+        "lang": "hi"
+      },
+      {
+        "text": "पानी मिलेगा?",
+        "latin": "paani milega?",
+        "lang": "hi"
+      },
+      {
+        "text": "मुझे पानी",
+        "latin": "mujhe paani",
+        "lang": "hi"
+      },
+      {
+        "text": "I need water",
+        "latin": "I need water",
+        "lang": "en"
+      },
+      {
+        "text": "Water, please",
+        "latin": "Water, please",
+        "lang": "en"
+      },
+      {
+        "text": "Can I have some water?",
+        "latin": "Can I have some water?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "need-rest",
+    "meaning_en": "I need to rest",
+    "category": "needs",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "आराम करना है",
+        "latin": "aaraam karna hai",
+        "lang": "hi"
+      },
+      {
+        "text": "मुझे थोड़ी देर बैठना है",
+        "latin": "mujhe thodi der baithna hai",
+        "lang": "hi"
+      },
+      {
+        "text": "मैं थोड़ा थक गया हूँ",
+        "latin": "main thoda thak gaya hoon",
+        "lang": "hi"
+      },
+      {
+        "text": "I need to rest",
+        "latin": "I need to rest",
+        "lang": "en"
+      },
+      {
+        "text": "I need a short break",
+        "latin": "I need a short break",
+        "lang": "en"
+      },
+      {
+        "text": "Could I sit down?",
+        "latin": "Could I sit down?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "need-bathroom",
+    "meaning_en": "Where is the bathroom?",
+    "category": "needs",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "वॉशरूम कहाँ है?",
+        "latin": "washroom kahaan hai?",
+        "lang": "hi"
+      },
+      {
+        "text": "शौचालय किधर है?",
+        "latin": "shouchaalay kidhar hai?",
+        "lang": "hi"
+      },
+      {
+        "text": "बाथरूम जाना है",
+        "latin": "bathroom jaana hai",
+        "lang": "hi"
+      },
+      {
+        "text": "Where is the restroom?",
+        "latin": "Where is the restroom?",
+        "lang": "en"
+      },
+      {
+        "text": "Bathroom please",
+        "latin": "Bathroom please",
+        "lang": "en"
+      },
+      {
+        "text": "Which way to the washroom?",
+        "latin": "Which way to the washroom?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "need-medicine",
+    "meaning_en": "I need my medicine",
+    "category": "needs",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "दवा का समय हो गया",
+        "latin": "dawa ka samay ho gaya",
+        "lang": "hi"
+      },
+      {
+        "text": "मेरी दवा दीजिए",
+        "latin": "meri dawa deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "मुझे गोली खानी है",
+        "latin": "mujhe goli khaani hai",
+        "lang": "hi"
+      },
+      {
+        "text": "I need my medicine",
+        "latin": "I need my medicine",
+        "lang": "en"
+      },
+      {
+        "text": "Time for my pills",
+        "latin": "Time for my pills",
+        "lang": "en"
+      },
+      {
+        "text": "Please bring my medication",
+        "latin": "Please bring my medication",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "need-chair",
+    "meaning_en": "Can I sit down?",
+    "category": "needs",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "क्या मैं यहाँ बैठ सकता हूँ?",
+        "latin": "kya main yahaan baith sakta hoon?",
+        "lang": "hi"
+      },
+      {
+        "text": "कुर्सी मिलेगी?",
+        "latin": "kursi milegi?",
+        "lang": "hi"
+      },
+      {
+        "text": "बैठने की जगह चाहिए",
+        "latin": "baithne ki jagah chaahiye",
+        "lang": "hi"
+      },
+      {
+        "text": "Can I take a seat?",
+        "latin": "Can I take a seat?",
+        "lang": "en"
+      },
+      {
+        "text": "Is this seat free?",
+        "latin": "Is this seat free?",
+        "lang": "en"
+      },
+      {
+        "text": "May I sit here?",
+        "latin": "May I sit here?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "need-quiet",
+    "meaning_en": "I need some quiet",
+    "category": "needs",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "थोड़ी शांति चाहिए",
+        "latin": "thodi shaanti chaahiye",
+        "lang": "hi"
+      },
+      {
+        "text": "शोर कम कीजिए",
+        "latin": "shor kam kijiye",
+        "lang": "hi"
+      },
+      {
+        "text": "यहाँ बहुत आवाज़ है",
+        "latin": "yahaan bahut aawaaz hai",
+        "lang": "hi"
+      },
+      {
+        "text": "I need a quiet spot",
+        "latin": "I need a quiet spot",
+        "lang": "en"
+      },
+      {
+        "text": "A little silence please",
+        "latin": "A little silence please",
+        "lang": "en"
+      },
+      {
+        "text": "Could we have some quiet?",
+        "latin": "Could we have some quiet?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "need-phone",
+    "meaning_en": "Can I use a phone?",
+    "category": "needs",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "एक कॉल करना है",
+        "latin": "ek call karna hai",
+        "lang": "hi"
+      },
+      {
+        "text": "फ़ोन मिलेगा?",
+        "latin": "phone milega?",
+        "lang": "hi"
+      },
+      {
+        "text": "ज़रूरी बात करनी है",
+        "latin": "zaroori baat karni hai",
+        "lang": "hi"
+      },
+      {
+        "text": "May I use the phone?",
+        "latin": "May I use the phone?",
+        "lang": "en"
+      },
+      {
+        "text": "I need to make a call",
+        "latin": "I need to make a call",
+        "lang": "en"
+      },
+      {
+        "text": "Can I borrow your phone?",
+        "latin": "Can I borrow your phone?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "need-blanket",
+    "meaning_en": "I feel cold, I need a blanket",
+    "category": "needs",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "ठंड लग रही है",
+        "latin": "thand lag rahi hai",
+        "lang": "hi"
+      },
+      {
+        "text": "चादर या कंबल दीजिए",
+        "latin": "chaadar ya kambal deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "थोड़ा गर्म कपड़ा चाहिए",
+        "latin": "thoda garam kapda chaahiye",
+        "lang": "hi"
+      },
+      {
+        "text": "I feel cold",
+        "latin": "I feel cold",
+        "lang": "en"
+      },
+      {
+        "text": "Could I have a blanket?",
+        "latin": "Could I have a blanket?",
+        "lang": "en"
+      },
+      {
+        "text": "It is chilly here",
+        "latin": "It is chilly here",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "pain-head",
+    "meaning_en": "My head hurts",
+    "category": "pain",
+    "urgent": true,
+    "variants": [
+      {
+        "text": "सिर में दर्द है",
+        "latin": "sir mein dard hai",
+        "lang": "hi"
+      },
+      {
+        "text": "सिर बहुत दुख रहा है",
+        "latin": "sir bahut dukh raha hai",
+        "lang": "hi"
+      },
+      {
+        "text": "सिर दर्द हो रहा है",
+        "latin": "sir dard ho raha hai",
+        "lang": "hi"
+      },
+      {
+        "text": "My head hurts",
+        "latin": "My head hurts",
+        "lang": "en"
+      },
+      {
+        "text": "I have a headache",
+        "latin": "I have a headache",
+        "lang": "en"
+      },
+      {
+        "text": "Severe head pain",
+        "latin": "Severe head pain",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "pain-chest",
+    "meaning_en": "My chest hurts",
+    "category": "pain",
+    "urgent": true,
+    "variants": [
+      {
+        "text": "सीने में दर्द है",
+        "latin": "seene mein dard hai",
+        "lang": "hi"
+      },
+      {
+        "text": "छाती में भारीपन लग रहा है",
+        "latin": "chhaati mein bhaaripan lag raha hai",
+        "lang": "hi"
+      },
+      {
+        "text": "यहाँ सीने में तकलीफ़ है",
+        "latin": "yahaan seene mein takleef hai",
+        "lang": "hi"
+      },
+      {
+        "text": "My chest hurts",
+        "latin": "My chest hurts",
+        "lang": "en"
+      },
+      {
+        "text": "I have chest tightness",
+        "latin": "I have chest tightness",
+        "lang": "en"
+      },
+      {
+        "text": "Sharp chest pain",
+        "latin": "Sharp chest pain",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "pain-stomach",
+    "meaning_en": "My stomach hurts",
+    "category": "pain",
+    "urgent": true,
+    "variants": [
+      {
+        "text": "पेट में दर्द है",
+        "latin": "pet mein dard hai",
+        "lang": "hi"
+      },
+      {
+        "text": "पेट दुख रहा है",
+        "latin": "pet dukh raha hai",
+        "lang": "hi"
+      },
+      {
+        "text": "पेट में बहुत ऐंठन है",
+        "latin": "pet mein bahut ainthann hai",
+        "lang": "hi"
+      },
+      {
+        "text": "My stomach hurts",
+        "latin": "My stomach hurts",
+        "lang": "en"
+      },
+      {
+        "text": "I have stomach ache",
+        "latin": "I have stomach ache",
+        "lang": "en"
+      },
+      {
+        "text": "Stomach pain",
+        "latin": "Stomach pain",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "pain-throat",
+    "meaning_en": "My throat hurts",
+    "category": "pain",
+    "urgent": true,
+    "variants": [
+      {
+        "text": "गले में दर्द है",
+        "latin": "gale mein dard hai",
+        "lang": "hi"
+      },
+      {
+        "text": "गले में खराश है",
+        "latin": "gale mein kharaash hai",
+        "lang": "hi"
+      },
+      {
+        "text": "निगलने में दर्द होता है",
+        "latin": "nigalne mein dard hota hai",
+        "lang": "hi"
+      },
+      {
+        "text": "My throat is sore",
+        "latin": "My throat is sore",
+        "lang": "en"
+      },
+      {
+        "text": "I have throat pain",
+        "latin": "I have throat pain",
+        "lang": "en"
+      },
+      {
+        "text": "Pain when swallowing",
+        "latin": "Pain when swallowing",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "pain-back",
+    "meaning_en": "My back hurts",
+    "category": "pain",
+    "urgent": true,
+    "variants": [
+      {
+        "text": "कमर में दर्द है",
+        "latin": "kamar mein dard hai",
+        "lang": "hi"
+      },
+      {
+        "text": "पीठ में बहुत दर्द है",
+        "latin": "peeth mein bahut dard hai",
+        "lang": "hi"
+      },
+      {
+        "text": "झुकने में दर्द होता है",
+        "latin": "jhukne mein dard hota hai",
+        "lang": "hi"
+      },
+      {
+        "text": "My back hurts",
+        "latin": "My back hurts",
+        "lang": "en"
+      },
+      {
+        "text": "I have back pain",
+        "latin": "I have back pain",
+        "lang": "en"
+      },
+      {
+        "text": "Severe back ache",
+        "latin": "Severe back ache",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "pain-dizzy",
+    "meaning_en": "I feel dizzy",
+    "category": "pain",
+    "urgent": true,
+    "variants": [
+      {
+        "text": "चक्कर आ रहे हैं",
+        "latin": "chakkar aa rahe hain",
+        "lang": "hi"
+      },
+      {
+        "text": "सिर घूम रहा है",
+        "latin": "sir ghoom raha hai",
+        "lang": "hi"
+      },
+      {
+        "text": "अचानक कमजोरी लग रही है",
+        "latin": "achaanak kamzori lag rahi hai",
+        "lang": "hi"
+      },
+      {
+        "text": "I feel dizzy",
+        "latin": "I feel dizzy",
+        "lang": "en"
+      },
+      {
+        "text": "The room is spinning",
+        "latin": "The room is spinning",
+        "lang": "en"
+      },
+      {
+        "text": "I am feeling faint",
+        "latin": "I am feeling faint",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "pain-breath",
+    "meaning_en": "I am having trouble breathing",
+    "category": "pain",
+    "urgent": true,
+    "variants": [
+      {
+        "text": "साँस लेने में तकलीफ़ है",
+        "latin": "saans lene mein takleef hai",
+        "lang": "hi"
+      },
+      {
+        "text": "साँस फूल रही है",
+        "latin": "saans phool rahi hai",
+        "lang": "hi"
+      },
+      {
+        "text": "साँस भारी हो रही है",
+        "latin": "saans bhaari ho rahi hai",
+        "lang": "hi"
+      },
+      {
+        "text": "I cannot breathe well",
+        "latin": "I cannot breathe well",
+        "lang": "en"
+      },
+      {
+        "text": "Hard to breathe",
+        "latin": "Hard to breathe",
+        "lang": "en"
+      },
+      {
+        "text": "Shortness of breath",
+        "latin": "Shortness of breath",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "pain-leg",
+    "meaning_en": "My leg hurts",
+    "category": "pain",
+    "urgent": true,
+    "variants": [
+      {
+        "text": "पैर में दर्द है",
+        "latin": "pair mein dard hai",
+        "lang": "hi"
+      },
+      {
+        "text": "चलने में दर्द हो रहा है",
+        "latin": "chalne mein dard ho raha hai",
+        "lang": "hi"
+      },
+      {
+        "text": "घुटने में चोट लगी है",
+        "latin": "ghutne mein chot lagi hai",
+        "lang": "hi"
+      },
+      {
+        "text": "My leg hurts",
+        "latin": "My leg hurts",
+        "lang": "en"
+      },
+      {
+        "text": "Pain in my leg",
+        "latin": "Pain in my leg",
+        "lang": "en"
+      },
+      {
+        "text": "Trouble walking",
+        "latin": "Trouble walking",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "help-call-doctor",
+    "meaning_en": "Please call a doctor",
+    "category": "help",
+    "urgent": true,
+    "variants": [
+      {
+        "text": "डॉक्टर को बुलाइए",
+        "latin": "doctor ko bulaaiye",
+        "lang": "hi"
+      },
+      {
+        "text": "जल्दी डॉक्टर दिखाइए",
+        "latin": "jaldi doctor dikhaaiye",
+        "lang": "hi"
+      },
+      {
+        "text": "अस्पताल ले चलिए",
+        "latin": "aspatal le chaliye",
+        "lang": "hi"
+      },
+      {
+        "text": "Please call a doctor",
+        "latin": "Please call a doctor",
+        "lang": "en"
+      },
+      {
+        "text": "We need a doctor now",
+        "latin": "We need a doctor now",
+        "lang": "en"
+      },
+      {
+        "text": "Get medical help",
+        "latin": "Get medical help",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "help-emergency",
+    "meaning_en": "I need emergency help",
+    "category": "help",
+    "urgent": true,
+    "variants": [
+      {
+        "text": "मदद कीजिए!",
+        "latin": "madad kijiye!",
+        "lang": "hi"
+      },
+      {
+        "text": "तुरंत सहायता चाहिए",
+        "latin": "turant sahaayata chaahiye",
+        "lang": "hi"
+      },
+      {
+        "text": "यहाँ कोई मदद करो",
+        "latin": "yahaan koi madad karo",
+        "lang": "hi"
+      },
+      {
+        "text": "Emergency help needed",
+        "latin": "Emergency help needed",
+        "lang": "en"
+      },
+      {
+        "text": "Please help me!",
+        "latin": "Please help me!",
+        "lang": "en"
+      },
+      {
+        "text": "Urgent assistance please",
+        "latin": "Urgent assistance please",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "help-lost",
+    "meaning_en": "I am lost, please help me",
+    "category": "help",
+    "urgent": true,
+    "variants": [
+      {
+        "text": "मैं रास्ता भूल गया हूँ",
+        "latin": "main raasta bhool gaya hoon",
+        "lang": "hi"
+      },
+      {
+        "text": "रास्ता बता दीजिए",
+        "latin": "raasta bata deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "मुझे यहाँ पहुँचना है",
+        "latin": "mujhe yahaan pahunchna hai",
+        "lang": "hi"
+      },
+      {
+        "text": "I am lost",
+        "latin": "I am lost",
+        "lang": "en"
+      },
+      {
+        "text": "Could you guide me?",
+        "latin": "Could you guide me?",
+        "lang": "en"
+      },
+      {
+        "text": "Which way is this?",
+        "latin": "Which way is this?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "help-fell",
+    "meaning_en": "I fell down and need help",
+    "category": "help",
+    "urgent": true,
+    "variants": [
+      {
+        "text": "मैं गिर गया हूँ",
+        "latin": "main gir gaya hoon",
+        "lang": "hi"
+      },
+      {
+        "text": "उठने में मदद कीजिए",
+        "latin": "uthne mein madad kijiye",
+        "lang": "hi"
+      },
+      {
+        "text": "हाथ पकड़कर उठाइए",
+        "latin": "haath pakadkar uthaaiye",
+        "lang": "hi"
+      },
+      {
+        "text": "I have fallen down",
+        "latin": "I have fallen down",
+        "lang": "en"
+      },
+      {
+        "text": "Please help me up",
+        "latin": "Please help me up",
+        "lang": "en"
+      },
+      {
+        "text": "I need a hand",
+        "latin": "I need a hand",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "help-heavy",
+    "meaning_en": "Can you help me carry this?",
+    "category": "help",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "यह सामान भारी है",
+        "latin": "yeh saamaan bhaari hai",
+        "lang": "hi"
+      },
+      {
+        "text": "उठाने में मदद करेंगे?",
+        "latin": "uthaane mein madad karenge?",
+        "lang": "hi"
+      },
+      {
+        "text": "ज़रा हाथ लगा दीजिए",
+        "latin": "zara haath laga deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "Can you help lift this?",
+        "latin": "Can you help lift this?",
+        "lang": "en"
+      },
+      {
+        "text": "This is heavy",
+        "latin": "This is heavy",
+        "lang": "en"
+      },
+      {
+        "text": "Could you give me a hand?",
+        "latin": "Could you give me a hand?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "help-repeat",
+    "meaning_en": "Please repeat that once more",
+    "category": "help",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "फिर से बोलिए",
+        "latin": "phir se boliye",
+        "lang": "hi"
+      },
+      {
+        "text": "एक बार और कहेंगे?",
+        "latin": "ek baar aur kahenge?",
+        "lang": "hi"
+      },
+      {
+        "text": "ज़रा धीरे से बताइए",
+        "latin": "zara dheere se bataaiye",
+        "lang": "hi"
+      },
+      {
+        "text": "Could you repeat that?",
+        "latin": "Could you repeat that?",
+        "lang": "en"
+      },
+      {
+        "text": "Once more please",
+        "latin": "Once more please",
+        "lang": "en"
+      },
+      {
+        "text": "Say that again please",
+        "latin": "Say that again please",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "help-call-family",
+    "meaning_en": "Please call my family",
+    "category": "help",
+    "urgent": true,
+    "variants": [
+      {
+        "text": "घर पर फ़ोन कर दीजिए",
+        "latin": "ghar par phone kar deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "परिवार को बता दीजिए",
+        "latin": "parivaar ko bata deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "मेरे घर वालों को बुलाइए",
+        "latin": "mere ghar waalon ko bulaaiye",
+        "lang": "hi"
+      },
+      {
+        "text": "Please call my home",
+        "latin": "Please call my home",
+        "lang": "en"
+      },
+      {
+        "text": "Inform my family",
+        "latin": "Inform my family",
+        "lang": "en"
+      },
+      {
+        "text": "Reach my relatives please",
+        "latin": "Reach my relatives please",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "help-wait",
+    "meaning_en": "Please wait for me a moment",
+    "category": "help",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "एक मिनट रुकिए",
+        "latin": "ek minute rukiye",
+        "lang": "hi"
+      },
+      {
+        "text": "थोड़ा इंतज़ार कीजिए",
+        "latin": "thoda intezaar kijiye",
+        "lang": "hi"
+      },
+      {
+        "text": "मैं अभी आया",
+        "latin": "main abhi aaya",
+        "lang": "hi"
+      },
+      {
+        "text": "Please wait a moment",
+        "latin": "Please wait a moment",
+        "lang": "en"
+      },
+      {
+        "text": "Just one second",
+        "latin": "Just one second",
+        "lang": "en"
+      },
+      {
+        "text": "Hold on please",
+        "latin": "Hold on please",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "family-call-home",
+    "meaning_en": "I want to call home",
+    "category": "family",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "घर बात करनी है",
+        "latin": "ghar baat karni hai",
+        "lang": "hi"
+      },
+      {
+        "text": "माँ को फ़ोन लगाना है",
+        "latin": "maa ko phone lagaana hai",
+        "lang": "hi"
+      },
+      {
+        "text": "घर वालों से बात करा दीजिए",
+        "latin": "ghar waalon se baat kara deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "I want to call home",
+        "latin": "I want to call home",
+        "lang": "en"
+      },
+      {
+        "text": "Calling my family",
+        "latin": "Calling my family",
+        "lang": "en"
+      },
+      {
+        "text": "Need to reach my folks",
+        "latin": "Need to reach my folks",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "family-coming-soon",
+    "meaning_en": "I will reach home soon",
+    "category": "family",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "जल्दी घर आ रहा हूँ",
+        "latin": "jaldi ghar aa raha hoon",
+        "lang": "hi"
+      },
+      {
+        "text": "रास्ते में हूँ, अभी पहुँचता हूँ",
+        "latin": "raaste mein hoon, abhi pahunchta hoon",
+        "lang": "hi"
+      },
+      {
+        "text": "बस दस मिनट में घर पर",
+        "latin": "bas das minute mein ghar par",
+        "lang": "hi"
+      },
+      {
+        "text": "On my way home",
+        "latin": "On my way home",
+        "lang": "en"
+      },
+      {
+        "text": "Reaching home shortly",
+        "latin": "Reaching home shortly",
+        "lang": "en"
+      },
+      {
+        "text": "Almost there",
+        "latin": "Almost there",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "family-how-are-you",
+    "meaning_en": "How is everyone at home?",
+    "category": "family",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "घर में सब कैसे हैं?",
+        "latin": "ghar mein sab kaise hain?",
+        "lang": "hi"
+      },
+      {
+        "text": "सब लोग ठीक हैं?",
+        "latin": "sab log theek hain?",
+        "lang": "hi"
+      },
+      {
+        "text": "घर का हाल बताइए",
+        "latin": "ghar ka haal bataaiye",
+        "lang": "hi"
+      },
+      {
+        "text": "How is everyone at home?",
+        "latin": "How is everyone at home?",
+        "lang": "en"
+      },
+      {
+        "text": "Is all well with family?",
+        "latin": "Is all well with family?",
+        "lang": "en"
+      },
+      {
+        "text": "How are folks doing?",
+        "latin": "How are folks doing?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "family-love-you",
+    "meaning_en": "I love you all",
+    "category": "family",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "आप सब बहुत याद आते हैं",
+        "latin": "aap sab bahut yaad aate hain",
+        "lang": "hi"
+      },
+      {
+        "text": "मुझे आप सब से प्यार है",
+        "latin": "mujhe aap sab se pyaar hai",
+        "lang": "hi"
+      },
+      {
+        "text": "आप सब हमेशा साथ हैं",
+        "latin": "aap sab hamesha saath hain",
+        "lang": "hi"
+      },
+      {
+        "text": "Sending love to everyone",
+        "latin": "Sending love to everyone",
+        "lang": "en"
+      },
+      {
+        "text": "Love you all",
+        "latin": "Love you all",
+        "lang": "en"
+      },
+      {
+        "text": "Warm regards to all",
+        "latin": "Warm regards to all",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "family-ate-food",
+    "meaning_en": "Did you have dinner?",
+    "category": "family",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "खाना खा लिया?",
+        "latin": "khaana kha liya?",
+        "lang": "hi"
+      },
+      {
+        "text": "भोजन कर लिया आपने?",
+        "latin": "bhojan kar liya aapne?",
+        "lang": "hi"
+      },
+      {
+        "text": "सबने खाना खाया?",
+        "latin": "sabne khaana khaaya?",
+        "lang": "hi"
+      },
+      {
+        "text": "Did you have your meal?",
+        "latin": "Did you have your meal?",
+        "lang": "en"
+      },
+      {
+        "text": "Have you eaten?",
+        "latin": "Have you eaten?",
+        "lang": "en"
+      },
+      {
+        "text": "Did you finish dinner?",
+        "latin": "Did you finish dinner?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "family-take-care",
+    "meaning_en": "Take care of your health",
+    "category": "family",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "अपना ध्यान रखिए",
+        "latin": "apna dhyaan rakhiye",
+        "lang": "hi"
+      },
+      {
+        "text": "सेहत का ख्याल रखें",
+        "latin": "sehat ka khyaal rakhein",
+        "lang": "hi"
+      },
+      {
+        "text": "समय पर दवा लीजिए",
+        "latin": "samay par dawa leejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "Take good care",
+        "latin": "Take good care",
+        "lang": "en"
+      },
+      {
+        "text": "Look after your health",
+        "latin": "Look after your health",
+        "lang": "en"
+      },
+      {
+        "text": "Stay healthy and safe",
+        "latin": "Stay healthy and safe",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "family-parents-well",
+    "meaning_en": "My parents are doing well",
+    "category": "family",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "माता-पिता बिल्कुल ठीक हैं",
+        "latin": "maata-pita bilkul theek hain",
+        "lang": "hi"
+      },
+      {
+        "text": "मम्मी-पापा अच्छे हैं",
+        "latin": "mummy-papa achchhe hain",
+        "lang": "hi"
+      },
+      {
+        "text": "घर पर सब कुशल-मंगल है",
+        "latin": "ghar par sab kushal-mangal hai",
+        "lang": "hi"
+      },
+      {
+        "text": "My parents are well",
+        "latin": "My parents are well",
+        "lang": "en"
+      },
+      {
+        "text": "Mom and dad are fine",
+        "latin": "Mom and dad are fine",
+        "lang": "en"
+      },
+      {
+        "text": "Family is doing great",
+        "latin": "Family is doing great",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "food-hungry",
+    "meaning_en": "I am feeling hungry",
+    "category": "food",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "भूख लगी है",
+        "latin": "bhookh lagi hai",
+        "lang": "hi"
+      },
+      {
+        "text": "कुछ खाने को दीजिए",
+        "latin": "kuchh khaane ko deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "खाना तैयार है?",
+        "latin": "khaana taiyaar hai?",
+        "lang": "hi"
+      },
+      {
+        "text": "I feel hungry",
+        "latin": "I feel hungry",
+        "lang": "en"
+      },
+      {
+        "text": "Something to eat please",
+        "latin": "Something to eat please",
+        "lang": "en"
+      },
+      {
+        "text": "Is food ready?",
+        "latin": "Is food ready?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "food-tea",
+    "meaning_en": "Can I have a cup of tea?",
+    "category": "food",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "चाय मिलेगी?",
+        "latin": "chaay milegi?",
+        "lang": "hi"
+      },
+      {
+        "text": "एक कप चाय दीजिए",
+        "latin": "ek cup chaay deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "गरम चाय चाहिए",
+        "latin": "garam chaay chaahiye",
+        "lang": "hi"
+      },
+      {
+        "text": "Cup of tea please",
+        "latin": "Cup of tea please",
+        "lang": "en"
+      },
+      {
+        "text": "Can I get some tea?",
+        "latin": "Can I get some tea?",
+        "lang": "en"
+      },
+      {
+        "text": "Hot tea please",
+        "latin": "Hot tea please",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "food-vegetarian",
+    "meaning_en": "Do you have vegetarian food?",
+    "category": "food",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "शाकाहारी भोजन मिलेगा?",
+        "latin": "shaakaahaari bhojan milega?",
+        "lang": "hi"
+      },
+      {
+        "text": "शुद्ध शाकाहारी खाना है?",
+        "latin": "shuddh shaakaahaari khaana hai?",
+        "lang": "hi"
+      },
+      {
+        "text": "बिना प्याज़-लहसुन का खाना",
+        "latin": "bina pyaaz-lahsun ka khaana",
+        "lang": "hi"
+      },
+      {
+        "text": "Vegetarian food please",
+        "latin": "Vegetarian food please",
+        "lang": "en"
+      },
+      {
+        "text": "Do you serve vegetarian?",
+        "latin": "Do you serve vegetarian?",
+        "lang": "en"
+      },
+      {
+        "text": "Veg options available?",
+        "latin": "Veg options available?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "food-less-spicy",
+    "meaning_en": "Please make it less spicy",
+    "category": "food",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "कम मिर्च वाला बनाइए",
+        "latin": "kam mirch waala banaaiye",
+        "lang": "hi"
+      },
+      {
+        "text": "ज़्यादा तीखा मत कीजिए",
+        "latin": "zyaada teekha mat kijiye",
+        "lang": "hi"
+      },
+      {
+        "text": "हल्के मसाले रखिएगा",
+        "latin": "halke masaale rakhiyega",
+        "lang": "hi"
+      },
+      {
+        "text": "Less spicy please",
+        "latin": "Less spicy please",
+        "lang": "en"
+      },
+      {
+        "text": "Mild flavor please",
+        "latin": "Mild flavor please",
+        "lang": "en"
+      },
+      {
+        "text": "Not too hot please",
+        "latin": "Not too hot please",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "food-hot-water",
+    "meaning_en": "Please give me warm water",
+    "category": "food",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "गरम पानी दीजिए",
+        "latin": "garam paani deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "गुनगुना पानी मिलेगा?",
+        "latin": "gunguna paani milega?",
+        "lang": "hi"
+      },
+      {
+        "text": "पीने के लिए हल्का गरम पानी",
+        "latin": "peene ke liye halka garam paani",
+        "lang": "hi"
+      },
+      {
+        "text": "Warm water please",
+        "latin": "Warm water please",
+        "lang": "en"
+      },
+      {
+        "text": "Can I get hot water?",
+        "latin": "Can I get hot water?",
+        "lang": "en"
+      },
+      {
+        "text": "Boiled drinking water please",
+        "latin": "Boiled drinking water please",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "food-delicious",
+    "meaning_en": "The food is very tasty",
+    "category": "food",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "खाना बहुत स्वादिष्ट है",
+        "latin": "khaana bahut swaadist hai",
+        "lang": "hi"
+      },
+      {
+        "text": "बहुत बढ़िया बना है",
+        "latin": "bahut badhiya bana hai",
+        "lang": "hi"
+      },
+      {
+        "text": "मज़ा आ गया खाकर",
+        "latin": "maza aa gaya khaakar",
+        "lang": "hi"
+      },
+      {
+        "text": "Food is delicious",
+        "latin": "Food is delicious",
+        "lang": "en"
+      },
+      {
+        "text": "Very tasty meal",
+        "latin": "Very tasty meal",
+        "lang": "en"
+      },
+      {
+        "text": "Wonderful food",
+        "latin": "Wonderful food",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "food-bill-please",
+    "meaning_en": "Please bring the bill",
+    "category": "food",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "बिल ले आइए",
+        "latin": "bill le aaiye",
+        "lang": "hi"
+      },
+      {
+        "text": "कितने पैसे हुए?",
+        "latin": "kitne paise hue?",
+        "lang": "hi"
+      },
+      {
+        "text": "चेक दीजिए भैया",
+        "latin": "check deejiye bhaiya",
+        "lang": "hi"
+      },
+      {
+        "text": "The bill please",
+        "latin": "The bill please",
+        "lang": "en"
+      },
+      {
+        "text": "Check please",
+        "latin": "Check please",
+        "lang": "en"
+      },
+      {
+        "text": "Could we have the bill?",
+        "latin": "Could we have the bill?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "food-sweet",
+    "meaning_en": "I would like some sweets",
+    "category": "food",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "कुछ मीठा मिलेगा?",
+        "latin": "kuchh meetha milega?",
+        "lang": "hi"
+      },
+      {
+        "text": "मीठे में क्या है?",
+        "latin": "meethe mein kya hai?",
+        "lang": "hi"
+      },
+      {
+        "text": "खीर या हलवा दीजिए",
+        "latin": "kheer ya halwa deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "Something sweet please",
+        "latin": "Something sweet please",
+        "lang": "en"
+      },
+      {
+        "text": "Dessert menu please",
+        "latin": "Dessert menu please",
+        "lang": "en"
+      },
+      {
+        "text": "Any sweet dishes?",
+        "latin": "Any sweet dishes?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "shop-how-much",
+    "meaning_en": "How much does this cost?",
+    "category": "shop",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "यह कितने का है?",
+        "latin": "yeh kitne ka hai?",
+        "lang": "hi"
+      },
+      {
+        "text": "इसकी क्या क़ीमत है?",
+        "latin": "iski kya qeemat hai?",
+        "lang": "hi"
+      },
+      {
+        "text": "इसका दाम बताइए",
+        "latin": "iska daam bataaiye",
+        "lang": "hi"
+      },
+      {
+        "text": "How much is this?",
+        "latin": "How much is this?",
+        "lang": "en"
+      },
+      {
+        "text": "What is the price?",
+        "latin": "What is the price?",
+        "lang": "en"
+      },
+      {
+        "text": "Cost of this item?",
+        "latin": "Cost of this item?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "shop-buy-milk",
+    "meaning_en": "I want to buy milk",
+    "category": "shop",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "दूध का पैकेट दीजिए",
+        "latin": "doodh ka packet deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "ताज़ा दूध मिलेगा?",
+        "latin": "taaza doodh milega?",
+        "lang": "hi"
+      },
+      {
+        "text": "एक लीटर दूध चाहिए",
+        "latin": "ek litre doodh chaahiye",
+        "lang": "hi"
+      },
+      {
+        "text": "One packet of milk please",
+        "latin": "One packet of milk please",
+        "lang": "en"
+      },
+      {
+        "text": "Milk please",
+        "latin": "Milk please",
+        "lang": "en"
+      },
+      {
+        "text": "Do you have fresh milk?",
+        "latin": "Do you have fresh milk?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "shop-have-change",
+    "meaning_en": "Do you have change?",
+    "category": "shop",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "खुले पैसे हैं आपके पास?",
+        "latin": "khule paise hain aapke paas?",
+        "lang": "hi"
+      },
+      {
+        "text": "सौ का छुट्टा मिलेगा?",
+        "latin": "sau ka chhutta milega?",
+        "lang": "hi"
+      },
+      {
+        "text": "खुले रुपये दीजिए",
+        "latin": "khule rupaye deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "Do you have change?",
+        "latin": "Do you have change?",
+        "lang": "en"
+      },
+      {
+        "text": "Change for hundred please",
+        "latin": "Change for hundred please",
+        "lang": "en"
+      },
+      {
+        "text": "Do you have small coins?",
+        "latin": "Do you have small coins?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "shop-online-pay",
+    "meaning_en": "Can I pay by UPI or card?",
+    "category": "shop",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "ऑनलाइन पेमेंट चलेगा?",
+        "latin": "online payment chalega?",
+        "lang": "hi"
+      },
+      {
+        "text": "क्यूआर कोड दिखा दीजिए",
+        "latin": "qr code dikha deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "कार्ड से ले लेंगे?",
+        "latin": "card se le lenge?",
+        "lang": "hi"
+      },
+      {
+        "text": "Can I pay by UPI?",
+        "latin": "Can I pay by UPI?",
+        "lang": "en"
+      },
+      {
+        "text": "Do you accept cards?",
+        "latin": "Do you accept cards?",
+        "lang": "en"
+      },
+      {
+        "text": "QR code scanner please",
+        "latin": "QR code scanner please",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "shop-carry-bag",
+    "meaning_en": "Please give me a carry bag",
+    "category": "shop",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "थैला दे दीजिए",
+        "latin": "thaila de deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "सामान रखने की थैली मिलेगी?",
+        "latin": "saamaan rakhne ki thaili milegi?",
+        "lang": "hi"
+      },
+      {
+        "text": "बैग चाहिए",
+        "latin": "bag chaahiye",
+        "lang": "hi"
+      },
+      {
+        "text": "Carry bag please",
+        "latin": "Carry bag please",
+        "lang": "en"
+      },
+      {
+        "text": "Could I have a bag?",
+        "latin": "Could I have a bag?",
+        "lang": "en"
+      },
+      {
+        "text": "A shopping bag please",
+        "latin": "A shopping bag please",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "shop-receipt",
+    "meaning_en": "Can I have a bill receipt?",
+    "category": "shop",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "पक्की रसीद मिलेगी?",
+        "latin": "pakki raseed milegi?",
+        "lang": "hi"
+      },
+      {
+        "text": "बिल का प्रिंट दे दीजिए",
+        "latin": "bill ka print de deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "रसीद बना दीजिए",
+        "latin": "raseed bana deejiye",
+        "lang": "hi"
+      },
+      {
+        "text": "Can I get a receipt?",
+        "latin": "Can I get a receipt?",
+        "lang": "en"
+      },
+      {
+        "text": "Printed bill please",
+        "latin": "Printed bill please",
+        "lang": "en"
+      },
+      {
+        "text": "Receipt please",
+        "latin": "Receipt please",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "shop-open-time",
+    "meaning_en": "What time does the shop close?",
+    "category": "shop",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "दुकान कब तक खुली रहती है?",
+        "latin": "dukaan kab tak khuli rahti hai?",
+        "lang": "hi"
+      },
+      {
+        "text": "कल कितने बजे खुलेंगे?",
+        "latin": "kal kitne baje khulenge?",
+        "lang": "hi"
+      },
+      {
+        "text": "दुकान बंद होने का समय क्या है?",
+        "latin": "dukaan band hone ka samay kya hai?",
+        "lang": "hi"
+      },
+      {
+        "text": "When do you close?",
+        "latin": "When do you close?",
+        "lang": "en"
+      },
+      {
+        "text": "Opening hours please",
+        "latin": "Opening hours please",
+        "lang": "en"
+      },
+      {
+        "text": "What time do you open tomorrow?",
+        "latin": "What time do you open tomorrow?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "feelings-happy",
+    "meaning_en": "I am feeling very happy today",
+    "category": "feelings",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "आज बहुत खुशी हो रही है",
+        "latin": "aaj bahut khushi ho rahi hai",
+        "lang": "hi"
+      },
+      {
+        "text": "मन बहुत प्रसन्न है",
+        "latin": "man bahut prasann hai",
+        "lang": "hi"
+      },
+      {
+        "text": "आज का दिन बहुत अच्छा रहा",
+        "latin": "aaj ka din bahut achchha raha",
+        "lang": "hi"
+      },
+      {
+        "text": "I feel very happy today",
+        "latin": "I feel very happy today",
+        "lang": "en"
+      },
+      {
+        "text": "Great day today",
+        "latin": "Great day today",
+        "lang": "en"
+      },
+      {
+        "text": "Feeling cheerful",
+        "latin": "Feeling cheerful",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "feelings-tired",
+    "meaning_en": "I am quite tired right now",
+    "category": "feelings",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "आज बहुत थकान लग रही है",
+        "latin": "aaj bahut thakaan lag rahi hai",
+        "lang": "hi"
+      },
+      {
+        "text": "शरीर में सुस्ती है",
+        "latin": "shareer mein susti hai",
+        "lang": "hi"
+      },
+      {
+        "text": "थोड़ी देर आराम चाहिए",
+        "latin": "thodi der aaraam chaahiye",
+        "lang": "hi"
+      },
+      {
+        "text": "I feel tired",
+        "latin": "I feel tired",
+        "lang": "en"
+      },
+      {
+        "text": "A bit exhausted",
+        "latin": "A bit exhausted",
+        "lang": "en"
+      },
+      {
+        "text": "Need some rest",
+        "latin": "Need some rest",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "feelings-nervous",
+    "meaning_en": "I am feeling a bit anxious",
+    "category": "feelings",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "थोड़ी घबराहट हो रही है",
+        "latin": "thodi ghabraahat ho rahi hai",
+        "lang": "hi"
+      },
+      {
+        "text": "मन थोड़ा बेचैन है",
+        "latin": "man thoda bechain hai",
+        "lang": "hi"
+      },
+      {
+        "text": "मैं गहरी साँस ले रहा हूँ",
+        "latin": "main gahri saans le raha hoon",
+        "lang": "hi"
+      },
+      {
+        "text": "Feeling a little anxious",
+        "latin": "Feeling a little anxious",
+        "lang": "en"
+      },
+      {
+        "text": "A bit nervous right now",
+        "latin": "A bit nervous right now",
+        "lang": "en"
+      },
+      {
+        "text": "Taking deep breaths",
+        "latin": "Taking deep breaths",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "feelings-proud",
+    "meaning_en": "I am proud of my effort",
+    "category": "feelings",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "मुझे अपनी कोशिश पर गर्व है",
+        "latin": "mujhe apni koshish par garv hai",
+        "lang": "hi"
+      },
+      {
+        "text": "आज मैंने अच्छा अभ्यास किया",
+        "latin": "aaj maine achchha abhyaas kiya",
+        "lang": "hi"
+      },
+      {
+        "text": "मेहनत रंग लाई",
+        "latin": "mehnat rang laai",
+        "lang": "hi"
+      },
+      {
+        "text": "Proud of my progress",
+        "latin": "Proud of my progress",
+        "lang": "en"
+      },
+      {
+        "text": "Happy with my effort",
+        "latin": "Happy with my effort",
+        "lang": "en"
+      },
+      {
+        "text": "Step by step progress",
+        "latin": "Step by step progress",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "feelings-calm",
+    "meaning_en": "I am feeling calm and peaceful",
+    "category": "feelings",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "मन बहुत शांत है",
+        "latin": "man bahut shaant hai",
+        "lang": "hi"
+      },
+      {
+        "text": "सब कुछ बहुत सहज लग रहा है",
+        "latin": "sab kuchh bahut sahaj lag raha hai",
+        "lang": "hi"
+      },
+      {
+        "text": "सुकून महसूस हो रहा है",
+        "latin": "sukoon mahsoos ho raha hai",
+        "lang": "hi"
+      },
+      {
+        "text": "Feeling calm and peaceful",
+        "latin": "Feeling calm and peaceful",
+        "lang": "en"
+      },
+      {
+        "text": "Completely relaxed",
+        "latin": "Completely relaxed",
+        "lang": "en"
+      },
+      {
+        "text": "At ease",
+        "latin": "At ease",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "feelings-grateful",
+    "meaning_en": "I feel very grateful",
+    "category": "feelings",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "दिल से आभार",
+        "latin": "dil se aabhaar",
+        "lang": "hi"
+      },
+      {
+        "text": "आपकी मदद के लिए धन्यवाद",
+        "latin": "aapki madad ke liye dhanyavaad",
+        "lang": "hi"
+      },
+      {
+        "text": "बहुत उपकार हुआ",
+        "latin": "bahut upkaar hua",
+        "lang": "hi"
+      },
+      {
+        "text": "Feeling very grateful",
+        "latin": "Feeling very grateful",
+        "lang": "en"
+      },
+      {
+        "text": "Heartfelt thanks",
+        "latin": "Heartfelt thanks",
+        "lang": "en"
+      },
+      {
+        "text": "So thankful for this",
+        "latin": "So thankful for this",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "feelings-hopeful",
+    "meaning_en": "I have good hopes for tomorrow",
+    "category": "feelings",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "आगे सब अच्छा होगा",
+        "latin": "aage sab achchha hoga",
+        "lang": "hi"
+      },
+      {
+        "text": "पूरी उम्मीद है",
+        "latin": "poori ummeed hai",
+        "lang": "hi"
+      },
+      {
+        "text": "नई शुरुआत की आशा है",
+        "latin": "nayi shuruaat ki aasha hai",
+        "lang": "hi"
+      },
+      {
+        "text": "Full of hope",
+        "latin": "Full of hope",
+        "lang": "en"
+      },
+      {
+        "text": "Looking forward to tomorrow",
+        "latin": "Looking forward to tomorrow",
+        "lang": "en"
+      },
+      {
+        "text": "Positive about the future",
+        "latin": "Positive about the future",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "politeness-thank-you",
+    "meaning_en": "Thank you very much",
+    "category": "politeness",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "धन्यवाद",
+        "latin": "dhanyavaad",
+        "lang": "hi"
+      },
+      {
+        "text": "बहुत शुक्रिया",
+        "latin": "bahut shukriya",
+        "lang": "hi"
+      },
+      {
+        "text": "बहुत मेहरबानी",
+        "latin": "bahut meharbaani",
+        "lang": "hi"
+      },
+      {
+        "text": "Thank you very much",
+        "latin": "Thank you very much",
+        "lang": "en"
+      },
+      {
+        "text": "Much appreciated",
+        "latin": "Much appreciated",
+        "lang": "en"
+      },
+      {
+        "text": "Thanks a lot",
+        "latin": "Thanks a lot",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "politeness-welcome",
+    "meaning_en": "You are very welcome",
+    "category": "politeness",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "आपका स्वागत है",
+        "latin": "aapka swaagat hai",
+        "lang": "hi"
+      },
+      {
+        "text": "कोई बात नहीं",
+        "latin": "koi baat nahin",
+        "lang": "hi"
+      },
+      {
+        "text": "यह तो मेरा फ़र्ज़ था",
+        "latin": "yeh to mera farz tha",
+        "lang": "hi"
+      },
+      {
+        "text": "You are welcome",
+        "latin": "You are welcome",
+        "lang": "en"
+      },
+      {
+        "text": "Glad to help",
+        "latin": "Glad to help",
+        "lang": "en"
+      },
+      {
+        "text": "My pleasure",
+        "latin": "My pleasure",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "politeness-excuse-me",
+    "meaning_en": "Excuse me for a moment",
+    "category": "politeness",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "माफ़ कीजिए",
+        "latin": "maaf kijiye",
+        "lang": "hi"
+      },
+      {
+        "text": "ज़रा सुनिए",
+        "latin": "zara suniye",
+        "lang": "hi"
+      },
+      {
+        "text": "एक पल दीजिएगा",
+        "latin": "ek pal deejiye-ga",
+        "lang": "hi"
+      },
+      {
+        "text": "Excuse me",
+        "latin": "Excuse me",
+        "lang": "en"
+      },
+      {
+        "text": "Pardon me",
+        "latin": "Pardon me",
+        "lang": "en"
+      },
+      {
+        "text": "May I have your attention?",
+        "latin": "May I have your attention?",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "politeness-sorry",
+    "meaning_en": "I am sorry about that",
+    "category": "politeness",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "मुझे क्षमा करें",
+        "latin": "mujhe kshama karein",
+        "lang": "hi"
+      },
+      {
+        "text": "मेरी ग़लती थी",
+        "latin": "meri galti thi",
+        "lang": "hi"
+      },
+      {
+        "text": "माफ़ी चाहता हूँ",
+        "latin": "maafi chaahta hoon",
+        "lang": "hi"
+      },
+      {
+        "text": "I am sorry",
+        "latin": "I am sorry",
+        "lang": "en"
+      },
+      {
+        "text": "My apologies",
+        "latin": "My apologies",
+        "lang": "en"
+      },
+      {
+        "text": "Sorry about that",
+        "latin": "Sorry about that",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "politeness-nice-to-meet",
+    "meaning_en": "Pleased to meet you",
+    "category": "politeness",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "आपसे मिलकर बहुत खुशी हुई",
+        "latin": "aap se milkar bahut khushi hui",
+        "lang": "hi"
+      },
+      {
+        "text": "मिलकर अच्छा लगा",
+        "latin": "milkar achchha laga",
+        "lang": "hi"
+      },
+      {
+        "text": "बड़ा आनंद हुआ आपसे मिलकर",
+        "latin": "bada aanand hua aap se milkar",
+        "lang": "hi"
+      },
+      {
+        "text": "Nice to meet you",
+        "latin": "Nice to meet you",
+        "lang": "en"
+      },
+      {
+        "text": "Pleasure meeting you",
+        "latin": "Pleasure meeting you",
+        "lang": "en"
+      },
+      {
+        "text": "Glad we met",
+        "latin": "Glad we met",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "politeness-good-day",
+    "meaning_en": "Have a wonderful day",
+    "category": "politeness",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "आपका दिन शुभ हो",
+        "latin": "aapka din shubh ho",
+        "lang": "hi"
+      },
+      {
+        "text": "दिन मंगलमय रहे",
+        "latin": "din mangalmay rahe",
+        "lang": "hi"
+      },
+      {
+        "text": "खुश रहिए हमेशा",
+        "latin": "khush rahiye hamesha",
+        "lang": "hi"
+      },
+      {
+        "text": "Have a nice day",
+        "latin": "Have a nice day",
+        "lang": "en"
+      },
+      {
+        "text": "Have a great time",
+        "latin": "Have a great time",
+        "lang": "en"
+      },
+      {
+        "text": "Take care today",
+        "latin": "Take care today",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "meaning_id": "politeness-see-you-soon",
+    "meaning_en": "See you again soon",
+    "category": "politeness",
+    "urgent": false,
+    "variants": [
+      {
+        "text": "फिर मिलेंगे",
+        "latin": "phir milenge",
+        "lang": "hi"
+      },
+      {
+        "text": "जल्दी ही मुलाकात होगी",
+        "latin": "jaldi hi mulaaqaat hogi",
+        "lang": "hi"
+      },
+      {
+        "text": "नमस्ते, फिर मिलते हैं",
+        "latin": "namaste, phir milte hain",
+        "lang": "hi"
+      },
+      {
+        "text": "See you soon",
+        "latin": "See you soon",
+        "lang": "en"
+      },
+      {
+        "text": "Catch you later",
+        "latin": "Catch you later",
+        "lang": "en"
+      },
+      {
+        "text": "Until next time",
+        "latin": "Until next time",
+        "lang": "en"
+      }
+    ]
+  }
+]
