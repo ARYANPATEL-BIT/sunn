@@ -25,7 +25,7 @@ os.environ["LLM_API_KEY"] = "test-llm-key"
 os.environ["LLM_MODEL"] = "test-model"
 os.environ["RERANKER_ENABLED"] = "0"
 for name in ("LLM_MODE", "LLM_MARGIN", "LLM_MIN_SCORE", "LLM_TIMEOUT_S", "LLM_RATE_PER_MIN", "LLM_REASONING_EFFORT",
-             "RERANKER_PATH", "RERANKER_WEIGHT", "RERANKER_THREADS"):
+             "RERANKER_PATH", "RERANKER_WEIGHT", "RERANKER_THREADS", "DEMO_INVITE_CODE"):
     os.environ[name] = ""  # empty is the code's default
 
 import auth  # noqa: E402
@@ -132,7 +132,7 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setenv("GNANI_CALL_LIMIT", "4000")
     monkeypatch.setenv("DAILY_CALL_CAP_PER_USER", "60")
     monkeypatch.delenv("OWNER_EMAIL", raising=False)
-    monkeypatch.delenv("DEMO_INVITE_CODE", raising=False)  # open sign-up, whatever .env says
+    monkeypatch.setenv("DEMO_INVITE_CODE", "")  # open sign-up, whatever .env says
     monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
     monkeypatch.delenv("TRUST_PROXY", raising=False)
     monkeypatch.delenv("GNANI_MOCK", raising=False)  # FakeGnani, not mock mode, unless a test sets it

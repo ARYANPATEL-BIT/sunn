@@ -621,6 +621,8 @@ def attempt(
 
     # Read and convert uploaded audio to 16kHz mono WAV for validation and Prisma
     data = audio_file.file.read(MAX_AUDIO_BYTES + 1)
+    if len(data) == 0:
+        raise Refused(400, "bad_audio", "the audio file is empty")
     if len(data) > MAX_AUDIO_BYTES:
         raise Refused(413, "file_too_large", "the audio file is too large")
 
