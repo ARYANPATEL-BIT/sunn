@@ -28,29 +28,76 @@ Sunn bridges this gap by combining:
 
 ---
 
-## 2. Visual Showcase and Screen Gallery
+## 2. Visual Showcase and Application Gallery
 
-Sunn features a dedicated assistive listening interface with an acoustic visualizer blob, high-contrast touch targets, bilingual Devanagari/Latin typography, and responsive layouts across mobile, tablet, and desktop viewports.
+Sunn features a dedicated assistive listening interface with an acoustic visualizer blob, high-contrast touch targets, bilingual Devanagari/Latin typography, and dedicated responsive layouts engineered for desktop, tablet, and mobile displays.
 
-### Core Experience
+### Desktop Experience
 
-| Public Landing Page | Active Listening (Speak) | Candidate Matches |
+Widescreen desktop interface (1440x1000) optimized for caregiver orientation, clinical speech practice, and evaluator demonstration.
+
+#### Core Assistive Experience
+
+| Public Landing Page | How It Works Overview |
+| :---: | :---: |
+| ![Public Landing Page](docs/screenshots/landscape/landing-desktop.png) | ![How It Works Overview](docs/screenshots/landscape/how-it-works-desktop.png) |
+| *Hero view highlighting the live voice visualizer and accessibility rationale* | *Step-by-step technical explanation of atypical speech recognition* |
+
+| Active Assistive Listening (Speak) | Phonetic Candidate Matches |
+| :---: | :---: |
+| ![Active Listening](docs/screenshots/landscape/speak-desktop.png) | ![Candidate Matches](docs/screenshots/landscape/candidates-desktop.png) |
+| *Listening screen with acoustic visualizer blob and instant mic recording* | *Phonetically ranked intent candidates matched to personal phrase library* |
+
+| Personal Phrase Library | Personal Progress Dashboard |
+| :---: | :---: |
+| ![Phrase Library](docs/screenshots/landscape/phrase-library-desktop.png) | ![Progress Dashboard](docs/screenshots/landscape/progress-desktop.png) |
+| *Categorized everyday phrases with context filters (home, hospital, urgent)* | *Daily practice minutes, 7-day streaks, and completed lesson analytics* |
+
+#### Trainings & Guided Practice
+
+| Trainings Curriculum Hub | Course Overview & Lesson Sequence |
+| :---: | :---: |
+| ![Trainings Curriculum Hub](docs/screenshots/landscape/training-curriculum-desktop.png) | ![Course Overview](docs/screenshots/landscape/course-overview-desktop.png) |
+| *4 practice categories: Smooth Speaking, Clear Sounds, Kids Speaking, Everyday Talk* | *Curriculum syllabus with lesson prerequisites and completion percentages* |
+
+| Listen and Repeat Step | Paced Speaking Practice |
+| :---: | :---: |
+| ![Listen and Repeat](docs/screenshots/landscape/listen-repeat-desktop.png) | ![Paced Speaking](docs/screenshots/landscape/paced-speaking-desktop.png) |
+| *Acoustic model listen-and-repeat exercise with focus sound feedback* | *Real-time WPM pace tracking comparing speech velocity against targets* |
+
+| Tricky Sounds Detection | "Easier Ways" Alternative Phrasing |
+| :---: | :---: |
+| ![Tricky Sounds Detection](docs/screenshots/landscape/tricky-sounds-desktop.png) | ![Easier Ways](docs/screenshots/landscape/easier-ways-desktop.png) |
+| *Evidence-based phoneme aggregation across practice attempts and reflections* | *Groq LLM semantic rewrites avoiding difficult sounds with 1-tap library add* |
+
+#### Evaluator Demonstration & Accessibility
+
+| Presenter Demo Guided Walkthrough | Accessibility & Device Settings |
+| :---: | :---: |
+| ![Presenter Demo Walkthrough](docs/screenshots/landscape/presenter-demo-desktop.png) | ![Accessibility Settings](docs/screenshots/landscape/settings-desktop.png) |
+| *In-memory evaluator cue bar docking at top with zero database side effects* | *Large text, high-contrast outlines, reduced motion, and voice cloning setup* |
+
+---
+
+### Mobile Experience
+
+Touch-optimized mobile interface (390x844) designed for one-handed operation, accessible touch targets, and low cognitive load on mobile devices.
+
+#### Core Mobile Workflows
+
+| Mobile Landing | Mobile Speak Interface | Candidate Matches |
 | :---: | :---: | :---: |
-| <img src="docs/screenshots/responsive-qa/desktop-01-landing.png" width="260" alt="Landing Page" /> | <img src="docs/screenshots/04-speak.png" width="260" alt="Active Listening" /> | <img src="docs/screenshots/05-candidates.png" width="260" alt="Candidate Matches" /> |
+| <img src="docs/screenshots/portrait/landing-mobile.png" width="240" alt="Mobile Landing" /><br/>*Compact mobile landing* | <img src="docs/screenshots/portrait/speak-mobile.png" width="240" alt="Mobile Speak" /><br/>*Single-tap mobile speaking* | <img src="docs/screenshots/portrait/candidate-matches-mobile.png" width="240" alt="Candidate Matches" /><br/>*Touch-friendly intent cards* |
 
-| Personal Phrase Library | Personal Progress Dashboard | Accessibility & Settings |
+| Phrase Library | Progress Dashboard | Device Settings |
 | :---: | :---: | :---: |
-| <img src="docs/screenshots/06-phrases.png" width="260" alt="Phrase Library" /> | <img src="docs/screenshots/07-progress.png" width="260" alt="Progress Dashboard" /> | <img src="docs/screenshots/08-settings.png" width="260" alt="Accessibility Settings" /> |
+| <img src="docs/screenshots/portrait/phrase-library-mobile.png" width="240" alt="Phrase Library" /><br/>*Quick-access phrases* | <img src="docs/screenshots/portrait/progress-mobile.png" width="240" alt="Progress Dashboard" /><br/>*Weekly practice trends* | <img src="docs/screenshots/portrait/settings-mobile.png" width="240" alt="Device Settings" /><br/>*Mobile accessibility toggles* |
 
-### Trainings & Guided Practice
+#### Mobile Guided Practice & Demonstration
 
-| Trainings Curriculum Hub | Listen and Repeat Step | Paced Speaking Practice |
+| Training Curriculum | Interactive Lesson Player | Mobile Presenter Demo |
 | :---: | :---: | :---: |
-| <img src="docs/screenshots/responsive-qa/desktop-05-trainings-home.png" width="260" alt="Trainings Curriculum Hub" /> | <img src="docs/screenshots/trainings/step_listen_repeat_en_light_1440.png" width="260" alt="Listen and Repeat Step" /> | <img src="docs/screenshots/trainings/speak_with_me_paced_en_light_1440.png" width="260" alt="Paced Speaking Practice" /> |
-
-| Tricky Sounds Detection | Easier Ways Alternative Phrasing | Presenter Guided Walkthrough |
-| :---: | :---: | :---: |
-| <img src="docs/screenshots/trainings/tricky_sounds_en_light_1440.png" width="260" alt="Tricky Sounds Detection" /> | <img src="docs/screenshots/responsive-qa/desktop-08-easier-ways.png" width="260" alt="Easier Ways Alternative Phrasing" /> | <img src="docs/screenshots/presenter/desktop-step3-speak.png" width="260" alt="Presenter Guided Walkthrough" /> |
+| <img src="docs/screenshots/portrait/training-curriculum-mobile.png" width="240" alt="Training Curriculum" /><br/>*Mobile curriculum navigation* | <img src="docs/screenshots/portrait/lesson-player-mobile.png" width="240" alt="Lesson Player" /><br/>*Compact lesson player* | <img src="docs/screenshots/portrait/presenter-demo-mobile.png" width="240" alt="Presenter Demo" /><br/>*Mobile presenter walkthrough* |
 
 ---
 
@@ -131,50 +178,50 @@ Sunn provides a clear distinction between **Interface UI Localization** and **Na
 
 ```mermaid
 flowchart TD
-    subgraph Browser ["Web Frontend (React 19 + Vite)"]
-        UI[User Interface & i18n Dictionaries]
-        AudioRec[Web Audio API Recorder]
-        AudioPlay[HTML5 Audio Player]
-        PBar[Presenter Demo Bar (Client Memory)]
+    subgraph Frontend ["Web Frontend (React 19 and Vite)"]
+        UI["User Interface and i18n Dictionaries"]
+        AudioRec["Web Audio API Recorder"]
+        AudioPlay["Audio Playback Engine"]
+        PBar["Presenter Demo Guide (Client Memory)"]
     end
 
-    subgraph Backend ["Sunn Server (FastAPI + Python 3.14)"]
-        Router[API Router & Auth Middleware]
-        Matcher[Phonetic Matcher & Reranker]
-        PaceCalc[WPM & Pace Math Engine]
-        TrickySvc[Tricky Sound Evidence Aggregator]
+    subgraph Backend ["Sunn Backend Server (FastAPI)"]
+        Router["API Router and Auth Middleware"]
+        Matcher["Phonetic Matcher and Reranker"]
+        PaceCalc["WPM and Pace Math Engine"]
+        TrickySvc["Tricky Sound Evidence Aggregator"]
     end
 
     subgraph Storage ["Persistent Local Storage"]
-        DB[(SQLite Database<br/>11 Tables)]
-        AudioDisk[(Local Audio Store<br/>data/users/:id/)]
-        CacheDisk[(TTS Cache Store<br/>data/cache/tts/)]
+        DB[("SQLite Database - 11 Tables")]
+        AudioDisk["User Audio File Store"]
+        TTSCache["TTS Audio Cache"]
     end
 
     subgraph External ["External Cloud Services (Server-Side Only)"]
-        Prisma[Gnani Prisma v2.5 STT<br/>api.vachana.ai]
-        Timbre[Gnani Timbre v2.5 TTS<br/>api.vachana.ai]
-        Groq[Groq Cloud LLM<br/>openai/gpt-oss-120b]
+        Prisma["Gnani Prisma v2.5 STT"]
+        Timbre["Gnani Timbre v2.5 TTS"]
+        Groq["Groq Cloud LLM (openai/gpt-oss-120b)"]
     end
 
-    AudioRec -- "16kHz Mono WAV" --> Router
-    Router -- "Token Verification" --> DB
-    Router -- "Audio Stream" --> Prisma
-    Prisma -- "Hypothesis Transcript" --> Router
-    Router -- "Transcripts & Candidates" --> Matcher
-    Matcher -- "Top Ranked Intent" --> UI
+    AudioRec -->|"16kHz Mono WAV"| Router
+    Router -->|"Token Verification"| DB
+    Router -->|"Audio Payload"| Prisma
+    Prisma -->|"Hypothesis Transcript"| Router
+    Router -->|"Hypothesis and Candidates"| Matcher
+    Matcher -->|"Top Ranked Intent"| UI
 
-    UI -- "Synthesize Intent" --> Router
-    Router -- "Text + Voice Config" --> Timbre
-    Timbre -- "Synthesized WAV" --> AudioPlay
-    Router <--> CacheDisk
+    UI -->|"Synthesize Request"| Router
+    Router -->|"Text and Voice Config"| Timbre
+    Timbre -->|"Synthesized WAV"| AudioPlay
+    Router --- TTSCache
 
-    UI -- "Find Alternative Words" --> Router
-    Router -- "Difficult Phonemes Prompt" --> Groq
-    Groq -- "Fluent Semantic Rewrites" --> UI
+    UI -->|"Alternative Phrasing Request"| Router
+    Router -->|"Difficult Phonemes Prompt"| Groq
+    Groq -->|"Fluent Semantic Rewrites"| UI
 
-    Router <--> DB
-    Router <--> AudioDisk
+    Router --- DB
+    Router --- AudioDisk
 ```
 
 ---
