@@ -1,5 +1,6 @@
 import csv
 import functools
+import glob
 import os
 import re
 import unicodedata
@@ -7,6 +8,8 @@ from collections import Counter
 
 from indic_transliteration import sanscript
 from rapidfuzz.distance import Levenshtein
+
+import languages
 
 # Usage priors, added to the 0-100 similarity. Kept small so similarity always dominates:
 # together they lift a phrase by at most 13 points, enough to settle a near tie between
@@ -21,38 +24,61 @@ CLEAR_SIMILARITY = 90  # a raw hypothesis this close to the confirmed phrase nee
 CONTEXTS = ("home", "hospital", "market", "any")
 SLOTS = ("item", "person", "place")
 SLOT = re.compile(r"\{(" + "|".join(SLOTS) + r")\}")
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Hand-written Latin spellings and English meanings of the starter phrases and more.
-GLOSSARY = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "ml", "phrases.csv")
+GLOSSARY = os.path.join(ROOT, "ml", "phrases.csv")
+# The other languages' starter phrases, each line "phrase | Latin spelling | English meaning".
+STARTERS = os.path.join(ROOT, "data", "default_phrases_*.txt")
+# Letters sanscript doesn't know (Malayalam chillus, Tamil's alveolar na), spelled out first,
+# and the è and ò it writes for short e and o.
+SPELLED_OUT = str.maketrans({"ൺ": "ണ്", "ൻ": "ന്", "ർ": "ര്", "ൽ": "ല്", "ൾ": "ള്", "ൿ": "ക്", "ன": "ந"})
+PLAIN = str.maketrans("èò", "eo")
 
 
 def has_devanagari(text):
-    return any("ऀ" <= c <= "ॿ" for c in text)
+    return languages.in_script(text, languages.DEVANAGARI)
 
 
 def normalize(text):
-    # Devanagari goes to ITRANS so it compares fairly with romanized Prisma output.
+    # Every Indic script goes to ITRANS, so it compares fairly with romanized Prisma output.
     # Only letters, digits and combining marks survive: ITRANS writes the danda as
     # "|" and chandrabindu as ".N", so dropping the rest keeps words in one piece.
-    if has_devanagari(text):
-        text = sanscript.transliterate(text, sanscript.DEVANAGARI, sanscript.ITRANS)
+    # Devanagari (Hindi, Marathi) goes as it always has; in the other scripts, what sanscript
+    # leaves untouched (a nukta) is dropped.
+    for block, scheme in languages.SCRIPTS:
+        if not languages.in_script(text, block):
+            continue
+        if scheme == sanscript.DEVANAGARI:
+            text = sanscript.transliterate(text, scheme, sanscript.ITRANS)
+        else:
+            text = sanscript.transliterate(text.translate(SPELLED_OUT), scheme, sanscript.ITRANS).translate(PLAIN)
+            text = "".join(c for c in text if not block[0] <= c <= block[1])
     text = "".join(c for c in text.lower() if c.isspace() or unicodedata.category(c)[0] in "LNM")
     return " ".join(text.split())
 
 
 @functools.cache
 def glossary():
-    """Devanagari phrase -> (Latin spelling, English meaning), from GLOSSARY; {} without it."""
+    """Phrase in an Indic script -> (Latin spelling, English meaning), from GLOSSARY and the
+    STARTERS files; {} without them."""
+    found = {}
     try:
         with open(GLOSSARY, encoding="utf-8") as f:
-            return {unicodedata.normalize("NFC", r["hindi"]): (r["latin"], r["meaning_en"]) for r in csv.DictReader(f)}
+            found = {unicodedata.normalize("NFC", r["hindi"]): (r["latin"], r["meaning_en"]) for r in csv.DictReader(f)}
     except OSError:
-        return {}
+        pass
+    for path in glob.glob(STARTERS):
+        with open(path, encoding="utf-8") as f:
+            for parts in (line.split("|") for line in f if not line.startswith("#")):
+                if len(parts) == 3:
+                    found.setdefault(unicodedata.normalize("NFC", parts[0].strip()), (parts[1].strip(), parts[2].strip()))
+    return found
 
 
 def gloss(text):
-    """(Latin spelling, English meaning) of a phrase, for the reranker and the judge: GLOSSARY's,
-    else its normalized ITRANS spelling and no meaning. An English phrase is both."""
-    if not has_devanagari(text):
+    """(Latin spelling, English meaning) of a phrase, for the reranker and the judge: the
+    glossary's, else its normalized ITRANS spelling and no meaning. A Latin phrase is both."""
+    if languages.script_of(text) is None:
         return text, text
     return glossary().get(unicodedata.normalize("NFC", text), (normalize(text), ""))
 
