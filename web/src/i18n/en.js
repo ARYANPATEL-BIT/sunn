@@ -1,6 +1,9 @@
 // Every UI string in English. hi.js has the same keys. {name}-style slots are filled by t().
 export default {
   'lang.label': 'Language',
+  'lang.beta': 'beta',
+  'lang.betaNote': 'Beta: translated by machine. Not yet checked by a native speaker.',
+  'sentence.end': '. ',
   'theme.toggle': 'Appearance: {theme}',
   'theme.light': 'Light',
   'theme.dark': 'Dark',
@@ -279,8 +282,6 @@ export default {
   'settings.savedSuccess': 'Settings saved successfully.',
   'settings.languageLabel': 'Application language',
   'settings.languageHelp': 'For buttons, messages and menus. Only on this device.',
-  'settings.langEnglish': 'English',
-  'settings.langHindi': 'हिंदी',
   'settings.themeLabel': 'Appearance',
   'settings.themeHelp': 'Automatic follows the light or dark setting of this device. Only on this device.',
   'settings.textSizeLabel': 'Text size',
@@ -353,8 +354,6 @@ export default {
   'onboarding.featureVoiceDesc': 'Sunn says the phrase you pick out loud, in a clear voice or in your own.',
   'onboarding.langHeading': "Choose the app's language",
   'onboarding.langDesc': 'This changes only what the screens are written in. The language you speak is in Settings.',
-  'onboarding.langEnglish': 'English',
-  'onboarding.langHindi': 'हिंदी (Hindi)',
   'onboarding.howHeading': 'Teaching Sunn your voice',
   'onboarding.howDesc': 'Sunn gets better the more it learns your pronunciation.',
   'onboarding.howStep1': 'Record 3 samples for each phrase so Sunn understands how you say it.',
@@ -523,6 +522,7 @@ export default {
   'trainings.backToTrainings': 'Back to Trainings',
   'trainings.backToCategory': 'Back to {category}',
   'trainings.honestNoteLabel': 'Honest note',
+  'trainings.lessonsLangNote': 'Lessons are available in English and Hindi for now.',
   'trainings.honestNote':
     'Sunn Trainings is for practice and confidence. It is not speech therapy and does not treat or cure any speech condition. If speaking is often hard for you or your child, a speech-language pathologist can help.',
   'trainings.signInToPractise': 'Sign in to practise',
