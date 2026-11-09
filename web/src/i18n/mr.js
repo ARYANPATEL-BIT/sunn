@@ -301,6 +301,7 @@ export default {
   'settings.voiceStatusLabel': 'सध्याचा आवाज',
   'settings.voiceRecorded': 'तुमच्या स्वतःच्या आवाजाची नक्कल',
   'settings.voiceStandard': 'नेहमीचा नैसर्गिक आवाज',
+  'settings.voiceNotInLanguage': 'तुमचा स्वतःचा आवाज सध्या फक्त हिंदीत चालतो. {language} मध्ये Sunn एका सामान्य आवाजात बोलतो.',
   'settings.useOwnVoiceLabel': 'वाक्ये माझ्या स्वतःच्या आवाजात बोला',
   'settings.useOwnVoiceHelp': 'रेकॉर्ड केलेला स्वतःचा आवाज लागतो.',
   'settings.voiceNotRecordedHelp': 'अजून स्वतःचा आवाज नाही, म्हणून Sunn नेहमीचा आवाज वापरते.',

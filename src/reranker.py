@@ -16,6 +16,7 @@ import matcher
 DEFAULT_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                             "ml", "models", "rerank-v2-onnx", "model.onnx")
 SHORTLIST = 10
+LANGUAGES = {"hi"}  # trained on Hindi only: never used for anyone speaking another language
 MAX_LENGTH = 64  # tokens per (heard, candidate) pair, as in training
 DEFAULT_WEIGHT = 20  # a confident pick can overturn a 20-point similarity gap, no more
 

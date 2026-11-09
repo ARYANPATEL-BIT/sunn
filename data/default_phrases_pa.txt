@@ -1,0 +1,60 @@
+# Machine-written: the starter phrases in Punjabi, with the same meanings as default_phrases_hi.txt,
+# not yet read by a native speaker (REVIEWED in web/src/i18n/languages.js).
+# Each line: the phrase in Gurmukhi script | a Latin spelling | its meaning (default_phrases_en.txt)
+# help
+ਮੈਨੂੰ ਮਦਦ ਚਾਹੀਦੀ ਹੈ | mainu madad chaahidi hai | I need help
+# basic needs
+ਪਾਣੀ ਚਾਹੀਦਾ ਹੈ | paani chaahida hai | I need water
+ਬਾਥਰੂਮ ਜਾਣਾ ਹੈ | bathroom jaana hai | I need the bathroom
+ਮੈਨੂੰ ਉਠਾ ਦਿਓ | mainu utha dio | Help me sit up
+ਮੈਨੂੰ ਲਿਟਾ ਦਿਓ | mainu lita dio | Help me lie down
+ਪਾਸਾ ਬਦਲ ਦਿਓ | paasa badal dio | Turn me on my side
+ਠੰਢ ਲੱਗ ਰਹੀ ਹੈ | thandh lagg rahi hai | I feel cold
+ਗਰਮੀ ਲੱਗ ਰਹੀ ਹੈ | garmi lagg rahi hai | I feel hot
+ਪੱਖਾ ਚਲਾ ਦਿਓ | pakkha chala dio | Turn on the fan
+ਲਾਈਟ ਬੰਦ ਕਰ ਦਿਓ | light band kar dio | Turn off the light
+ਮੇਰੀ ਐਨਕ ਦੇ ਦਿਓ | meri ainak de dio | Give me my glasses
+# pain and health
+ਦਰਦ ਹੋ ਰਿਹਾ ਹੈ | dard ho riha hai | I'm in pain
+ਸਿਰ ਦਰਦ ਹੋ ਰਿਹਾ ਹੈ | sir dard ho riha hai | My head hurts
+ਢਿੱਡ ਵਿੱਚ ਦਰਦ ਹੈ | dhidd vich dard hai | My stomach hurts
+ਦਵਾਈ ਦੇ ਦਿਓ | davaai de dio | Give me my medicine
+ਡਾਕਟਰ ਨੂੰ ਬੁਲਾਓ | doctor nu bulaao | Call the doctor
+ਸਾਹ ਲੈਣ ਵਿੱਚ ਤਕਲੀਫ਼ ਹੈ | saah lain vich takleef hai | I can't breathe properly
+ਚੱਕਰ ਆ ਰਹੇ ਨੇ | chakkar aa rahe ne | I feel dizzy
+ਜੀ ਘਬਰਾ ਰਿਹਾ ਹੈ | ji ghabra riha hai | I feel uneasy
+ਬਹੁਤ ਥਕਾਵਟ ਹੈ | bahut thakaavat hai | I feel tired
+ਮੈਂ ਠੀਕ ਹਾਂ | main theek haan | I'm fine
+# food and drink
+ਭੁੱਖ ਲੱਗੀ ਹੈ | bhukkh laggi hai | I'm hungry
+ਖਾਣਾ ਦੇ ਦਿਓ | khaana de dio | Give me some food
+ਚਾਹ ਪੀਣੀ ਹੈ | chaah peeni hai | I want tea
+ਦੁੱਧ ਚਾਹੀਦਾ ਹੈ | duddh chaahida hai | I need milk
+ਥੋੜ੍ਹਾ ਹੋਰ ਦਿਓ | thoda hor dio | A little more
+ਬੱਸ, ਢਿੱਡ ਭਰ ਗਿਆ | bass, dhidd bhar gaya | That's enough, I'm full
+ਖਾਣਾ ਗਰਮ ਕਰ ਦਿਓ | khaana garam kar dio | Heat up the food
+ਲੂਣ ਘੱਟ ਹੈ | loon ghatt hai | It needs more salt
+ਗਰਮ ਪਾਣੀ ਚਾਹੀਦਾ ਹੈ | garam paani chaahida hai | I need warm water
+ਕੁਝ ਮਿੱਠਾ ਦਿਓ | kujh mittha dio | Give me something sweet
+# family
+ਮਾਂ ਨੂੰ ਬੁਲਾਓ | maan nu bulaao | Call my mother
+ਪਾਪਾ ਨੂੰ ਬੁਲਾਓ | papa nu bulaao | Call my father
+ਪੁੱਤ ਨੂੰ ਫ਼ੋਨ ਕਰੋ | putt nu phone karo | Phone my son
+ਧੀ ਨੂੰ ਬੁਲਾਓ | dhee nu bulaao | Call my daughter
+ਵੀਰ ਨੂੰ ਬੁਲਾਓ | veer nu bulaao | Call my brother
+ਭੈਣ ਨੂੰ ਬੁਲਾਓ | bhain nu bulaao | Call my sister
+ਸਾਰੇ ਕਿੱਥੇ ਨੇ | saare kitthe ne | Where is everyone
+ਮੇਰੇ ਕੋਲ ਬੈਠੋ | mere kol baitho | Sit with me
+ਮੈਨੂੰ ਇਕੱਲਾ ਨਾ ਛੱਡੋ | mainu ikalla na chhaddo | Don't leave me alone
+ਫ਼ੋਨ ਲਾ ਦਿਓ | phone la dio | Make a phone call for me
+# greetings and politeness
+ਸਤ ਸ੍ਰੀ ਅਕਾਲ | sat sri akaal | Hello
+ਧੰਨਵਾਦ | dhannvaad | Thank you
+ਹਾਂ | haan | Yes
+ਨਹੀਂ | nahin | No
+ਠੀਕ ਹੈ | theek hai | Okay
+ਮਾਫ਼ ਕਰਨਾ | maaf karna | Sorry
+ਇੱਕ ਮਿੰਟ ਰੁਕੋ | ikk mint ruko | Wait a minute
+ਸ਼ੁਭ ਰਾਤ | shubh raat | Good night
+ਤੁਸੀਂ ਕਿਵੇਂ ਹੋ | tusin kiven ho | How are you
+ਬਹੁਤ ਵਧੀਆ | bahut vadhiya | Very good

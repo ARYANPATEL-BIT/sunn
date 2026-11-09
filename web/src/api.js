@@ -76,7 +76,7 @@ function upload(path, blob, fields = {}) {
 export const config = () => request('/config').then(json)
 export const googleConfig = () => request('/auth/google/config').then(json)
 
-// language is the language the person speaks: 'hi' or 'en'
+// language is the language the person speaks: one of the ten codes in i18n/languages.js
 export const signup = (body) => post('/auth/signup', { ...body, consent: true }).then(json)
 export const login = (email, password) => post('/auth/login', { email, password }).then(json)
 export const authGoogle = (data) => post('/auth/google', data).then(json)
@@ -107,7 +107,7 @@ export const deleteVoice = () => del('/me/voice').then(json)
 
 // --- Phrase Management ---
 
-// [{ id, text, contexts, urgent, enrolled, sample_count, last_used_at, sources }]
+// [{ id, text, contexts, urgent, language, enrolled, sample_count, last_used_at, sources }]
 export const listPhrases = () => request('/me/phrases').then(json)
 
 // Add the default everyday phrases in the user's language
@@ -128,8 +128,12 @@ export const deletePhrase = (phraseId) => del(`/me/phrases/${phraseId}`).then(js
 export const enroll = (phraseId, blob) => upload('/me/enroll', blob, { phrase_id: phraseId }).then(json)
 
 // Top 3 candidates for a recording. context is 'home', 'hospital' or 'market'; 'any' sends none.
-export const recognize = (blob, context) =>
-  upload('/me/recognize', blob, context && context !== 'any' ? { context } : {}).then(json)
+// uiLanguage is the interface's, which the judge's reason comes back in.
+export const recognize = (blob, context, uiLanguage = 'en') =>
+  upload('/me/recognize', blob, {
+    ...(context && context !== 'any' ? { context } : {}),
+    ui_language: uiLanguage,
+  }).then(json)
 
 // Confirm a recognition result. Accepts:
 // - { sample_id, phrase_id }
@@ -173,7 +177,7 @@ export async function say(text, options = {}) {
     return { blob, fallback: false }
   } catch (err) {
     if (options.fallback && typeof window !== 'undefined' && window.speechSynthesis) {
-      await speakBrowserFallback(text, options.language === 'en' ? 'en-IN' : 'hi-IN')
+      await speakBrowserFallback(text, `${options.language || 'hi'}-IN`)
       return { blob: null, fallback: true }
     }
     throw err

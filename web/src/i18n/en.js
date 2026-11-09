@@ -300,6 +300,7 @@ export default {
   'settings.voiceStatusLabel': 'Current speech voice',
   'settings.voiceRecorded': 'Personal cloned voice',
   'settings.voiceStandard': 'Standard natural voice',
+  'settings.voiceNotInLanguage': 'Your own voice works in Hindi only for now. In {language}, Sunn speaks in a standard voice.',
   'settings.useOwnVoiceLabel': 'Speak phrases in my personal voice',
   'settings.useOwnVoiceHelp': 'Requires a recorded personal voice model.',
   'settings.voiceNotRecordedHelp': 'No personal voice yet, so Sunn uses the standard voice.',

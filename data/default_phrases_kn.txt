@@ -1,0 +1,60 @@
+# Machine-written: the starter phrases in Kannada, with the same meanings as default_phrases_hi.txt,
+# not yet read by a native speaker (REVIEWED in web/src/i18n/languages.js).
+# Each line: the phrase in Kannada script | a Latin spelling | its meaning (default_phrases_en.txt)
+# help
+ನನಗೆ ಸಹಾಯ ಬೇಕು | nanage sahaaya beku | I need help
+# basic needs
+ನೀರು ಬೇಕು | neeru beku | I need water
+ಬಾತ್ರೂಮ್ ಹೋಗಬೇಕು | bathroom hogabeku | I need the bathroom
+ನನ್ನನ್ನು ಎಬ್ಬಿಸಿ ಕೂರಿಸಿ | nannannu ebbisi koorisi | Help me sit up
+ನನ್ನನ್ನು ಮಲಗಿಸಿ | nannannu malagisi | Help me lie down
+ನನ್ನನ್ನು ಮಗ್ಗುಲಿಗೆ ತಿರುಗಿಸಿ | nannannu maggulige thirugisi | Turn me on my side
+ಚಳಿ ಆಗ್ತಿದೆ | chali aagthide | I feel cold
+ಸೆಖೆ ಆಗ್ತಿದೆ | sekhe aagthide | I feel hot
+ಫ್ಯಾನ್ ಹಾಕಿ | fan haaki | Turn on the fan
+ಲೈಟ್ ಆರಿಸಿ | light aarisi | Turn off the light
+ನನ್ನ ಕನ್ನಡಕ ಕೊಡಿ | nanna kannadaka kodi | Give me my glasses
+# pain and health
+ನೋವಾಗ್ತಿದೆ | novaagthide | I'm in pain
+ತಲೆ ನೋವಾಗ್ತಿದೆ | thale novaagthide | My head hurts
+ಹೊಟ್ಟೆ ನೋವಾಗ್ತಿದೆ | hotte novaagthide | My stomach hurts
+ಔಷಧಿ ಕೊಡಿ | aushadhi kodi | Give me my medicine
+ಡಾಕ್ಟರನ್ನು ಕರೀರಿ | doctorannu kareeri | Call the doctor
+ಉಸಿರಾಡೋಕೆ ಕಷ್ಟ ಆಗ್ತಿದೆ | usiraadoke kashta aagthide | I can't breathe properly
+ತಲೆ ಸುತ್ತುತ್ತಿದೆ | thale suththuththide | I feel dizzy
+ಏನೋ ಒಂಥರಾ ಆಗ್ತಿದೆ | eno ontharaa aagthide | I feel uneasy
+ತುಂಬಾ ಸುಸ್ತಾಗಿದೆ | thumbaa susthaagide | I feel tired
+ನಾನು ಚೆನ್ನಾಗಿದ್ದೀನಿ | naanu chennaagiddeeni | I'm fine
+# food and drink
+ಹಸಿವಾಗ್ತಿದೆ | hasivaagthide | I'm hungry
+ಊಟ ಕೊಡಿ | oota kodi | Give me some food
+ಟೀ ಕುಡೀಬೇಕು | tea kudeebeku | I want tea
+ಹಾಲು ಬೇಕು | haalu beku | I need milk
+ಇನ್ನೂ ಸ್ವಲ್ಪ ಕೊಡಿ | innoo swalpa kodi | A little more
+ಸಾಕು, ಹೊಟ್ಟೆ ತುಂಬಿತು | saaku, hotte thumbithu | That's enough, I'm full
+ಊಟ ಬಿಸಿ ಮಾಡಿ | oota bisi maadi | Heat up the food
+ಉಪ್ಪು ಕಡಿಮೆ ಇದೆ | uppu kadime ide | It needs more salt
+ಬಿಸಿ ನೀರು ಬೇಕು | bisi neeru beku | I need warm water
+ಏನಾದ್ರೂ ಸಿಹಿ ಕೊಡಿ | enaadroo sihi kodi | Give me something sweet
+# family
+ಅಮ್ಮನನ್ನು ಕರೀರಿ | ammanannu kareeri | Call my mother
+ಅಪ್ಪನನ್ನು ಕರೀರಿ | appanannu kareeri | Call my father
+ನನ್ನ ಮಗನಿಗೆ ಫೋನ್ ಮಾಡಿ | nanna maganige phone maadi | Phone my son
+ನನ್ನ ಮಗಳನ್ನು ಕರೀರಿ | nanna magalannu kareeri | Call my daughter
+ಅಣ್ಣನನ್ನು ಕರೀರಿ | annanannu kareeri | Call my brother
+ಅಕ್ಕನನ್ನು ಕರೀರಿ | akkanannu kareeri | Call my sister
+ಎಲ್ಲರೂ ಎಲ್ಲಿದ್ದಾರೆ | ellaroo elliddaare | Where is everyone
+ನನ್ನ ಹತ್ರ ಕೂತ್ಕೊಳ್ಳಿ | nanna hathra koothkolli | Sit with me
+ನನ್ನನ್ನು ಒಂಟಿಯಾಗಿ ಬಿಡಬೇಡಿ | nannannu ontiyaagi bidabedi | Don't leave me alone
+ಫೋನ್ ಮಾಡಿ ಕೊಡಿ | phone maadi kodi | Make a phone call for me
+# greetings and politeness
+ನಮಸ್ಕಾರ | namaskaara | Hello
+ಧನ್ಯವಾದ | dhanyavaada | Thank you
+ಹೌದು | haudu | Yes
+ಇಲ್ಲ | illa | No
+ಸರಿ | sari | Okay
+ಕ್ಷಮಿಸಿ | kshamisi | Sorry
+ಒಂದು ನಿಮಿಷ ಇರಿ | ondu nimisha iri | Wait a minute
+ಶುಭ ರಾತ್ರಿ | shubha raathri | Good night
+ಹೇಗಿದ್ದೀರಿ | hegiddeeri | How are you
+ತುಂಬಾ ಚೆನ್ನಾಗಿದೆ | thumbaa chennaagide | Very good

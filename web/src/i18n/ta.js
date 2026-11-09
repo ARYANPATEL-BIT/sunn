@@ -301,6 +301,7 @@ export default {
   'settings.voiceStatusLabel': 'இப்போதைய குரல்',
   'settings.voiceRecorded': 'உங்கள் சொந்தக் குரலின் நகல்',
   'settings.voiceStandard': 'சாதாரண இயல்பான குரல்',
+  'settings.voiceNotInLanguage': 'உங்கள் சொந்தக் குரல் இப்போது இந்தியில் மட்டுமே வேலை செய்யும். {language} மொழியில் Sunn ஒரு பொதுவான குரலில் பேசும்.',
   'settings.useOwnVoiceLabel': 'வாக்கியங்களை என் சொந்தக் குரலில் சொல்',
   'settings.useOwnVoiceHelp': 'பதிவு செய்த சொந்தக் குரல் தேவை.',
   'settings.voiceNotRecordedHelp': 'இன்னும் சொந்தக் குரல் இல்லை, எனவே Sunn சாதாரணக் குரலைப் பயன்படுத்துகிறது.',

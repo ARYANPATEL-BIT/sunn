@@ -223,7 +223,7 @@ def test_groq_judge_tenant_isolated_cache(monkeypatch):
     """Judge cache keys isolate results between different users."""
     called_users = []
 
-    def mock_ask(heard, candidates, context):
+    def mock_ask(heard, candidates, context, *languages):
         return {"choice": "1", "confidence": 0.9, "reason": "test"}
 
     monkeypatch.setattr(llm_judge, "ask", mock_ask)

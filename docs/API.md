@@ -102,7 +102,7 @@ Hugging Face's) the IP is the client's own when the server sets `TRUST_PROXY` (d
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": null, "caregiver_phone": null,
- "has_own_voice": false, "use_own_voice": false}
+ "has_own_voice": false, "use_own_voice": false, "can_clone_voice": true}
 ```
 
 Errors: `invite_required`, `too_many_attempts`, `consent_required`, `no_name`, `bad_email`,
@@ -115,7 +115,7 @@ Errors: `invite_required`, `too_many_attempts`, `consent_required`, `no_name`, `
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
- "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true}
+ "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": true}
 ```
 
 Errors: `bad_login`, `too_many_attempts`, `invalid_input`.
@@ -127,7 +127,7 @@ Errors: `bad_login`, `too_many_attempts`, `invalid_input`.
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
- "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true}
+ "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": true}
 ```
 
 Errors: `invalid_google_token`, `google_unreachable`, `unverified_email`, `invite_required`, `too_many_attempts`, `consent_required`, `email_taken`, `invalid_input`.
@@ -149,7 +149,7 @@ The signed-in user. Use this on app start to see whether there is a session.
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
- "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true}
+ "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": true}
 ```
 
 Errors: `not_logged_in`.
@@ -162,8 +162,8 @@ already has is skipped, so after a language change this adds the new language's 
 building blocks next to the old ones.
 
 ```json
-[{"id": 1, "text": "मदद चाहिए", "contexts": ["any"], "urgent": true, "enrolled": 0, "sample_count": 0, "last_used_at": null, "sources": []},
- {"id": 12, "text": "पानी चाहिए", "contexts": ["home", "hospital"], "urgent": false, "enrolled": 0, "sample_count": 0, "last_used_at": null, "sources": []}]
+[{"id": 1, "text": "मदद चाहिए", "contexts": ["any"], "urgent": true, "language": "hi", "enrolled": 0, "sample_count": 0, "last_used_at": null, "sources": []},
+ {"id": 12, "text": "पानी चाहिए", "contexts": ["home", "hospital"], "urgent": false, "language": "hi", "enrolled": 0, "sample_count": 0, "last_used_at": null, "sources": []}]
 ```
 
 Errors: `not_logged_in`.
@@ -196,8 +196,11 @@ the first candidate's similarity is under 60.
 
 With `RERANKER_ENABLED`, `parts` also has `rerank`: the trained reranker's part, up to
 `RERANKER_WEIGHT`. With `LLM_ENABLED`, the judge may put another of the top 5 first:
-`chosen_by` is `judge` then, with its `reason` in plain English, else `matcher` and `reason` is
-null. `timings_ms` is milliseconds per step, null for one that didn't run; `tts` is always null
+`chosen_by` is `judge` then, with its `reason` in the interface language (optional form field
+`ui_language`, a language code, default `en`; null when the judge's reason isn't readable text in
+it), else `matcher` and `reason` is null. The reranker only runs for someone who speaks Hindi, the
+only language it was trained on. Candidates are the user's phrases in the language they speak and
+in English, matched only to recordings in those languages. `timings_ms` is milliseconds per step, null for one that didn't run; `tts` is always null
 here, since Timbre runs in `POST /speak`.
 
 ```json
@@ -231,8 +234,10 @@ Errors: `not_logged_in`, `not_found`, `invalid_input`.
 
 ### `POST /speak` · real
 
-`{"text": "दवाई चाहिए"}`. Answers `audio/wav`: the user's own voice when `use_own_voice` is on,
-else the stock voice for their language. Its `Server-Timing` header (`tts;dur=<ms>`) says how
+`{"text": "दवाई चाहिए"}`. Answers `audio/wav`, in the language of the user's phrase with that text
+(their language when it is no phrase): their own voice when `use_own_voice` is on and that
+language offers it (`can_clone_voice`; Hindi only, the one language Gnani's voice-clone docs show),
+else that language's stock voice. Its `Server-Timing` header (`tts;dur=<ms>`) says how
 long Timbre took.
 
 Errors: `not_logged_in`, `invalid_input`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`,
@@ -255,9 +260,9 @@ every normal account. Label a phrase with `simulated` in it, so nobody mistakes 
 dysarthric speech.
 
 ```json
-[{"id": 2, "text": "दर्द हो रहा है", "contexts": ["hospital"], "urgent": true, "enrolled": 3, "sample_count": 5, "last_used_at": "2026-10-18T07:40:00Z", "sources": []},
- {"id": 12, "text": "पानी चाहिए", "contexts": ["home", "hospital"], "urgent": false, "enrolled": 3, "sample_count": 9, "last_used_at": "2026-10-20T18:05:00Z", "sources": ["simulated"]},
- {"id": 40, "text": "बेटे को बुलाओ", "contexts": ["any"], "urgent": false, "enrolled": 0, "sample_count": 1, "last_used_at": null, "sources": []}]
+[{"id": 2, "text": "दर्द हो रहा है", "contexts": ["hospital"], "urgent": true, "language": "hi", "enrolled": 3, "sample_count": 5, "last_used_at": "2026-10-18T07:40:00Z", "sources": []},
+ {"id": 12, "text": "पानी चाहिए", "contexts": ["home", "hospital"], "urgent": false, "language": "hi", "enrolled": 3, "sample_count": 9, "last_used_at": "2026-10-20T18:05:00Z", "sources": ["simulated"]},
+ {"id": 40, "text": "बेटे को बुलाओ", "contexts": ["any"], "urgent": false, "language": "hi", "enrolled": 0, "sample_count": 1, "last_used_at": null, "sources": []}]
 ```
 
 Errors: `not_logged_in`.
@@ -267,18 +272,18 @@ Errors: `not_logged_in`.
 `{"text": "खिड़की खोल दो"}`. Adding text that is already a phrase returns that phrase.
 
 ```json
-{"id": 52, "text": "खिड़की खोल दो", "contexts": ["any"], "urgent": false}
+{"id": 52, "text": "खिड़की खोल दो", "contexts": ["any"], "urgent": false, "language": "hi"}
 ```
 
 Errors: `not_logged_in`, `invalid_input`.
 
 ### `PATCH /me/phrases/{phrase_id}` · real
 
-Any of `{"text": "ठंडा पानी चाहिए", "contexts": ["home"], "urgent": false}`. `contexts: []`
+Any of `{"text": "ठंडा पानी चाहिए", "contexts": ["home"], "urgent": false, "language": "hi"}`. `contexts: []`
 means any.
 
 ```json
-{"id": 12, "text": "ठंडा पानी चाहिए", "contexts": ["home"], "urgent": false}
+{"id": 12, "text": "ठंडा पानी चाहिए", "contexts": ["home"], "urgent": false, "language": "hi"}
 ```
 
 Errors: `not_logged_in`, `not_found`, `invalid_input`, `phrase_exists`.
@@ -439,17 +444,19 @@ Any of `{"use_own_voice": true, "caregiver_name": "राहुल", "caregiver_
 `null` or `""` clears a caregiver field. `caregiver_phone` comes back as digits with the
 country code, ready for `https://wa.me/<phone>`. `use_own_voice: true` needs a recorded voice.
 
-`language` (`hi` or `en`; anything else is `invalid_input`, and Hinglish is `hi`) is the
-language the person speaks, not the app's display language. It is saved, and every new
-recognition and stock-voice `/speak` uses it. Nothing is deleted: phrases, recordings, slot
-words and templates all stay, but recordings in the old language stop counting for
-recognition (see `sample_count` in `GET /me/phrases`) until the language is switched back. Call
+`language` (`en`, `hi`, `ta`, `te`, `kn`, `ml`, `mr`, `gu`, `bn` or `pa`; anything else is
+`invalid_input`, and Hinglish is `hi`) is the language the person speaks, not the app's display
+language. It is saved, and every new recognition and every new phrase uses it; each phrase keeps
+its own `language`, which `/speak` says it in. Nothing is deleted: phrases, recordings, slot words
+and templates all stay, but phrases and recordings in the old language (other than English) stop
+counting for recognition (see `sample_count` in `GET /me/phrases`) until the language is switched
+back. Call
 `POST /me/phrases/default` afterwards to add the new language's everyday phrases.
 
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "en",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
- "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true}
+ "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": false}
 ```
 
 Errors: `not_logged_in`, `invalid_input`, `no_voice`.
@@ -463,7 +470,7 @@ turns it on.
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
- "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": false}
+ "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": false, "can_clone_voice": true}
 ```
 
 Errors: `not_logged_in`, `consent_required`, `invalid_input`, `file_too_large`, `bad_audio`,
@@ -477,7 +484,7 @@ Forgets the cloned voice and everything spoken in it; `use_own_voice` goes off.
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
- "caregiver_phone": "919876543210", "has_own_voice": false, "use_own_voice": false}
+ "caregiver_phone": "919876543210", "has_own_voice": false, "use_own_voice": false, "can_clone_voice": true}
 ```
 
 Errors: `not_logged_in`.

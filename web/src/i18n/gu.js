@@ -301,6 +301,7 @@ export default {
   'settings.voiceStatusLabel': 'હાલનો અવાજ',
   'settings.voiceRecorded': 'તમારા પોતાના અવાજની નકલ',
   'settings.voiceStandard': 'સામાન્ય કુદરતી અવાજ',
+  'settings.voiceNotInLanguage': 'તમારો પોતાનો અવાજ હાલ ફક્ત હિન્દીમાં ચાલે છે. {language}માં Sunn એક સામાન્ય અવાજમાં બોલે છે.',
   'settings.useOwnVoiceLabel': 'વાક્યો મારા પોતાના અવાજમાં બોલો',
   'settings.useOwnVoiceHelp': 'રેકોર્ડ કરેલો પોતાનો અવાજ જોઈએ.',
   'settings.voiceNotRecordedHelp': 'હજી પોતાનો અવાજ નથી, તેથી Sunn સામાન્ય અવાજ વાપરે છે.',

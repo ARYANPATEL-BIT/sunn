@@ -301,6 +301,7 @@ export default {
   'settings.voiceStatusLabel': 'ಈಗಿನ ಧ್ವನಿ',
   'settings.voiceRecorded': 'ನಿಮ್ಮದೇ ಧ್ವನಿಯ ನಕಲು',
   'settings.voiceStandard': 'ಸಾಮಾನ್ಯ ಸಹಜ ಧ್ವನಿ',
+  'settings.voiceNotInLanguage': 'ನಿಮ್ಮ ಸ್ವಂತ ಧ್ವನಿ ಸದ್ಯಕ್ಕೆ ಹಿಂದಿಯಲ್ಲಿ ಮಾತ್ರ ಕೆಲಸ ಮಾಡುತ್ತದೆ. {language}ದಲ್ಲಿ Sunn ಸಾಮಾನ್ಯ ಧ್ವನಿಯಲ್ಲಿ ಮಾತನಾಡುತ್ತದೆ.',
   'settings.useOwnVoiceLabel': 'ಮಾತುಗಳನ್ನು ನನ್ನದೇ ಧ್ವನಿಯಲ್ಲಿ ಹೇಳಿ',
   'settings.useOwnVoiceHelp': 'ರೆಕಾರ್ಡ್ ಮಾಡಿದ ಸ್ವಂತ ಧ್ವನಿ ಬೇಕು.',
   'settings.voiceNotRecordedHelp': 'ಇನ್ನೂ ಸ್ವಂತ ಧ್ವನಿ ಇಲ್ಲ, ಹಾಗಾಗಿ Sunn ಸಾಮಾನ್ಯ ಧ್ವನಿ ಬಳಸುತ್ತದೆ.',

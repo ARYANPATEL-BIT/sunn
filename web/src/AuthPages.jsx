@@ -3,6 +3,7 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import * as api from './api.js'
 import { safeNext, useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
+import { LANGUAGES } from './i18n/languages.js'
 import { isOnboarded } from './prefs.js'
 import { Alert, errorText, Grille, Icon, LanguagePicker, PrimaryButton, reducedMotion, ThemeToggle, useGo, Wordmark } from './ui/index.js'
 
@@ -361,8 +362,8 @@ export function SignupPage() {
   const [password, setPassword] = useState('')
   const [inviteCode, setInviteCode] = useState(params.get('invite') || '')
   const [inviteRequired, setInviteRequired] = useState(false)
-  // The language the person speaks, not the page's: Hindi or English for now.
-  const [speaks, setSpeaks] = useState(lang === 'hi' ? 'hi' : 'en')
+  // The language the person speaks, not the page's, though it starts as the page's.
+  const [speaks, setSpeaks] = useState(lang)
   const [consent, setConsent] = useState(false)
   const [busy, setBusy] = useState(false)
   const [googleClientId, setGoogleClientId] = useState('')
@@ -543,10 +544,7 @@ export function SignupPage() {
         <fieldset className="group-wrap">
           <legend className="group-title">{t('signup.language')}</legend>
           <div className="group">
-            {[
-              ['hi', 'हिंदी'],
-              ['en', 'English'],
-            ].map(([code, label]) => (
+            {LANGUAGES.map(({ code, native: label }) => (
               <label key={code} className="row choice" lang={code}>
                 <input
                   type="radio"

@@ -301,6 +301,7 @@ export default {
   'settings.voiceStatusLabel': 'এখনকার গলা',
   'settings.voiceRecorded': 'আপনার নিজের গলার নকল',
   'settings.voiceStandard': 'সাধারণ স্বাভাবিক গলা',
+  'settings.voiceNotInLanguage': 'আপনার নিজের গলা এখন শুধু হিন্দিতে কাজ করে। {language}-তে Sunn একটি সাধারণ গলায় কথা বলে।',
   'settings.useOwnVoiceLabel': 'কথাগুলো আমার নিজের গলায় বলুক',
   'settings.useOwnVoiceHelp': 'রেকর্ড করা নিজের গলা লাগবে।',
   'settings.voiceNotRecordedHelp': 'এখনও নিজের গলা নেই, তাই Sunn সাধারণ গলা ব্যবহার করে।',

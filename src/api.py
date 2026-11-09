@@ -24,6 +24,7 @@ import auth
 import db
 import gnani
 import gnani_mock
+import languages
 import llm_judge
 import log
 import matcher
@@ -46,8 +47,10 @@ VOICE_SECONDS = (5, 30)  # reference audio for cloning, from the voice clone emb
 # The group comments in data/default_phrases_*.txt -> contexts for the phrases under them.
 GROUP_CONTEXTS = {"help": "any", "basic needs": "home,hospital", "pain and health": "hospital",
                   "food and drink": "home", "family": "home", "greetings and politeness": "any"}
+# Urgent by text, or in the other languages' files by meaning (their third column).
 URGENT_PHRASES = {"मदद चाहिए", "दर्द हो रहा है", "I need help", "I'm in pain"}
-# Building blocks every new user starts with. बेटे, not बेटा: the only person template takes को.
+# Building blocks every new user starts with, in Hindi and English only for now.
+# बेटे, not बेटा: the only person template takes को.
 DEFAULT_SLOT_WORDS = {
     "hi": {"item": ["पानी", "दवाई", "खाना", "चाय", "कंबल"], "person": ["बेटे", "बेटी", "डॉक्टर", "नर्स"]},
     "en": {"item": ["water", "my medicine", "food", "tea", "a blanket"],
@@ -140,7 +143,8 @@ def public(user):
     """The user as the app sees it. The voice embedding itself never leaves the server."""
     return {**{key: user[key] for key in ("id", "name", "email", "language", "consent_given_at",
                                           "caregiver_name", "caregiver_phone")},
-            "has_own_voice": user["voice_embedding"] is not None, "use_own_voice": bool(user["use_own_voice"])}
+            "has_own_voice": user["voice_embedding"] is not None, "use_own_voice": bool(user["use_own_voice"]),
+            "can_clone_voice": user["language"] in speak.CLONE_LANGUAGES}
 
 
 def get_user(user_id):
@@ -182,17 +186,20 @@ def phrase_out(phrase):
 
 
 def get_phrase(user_id, phrase_id):
-    return phrase_out({key: owned("phrases", phrase_id, user_id)[key] for key in ("id", "text", "contexts", "urgent")})
+    phrase = owned("phrases", phrase_id, user_id)
+    return phrase_out({key: phrase[key] for key in ("id", "text", "contexts", "urgent", "language")})
 
 
-def find_or_add_phrase(user_id, text, contexts="any", urgent=False):
-    """Phrase id for text, reusing an identical phrase so one phrase never splits the bank."""
+def find_or_add_phrase(user, text):
+    """Phrase id for text in the user's language, reusing an identical phrase so one phrase never
+    splits the bank. The same words in another language are another phrase."""
     text = clean_text(text)
-    phrase = db.row("SELECT id FROM phrases WHERE user_id = ? AND text = ?", (user_id, text))
+    phrase = db.row("SELECT id FROM phrases WHERE user_id = ? AND text = ? AND language = ?",
+                    (user["id"], text, user["language"]))
     if phrase:
         return phrase["id"]
-    return db.execute("INSERT INTO phrases (user_id, text, contexts, urgent) VALUES (?, ?, ?, ?)",
-                      (user_id, text, contexts, int(urgent)))
+    return db.execute("INSERT INTO phrases (user_id, text, language) VALUES (?, ?, ?)",
+                      (user["id"], text, user["language"]))
 
 
 def user_folder(user):
@@ -301,11 +308,11 @@ def add_default_building_blocks(user_id, language):
     words = {(w["slot"], w["text"]) for w in db.rows("SELECT slot, text FROM slot_words WHERE user_id = ?", (user_id,))}
     templates = {t["text"] for t in db.rows("SELECT text FROM templates WHERE user_id = ?", (user_id,))}
     statements = [("INSERT INTO slot_words (user_id, slot, text) VALUES (?, ?, ?)", (user_id, slot, word))
-                  for slot, slot_words in DEFAULT_SLOT_WORDS[language].items() for word in slot_words
+                  for slot, slot_words in DEFAULT_SLOT_WORDS.get(language, {}).items() for word in slot_words
                   if (slot, word) not in words]
     statements += [("INSERT INTO templates (user_id, text, fixed_part) VALUES (?, ?, ?)",
                     (user_id, text, matcher.parse_template(text)[1]))
-                   for text in DEFAULT_TEMPLATES[language] if text not in templates]
+                   for text in DEFAULT_TEMPLATES.get(language, []) if text not in templates]
     if statements:
         db.transaction(*statements)
 
@@ -453,7 +460,7 @@ def auth_google(body: schemas.GoogleAuth, request: Request, response: Response):
     if not body.consent:
         raise Refused(400, "consent_required", "consent must be true")
 
-    language = body.language if body.language in ("hi", "en") else "en"
+    language = body.language if body.language in languages.CODES else "en"
     try:
         user_id = db.execute(
             "INSERT INTO users (name, email, password_hash, language, consent_given_at, google_id) "
@@ -484,8 +491,9 @@ def me(user=Depends(current_user)):
 def update_me(changes: schemas.UserUpdate, user=Depends(current_user)):
     """Change any of use_own_voice (needs a recorded voice), caregiver_name and caregiver_phone
     (digits with the country code, like 919876543210; spaces, dashes and + are dropped).
-    null or "" clears a caregiver field. language ("hi" or "en") is what new Prisma and Timbre
-    calls use; nothing is deleted, but the matcher only uses samples in the current language."""
+    null or "" clears a caregiver field. language (languages.CODES) is what Prisma hears from now on
+    and new phrases are in; nothing is deleted, but the matcher only uses phrases and samples in
+    the current language and English."""
     updates = {}
     for field, value in changes.model_dump(exclude_unset=True).items():
         if field == "language" and value is not None:
@@ -556,15 +564,17 @@ def delete_voice(user=Depends(current_user)):
 
 @app.get("/me/phrases", response_model=list[schemas.PhraseDetail])
 def list_phrases(user=Depends(current_user)):
-    """Every phrase with its enrollment recordings (enrolled, so enrollment can resume), its
-    samples in the user's current language (sample_count, confirmed recognitions included; the
-    matcher ignores the rest), when it was last used, and sources: where its demo recordings came
-    from (pilot, torgo, simulated; empty when every recording was made in the app)."""
+    """Every phrase, in every language, with its enrollment recordings (enrolled, so enrollment can
+    resume), its samples in the user's current language or English (sample_count, confirmed
+    recognitions included; the matcher ignores the rest), when it was last used, and sources: where
+    its demo recordings came from (pilot, torgo, simulated; empty when every recording was made in
+    the app)."""
     return [{**phrase_out(p), "sources": sorted(p["sources"].split(",")) if p["sources"] else []}
             for p in db.rows("""
-        SELECT p.id, p.text, p.contexts, p.urgent,
+        SELECT p.id, p.text, p.contexts, p.urgent, p.language,
             (SELECT COUNT(*) FROM samples s WHERE s.phrase_id = p.id AND s.source = 'enroll') AS enrolled,
-            (SELECT COUNT(*) FROM samples s WHERE s.phrase_id = p.id AND s.language = :language) AS sample_count,
+            (SELECT COUNT(*) FROM samples s WHERE s.phrase_id = p.id AND s.language IN (:language, 'en'))
+                AS sample_count,
             (SELECT MAX(created_at) FROM uses u WHERE u.phrase_id = p.id) AS last_used_at,
             (SELECT GROUP_CONCAT(DISTINCT s.speech_source) FROM samples s WHERE s.phrase_id = p.id) AS sources
         FROM phrases p WHERE p.user_id = :u ORDER BY p.id""", {"u": user["id"], "language": user["language"]})]
@@ -572,28 +582,32 @@ def list_phrases(user=Depends(current_user)):
 
 @app.post("/me/phrases", response_model=schemas.Phrase)
 def add_phrase(body: schemas.NewPhrase, user=Depends(current_user)):
-    return get_phrase(user["id"], find_or_add_phrase(user["id"], body.text))
+    return get_phrase(user["id"], find_or_add_phrase(user, body.text))
 
 
 @app.post("/me/phrases/default", response_model=list[schemas.PhraseDetail])
 def add_default_phrases(user=Depends(current_user)):
-    """Add the everyday phrases in the user's language (data/default_phrases_<hi|en>.txt), with
-    contexts from their group comment (GROUP_CONTEXTS; a group not listed there is any), and the
-    default slot words and templates for it. Text the user already has is skipped, so after a
-    language change this adds the new language's. One transaction for all of them: one commit
-    instead of one per phrase, which kept sign-up waiting for seconds."""
-    add_default_building_blocks(user["id"], user["language"])
-    have = {p["text"] for p in db.rows("SELECT text FROM phrases WHERE user_id = ?", (user["id"],))}
+    """Add the everyday phrases in the user's language (data/default_phrases_<code>.txt; past
+    Hindi and English, each line is "phrase | Latin spelling | English meaning"), with contexts
+    from their group comment (GROUP_CONTEXTS; a group not listed there is any), and the default
+    slot words and templates for it. Text the user already has in that language is skipped, so
+    after a language change this adds the new language's. One transaction for all of them: one
+    commit instead of one per phrase, which kept sign-up waiting for seconds."""
+    language = user["language"]
+    add_default_building_blocks(user["id"], language)
+    have = {p["text"] for p in db.rows("SELECT text FROM phrases WHERE user_id = ? AND language = ?",
+                                       (user["id"], language))}
     contexts, statements = "any", []
-    with open(DEFAULT_PHRASES.format(language=user["language"]), encoding="utf-8") as f:
+    with open(DEFAULT_PHRASES.format(language=language), encoding="utf-8") as f:
         for line in f:
-            text = " ".join(line.split())
+            text, *gloss = [" ".join(part.split()) for part in line.split("|")]
             if line.startswith("#"):
                 contexts = GROUP_CONTEXTS.get(line.strip("# \n"), "any")
             elif text and text not in have:
                 have.add(text)
-                statements.append(("INSERT INTO phrases (user_id, text, contexts, urgent) VALUES (?, ?, ?, ?)",
-                                   (user["id"], text, contexts, int(text in URGENT_PHRASES))))
+                urgent = text in URGENT_PHRASES or bool(gloss) and gloss[-1] in URGENT_PHRASES
+                statements.append(("INSERT INTO phrases (user_id, text, contexts, urgent, language)"
+                                   " VALUES (?, ?, ?, ?, ?)", (user["id"], text, contexts, int(urgent), language)))
     if statements:
         db.transaction(*statements)
     return list_phrases(user)
@@ -607,8 +621,8 @@ def update_phrase(phrase_id: int, changes: schemas.PhraseUpdate, user=Depends(cu
     for field, value in changes.model_dump(exclude_none=True).items():
         if field == "text":
             updates[field] = clean_text(value)
-            taken = db.row("SELECT id FROM phrases WHERE user_id = ? AND text = ? AND id != ?",
-                           (user["id"], updates[field], phrase_id))
+            taken = db.row("SELECT id FROM phrases WHERE user_id = ? AND text = ? AND id != ? AND language ="
+                           " (SELECT language FROM phrases WHERE id = ?)", (user["id"], updates[field], phrase_id, phrase_id))
             if taken:
                 raise Refused(409, "phrase_exists", "another phrase already has this text", phrase_id=taken["id"])
         elif field == "contexts":
@@ -714,20 +728,23 @@ def enroll_template(template_id: int, audio_file: UploadFile = File(alias="audio
 
 
 def candidates_for(user):
-    """What a recording can be matched to: every phrase, and every template × slot word of its
-    slot. Only samples in the user's current language are fingerprints: Prisma's hi-IN and
-    en-IN hypotheses of the same speech aren't comparable. A composition's fingerprints are each slot word hypothesis joined to each fixed part
-    hypothesis, in the template's word order. A composition whose text is already a phrase adds
-    its fingerprints to that phrase instead of standing on its own."""
-    user_id, heard = user["id"], defaultdict(list)
+    """What a recording can be matched to: every phrase in the user's language, or English, and
+    every template × slot word of its slot. A recording is transcribed in the user's language, so
+    only samples in that language (or English) are fingerprints: Prisma's hi-IN and ta-IN
+    hypotheses of the same speech aren't comparable. A composition's fingerprints are each slot
+    word hypothesis joined to each fixed part hypothesis, in the template's word order. A
+    composition whose text is already a phrase adds its fingerprints to that phrase instead of
+    standing on its own."""
+    user_id, heard, spoken = user["id"], defaultdict(list), (user["language"], "en")
     for s in db.rows("SELECT phrase_id, slot_word_id, template_id, prisma_hypothesis FROM samples"
-                     " WHERE user_id = ? AND source IS NOT NULL AND language = ?", (user_id, user["language"])):
+                     " WHERE user_id = ? AND source IS NOT NULL AND language IN (?, ?)", (user_id, *spoken)):
         for column in ("phrase_id", "slot_word_id", "template_id"):
             if s[column] is not None:
                 heard[column, s[column]].append(s["prisma_hypothesis"])
 
     candidates = {}
-    for p in db.rows("SELECT id, text, contexts, urgent FROM phrases WHERE user_id = ?", (user_id,)):
+    for p in db.rows("SELECT id, text, contexts, urgent FROM phrases WHERE user_id = ? AND language IN (?, ?)"
+                     " ORDER BY language != 'en', id", (user_id, *spoken)):
         candidates[p["text"]] = {"key": p["id"], "phrase_id": p["id"], "text": p["text"], "composed": False,
                                  "contexts": p["contexts"].split(","), "urgent": bool(p["urgent"]),
                                  "fingerprints": heard["phrase_id", p["id"]]}
@@ -769,24 +786,26 @@ def timer(timings, step):
 
 @app.post("/me/recognize", response_model=schemas.Recognition)
 def recognize(audio_file: UploadFile = File(alias="audio"), context: schemas.Context | None = Form(None),
-              user=Depends(current_user)):
+              ui_language: schemas.Language = Form("en"), user=Depends(current_user)):
     """Top 3 candidates for a recording. Each has score = similarity + context + freq + time
-    (see matcher.py), + rerank when RERANKER_ENABLED (src/reranker.py), with those parts, urgent,
-    and composed: a composed one is a template × slot word that isn't a phrase yet, with its
-    template_id and slot_word_id. When LLM_ENABLED, the judge (src/llm_judge.py) may put another
-    of the top 5 first: chosen_by says which did, and reason is the judge's when it did."""
+    (see matcher.py), + rerank when RERANKER_ENABLED and the user speaks Hindi (src/reranker.py),
+    with those parts, urgent, and composed: a composed one is a template × slot word that isn't a
+    phrase yet, with its template_id and slot_word_id. When LLM_ENABLED, the judge
+    (src/llm_judge.py) may put another of the top 5 first: chosen_by says which did, and reason is
+    the judge's when it did, in ui_language (the interface's) or null when it isn't readable."""
     timings = {"stt": None, "match": None, "rerank": None, "llm": None, "tts": None}  # tts: POST /speak
     with timer(timings, "stt"):
         path, hypothesis = save_and_transcribe(user, audio_file)
     with timer(timings, "match"):
         ranked = matcher.rank(hypothesis, candidates_for(user), context, priors_for(user["id"]), k=reranker.SHORTLIST)
-    if reranker.on():
+    if reranker.on() and user["language"] in reranker.LANGUAGES:
         with timer(timings, "rerank"):
             ranked = reranker.rescore(hypothesis, ranked)
     judged = {"shown": ranked[:llm_judge.SHOWN], "chosen_by": "matcher", "reason": None}
     if llm_judge.should_ask(hypothesis, ranked):
         with timer(timings, "llm"):
-            judged = llm_judge.judge(hypothesis, ranked, context, *history_for(user["id"]), user["id"])
+            judged = llm_judge.judge(hypothesis, ranked, context, *history_for(user["id"]), user["id"],
+                                     user["language"], ui_language)
     candidates = [{key: c[key] for key in ("phrase_id", "text", "score", "parts", "urgent", "composed",
                                            "template_id", "slot_word_id") if key in c} for c in judged["shown"]]
     sample_id = db.execute(
@@ -824,7 +843,7 @@ def confirm(body: schemas.Confirm, user=Depends(current_user)):
         if word["slot"] != slot:
             raise Refused(400, "invalid_input", f"that template takes a {slot}")
         new_text = matcher.compose(slot_first, word["text"], fixed)
-    phrase = get_phrase(user_id, find_or_add_phrase(user_id, new_text) if new_text is not None else phrase_id)
+    phrase = get_phrase(user_id, find_or_add_phrase(user, new_text) if new_text is not None else phrase_id)
     db.transaction(("UPDATE samples SET phrase_id = ?, source = 'correction' WHERE id = ?", (phrase["id"], sample_id)),
                    ("INSERT INTO uses (user_id, phrase_id, created_at) VALUES (?, ?, ?)", (user_id, phrase["id"], now())))
     return {"sample_id": sample_id, "phrase_id": phrase["id"], "text": phrase["text"], "urgent": phrase["urgent"]}
@@ -832,15 +851,20 @@ def confirm(body: schemas.Confirm, user=Depends(current_user)):
 
 @app.post("/speak", response_class=FileResponse, responses={200: {"content": {"audio/wav": {}}}})
 def speak_text(body: schemas.Speak, user=Depends(current_user)):
-    """Say text in the user's cloned voice when use_own_voice is on, else in the stock voice
-    for their language. Answers audio/wav, with how long Timbre took in Server-Timing."""
+    """Say text in its phrase's language (their phrase in the language they speak first; the
+    user's language when it is no phrase), in the user's cloned voice when use_own_voice is on and
+    that language offers it (speak.CLONE_LANGUAGES), else in the language's stock voice. Answers
+    audio/wav, with how long Timbre took in Server-Timing."""
     text, timings = clean_text(body.text), {}
+    phrase = db.row("SELECT language FROM phrases WHERE user_id = ? AND text = ? ORDER BY language = ? DESC,"
+                    " language = 'en' DESC LIMIT 1", (user["id"], text, user["language"]))
+    language = phrase["language"] if phrase else user["language"]
     with timer(timings, "tts"):
-        if user["use_own_voice"] and user["voice_embedding"]:
-            path = speak.synthesize(text, user["language"], json.loads(user["voice_embedding"]),
+        if user["use_own_voice"] and user["voice_embedding"] and language in speak.CLONE_LANGUAGES:
+            path = speak.synthesize(text, language, json.loads(user["voice_embedding"]),
                                     cache_dir=f"{voice_folder(user)}/tts", user_id=user["id"])
         else:
-            path = speak.synthesize(text, user["language"], user_id=user["id"])
+            path = speak.synthesize(text, language, user_id=user["id"])
     return FileResponse(path, media_type="audio/wav", headers={"Server-Timing": f"tts;dur={timings['tts']}"})
 
 

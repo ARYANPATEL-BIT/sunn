@@ -301,6 +301,7 @@ export default {
   'settings.voiceStatusLabel': 'वर्तमान आवाज़',
   'settings.voiceRecorded': 'आपकी अपनी क्लोन की गई आवाज़',
   'settings.voiceStandard': 'सामान्य आवाज़ (नलिनी / कावेरी)',
+  'settings.voiceNotInLanguage': 'आपकी अपनी आवाज़ अभी सिर्फ़ हिंदी में काम करती है। {language} में Sunn एक सामान्य आवाज़ में बोलता है।',
   'settings.useOwnVoiceLabel': 'वाक्य मेरी अपनी आवाज़ में बोलें',
   'settings.useOwnVoiceHelp': 'इसके लिए पहले से रिकॉर्ड की गई आवाज़ की आवश्यकता है।',
   'settings.voiceNotRecordedHelp': 'अभी अपनी आवाज़ नहीं जुड़ी है, इसलिए सुन सामान्य आवाज़ में बोलता है।',

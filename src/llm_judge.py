@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 
 import httpx
 
+import languages
 import log
 import matcher
 
@@ -27,10 +28,12 @@ SYSTEM = (
     " likely meant: first by sound similarity, then by the place, time of day and recent phrases. you must"
     ' answer with one candidate id from the list, or "none" if no candidate fits. never write a new phrase. if'
     " a candidate about pain, a doctor or help is plausible, do not dismiss it. reply with json only:"
-    ' {"choice": "<id or none>", "confidence": <0 to 1>, "reason": "<max 12 words, plain english>"}'
+    ' {"choice": "<id or none>", "confidence": <0 to 1>, "reason": "<max 12 words, plain words>"}.'
+    " write the reason in the language the user message asks for."
 )
-USER = ("the stt registered: {heard}. our model ranked these candidates (best first): {candidates}."
-        " context: {context}. which candidate did they mean?")
+USER = ("the person speaks {language}, written in {script} script. the stt registered: {heard}. our model ranked"
+        " these candidates (best first): {candidates}. context: {context}. which candidate did they mean?"
+        " write the reason in {reason_language}.")
 TOP_K = 5  # candidates the judge chooses among
 SHOWN = 3  # candidates the app shows
 MIN_CONFIDENCE = 0.5  # under it, the matcher's order stands
@@ -70,9 +73,12 @@ def candidate_id(c):
     return str(c["phrase_id"]) if c.get("phrase_id") is not None else f"t{c['template_id']}w{c['slot_word_id']}"
 
 
-def describe(c, times_used):
+def describe(c, times_used, language="hi"):
+    """A candidate for the judge. Its text in an Indic script goes under "hindi" for a Hindi
+    speaker, as it always has, and under "native" for the rest."""
     latin, meaning = matcher.gloss(c["text"])
-    return {"id": candidate_id(c), "hindi": c["text"] if matcher.has_devanagari(c["text"]) else "",
+    native = c["text"] if languages.script_of(c["text"]) else ""
+    return {"id": candidate_id(c), "hindi" if language == "hi" else "native": native,
             "latin": latin, "meaning_en": meaning, "score": round(c["score"] / 100, 2),
             "times_used": times_used.get(c.get("phrase_id"), 0)}
 
@@ -98,7 +104,18 @@ def parse(content, ids):
             "reason": " ".join(str(answer.get("reason") or "").split()[:12])}
 
 
-def ask(heard, candidates, context):
+def readable(reason, language):
+    """reason when it is text in language's script (Latin for English): most of its letters in
+    that script, and no braces or angle brackets. Else None, and no reason is shown."""
+    block = languages.LANGUAGES[language].block
+    letters = [c for c in reason if c.isalpha()]
+    if not letters or any(c in reason for c in "{}<>"):
+        return None
+    ours = sum((block[0] <= c <= block[1]) if block else c.isascii() for c in letters)
+    return reason if ours >= len(letters) / 2 else None
+
+
+def ask(heard, candidates, context, language="hi", reason_language="en"):
     """The model's verdict on candidates (described), or None, logged, when there isn't a valid one."""
     base = setting("LLM_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
     key = setting("GROQ_API_KEY") or setting("LLM_API_KEY")
@@ -107,8 +124,11 @@ def ask(heard, candidates, context):
     body = {"model": model, "temperature": 0, "max_tokens": max_tokens, "response_format": {"type": "json_object"},
             "messages": [{"role": "system", "content": SYSTEM},
                          {"role": "user", "content": USER.format(
+                             language=languages.LANGUAGES[language].name.lower(),
+                             script=languages.LANGUAGES[language].script.lower(),
                              heard=heard, candidates=json.dumps(candidates, ensure_ascii=False),
-                             context=json.dumps(context, ensure_ascii=False))}]}
+                             context=json.dumps(context, ensure_ascii=False),
+                             reason_language=languages.LANGUAGES[reason_language].name.lower())}]}
     effort = setting("LLM_REASONING_EFFORT", "low").strip().lower()
     if effort in ("low", "medium", "high"):
         body["reasoning_effort"] = effort
@@ -176,15 +196,17 @@ def reorder(ranked, chosen):
     return shown
 
 
-def judge(heard, ranked, place, recent, times_used, user_id):
+def judge(heard, ranked, place, recent, times_used, user_id, language="hi", reason_language="en"):
     """{shown, chosen_by, reason, verdict} for ranked, the matcher's order: shown is the SHOWN
     candidates to show, the judge's pick first when it made a confident valid one (chosen_by
-    "judge", with its reason), else the matcher's top SHOWN (chosen_by "matcher", reason None).
-    recent is the last 3 phrases the person spoke; times_used is {phrase_id: uses}."""
+    "judge", with its reason in reason_language, the interface's, or None when it isn't readable
+    text in it), else the matcher's top SHOWN (chosen_by "matcher", reason None). recent is the
+    last 3 phrases the person spoke; times_used is {phrase_id: uses}; language is the one they speak."""
     top = ranked[:TOP_K]
     ids = [candidate_id(c) for c in top]
     result = {"shown": ranked[:SHOWN], "chosen_by": "matcher", "reason": None, "verdict": None}
-    key = hashlib.sha256(json.dumps([user_id, heard, ids, place], ensure_ascii=False).encode("utf-8")).hexdigest()
+    key = hashlib.sha256(json.dumps([user_id, heard, ids, place, language, reason_language],
+                                    ensure_ascii=False).encode("utf-8")).hexdigest()
     verdict = remember(key)
     if verdict is None:
         if not take_slot(user_id):
@@ -192,11 +214,12 @@ def judge(heard, ranked, place, recent, times_used, user_id):
             return result
         context = {"place": place, "time_of_day": matcher.time_bucket(datetime.now(timezone.utc)),
                    "recent_phrases": recent}
-        verdict = ask(heard, [describe(c, times_used) for c in top], context)
+        verdict = ask(heard, [describe(c, times_used, language) for c in top], context, language, reason_language)
         if verdict is None:
             return result
         remember(key, verdict)
     result["verdict"] = verdict
     if verdict["choice"] != "none" and verdict["confidence"] >= MIN_CONFIDENCE:
-        result.update(shown=reorder(ranked, ids.index(verdict["choice"])), chosen_by="judge", reason=verdict["reason"])
+        result.update(shown=reorder(ranked, ids.index(verdict["choice"])), chosen_by="judge",
+                      reason=readable(verdict["reason"], reason_language))
     return result

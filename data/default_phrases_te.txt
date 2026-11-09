@@ -1,0 +1,60 @@
+# Machine-written: the starter phrases in Telugu, with the same meanings as default_phrases_hi.txt,
+# not yet read by a native speaker (REVIEWED in web/src/i18n/languages.js).
+# Each line: the phrase in Telugu script | a Latin spelling | its meaning (default_phrases_en.txt)
+# help
+నాకు సహాయం కావాలి | naaku sahaayam kaavaali | I need help
+# basic needs
+నీళ్ళు కావాలి | neellu kaavaali | I need water
+బాత్రూమ్ కి వెళ్ళాలి | bathroom ki vellaali | I need the bathroom
+నన్ను కూర్చోబెట్టండి | nannu koorchobettandi | Help me sit up
+నన్ను పడుకోబెట్టండి | nannu padukobettandi | Help me lie down
+నన్ను పక్కకి తిప్పండి | nannu pakkaki thippandi | Turn me on my side
+చలిగా ఉంది | chaligaa undi | I feel cold
+వేడిగా ఉంది | vedigaa undi | I feel hot
+ఫ్యాన్ వేయండి | fan veyandi | Turn on the fan
+లైట్ ఆపేయండి | light aapeyandi | Turn off the light
+నా కళ్ళద్దాలు ఇవ్వండి | naa kalladdaalu ivvandi | Give me my glasses
+# pain and health
+నొప్పిగా ఉంది | noppigaa undi | I'm in pain
+తల నొప్పిగా ఉంది | thala noppigaa undi | My head hurts
+కడుపు నొప్పిగా ఉంది | kadupu noppigaa undi | My stomach hurts
+మందులు ఇవ్వండి | mandulu ivvandi | Give me my medicine
+డాక్టర్ ని పిలవండి | doctor ni pilavandi | Call the doctor
+ఊపిరి ఆడటం లేదు | oopiri aadatam ledu | I can't breathe properly
+కళ్ళు తిరుగుతున్నాయి | kallu thiruguthunnaayi | I feel dizzy
+ఏదోలా ఉంది | edolaa undi | I feel uneasy
+చాలా అలసటగా ఉంది | chaalaa alasatagaa undi | I feel tired
+నేను బాగానే ఉన్నాను | nenu baagaane unnaanu | I'm fine
+# food and drink
+ఆకలిగా ఉంది | aakaligaa undi | I'm hungry
+అన్నం పెట్టండి | annam pettandi | Give me some food
+టీ తాగాలి | tea thaagaali | I want tea
+పాలు కావాలి | paalu kaavaali | I need milk
+ఇంకొంచెం ఇవ్వండి | inkonchem ivvandi | A little more
+చాలు, కడుపు నిండింది | chaalu, kadupu nindindi | That's enough, I'm full
+అన్నం వేడి చేయండి | annam vedi cheyandi | Heat up the food
+ఉప్పు తక్కువైంది | uppu thakkuvaindi | It needs more salt
+వేడి నీళ్ళు కావాలి | vedi neellu kaavaali | I need warm water
+ఏదైనా తీపి ఇవ్వండి | edainaa theepi ivvandi | Give me something sweet
+# family
+అమ్మని పిలవండి | ammani pilavandi | Call my mother
+నాన్నని పిలవండి | naannani pilavandi | Call my father
+మా అబ్బాయికి ఫోన్ చేయండి | maa abbaayiki phone cheyandi | Phone my son
+మా అమ్మాయిని పిలవండి | maa ammaayini pilavandi | Call my daughter
+అన్నయ్యని పిలవండి | annayyani pilavandi | Call my brother
+అక్కని పిలవండి | akkani pilavandi | Call my sister
+అందరూ ఎక్కడ ఉన్నారు | andaroo ekkada unnaaru | Where is everyone
+నా దగ్గర కూర్చోండి | naa daggara koorchondi | Sit with me
+నన్ను ఒంటరిగా వదలకండి | nannu ontarigaa vadalakandi | Don't leave me alone
+ఫోన్ కలపండి | phone kalapandi | Make a phone call for me
+# greetings and politeness
+నమస్కారం | namaskaaram | Hello
+ధన్యవాదాలు | dhanyavaadaalu | Thank you
+అవును | avunu | Yes
+కాదు | kaadu | No
+సరే | sare | Okay
+క్షమించండి | kshaminchandi | Sorry
+ఒక్క నిమిషం ఆగండి | okka nimisham aagandi | Wait a minute
+శుభ రాత్రి | shubha raathri | Good night
+ఎలా ఉన్నారు | elaa unnaaru | How are you
+చాలా బాగుంది | chaalaa baagundi | Very good

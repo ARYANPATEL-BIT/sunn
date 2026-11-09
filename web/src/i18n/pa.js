@@ -301,6 +301,7 @@ export default {
   'settings.voiceStatusLabel': 'ਹੁਣ ਦੀ ਆਵਾਜ਼',
   'settings.voiceRecorded': 'ਤੁਹਾਡੀ ਆਪਣੀ ਆਵਾਜ਼ ਦੀ ਨਕਲ',
   'settings.voiceStandard': 'ਆਮ ਕੁਦਰਤੀ ਆਵਾਜ਼',
+  'settings.voiceNotInLanguage': 'ਤੁਹਾਡੀ ਆਪਣੀ ਆਵਾਜ਼ ਹਾਲੇ ਸਿਰਫ਼ ਹਿੰਦੀ ਵਿੱਚ ਕੰਮ ਕਰਦੀ ਹੈ। {language} ਵਿੱਚ Sunn ਇੱਕ ਆਮ ਆਵਾਜ਼ ਵਿੱਚ ਬੋਲਦਾ ਹੈ।',
   'settings.useOwnVoiceLabel': 'ਵਾਕ ਮੇਰੀ ਆਪਣੀ ਆਵਾਜ਼ ਵਿੱਚ ਬੋਲੋ',
   'settings.useOwnVoiceHelp': 'ਰਿਕਾਰਡ ਕੀਤੀ ਆਪਣੀ ਆਵਾਜ਼ ਚਾਹੀਦੀ ਹੈ।',
   'settings.voiceNotRecordedHelp': 'ਅਜੇ ਆਪਣੀ ਆਵਾਜ਼ ਨਹੀਂ ਹੈ, ਇਸ ਲਈ Sunn ਆਮ ਆਵਾਜ਼ ਵਰਤਦਾ ਹੈ।',

@@ -6,11 +6,13 @@ import audio
 import db
 import gnani
 import gnani_mock
+import languages
 
-# From https://docs.gnani.ai/api/STT/speech-to-text.md
+# From https://docs.gnani.ai/api/STT/speech-to-text.md. No model field: Prisma v2.5, the default,
+# takes all ten languages (docs.gnani.ai/api/STT/models/prisma-v2-5.md).
 URL = "https://api.vachana.ai/stt/v3"
-# A user's language ("hi" or "en") -> Prisma language_code. en-IN is Indian English.
-LANGUAGES = {"hi": "hi-IN", "en": "en-IN"}
+# A user's language -> Prisma language_code. en-IN is Indian English, and takes Hinglish too.
+LANGUAGES = {code: f"{code}-IN" for code in languages.CODES}
 CACHE_DIR = os.path.join(db.DATA_DIR, "cache", "prisma")
 
 

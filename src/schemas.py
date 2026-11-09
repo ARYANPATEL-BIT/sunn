@@ -6,7 +6,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-Language = Literal["hi", "en"]  # the language the user speaks
+import languages
+
+Language = Literal[languages.CODES]  # the language the user speaks, or a phrase is in
 Context = Literal["home", "hospital", "market"]  # where the user is, for POST /me/recognize
 PhraseContext = Literal["home", "hospital", "market", "any"]  # where a phrase is used
 Slot = Literal["item", "person", "place"]
@@ -75,7 +77,8 @@ class GoogleAuth(Request):
 class User(BaseModel):
     model_config = example(id=7, name="सुनीता", email="sunita@example.com", language="hi",
                            consent_given_at="2026-10-01T09:30:00Z", caregiver_name="राहुल",
-                           caregiver_phone="919876543210", has_own_voice=True, use_own_voice=True)
+                           caregiver_phone="919876543210", has_own_voice=True, use_own_voice=True,
+                           can_clone_voice=True)
     id: int
     name: str
     email: str
@@ -85,6 +88,7 @@ class User(BaseModel):
     caregiver_phone: str | None  # digits with the country code, ready for https://wa.me/<phone>
     has_own_voice: bool  # a cloned voice is recorded
     use_own_voice: bool  # /speak uses it
+    can_clone_voice: bool  # own voice is offered in the language the user speaks (speak.CLONE_LANGUAGES)
 
 
 class UserUpdate(Request):
@@ -92,7 +96,7 @@ class UserUpdate(Request):
     use_own_voice: bool | None = None  # true needs a recorded voice
     caregiver_name: str | None = None
     caregiver_phone: str | None = None  # spaces, dashes, brackets and + are dropped
-    language: Language | None = None  # Prisma and Timbre follow it; nothing is deleted
+    language: Language | None = None  # Prisma and new phrases follow it; nothing is deleted
 
 
 class Config(BaseModel):
@@ -108,18 +112,19 @@ class GoogleConfig(BaseModel):
 # --- phrases
 
 class Phrase(BaseModel):
-    model_config = example(id=12, text="पानी चाहिए", contexts=["home", "hospital"], urgent=False)
+    model_config = example(id=12, text="पानी चाहिए", contexts=["home", "hospital"], urgent=False, language="hi")
     id: int
     text: str
     contexts: list[PhraseContext]
     urgent: bool
+    language: Language  # the phrase's own; Timbre says it in this language
 
 
 class PhraseDetail(Phrase):
-    model_config = example(id=12, text="पानी चाहिए", contexts=["home", "hospital"], urgent=False,
+    model_config = example(id=12, text="पानी चाहिए", contexts=["home", "hospital"], urgent=False, language="hi",
                            enrolled=3, sample_count=9, last_used_at="2026-10-20T18:05:00Z", sources=[])
     enrolled: int  # enrollment recordings
-    sample_count: int  # enrollments and confirmed recognitions in the user's current language
+    sample_count: int  # enrollments and confirmed recognitions in the user's current language or English
     last_used_at: datetime | None
     sources: list[SpeechSource]  # where its demo recordings came from; [] when all were made in the app
 

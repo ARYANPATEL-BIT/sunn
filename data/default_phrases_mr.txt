@@ -1,0 +1,60 @@
+# Machine-written: the starter phrases in Marathi, with the same meanings as default_phrases_hi.txt,
+# not yet read by a native speaker (REVIEWED in web/src/i18n/languages.js).
+# Each line: the phrase in Devanagari script | a Latin spelling | its meaning (default_phrases_en.txt)
+# help
+मला मदत हवी आहे | mala madat havi aahe | I need help
+# basic needs
+पाणी हवं | paani hava | I need water
+बाथरूमला जायचंय | bathroomla jaaychay | I need the bathroom
+मला उठवून बसवा | mala uthvun basva | Help me sit up
+मला झोपवा | mala zopva | Help me lie down
+मला कुशीवर वळवा | mala kushivar valva | Turn me on my side
+थंडी वाजतेय | thandi vaajtey | I feel cold
+गरम होतंय | garam hotay | I feel hot
+पंखा लावा | pankha laava | Turn on the fan
+लाईट बंद करा | light band kara | Turn off the light
+माझा चष्मा द्या | maajha chashma dya | Give me my glasses
+# pain and health
+दुखतंय | dukhtay | I'm in pain
+डोकं दुखतंय | doka dukhtay | My head hurts
+पोट दुखतंय | pot dukhtay | My stomach hurts
+औषध द्या | aushadh dya | Give me my medicine
+डॉक्टरांना बोलवा | doctorana bolva | Call the doctor
+श्वास घ्यायला त्रास होतोय | shwaas ghyaayla traas hotoy | I can't breathe properly
+चक्कर येतेय | chakkar yetey | I feel dizzy
+अस्वस्थ वाटतंय | asvastha vaatatay | I feel uneasy
+खूप थकवा आलाय | khoop thakva aalay | I feel tired
+मी ठीक आहे | mee theek aahe | I'm fine
+# food and drink
+भूक लागलीय | bhook laagliy | I'm hungry
+जेवण द्या | jevan dya | Give me some food
+चहा प्यायचाय | chaha pyaaychay | I want tea
+दूध हवं | doodh hava | I need milk
+अजून थोडं द्या | ajun thoda dya | A little more
+बस, पोट भरलं | bas, pot bharla | That's enough, I'm full
+जेवण गरम करा | jevan garam kara | Heat up the food
+मीठ कमी आहे | meeth kami aahe | It needs more salt
+गरम पाणी हवं | garam paani hava | I need warm water
+काहीतरी गोड द्या | kaahitari god dya | Give me something sweet
+# family
+आईला बोलवा | aaila bolva | Call my mother
+बाबांना बोलवा | baabaana bolva | Call my father
+मुलाला फोन करा | mulaala phone kara | Phone my son
+मुलीला बोलवा | mulila bolva | Call my daughter
+दादाला बोलवा | daadaala bolva | Call my brother
+ताईला बोलवा | taaila bolva | Call my sister
+सगळे कुठे आहेत | sagle kuthe aahet | Where is everyone
+माझ्याजवळ बसा | maajhyaajaval basa | Sit with me
+मला एकटं सोडू नका | mala ekta sodu naka | Don't leave me alone
+फोन लावून द्या | phone laavun dya | Make a phone call for me
+# greetings and politeness
+नमस्कार | namaskaar | Hello
+धन्यवाद | dhanyavaad | Thank you
+हो | ho | Yes
+नाही | naahi | No
+ठीक आहे | theek aahe | Okay
+माफ करा | maaf kara | Sorry
+एक मिनिट थांबा | ek minit thaamba | Wait a minute
+शुभ रात्री | shubh raatri | Good night
+कसे आहात | kase aahaat | How are you
+खूप छान | khoop chhaan | Very good
