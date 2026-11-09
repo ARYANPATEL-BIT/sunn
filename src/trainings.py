@@ -390,18 +390,19 @@ def audio(audio_key: str):
     then AUDIO_DIR/<key>.wav; not_found until it is generated. With GNANI_MOCK, a listed
     key without audio answers half a second of silence."""
     find(LIBRARY.audio, audio_key, "audio")  # only listed keys, so the path is always a plain file name
+    cache_headers = {"Cache-Control": "public, max-age=86400, immutable"}
     mp3_path = os.path.join(WEB_AUDIO_DIR, f"{audio_key}.mp3")
     if os.path.exists(mp3_path):
-        return FileResponse(mp3_path, media_type="audio/mpeg")
+        return FileResponse(mp3_path, media_type="audio/mpeg", headers=cache_headers)
     opus_path = os.path.join(WEB_AUDIO_DIR, f"{audio_key}.opus")
     if os.path.exists(opus_path):
-        return FileResponse(opus_path, media_type="audio/ogg")
+        return FileResponse(opus_path, media_type="audio/ogg", headers=cache_headers)
     wav_path = os.path.join(AUDIO_DIR, f"{audio_key}.wav")
     if os.path.exists(wav_path):
-        return FileResponse(wav_path, media_type="audio/wav")
+        return FileResponse(wav_path, media_type="audio/wav", headers=cache_headers)
     if not gnani_mock.on():
         raise Refused(404, "not_found", "audio not made yet")
-    return FileResponse(gnani_mock.silence(), media_type="audio/wav")
+    return FileResponse(gnani_mock.silence(), media_type="audio/wav", headers={"Cache-Control": "no-cache"})
 
 
 # --- the user's own practice

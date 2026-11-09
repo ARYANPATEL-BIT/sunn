@@ -67,11 +67,31 @@ def save_durations(path: str, durations: dict[str, float]):
         json.dump(durations, f, ensure_ascii=False, indent=2)
 
 
+def get_priority(key: str) -> str:
+    """Classify training audio key into priority tiers:
+    - Priority A (Demo-critical): Core easy-starts-1 and introductions-1 demo phrases (~13 assets).
+    - Priority B (Important): Remaining easy-starts, introductions, s-and-sh-1, and sound-play-1 (~53 assets).
+    - Priority C (Optional): Advanced tongue twisters and sound play (~62 assets).
+    """
+    if key.startswith("easy-starts-1-") or key.startswith("introductions-1-greetings-") or key in ("introductions-1-dialogue-1", "introductions-1-dialogue-2"):
+        return "A"
+    if (
+        key.startswith("easy-starts-")
+        or key.startswith("introductions-")
+        or key.startswith("s-and-sh-1-")
+        or key.startswith("sound-play-1-")
+    ):
+        return "B"
+    return "C"
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate Timbre TTS audio for trainings lessons.")
     parser.add_argument("--yes", action="store_true", help="Confirm generation of missing audio files")
     parser.add_argument("--dry-run", action="store_true", help="Print estimates and missing counts without generating audio")
     parser.add_argument("--max", type=int, default=250, help="Maximum number of files to generate in this run (default 250)")
+    parser.add_argument("--priority", choices=["A", "B", "C", "all"], default="all", help="Target priority tier (A: demo-critical, B: important, C: optional, all)")
+    parser.add_argument("--key", help="Target a specific audio key (e.g. easy-starts-1-vowels-aam)")
     parser.add_argument("--manifest", default=DEFAULT_MANIFEST, help="Path to audio_manifest.json")
     parser.add_argument("--durations", default=DEFAULT_DURATIONS, help="Path to audio_durations.json")
     parser.add_argument("--out-dir", default=DEFAULT_OUT_DIR, help="Destination folder for audio files")
@@ -91,17 +111,29 @@ def main():
     missing = []
     existing = 0
     total_chars = 0
+    priority_counts = {"A": 0, "B": 0, "C": 0}
+    priority_missing = {"A": 0, "B": 0, "C": 0}
 
     for item in manifest:
         key = item["audio_key"]
         text = item["text"]
+        p = get_priority(key)
+        item["priority"] = p
+        priority_counts[p] += 1
+
         mp3_path = os.path.join(args.out_dir, f"{key}.mp3")
         # Consider present if file exists on disk and duration is recorded
         if os.path.exists(mp3_path) and key in durations and durations[key] > 0:
             existing += 1
         else:
-            missing.append(item)
-            total_chars += len(text)
+            priority_missing[p] += 1
+            if args.key:
+                if key == args.key:
+                    missing.append(item)
+                    total_chars += len(text)
+            elif args.priority == "all" or args.priority == p:
+                missing.append(item)
+                total_chars += len(text)
 
     missing_count = len(missing)
     estimated_credits = missing_count  # 1 Timbre TTS call per missing file = 1 credit
@@ -110,8 +142,15 @@ def main():
     print("Sunn Trainings - Timbre Audio Generator")
     print("=" * 60)
     print(f"Total manifest keys:              {len(manifest)}")
+    print(f"  - Priority A (Demo-critical):   {priority_counts['A']} keys ({priority_missing['A']} missing)")
+    print(f"  - Priority B (Important):       {priority_counts['B']} keys ({priority_missing['B']} missing)")
+    print(f"  - Priority C (Optional):        {priority_counts['C']} keys ({priority_missing['C']} missing)")
+    print(f"Target Selection:")
+    print(f"  - Priority filter:              {args.priority}")
+    if args.key:
+        print(f"  - Specific key:                 {args.key}")
     print(f"Existing audio files:             {existing}")
-    print(f"Missing audio files:              {missing_count}")
+    print(f"Selected missing files to make:   {missing_count}")
     print(f"Total characters to synthesize:   {total_chars}")
     print(f"Estimated Timbre TTS credits:     {estimated_credits} calls")
     print(f"Mock mode (GNANI_MOCK):           {'ON (free synthetic audio)' if gnani_mock.on() else 'OFF (live Gnani API)'}")
