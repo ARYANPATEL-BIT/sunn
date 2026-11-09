@@ -11,6 +11,9 @@ export default {
   'nav.signIn': 'साइन इन',
   'nav.openApp': 'ऐप खोलें',
   'nav.main': 'मुख्य',
+  'nav.menu': 'मेनू',
+  'nav.openMenu': 'नेविगेशन मेनू खोलें',
+  'nav.closeMenu': 'नेविगेशन मेनू बंद करें',
 
   'hero.headline': 'हर आवाज़, समझी जाए।',
   'hero.line1': 'जैसे\u00a0बोल पाते\u00a0हैं, वैसे\u00a0बोलिए।',

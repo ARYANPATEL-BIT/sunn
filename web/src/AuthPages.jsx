@@ -175,6 +175,8 @@ function useGoogleSignIn({ clientId, buttonRef, text = 'signin_with', onToken, o
             }
           },
         })
+        const availableWidth = buttonRef.current ? buttonRef.current.offsetWidth : 280
+        const buttonWidth = Math.min(280, Math.max(200, availableWidth || 280))
         buttonRef.current.innerHTML = ''
         window.google.accounts.id.renderButton(buttonRef.current, {
           theme: 'outline',
@@ -182,7 +184,7 @@ function useGoogleSignIn({ clientId, buttonRef, text = 'signin_with', onToken, o
           type: 'standard',
           shape: 'rectangular',
           text,
-          width: 280,
+          width: buttonWidth,
         })
       } catch (err) {
         console.error('Failed to initialize Google Sign-In', err)
