@@ -60,21 +60,6 @@ export function Toast({ children }) {
   )
 }
 
-// EN / हिं, a two-key switch in a well. Switches the whole interface; phrases stay as stored.
-export function LangToggle() {
-  const { lang, setLang, t } = useLang()
-  return (
-    <div className="lang-toggle" role="group" aria-label={t('lang.label')}>
-      <button type="button" lang="en" aria-pressed={lang === 'en'} onClick={() => setLang('en')}>
-        EN
-      </button>
-      <button type="button" lang="hi" aria-pressed={lang === 'hi'} onClick={() => setLang('hi')}>
-        हिं
-      </button>
-    </div>
-  )
-}
-
 const THEME_ICON = { light: 'sun', dark: 'moon', system: 'contrast' }
 
 // Steps through system, the opposite of the device, and back; Settings has all three as a list.

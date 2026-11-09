@@ -2,13 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
+import { formatDate } from './i18n/languages.js'
 import { applyPreferences, getPreferences, setPreference } from './prefs.js'
 import { useTheme } from './theme.js'
-import { Alert, Button, Choices, Group, Icon, PrimaryButton, Row as SwitchRow, Sheet, Toast, useGo } from './ui/index.js'
+import {
+  Alert, Button, Choices, Group, Icon, languageOptions, PrimaryButton, Row as SwitchRow, Sheet, Toast, useGo,
+} from './ui/index.js'
 
 export default function Settings() {
   const { user, signedIn, deleteAccount, logout } = useAuth()
-  const { lang, setLang, t } = useLang()
+  const { lang, locale, setLang, t } = useLang()
   const go = useGo()
   const [theme, setTheme] = useTheme()
 
@@ -239,7 +242,7 @@ export default function Settings() {
   }
 
   const createdDate = user?.consent_given_at
-    ? new Date(user.consent_given_at).toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-US', {
+    ? formatDate(new Date(user.consent_given_at), locale, {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -271,10 +274,7 @@ export default function Settings() {
       <Group bare title={t('settings.languageLabel')} titleId="app-language-label" footer={t('settings.languageHelp')}>
         <Choices
           labelledBy="app-language-label"
-          options={[
-            { value: 'en', label: t('settings.langEnglish'), lang: 'en' },
-            { value: 'hi', label: t('settings.langHindi'), lang: 'hi' },
-          ]}
+          options={languageOptions()}
           value={lang}
           onChange={handleSetLanguage}
         />

@@ -4,7 +4,7 @@ import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { usePresenterMode } from './prefs.js'
 import PresenterBar from './PresenterBar.jsx'
-import { Icon, LangToggle, reducedMotion, ThemeToggle, Wordmark } from './ui/index.js'
+import { Icon, LanguagePicker, reducedMotion, ThemeToggle, Wordmark } from './ui/index.js'
 import { TabFace, TABS } from './ui/Tabs.jsx'
 
 // Every /app screen: a header (home, presenter mode, language, theme; on wide screens who is
@@ -45,7 +45,7 @@ export default function AppShell() {
               <Icon name="presentation" />
               <span className="wide-only">{t('presenter.shortLabel')}</span>
             </button>
-            <LangToggle />
+            <LanguagePicker />
             <ThemeToggle />
             <span className="who wide-only">
               <span className="visually-hidden">{t('app.signedIn', { name: user.name })}</span>
