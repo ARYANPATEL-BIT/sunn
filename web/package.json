@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "test": "node --test src/i18n/strings.test.js",
+    "test": "node --test src/i18n/strings.test.js src/quickstart.test.js",
     "e2e": "vite build && playwright test",
     "tunnel": "cloudflared tunnel --url https://localhost:5173 --no-tls-verify"
   },
