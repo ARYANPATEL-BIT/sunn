@@ -1,8 +1,8 @@
 import { useLang } from '../i18n/index.jsx'
 import { Label } from './Label.jsx'
 
-// The band selector: keys in a recessed well, each printed Hindi over English, the chosen key
-// raised. A radiogroup; each key is named in the interface language only.
+// The band selector: keys in a recessed well, each printed in the interface language (Hindi
+// under English) over English, the chosen key raised. A radiogroup; each key is named in the interface language only.
 export function Band({ title, label, options, value, onChange, disabled, still }) {
   const { t, bi } = useLang()
   return (
@@ -14,8 +14,8 @@ export function Band({ title, label, options, value, onChange, disabled, still }
           const on = value === option.value
           const face = (
             <>
-              <span className="band-hi" lang="hi" aria-hidden="true">
-                {words.hi}
+              <span className="band-local" lang={words.second} aria-hidden="true">
+                {words.local}
               </span>
               <span className="band-en" lang="en" aria-hidden="true">
                 {words.en}

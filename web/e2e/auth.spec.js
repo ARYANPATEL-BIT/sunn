@@ -12,7 +12,9 @@ for (const lang of LANGS) {
       await openSpeak(request, user)
 
       await page.goto('/')
-      await expect(page.getByRole('heading', { level: 1 })).toContainText(t(lang, 'hero.headline'))
+      // The headline is the English one in every language, with the interface language under it.
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText(t('en', 'hero.headline'))
+      await expect(page.locator('.display-other')).toHaveText(t(lang === 'en' ? 'hi' : lang, 'hero.headline'))
       await expectNoLeaks(page, lang)
       await page.getByRole('button', { name: t(lang, 'cta.start') }).first().click()
       await expect(page).toHaveURL(/\/login\?next=%2Fapp%2Fspeak$/)

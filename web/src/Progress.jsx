@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
+import { formatDate } from './i18n/languages.js'
 import { Alert, Button, Icon, Sheet, useGo } from './ui/index.js'
 
 const COURSE_METADATA = {
@@ -33,10 +34,9 @@ const WEEK_DAYS = [
   'progress.daySu',
 ]
 
-function formatWeekStart(isoDate, currentLang) {
+function formatWeekStart(isoDate, locale) {
   try {
-    const d = new Date(isoDate)
-    return d.toLocaleDateString(currentLang === 'hi' ? 'hi-IN' : 'en-US', {
+    return formatDate(new Date(isoDate), locale, {
       day: 'numeric',
       month: 'short',
     })
@@ -98,7 +98,7 @@ function DeleteAccount() {
 // Confirmed phrases per week, stacked: understood directly (solid ink) under assisted (an ink
 // outline), so the two differ by shape, not color. The total in mono above each bar, a hairline
 // grid. Values are also in the table view.
-function WeeklyChart({ weeks, lang }) {
+function WeeklyChart({ weeks, locale }) {
   const { t } = useLang()
   const max = Math.max(1, ...weeks.map((w) => w.confirmed))
   const ticks = max > 1 ? [0, Math.round(max / 2), max] : [0, max]
@@ -121,7 +121,7 @@ function WeeklyChart({ weeks, lang }) {
                   {assisted > 0 && <span className="segment assisted" style={{ flexGrow: assisted }} />}
                   {clear > 0 && <span className="segment clear" style={{ flexGrow: clear }} />}
                 </div>
-                <span className="chart-x">{formatWeekStart(w.week_start, lang)}</span>
+                <span className="chart-x">{formatWeekStart(w.week_start, locale)}</span>
               </div>
             )
           })}
@@ -132,7 +132,7 @@ function WeeklyChart({ weeks, lang }) {
 }
 
 export default function Progress() {
-  const { lang, t } = useLang()
+  const { lang, locale, t } = useLang()
   const { user } = useAuth()
   const go = useGo()
 
@@ -367,7 +367,7 @@ export default function Progress() {
                 <tbody>
                   {weeks.map((w) => (
                     <tr key={w.week_start}>
-                      <th scope="row">{formatWeekStart(w.week_start, lang)}</th>
+                      <th scope="row">{formatWeekStart(w.week_start, locale)}</th>
                       <td>{w.confirmed}</td>
                       <td>{w.clear}</td>
                       <td>{Math.max(0, w.confirmed - w.clear)}</td>
@@ -387,7 +387,7 @@ export default function Progress() {
                     <span>{t('progress.weeklyAssistedLabel')}</span>
                   </span>
                 </div>
-                <WeeklyChart weeks={weeks} lang={lang} />
+                <WeeklyChart weeks={weeks} locale={locale} />
               </>
             )}
           </div>

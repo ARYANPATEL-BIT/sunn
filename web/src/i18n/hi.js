@@ -1,6 +1,9 @@
 // हर UI वाक्य हिंदी में। en.js जैसी ही keys। {name} जैसी जगहें t() भरता है।
 export default {
   'lang.label': 'भाषा',
+  'lang.beta': 'बीटा',
+  'lang.betaNote': 'बीटा: इसका अनुवाद मशीन से हुआ है। उस भाषा के किसी जानकार ने इसे अभी नहीं जाँचा।',
+  'sentence.end': '। ',
   'theme.toggle': 'स्क्रीन का रंग: {theme}',
   'theme.light': 'हल्का',
   'theme.dark': 'गहरा',
@@ -280,8 +283,6 @@ export default {
   'settings.savedSuccess': 'सेटिंग्स सहेज ली गईं।',
   'settings.languageLabel': 'ऐप की भाषा',
   'settings.languageHelp': 'बटन, संदेश और मेनू की भाषा। सिर्फ़ इसी डिवाइस पर।',
-  'settings.langEnglish': 'English',
-  'settings.langHindi': 'हिंदी',
   'settings.themeLabel': 'स्क्रीन का रंग',
   'settings.themeHelp': '‘डिवाइस के हिसाब से’ चुनने पर स्क्रीन हल्की या गहरी वैसी ही रहेगी, जैसी इस डिवाइस की सेटिंग है। सिर्फ़ इसी डिवाइस पर।',
   'settings.textSizeLabel': 'अक्षर का आकार',
@@ -354,8 +355,6 @@ export default {
   'onboarding.featureVoiceDesc': 'आप जो वाक्य चुनते हैं, सुन उसे साफ़ आवाज़ में या आपकी अपनी आवाज़ में बोलता है।',
   'onboarding.langHeading': 'ऐप की भाषा चुनिए',
   'onboarding.langDesc': 'इससे सिर्फ़ स्क्रीन की भाषा बदलती है। आप जो भाषा बोलते हैं, वह सेटिंग्स में है।',
-  'onboarding.langEnglish': 'English',
-  'onboarding.langHindi': 'हिंदी',
   'onboarding.howHeading': 'सुन को अपनी बोली सिखाना',
   'onboarding.howDesc': 'सुन आपकी आवाज़ को जितना सुनता है, उतना ही बेहतर समझता है।',
   'onboarding.howStep1': 'हर वाक्य को 3 बार रिकॉर्ड करें ताकि सुन आपकी बोली समझ सके।',
@@ -524,6 +523,7 @@ export default {
   'trainings.backToTrainings': 'अभ्यास पर वापस जाएँ',
   'trainings.backToCategory': '{category} पर वापस जाएँ',
   'trainings.honestNoteLabel': 'ज़रूरी बात',
+  'trainings.lessonsLangNote': 'अभी पाठ अंग्रेज़ी और हिंदी में ही हैं।',
   'trainings.honestNote':
     'सुन अभ्यास सिर्फ़ अभ्यास और आत्मविश्वास के लिए है। यह स्पीच थेरेपी नहीं है और किसी भी बोलने की समस्या का इलाज नहीं करता। अगर बोलना अक्सर मुश्किल लगता है, तो स्पीच-लैंग्वेज पैथोलॉजिस्ट मदद कर सकते हैं।',
   'trainings.signInToPractise': 'अभ्यास के लिए साइन इन करें',

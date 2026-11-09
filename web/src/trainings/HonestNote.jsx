@@ -11,3 +11,10 @@ export function HonestNote({ className = '' }) {
     </aside>
   )
 }
+
+// Lesson content is written in English and Hindi only; other interface languages are told so.
+export function LessonsLangNote() {
+  const { t, lang } = useLang()
+  if (lang === 'en' || lang === 'hi') return null
+  return <p className="trainings-lang-note">{t('trainings.lessonsLangNote')}</p>
+}

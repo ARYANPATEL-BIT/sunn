@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
+import { LANGUAGES } from './i18n/languages.js'
 import { setOnboarded } from './prefs.js'
 import { speakProgress } from './quickstart.js'
 import { Alert, Button, Icon, PrimaryButton, useGo } from './ui/index.js'
+import { LanguageSub } from './ui/LanguagePicker.jsx'
 
 const TOTAL_STEPS = 4
 
@@ -145,10 +147,7 @@ export default function Onboarding() {
             </h1>
             <p className="lede-sm">{t('onboarding.langDesc')}</p>
             <div className="group" role="radiogroup" aria-label={t('onboarding.langHeading')}>
-              {[
-                ['hi', 'onboarding.langHindi', 'नमस्ते'],
-                ['en', 'onboarding.langEnglish', 'Hello'],
-              ].map(([code, labelKey, sampleGreeting]) => (
+              {LANGUAGES.map(({ code, native }) => (
                 <button
                   key={code}
                   type="button"
@@ -159,9 +158,11 @@ export default function Onboarding() {
                 >
                   <span className="row-text">
                     <span className="greeting" lang={code}>
-                      {sampleGreeting}
+                      {native}
                     </span>
-                    <span className="row-sub">{t(labelKey)}</span>
+                    <span className="row-sub">
+                      <LanguageSub code={code} />
+                    </span>
                   </span>
                   <Icon name="check" className="choice-check" />
                 </button>

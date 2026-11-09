@@ -53,7 +53,8 @@ export function Row({ id, title, help, note, on, onClick, disabled }) {
   )
 }
 
-// One choice of a few, as rows with a check at the end. A radiogroup of radios.
+// One choice of a few, as rows with a check at the end, and an optional `sub` line under the
+// name. A radiogroup of radios.
 export function Choices({ label, labelledBy, options, value, onChange, disabled }) {
   return (
     <div className="group" role="radiogroup" aria-label={label} aria-labelledby={labelledBy}>
@@ -67,9 +68,18 @@ export function Choices({ label, labelledBy, options, value, onChange, disabled 
           onClick={() => onChange(option.value)}
           disabled={disabled}
         >
-          <span className="row-title" lang={option.lang}>
-            {option.label}
-          </span>
+          {option.sub ? (
+            <span className="row-text">
+              <span className="row-title" lang={option.lang}>
+                {option.label}
+              </span>
+              <span className="row-sub">{option.sub}</span>
+            </span>
+          ) : (
+            <span className="row-title" lang={option.lang}>
+              {option.label}
+            </span>
+          )}
           <Icon name="check" className="choice-check" />
         </button>
       ))}

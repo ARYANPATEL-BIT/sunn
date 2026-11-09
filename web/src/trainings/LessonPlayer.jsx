@@ -4,6 +4,7 @@ import * as api from '../api.js'
 import { useAuth } from '../auth.jsx'
 import { useLang } from '../i18n/index.jsx'
 import { Alert, Icon, PrimaryButton, reducedMotion } from '../ui/index.js'
+import { LessonsLangNote } from './HonestNote.jsx'
 import { LessonDone } from './LessonDone.jsx'
 import { StepView } from './steps/index.jsx'
 
@@ -242,6 +243,7 @@ export function LessonPlayer() {
           </div>
         </div>
       </header>
+      <LessonsLangNote />
 
       {/* Screen reader live announcement */}
       <div aria-live="polite" className="visually-hidden">

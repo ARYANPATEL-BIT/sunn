@@ -4,7 +4,7 @@ import * as api from './api.js'
 import { safeNext, useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { isOnboarded } from './prefs.js'
-import { Alert, errorText, Grille, Icon, LangToggle, PrimaryButton, reducedMotion, ThemeToggle, useGo, Wordmark } from './ui/index.js'
+import { Alert, errorText, Grille, Icon, LanguagePicker, PrimaryButton, reducedMotion, ThemeToggle, useGo, Wordmark } from './ui/index.js'
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const MIN_PASSWORD = 8
@@ -96,7 +96,7 @@ function AuthFrame({ title, children, footer }) {
         <div className="bar">
           <Wordmark />
           <div className="bar-end">
-            <LangToggle />
+            <LanguagePicker />
             <ThemeToggle />
           </div>
         </div>
@@ -361,7 +361,8 @@ export function SignupPage() {
   const [password, setPassword] = useState('')
   const [inviteCode, setInviteCode] = useState(params.get('invite') || '')
   const [inviteRequired, setInviteRequired] = useState(false)
-  const [speaks, setSpeaks] = useState(lang) // the language the person speaks, not the page's
+  // The language the person speaks, not the page's: Hindi or English for now.
+  const [speaks, setSpeaks] = useState(lang === 'hi' ? 'hi' : 'en')
   const [consent, setConsent] = useState(false)
   const [busy, setBusy] = useState(false)
   const [googleClientId, setGoogleClientId] = useState('')
