@@ -5,7 +5,7 @@ import { chromium } from '../web/node_modules/@playwright/test/index.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const BASE_URL = 'http://localhost:7860'
-const OUT_DIR = path.resolve(__dirname, '../docs/screenshots/responsive')
+const OUT_DIR = path.resolve(__dirname, '../docs/screenshots/responsive-qa')
 
 fs.mkdirSync(OUT_DIR, { recursive: true })
 
@@ -24,7 +24,7 @@ async function captureViewport(browser, { name, width, height }) {
   await page.waitForTimeout(600)
   await page.screenshot({ path: path.join(OUT_DIR, `${name}-01-landing.png`), fullPage: false })
 
-  // If mobile, capture open navigation drawer
+  // If mobile/tablet, capture open navigation drawer
   if (width < 1024) {
     const toggle = page.locator('.mobile-nav-toggle')
     if (await toggle.isVisible()) {
@@ -102,6 +102,12 @@ async function captureViewport(browser, { name, width, height }) {
   await page.waitForTimeout(600)
   await page.screenshot({ path: path.join(OUT_DIR, `${name}-09-progress.png`), fullPage: false })
 
+  // 10. Settings Screen
+  console.log(`[${name}] Capturing Settings Screen...`)
+  await page.goto(`${BASE_URL}/app/settings`, { waitUntil: 'networkidle' })
+  await page.waitForTimeout(600)
+  await page.screenshot({ path: path.join(OUT_DIR, `${name}-10-settings.png`), fullPage: false })
+
   await context.close()
 }
 
@@ -111,14 +117,23 @@ async function main() {
     args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'],
   })
 
-  // Capture representative Mobile viewport (390x844 iPhone 13/14)
+  // 1. Ultra-compact mobile (320x568 iPhone SE 1st gen)
+  await captureViewport(browser, { name: 'mobile-compact', width: 320, height: 568 })
+
+  // 2. Standard mobile (390x844 iPhone 13/14)
   await captureViewport(browser, { name: 'mobile', width: 390, height: 844 })
 
-  // Capture representative Desktop viewport (1440x900)
+  // 3. Landscape mobile (844x390)
+  await captureViewport(browser, { name: 'landscape', width: 844, height: 390 })
+
+  // 4. Tablet portrait (768x1024 iPad Mini)
+  await captureViewport(browser, { name: 'tablet', width: 768, height: 1024 })
+
+  // 5. Desktop standard (1440x900)
   await captureViewport(browser, { name: 'desktop', width: 1440, height: 900 })
 
   await browser.close()
-  console.log('\nAll responsive screenshot captures completed successfully!')
+  console.log('\nAll responsive screenshot captures completed successfully in docs/screenshots/responsive-qa!')
 }
 
 main().catch((err) => {
