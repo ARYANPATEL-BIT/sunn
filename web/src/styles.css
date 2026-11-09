@@ -2159,10 +2159,21 @@ input:focus-visible + .file-pick {
 }
 
 .learned {
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.learned-header {
+  display: flex;
   align-items: baseline;
-  gap: 6px 12px;
+  justify-content: space-between;
+}
+
+.learned-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
 }
 
 .learned-label {
@@ -2175,8 +2186,31 @@ input:focus-visible + .file-pick {
   font-weight: 500;
 }
 
+.learned-subtitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+.learned-context {
+  color: var(--ink-3);
+}
+
+.change-goal-btn {
+  font-size: 0.8125rem;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--primary, #d97706);
+}
+
+.change-goal-btn:hover {
+  opacity: 0.8;
+}
+
 .progress-line {
-  grid-column: 1 / -1;
   height: 6px;
   overflow: hidden;
   border-radius: 3px;
@@ -2188,6 +2222,88 @@ input:focus-visible + .file-pick {
   background: var(--ink);
   transform-origin: left;
   transition: transform var(--base) var(--ease-out);
+}
+
+/* Goal selection screen */
+.goal-selection {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.goal-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.goal-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.goal-option-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-card, 12px);
+  background: var(--raised, #fff);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--fast) var(--ease-out), background-color var(--fast) var(--ease-out);
+}
+
+.goal-option-card:hover {
+  border-color: var(--ink-2);
+}
+
+.goal-option-card.selected {
+  border-color: var(--ink);
+  background: var(--well, #f4f4f5);
+}
+
+.goal-option-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.goal-option-count {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.goal-radio-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--edge);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.goal-radio-circle.checked {
+  border-color: var(--ink);
+}
+
+.goal-radio-circle.checked::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.goal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
 }
 
 /* Recordings saved: meter segments, lit in ink (or screen light on the readout). */

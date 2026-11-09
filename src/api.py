@@ -144,7 +144,8 @@ def public(user):
     return {**{key: user[key] for key in ("id", "name", "email", "language", "consent_given_at",
                                           "caregiver_name", "caregiver_phone")},
             "has_own_voice": user["voice_embedding"] is not None, "use_own_voice": bool(user["use_own_voice"]),
-            "can_clone_voice": user["language"] in speak.CLONE_LANGUAGES}
+            "can_clone_voice": user["language"] in speak.CLONE_LANGUAGES,
+            "phrase_goal": int(user["phrase_goal"]) if user.get("phrase_goal") is not None else 10}
 
 
 def get_user(user_id):
@@ -501,6 +502,10 @@ def update_me(changes: schemas.UserUpdate, user=Depends(current_user)):
         elif field == "use_own_voice" and value is not None:
             if value and user["voice_embedding"] is None:
                 raise Refused(409, "no_voice", "record your voice first")
+            updates[field] = int(value)
+        elif field == "phrase_goal" and value is not None:
+            if value < 1:
+                raise Refused(400, "invalid_input", "phrase_goal must be at least 1")
             updates[field] = int(value)
         elif field in ("caregiver_name", "caregiver_phone"):
             value = " ".join((value or "").split()) or None

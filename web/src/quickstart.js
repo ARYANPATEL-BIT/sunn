@@ -138,14 +138,85 @@ export function quickStart(phrases, language) {
   return (QUICK_START[language] || []).map((text) => phrases.find((p) => p.text === text)).filter(Boolean)
 }
 
-// { ready, total } toward opening Speak. Without any quick-start phrase (all deleted, or a
-// custom list), one phrase with a recording is enough.
-export function speakProgress(phrases, language) {
-  const first = quickStart(phrases, language)
-  if (!first.length) {
-    const any = phrases.some((p) => p.sample_count > 0)
-    return { ready: any ? 1 : 0, total: 1, open: any }
+// Returns user-selectable goal targets adapted dynamically to totalAvailable.
+export function getGoalOptions(totalAvailable) {
+  if (!totalAvailable || totalAvailable <= 0) return [10]
+  const steps = [10, 20, 25, 50]
+  const options = []
+  for (const s of steps) {
+    if (s < totalAvailable) {
+      options.push(s)
+    }
   }
-  const done = first.filter(ready).length
-  return { ready: done, total: first.length, open: done === first.length }
+  if (!options.includes(totalAvailable)) {
+    options.push(totalAvailable)
+  }
+  return options
+}
+
+// Ordered phrases up to the target goal, keeping starter phrases first.
+export function getTargetPhrases(phrases, language, goal = 10) {
+  if (!Array.isArray(phrases) || !phrases.length) return []
+  const starter = quickStart(phrases, language)
+  const others = phrases.filter((p) => !starter.includes(p))
+  const fullOrder = [...starter, ...others]
+  const effectiveGoal = Math.max(1, Math.min(goal || 10, fullOrder.length))
+  return fullOrder.slice(0, effectiveGoal)
+}
+
+// Central calculation for preparation progress toward the chosen goal.
+// Speak opens once every phrase in the target goal is ready.
+export function speakProgress(phrases, language, userGoal = 10) {
+  if (!Array.isArray(phrases) || !phrases.length) {
+    const fallbackGoal = userGoal || 10
+    return {
+      ready: 0,
+      total: fallbackGoal,
+      open: false,
+      available: 0,
+      goal: fallbackGoal,
+      targetPhrases: [],
+      nextPhrase: null,
+      totalDone: 0,
+      percent: 0,
+    }
+  }
+
+  const starter = quickStart(phrases, language)
+  const others = phrases.filter((p) => !starter.includes(p))
+  const fullOrder = [...starter, ...others]
+  const totalAvailable = fullOrder.length
+
+  if (!starter.length && totalAvailable === 0) {
+    return {
+      ready: 0,
+      total: 1,
+      open: false,
+      available: 0,
+      goal: 1,
+      targetPhrases: [],
+      nextPhrase: null,
+      totalDone: 0,
+      percent: 0,
+    }
+  }
+
+  const effectiveGoal = Math.max(1, Math.min(userGoal || 10, totalAvailable))
+  const targetPhrases = fullOrder.slice(0, effectiveGoal)
+
+  const done = targetPhrases.filter(ready).length
+  const totalDone = fullOrder.filter(ready).length
+  const nextPhrase = targetPhrases.find((p) => !ready(p)) || fullOrder.find((p) => !ready(p)) || null
+
+  return {
+    ready: done,
+    total: effectiveGoal,
+    open: done >= effectiveGoal,
+    available: totalAvailable,
+    goal: effectiveGoal,
+    targetPhrases,
+    nextPhrase,
+    totalDone,
+    percent: Math.round((done / effectiveGoal) * 100),
+  }
 }

@@ -93,6 +93,7 @@ export const me = () =>
 
 // Any of use_own_voice, caregiver_name, caregiver_phone, language (the language the person speaks)
 export const updateMe = (changes) => patch('/me', changes).then(json)
+export const patchMe = updateMe
 
 // Deletes the account, its phrases, recordings, transcripts and cloned voice
 export const deleteAccount = () => del('/me').then(json)
