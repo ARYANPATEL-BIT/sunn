@@ -145,16 +145,196 @@ def test_attempts(env):
     assert too_long["error"] == "audio_too_long"
 
 
-def test_tricky_sounds(env):
+def test_tricky_sounds_empty_for_new_user(env):
     found = env.signup().get("/me/trainings/tricky-sounds").json()
-    assert found and all(set(s) == {"sound_id", "label", "why_key", "evidence", "practise_lesson_id"} for s in found)
-    assert all(set(s["evidence"]) == {"speak", "practice", "self"} for s in found)
+    assert found == []
 
 
-def test_alternatives(env):
-    found = env.signup().post("/me/trainings/alternatives", json={"text": "शुक्रिया", "lang": "hi"}).json()
-    assert set(found) == {"meaning_en", "alternatives"}
-    assert all(set(a) == {"text", "latin", "meaning_en", "avoids", "source"} for a in found["alternatives"])
+def test_tricky_sounds_thresholds(env):
+    client = env.signup()
+    uid = db.row("SELECT id FROM users ORDER BY id DESC LIMIT 1")["id"]
+
+    # 1. Speak substitutions: below threshold 5 -> empty
+    phrase_id = db.execute("INSERT INTO phrases (user_id, text) VALUES (?, ?)", (uid, "पानी"))
+    for _ in range(4):
+        db.execute(
+            "INSERT INTO samples (user_id, phrase_id, audio_path, prisma_hypothesis, source, created_at)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (uid, phrase_id, "mock.wav", "बानी", "enroll", "2026-11-09T10:00:00Z"),
+        )
+    assert client.get("/me/trainings/tricky-sounds").json() == []
+
+    # 5th substitution triggers qualification for 'p'
+    db.execute(
+        "INSERT INTO samples (user_id, phrase_id, audio_path, prisma_hypothesis, source, created_at)"
+        " VALUES (?, ?, ?, ?, ?, ?)",
+        (uid, phrase_id, "mock.wav", "बानी", "enroll", "2026-11-09T10:00:00Z"),
+    )
+    sounds = client.get("/me/trainings/tricky-sounds").json()
+    assert len(sounds) == 1
+    assert sounds[0]["sound_id"] == "p"
+    assert sounds[0]["why_key"] == "heard_in_speak"
+    assert sounds[0]["evidence"]["speak"] == 5
+    assert sounds[0]["practise_lesson_id"] == "easy-starts-2"
+
+    # 2. Practice attempts: 8 total words with >40% practise rate triggers qualification
+    # s-and-sh-1-echo has target: 'सोनू सुबह सात बजे स्कूल जाता है' (4 's' words)
+    # 1 attempt gives 4 words (< 8) -> not qualified yet
+    db.execute(
+        "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (uid, "s-and-sh-1", "s-and-sh-1-echo", None, "कल हम घर गए", 0.1, None, 1, "2026-11-09T10:00:00Z"),
+    )
+    sounds = client.get("/me/trainings/tricky-sounds").json()
+    assert [s["sound_id"] for s in sounds] == ["p"]
+
+    # 2nd attempt brings 's' words to 8 (>= 8) with 100% practise rate -> qualifies!
+    db.execute(
+        "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (uid, "s-and-sh-1", "s-and-sh-1-echo", None, "कल हम घर गए", 0.1, None, 1, "2026-11-09T10:00:00Z"),
+    )
+    sounds = client.get("/me/trainings/tricky-sounds").json()
+    assert {s["sound_id"] for s in sounds} == {"p", "s"}
+    s_sound = next(s for s in sounds if s["sound_id"] == "s")
+    assert s_sound["why_key"] == "heard_in_practice"
+    assert s_sound["evidence"]["practice"] == 8
+    assert s_sound["practise_lesson_id"] == "s-and-sh-1"
+
+    # 3. Self reflection: 2 'hard' reflections on a lesson focusing on 'r' and 'l'
+    # 1 reflection -> does not qualify
+    db.execute(
+        "INSERT INTO training_reflections (user_id, lesson_id, step_id, feeling, created_at)"
+        " VALUES (?, ?, ?, ?, ?)",
+        (uid, "s-and-sh-2", "s-and-sh-2-reflect", "hard", "2026-11-09T10:00:00Z"),
+    )
+    sounds = client.get("/me/trainings/tricky-sounds").json()
+    assert {s["sound_id"] for s in sounds} == {"p", "s"}
+
+    # 2nd and 3rd reflection -> qualifies 'r' and 'l' with you_said_hard
+    for _ in range(2):
+        db.execute(
+            "INSERT INTO training_reflections (user_id, lesson_id, step_id, feeling, created_at)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (uid, "s-and-sh-2", "s-and-sh-2-reflect", "hard", "2026-11-09T10:01:00Z"),
+        )
+    # We now have 4 qualifying sounds ('p', 's', 'r', 'l'). API must return top 3!
+    sounds = client.get("/me/trainings/tricky-sounds").json()
+    assert len(sounds) == 3
+    assert sounds[0]["sound_id"] == "s"
+    assert sounds[1]["sound_id"] == "p"
+    assert sounds[2]["sound_id"] in ("r", "l")
+    assert sounds[2]["why_key"] == "you_said_hard"
+
+
+def test_alternatives_library_ranking_and_avoids(env):
+    client = env.signup()
+    uid = db.row("SELECT id FROM users ORDER BY id DESC LIMIT 1")["id"]
+
+    # Give user tricky sound 'p'
+    phrase_id = db.execute("INSERT INTO phrases (user_id, text) VALUES (?, ?)", (uid, "पानी"))
+    for _ in range(5):
+        db.execute(
+            "INSERT INTO samples (user_id, phrase_id, audio_path, prisma_hypothesis, source, created_at)"
+            " VALUES (?, ?, ?, ?, ?, ?)",
+            (uid, phrase_id, "mock.wav", "बानी", "enroll", "2026-11-09T10:00:00Z"),
+        )
+    tricky = client.get("/me/trainings/tricky-sounds").json()
+    assert [t["sound_id"] for t in tricky] == ["p"]
+
+    # Request alternatives for "पानी चाहिए"
+    res = client.post("/me/trainings/alternatives", json={"text": "पानी चाहिए", "lang": "hi"}).json()
+    assert res["meaning_en"] == "I need water"
+    assert len(res["alternatives"]) <= 4
+    assert all(a["source"] == "library" for a in res["alternatives"])
+
+    # First alternative avoids 'p'
+    first_alt = res["alternatives"][0]
+    assert "p" in first_alt["avoids"]
+
+    # Sorter order: fewer tricky sounds first
+    for i in range(len(res["alternatives"]) - 1):
+        curr_tricky = len([s for s in ["p"] if s not in res["alternatives"][i]["avoids"]])
+        next_tricky = len([s for s in ["p"] if s not in res["alternatives"][i + 1]["avoids"]])
+        assert curr_tricky <= next_tricky
+
+
+def test_alternatives_urgent_retains_urgency(env):
+    client = env.signup()
+
+    # Search for an urgent meaning
+    res = client.post("/me/trainings/alternatives", json={"text": "मदद कीजिए", "lang": "hi"}).json()
+    assert res["meaning_en"]
+    assert len(res["alternatives"]) > 0
+    for a in res["alternatives"]:
+        assert not any(w in a["text"].lower() for w in ["fine", "all good", "no problem", "सब ठीक"])
+
+
+def test_alternatives_groq_mocked(env, monkeypatch):
+    import json as json_mod
+    import httpx
+    import trainings
+
+    client = env.signup()
+    monkeypatch.setenv("LLM_ENABLED", "1")
+    monkeypatch.setenv("LLM_API_KEY", "mock-groq-key")
+
+    calls = []
+
+    # 1. Valid assistant response
+    def fake_post(url, headers=None, json=None, timeout=None):
+        calls.append(json)
+        payload = {
+            "choices": [{
+                "message": {
+                    "content": json_mod.dumps({
+                        "meaning_en": "Please open the window",
+                        "alternatives": [
+                            {"text": "खिड़की खोल दीजिए", "latin": "khidki khol deejiye"},
+                            {"text": "खिड़की खोलें", "latin": "khidki kholein"},
+                        ]
+                    })
+                }
+            }]
+        }
+        return httpx.Response(200, json=payload, request=httpx.Request("POST", url))
+
+    monkeypatch.setattr(trainings.httpx, "post", fake_post)
+
+    # Input not in library
+    res = client.post("/me/trainings/alternatives", json={"text": "कृपया खिड़की खोलिए", "lang": "hi"}).json()
+    assert res["meaning_en"] == "Please open the window"
+    assert len(res["alternatives"]) == 2
+    assert all(a["source"] == "assistant" for a in res["alternatives"])
+
+    # 2. Bad JSON from Groq: handled gracefully without 500 error
+    def fake_bad_json(url, headers=None, json=None, timeout=None):
+        return httpx.Response(200, text="Invalid json response", request=httpx.Request("POST", url))
+
+    monkeypatch.setattr(trainings.httpx, "post", fake_bad_json)
+    trainings._alternatives_cache.clear()
+
+    bad_res = client.post("/me/trainings/alternatives", json={"text": "कुछ नया बोलिए", "lang": "hi"})
+    assert bad_res.status_code == 200
+    assert bad_res.json()["alternatives"] == []
+
+    # 3. Timeout from Groq: handled gracefully without 500 error
+    def fake_timeout(url, headers=None, json=None, timeout=None):
+        raise httpx.TimeoutException("Groq timed out")
+
+    monkeypatch.setattr(trainings.httpx, "post", fake_timeout)
+    trainings._alternatives_cache.clear()
+
+    to_res = client.post("/me/trainings/alternatives", json={"text": "कुछ और बोलिए", "lang": "hi"})
+    assert to_res.status_code == 200
+    assert to_res.json()["alternatives"] == []
+
+    # 4. LLM_ENABLED=false: skips Groq cleanly
+    monkeypatch.setenv("LLM_ENABLED", "0")
+    calls.clear()
+    off_res = client.post("/me/trainings/alternatives", json={"text": "कोई अनोखा वाक्य", "lang": "hi"})
+    assert off_res.status_code == 200
+    assert len(calls) == 0
 
 
 @pytest.mark.parametrize("method, path", [

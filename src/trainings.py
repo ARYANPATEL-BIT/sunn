@@ -2,13 +2,17 @@
 Training progress, reflections and attempts are stored in the database.
 docs/TRAININGS_CONTRACT.md is the contract. Browsing the content (content/trainings/,
 read through src/trainings_content.py) needs no session; everything under /me does."""
+import json
 import os
 import re
 import subprocess
 import tempfile
+import threading
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
-from typing import Literal
+from typing import Any, Literal
 
+import httpx
 from fastapi import APIRouter, Cookie, Depends, File, Form, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -19,10 +23,13 @@ import auth
 import db
 import gnani
 import gnani_mock
+import llm_judge
 import matcher
 import prisma
 import schemas
 import trainings_content as content
+
+router = APIRouter()
 from api import Refused, current_user, get_user
 
 # Once, at start: content that breaks the contract stops the server here, not on a request.
@@ -39,7 +46,126 @@ TRAINING_CHECKS_PER_DAY = int(os.environ.get("TRAINING_CHECKS_PER_DAY", 20))
 WORD_CLEAR_THRESHOLD = float(os.environ.get("WORD_CLEAR_THRESHOLD", 0.70))
 MAX_AUDIO_BYTES = 10 * 1024 * 1024  # 10 MB upload cap
 
-router = APIRouter()
+DEV_CHAR_TO_SOUND: dict[str, str] = {
+    'प': 'p',
+    'ब': 'b',
+    'त': 't-dental',
+    'ट': 't-retroflex',
+    'द': 'd', 'ड': 'd', 'ड़': 'd',
+    'क': 'k', 'क़': 'k',
+    'ग': 'g', 'ग़': 'g',
+    'च': 'ch',
+    'ज': 'j', 'ज़': 'j',
+    'स': 's',
+    'श': 'sh', 'ष': 'sh',
+    'र': 'r',
+    'ल': 'l',
+    'ख': 'aspirated', 'ख़': 'aspirated', 'घ': 'aspirated', 'छ': 'aspirated',
+    'झ': 'aspirated', 'ठ': 'aspirated', 'ढ': 'aspirated', 'ढ़': 'aspirated',
+    'थ': 'aspirated', 'ध': 'aspirated', 'फ': 'aspirated', 'फ़': 'aspirated', 'भ': 'aspirated',
+    'म': 'nasal', 'न': 'nasal', 'ण': 'nasal', 'ङ': 'nasal', 'ञ': 'nasal',
+}
+
+
+def extract_word_sounds(word: str) -> set[str]:
+    """Sounds a word contains: word-initial consonant, clusters, and character sounds."""
+    sounds: set[str] = set()
+    cleaned = word.strip("।,?!'\"()[]{}")
+    if not cleaned:
+        return sounds
+    w_lower = cleaned.lower()
+
+    if "th" in w_lower:
+        sounds.add("th-english")
+    if "sh" in w_lower:
+        sounds.add("sh")
+    if "ch" in w_lower:
+        sounds.add("ch")
+    for k in ["kh", "gh", "chh", "jh", "dh", "bh", "ph"]:
+        if k in w_lower:
+            sounds.add("aspirated")
+
+    if re.search(r"[\u0915-\u0939]\u094d[\u0915-\u0939]", cleaned):
+        sounds.add("clusters")
+    if re.search(r"(?:sk|pr|kr|pl|bl|st|sp|cl|gl|dr|tr|br|str|spr|sch)", w_lower):
+        sounds.add("clusters")
+
+    for char in cleaned:
+        if char in DEV_CHAR_TO_SOUND:
+            sounds.add(DEV_CHAR_TO_SOUND[char])
+            break
+
+    for char in cleaned:
+        if char in DEV_CHAR_TO_SOUND:
+            sounds.add(DEV_CHAR_TO_SOUND[char])
+        elif char in ("\u0902", "\u0901"):
+            sounds.add("nasal")
+
+    if "p" in w_lower:
+        sounds.add("p")
+    if "b" in w_lower:
+        sounds.add("b")
+    if "d" in w_lower:
+        sounds.add("d")
+    if "k" in w_lower or ("c" in w_lower and "ch" not in w_lower):
+        sounds.add("k")
+    if "g" in w_lower:
+        sounds.add("g")
+    if "j" in w_lower:
+        sounds.add("j")
+    if "s" in w_lower and "sh" not in w_lower:
+        sounds.add("s")
+    if "r" in w_lower:
+        sounds.add("r")
+    if "l" in w_lower:
+        sounds.add("l")
+    if any(c in w_lower for c in ["m", "n"]):
+        sounds.add("nasal")
+
+    return sounds
+
+
+def extract_text_sounds(text: str) -> set[str]:
+    """All speech sounds present in a sentence or phrase."""
+    sounds: set[str] = set()
+    for word in text.split():
+        sounds.update(extract_word_sounds(word))
+    return sounds
+
+
+ALTERNATIVES_PATH = os.path.join(content.ROOT, "alternatives.json")
+TAGGED_ALTERNATIVES = []
+if os.path.exists(ALTERNATIVES_PATH):
+    with open(ALTERNATIVES_PATH, encoding="utf-8") as _f:
+        _raw_meanings = json.load(_f)
+    for _m in _raw_meanings:
+        _meaning_item = {
+            "meaning_id": _m.get("meaning_id", ""),
+            "meaning_en": _m.get("meaning_en", ""),
+            "category": _m.get("category", ""),
+            "urgent": bool(_m.get("urgent", False)),
+            "variants": [],
+        }
+        for _idx, _v in enumerate(_m.get("variants", [])):
+            _v_text = _v.get("text", "")
+            _v_latin = _v.get("latin", _v_text)
+            _v_lang = _v.get("lang", "hi")
+            _v_sounds = extract_text_sounds(_v_text) | extract_text_sounds(_v_latin)
+            _meaning_item["variants"].append({
+                "text": _v_text,
+                "latin": _v_latin,
+                "lang": _v_lang,
+                "sounds": _v_sounds,
+                "norm": matcher.normalize(_v_text),
+                "norm_latin": matcher.normalize(_v_latin),
+                "index": _idx,
+            })
+        TAGGED_ALTERNATIVES.append(_meaning_item)
+
+
+_assistant_calls_today: dict[tuple[int, str], int] = defaultdict(int)
+_alternatives_cache: dict[tuple, Any] = {}
+_alternatives_lock = threading.Lock()
 
 
 # --- responses
@@ -649,27 +775,361 @@ def attempt(
                     pass
 
 
+def get_user_tricky_sounds(user: dict) -> list[TrickySound]:
+    """Collects evidence across speak, practice, and self reflections for the user."""
+    user_id = user["id"]
+    sounds_dict = {s.id: s for s in LIBRARY.sounds}
+
+    # 1. Speak evidence: count consistent substitutions
+    speak_counts: dict[str, int] = defaultdict(int)
+    samples = db.rows(
+        "SELECT s.prisma_hypothesis, p.text FROM samples s JOIN phrases p ON s.phrase_id = p.id WHERE s.user_id = ?",
+        (user_id,)
+    )
+    for sample in samples:
+        target = sample["text"] or ""
+        hypo = sample["prisma_hypothesis"] or ""
+        if not target or not hypo:
+            continue
+        ops = Levenshtein.editops(target, hypo)
+        for op, s1, _ in ops:
+            if op == "replace" and s1 < len(target):
+                ch = target[s1]
+                if ch in DEV_CHAR_TO_SOUND:
+                    sound_id = DEV_CHAR_TO_SOUND[ch]
+                    speak_counts[sound_id] += 1
+                elif ch.lower() in ("m", "n"):
+                    speak_counts["nasal"] += 1
+                elif ch in ("\u0902", "\u0901"):
+                    speak_counts["nasal"] += 1
+
+    # 2. Practice evidence: checked attempts word alignments
+    practice_words_practise: dict[str, int] = defaultdict(int)
+    practice_words_total: dict[str, int] = defaultdict(int)
+    attempts = db.rows(
+        "SELECT step_id, item_id, transcript FROM training_attempts WHERE user_id = ? AND checked = 1",
+        (user_id,)
+    )
+    for att in attempts:
+        step_id = att["step_id"]
+        item_id = att["item_id"]
+        transcript = att["transcript"]
+        if step_id not in LIBRARY.steps or not transcript:
+            continue
+        _, _, step = LIBRARY.steps[step_id]
+
+        target_text = ""
+        if isinstance(step, content.ListenRepeat):
+            if item_id:
+                for it in step.items:
+                    if it.id == item_id:
+                        target_text = it.text
+                        break
+        elif isinstance(step, (content.SpeakWithMe, content.ReadAloud)):
+            target_text = step.text
+
+        if not target_text:
+            continue
+
+        aligned = align_words(target_text, transcript)
+        for w_item in aligned:
+            w_sounds = extract_word_sounds(w_item.text)
+            for sid in w_sounds:
+                practice_words_total[sid] += 1
+                if w_item.status == "practise":
+                    practice_words_practise[sid] += 1
+
+    # 3. Self evidence: "hard" reflections on steps that have focus_sound
+    self_counts: dict[str, int] = defaultdict(int)
+    reflections = db.rows(
+        "SELECT step_id, feeling FROM training_reflections WHERE user_id = ? AND feeling = 'hard'",
+        (user_id,)
+    )
+    for ref in reflections:
+        step_id = ref["step_id"]
+        if step_id not in LIBRARY.steps:
+            continue
+        found_course, found_lesson, step = LIBRARY.steps[step_id]
+        step_sounds = set()
+        if getattr(step, "focus_sound", None):
+            step_sounds.add(step.focus_sound)
+        if getattr(step, "sound_a", None):
+            step_sounds.add(step.sound_a)
+        if getattr(step, "sound_b", None):
+            step_sounds.add(step.sound_b)
+        if not step_sounds:
+            for s in found_lesson.steps:
+                if getattr(s, "focus_sound", None):
+                    step_sounds.add(s.focus_sound)
+                if getattr(s, "items", None):
+                    for it in s.items:
+                        if getattr(it, "focus_sound", None):
+                            step_sounds.add(it.focus_sound)
+        for sid in step_sounds:
+            self_counts[sid] += 1
+
+    # 4. Filter by thresholds:
+    # at least 5 speak substitutions, OR 8 practice words with >40% practise rate, OR 2 "hard" reflections
+    qualifying = []
+    for sid, sound in sounds_dict.items():
+        spk = speak_counts.get(sid, 0)
+        prc = practice_words_practise.get(sid, 0)
+        prc_tot = practice_words_total.get(sid, 0)
+        slf = self_counts.get(sid, 0)
+
+        prc_rate = (prc / prc_tot) if prc_tot > 0 else 0.0
+
+        qualifies = (spk >= 5) or (prc_tot >= 8 and prc_rate > 0.40) or (slf >= 2)
+        if not qualifies:
+            continue
+
+        if spk >= prc and spk >= slf:
+            why = "heard_in_speak"
+        elif prc >= slf:
+            why = "heard_in_practice"
+        else:
+            why = "you_said_hard"
+
+        total_evidence = spk + prc + slf
+        qualifying.append({
+            "sound_id": sid,
+            "label": sound.label,
+            "why_key": why,
+            "evidence": Evidence(speak=spk, practice=prc, self=slf),
+            "practise_lesson_id": sound.practise_lesson_id,
+            "total_score": total_evidence,
+        })
+
+    qualifying.sort(key=lambda x: x["total_score"], reverse=True)
+    top3 = qualifying[:3]
+    return [
+        TrickySound(
+            sound_id=item["sound_id"],
+            label=item["label"],
+            why_key=item["why_key"],
+            evidence=item["evidence"],
+            practise_lesson_id=item["practise_lesson_id"],
+        )
+        for item in top3
+    ]
+
+
 @router.get("/me/trainings/tricky-sounds", response_model=list[TrickySound])
 def tricky_sounds(user=Depends(current_user)):
     """Sounds the user might like to practise, with the evidence for each. A suggestion, never a
     diagnosis."""
-    sounds = {s.id: s for s in LIBRARY.sounds}
-    made_up = [("s", "heard_in_practice", {"speak": 2, "practice": 5, "self": 1}),
-               ("sh", "heard_in_speak", {"speak": 4, "practice": 1, "self": 0})]
-    return [{"sound_id": i, "label": sounds[i].label, "why_key": why, "evidence": evidence,
-             "practise_lesson_id": sounds[i].practise_lesson_id} for i, why, evidence in made_up if i in sounds]
+    return get_user_tricky_sounds(user)
+
+
+def call_groq_alternatives(text: str, lang: str, tricky_ids: list[str]) -> Alternatives | None:
+    try:
+        base = llm_judge.setting("LLM_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
+        model = llm_judge.setting("LLM_MODEL", "llama-3.3-70b-versatile")
+        key = llm_judge.setting("LLM_API_KEY")
+        timeout = float(llm_judge.setting("LLM_TIMEOUT_S", "3"))
+
+        sounds_dict = {s.id: s for s in LIBRARY.sounds}
+        if tricky_ids:
+            sound_desc_list = []
+            for tid in tricky_ids:
+                if tid in sounds_dict:
+                    s = sounds_dict[tid]
+                    label = s.label.hi if lang == "hi" else s.label.en
+                    eg = s.examples[0].text if s.examples else tid
+                    sound_desc_list.append(f"{tid} ({label}, e.g. {eg})")
+                else:
+                    sound_desc_list.append(tid)
+            sounds_str = ", ".join(sound_desc_list)
+        else:
+            sounds_str = "none"
+
+        lang_name = "Hindi" if lang == "hi" else "English"
+        system_prompt = (
+            f"you help a person who finds some speech sounds hard. give 3 short, natural ways to say the same thing in {lang_name}, "
+            f"keeping exactly the same meaning and the same urgency. avoid these sounds where you can: {sounds_str}. "
+            "if the meaning is about pain, help, a doctor or danger, keep it just as clear and urgent. "
+            'reply with json only: {"meaning_en": "...", "alternatives": [{"text": "...", "latin": "..."}]}'
+        )
+
+        body = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": text},
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.2,
+        }
+
+        resp = httpx.post(f"{base}/chat/completions", headers={"Authorization": f"Bearer {key}"}, json=body, timeout=timeout)
+        if resp.status_code != 200:
+            return None
+
+        data = resp.json()
+        raw_content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        parsed = json.loads(raw_content)
+
+        meaning_en = parsed.get("meaning_en")
+        raw_alts = parsed.get("alternatives")
+        if not isinstance(meaning_en, str) or not isinstance(raw_alts, list):
+            return None
+        if not (1 <= len(raw_alts) <= 3):
+            return None
+
+        text_lower = text.lower()
+        is_urgent_input = any(w in text_lower for w in ["pain", "hurt", "doctor", "help", "sos", "danger", "दर्द", "डॉक्टर", "मदद", "सांस", "तकलीफ़"])
+
+        valid_alts = []
+        for item in raw_alts:
+            if not isinstance(item, dict):
+                continue
+            alt_text = item.get("text", "").strip()
+            alt_latin = item.get("latin", alt_text).strip()
+            if not alt_text or len(alt_text) >= 60:
+                continue
+            if alt_text.lower() == text.strip().lower() or matcher.normalize(alt_text) == matcher.normalize(text):
+                continue
+
+            if is_urgent_input:
+                dismissive_words = ["fine", "ok", "all good", "no problem", "better", "nothing", "सब ठीक", "कोई बात नहीं", "दर्द नहीं"]
+                if any(dw in alt_text.lower() for dw in dismissive_words):
+                    continue
+
+            v_sounds = extract_text_sounds(alt_text) | extract_text_sounds(alt_latin)
+            avoids = [s for s in tricky_ids if s not in v_sounds]
+            valid_alts.append({
+                "text": alt_text,
+                "latin": alt_latin,
+                "meaning_en": meaning_en,
+                "avoids": avoids,
+                "source": "assistant",
+                "sounds": v_sounds,
+            })
+
+        if not valid_alts:
+            return None
+
+        tricky_set = set(tricky_ids)
+        valid_alts.sort(key=lambda x: (len(x["sounds"] & tricky_set), len(x["text"])))
+
+        return Alternatives(
+            meaning_en=meaning_en,
+            alternatives=[
+                Alternative(
+                    text=a["text"],
+                    latin=a["latin"],
+                    meaning_en=a["meaning_en"],
+                    avoids=a["avoids"],
+                    source="assistant",
+                )
+                for a in valid_alts
+            ]
+        )
+    except Exception:
+        return None
 
 
 @router.post("/me/trainings/alternatives", response_model=Alternatives)
 def alternatives(body: AlternativesRequest, user=Depends(current_user)):
     """Other ways to say text that leave out the user's tricky sounds."""
-    if body.lang == "en":
-        return {"meaning_en": "thank you", "alternatives": [
-            {"text": "Much appreciated", "latin": "Much appreciated", "meaning_en": "thank you",
-             "avoids": ["th-english"], "source": "library"},
-            {"text": "Cheers", "latin": "Cheers", "meaning_en": "thanks, said casually", "avoids": ["th-english"],
-             "source": "assistant"}]}
-    return {"meaning_en": "thank you", "alternatives": [
-        {"text": "धन्यवाद", "latin": "dhanyavaad", "meaning_en": "thank you", "avoids": ["sh"], "source": "library"},
-        {"text": "बहुत मेहरबानी", "latin": "bahut meharbaani", "meaning_en": "thank you very much", "avoids": ["sh"],
-         "source": "assistant"}]}
+    user_tricky = get_user_tricky_sounds(user)
+    tricky_ids = [ts.sound_id for ts in user_tricky]
+    tricky_set = set(tricky_ids)
+
+    norm_input = matcher.normalize(body.text)
+
+    # 1. Search in Library: exact match or fuzzy match >= 0.85
+    best_meaning = None
+    best_variant = None
+    best_sim = 0.0
+
+    for m in TAGGED_ALTERNATIVES:
+        for v in m["variants"]:
+            if norm_input == v["norm"] or norm_input == v["norm_latin"]:
+                best_meaning = m
+                best_variant = v
+                best_sim = 1.0
+                break
+        if best_meaning:
+            break
+
+    if not best_meaning:
+        for m in TAGGED_ALTERNATIVES:
+            for v in m["variants"]:
+                sim1 = Levenshtein.normalized_similarity(norm_input, v["norm"])
+                sim2 = Levenshtein.normalized_similarity(norm_input, v["norm_latin"])
+                sim = max(sim1, sim2)
+                if sim > best_sim:
+                    best_sim = sim
+                    best_meaning = m
+                    best_variant = v
+
+    if best_meaning and best_sim >= 0.85:
+        other_variants = [v for v in best_meaning["variants"] if v["text"] != body.text and v["norm"] != norm_input]
+        if not other_variants:
+            other_variants = best_meaning["variants"]
+
+        def rank_key(v):
+            tricky_contained = len(v["sounds"] & tricky_set)
+            return (tricky_contained, len(v["text"]), v["index"])
+
+        sorted_variants = sorted(other_variants, key=rank_key)
+        alts = []
+        for v in sorted_variants[:4]:
+            avoids = [s for s in tricky_ids if s not in v["sounds"]]
+            alts.append(Alternative(
+                text=v["text"],
+                latin=v["latin"],
+                meaning_en=best_meaning["meaning_en"],
+                avoids=avoids,
+                source="library",
+            ))
+        return Alternatives(meaning_en=best_meaning["meaning_en"], alternatives=alts)
+
+    # 2. Not found in library: check Groq assistant if LLM_ENABLED
+    cache_key = (user["id"], norm_input, body.lang, tuple(sorted(tricky_ids)))
+    with _alternatives_lock:
+        if cache_key in _alternatives_cache:
+            return _alternatives_cache[cache_key]
+
+    if llm_judge.enabled():
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        with _alternatives_lock:
+            calls_today = _assistant_calls_today[(user["id"], today_str)]
+            if calls_today < 20:
+                _assistant_calls_today[(user["id"], today_str)] += 1
+                can_call = True
+            else:
+                can_call = False
+
+        if can_call:
+            assistant_res = call_groq_alternatives(body.text, body.lang, tricky_ids)
+            if assistant_res is not None:
+                with _alternatives_lock:
+                    _alternatives_cache[cache_key] = assistant_res
+                return assistant_res
+
+    # 3. Fallback: closest library results if similarity >= 0.60, or empty list
+    if best_meaning and best_sim >= 0.60:
+        other_variants = [v for v in best_meaning["variants"] if v["text"] != body.text and v["norm"] != norm_input]
+        if not other_variants:
+            other_variants = best_meaning["variants"]
+
+        def rank_key(v):
+            tricky_contained = len(v["sounds"] & tricky_set)
+            return (tricky_contained, len(v["text"]), v["index"])
+
+        sorted_variants = sorted(other_variants, key=rank_key)
+        alts = []
+        for v in sorted_variants[:4]:
+            avoids = [s for s in tricky_ids if s not in v["sounds"]]
+            alts.append(Alternative(
+                text=v["text"],
+                latin=v["latin"],
+                meaning_en=best_meaning["meaning_en"],
+                avoids=avoids,
+                source="library",
+            ))
+        return Alternatives(meaning_en=best_meaning["meaning_en"], alternatives=alts)
+
+    return Alternatives(meaning_en="practice", alternatives=[])
