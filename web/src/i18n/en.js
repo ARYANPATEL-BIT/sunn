@@ -11,6 +11,9 @@ export default {
   'nav.signIn': 'Sign in',
   'nav.openApp': 'Open app',
   'nav.main': 'Main',
+  'nav.menu': 'Menu',
+  'nav.openMenu': 'Open navigation menu',
+  'nav.closeMenu': 'Close navigation menu',
 
   'hero.headline': 'Every voice, understood.',
   'hero.line1': 'Speak the way you can.',

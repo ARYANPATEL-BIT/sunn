@@ -48,7 +48,7 @@ for (const lang of LANGS) {
 
       // Verify lessons list and honest note on course page
       const lessonsList = page.locator('.lessons-list .lesson-row')
-      await expect(lessonsList).toHaveCount(2)
+      await expect(lessonsList).toHaveCount(4)
       await expect(page.locator('.trainings-honest-note')).toBeVisible()
 
       // 4. Browsing logged out: clicking practise button redirects to login

@@ -14,6 +14,23 @@ for (const lang of LANGS) {
       await markOnboarded(page, user)
 
       // 1. Logged in on /trainings shows tricky sounds and easier ways cards
+      // Route tricky-sounds with data to test populated card
+      await page.route('**/me/trainings/tricky-sounds', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([
+            {
+              sound: 's-sh',
+              name_en: 's and sh sounds',
+              name_hi: 'स और श की आवाज़ें',
+              why_key: 'heard_in_speak',
+              practise_lesson_id: 's-and-sh-1',
+            },
+          ]),
+        })
+      })
+
       await page.goto('/trainings')
       await expect(page.locator('.tricky-sounds-card')).toBeVisible()
       await expect(page.locator('.easier-ways-card')).toBeVisible()
@@ -137,6 +154,28 @@ for (const lang of LANGS) {
       const user = await signUp(page.request, { speaks: lang })
       await openSpeak(page.request, user)
       await markOnboarded(page, user)
+
+      await page.route('**/me/trainings/progress', async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            courses: [
+              { id: 'easy-starts', percent: 50, completed_lessons: 2, total_lessons: 4 },
+            ],
+            resume: {
+              category_id: 'smooth-speaking',
+              course_id: 'easy-starts',
+              lesson_id: 'easy-starts-1',
+              step_index: 2,
+              title: 'Gentle start',
+            },
+            lessons_done: 2,
+            minutes_practised: 15,
+            days_this_week: 2,
+          }),
+        })
+      })
 
       await page.goto('/app/progress')
       const trainingsSection = page.locator('.trainings-progress-section')

@@ -36,7 +36,7 @@ export function CheckingFeedback({
   feedbackType = 'pace',
   isKids = false,
   isSmoothOrKids = false,
-  checksLeftToday = 24,
+  checksLeftToday = 20,
 }) {
   const { t } = useLang()
 
@@ -62,7 +62,7 @@ export function CheckingFeedback({
               <span className="checks-counter-meta">
                 {isExhausted
                   ? t('check.noChecksLeft')
-                  : t('check.checksLeft', { count: checksLeftToday ?? 24 })}
+                  : t('check.checksLeft', { count: checksLeftToday ?? 20 })}
               </span>
             )}
           </div>

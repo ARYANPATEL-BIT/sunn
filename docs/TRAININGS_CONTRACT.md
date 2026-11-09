@@ -252,7 +252,7 @@ Errors: `not_logged_in`, `not_found`, `invalid_input` (a `step_index` past the l
 
 Errors: `not_logged_in`, `not_found`, `invalid_input`.
 
-### `POST /me/trainings/attempts` · stub
+### `POST /me/trainings/attempts` · real
 
 Form: `audio` (the try, 0.3 to 15 s), `step_id`, `item_id` (the item's id, for a
 `listen_repeat` step only), `check` (`true` or `false`). Only `listen_repeat`,
@@ -285,7 +285,7 @@ Errors: `not_logged_in`, `not_found`, `invalid_input`, `file_too_large`, `bad_au
 `audio_too_short`, `audio_too_long`, `no_speech`, `gnani_unreachable`, `gnani_rejected`,
 `credit_limit_reached`, `daily_cap_reached`.
 
-### `GET /me/trainings/tricky-sounds` · stub
+### `GET /me/trainings/tricky-sounds` · real
 
 Sounds the user might like to practise, most evidence first, and a lesson for each. A
 suggestion, never a diagnosis: word it as "You might like to practise", never "you have
@@ -303,12 +303,12 @@ reflections on steps that practise it (`self`). `why_key` names the biggest of t
 
 Errors: `not_logged_in`.
 
-### `POST /me/trainings/alternatives` · stub
+### `POST /me/trainings/alternatives` · real
 
 `{"text": "शुक्रिया", "lang": "hi"}`. Other ways to say the text that leave out the user's
 tricky sounds (`avoids`), for a moment when being understood matters more than practice.
 Offered as a choice, never pushed. `source` is `library` (Sunn's own list) or `assistant`
-(the LLM, only when `LLM_ENABLED`). The stub always answers about "thank you".
+(the LLM, only when `LLM_ENABLED`).
 
 ```json
 {"meaning_en": "thank you", "alternatives": [

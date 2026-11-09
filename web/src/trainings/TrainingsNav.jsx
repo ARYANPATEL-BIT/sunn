@@ -16,9 +16,14 @@ export function TrainingsNav({ backTo, backLabel }) {
           <div className="trainings-nav-start">
             <Wordmark />
             {backTo && (
-              <Link to={backTo} className="trainings-back-link" viewTransition={!reducedMotion()}>
+              <Link
+                to={backTo}
+                className="trainings-back-link"
+                aria-label={backLabel || t('trainings.backToTrainings')}
+                viewTransition={!reducedMotion()}
+              >
                 <Icon name="arrowLeft" />
-                <span>{backLabel || t('trainings.backToTrainings')}</span>
+                <span className="back-link-text">{backLabel || t('trainings.backToTrainings')}</span>
               </Link>
             )}
           </div>
