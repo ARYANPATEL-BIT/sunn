@@ -28,7 +28,7 @@ for (const lang of LANGS) {
       const invite = page.getByLabel(t(lang, 'signup.inviteCode'))
       await expect(invite).toBeVisible()
       await expectNoLeaks(page, lang)
-      const email = `e2e-journey-${lang}-${Date.now()}@example.com`
+      const email = `e2e-journey-${lang}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@example.com`
       await page.getByLabel(t(lang, 'signup.name')).fill(lang === 'hi' ? 'आशा' : 'Asha')
       await page.getByLabel(t(lang, 'auth.email')).fill(email)
       await page.getByLabel(t(lang, 'auth.password'), { exact: true }).fill('e2e-password-1')
