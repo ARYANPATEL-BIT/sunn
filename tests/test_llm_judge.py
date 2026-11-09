@@ -75,8 +75,9 @@ def test_the_request_sends_only_text_as_specified(llm):
     assert body["messages"][0] == {"role": "system", "content": llm_judge.SYSTEM}
     message = body["messages"][1]["content"]
     heard, rest = message.split(". our model ranked these candidates (best first): ")
-    candidates, context = rest.removesuffix(". which candidate did they mean?").split(". context: ")
-    assert heard == "the stt registered: baani chaiye"
+    candidates, context = rest.removesuffix(". which candidate did they mean? write the reason in english.").split(
+        ". context: ")
+    assert heard == "the person speaks hindi, written in devanagari script. the stt registered: baani chaiye"
     candidates, context = json.loads(candidates), json.loads(context)
     assert [c["id"] for c in candidates] == ["1", "2", "3", "4", "5"]
     assert candidates[0] == {"id": "1", "hindi": "पानी चाहिए", "latin": "paani chahiye", "meaning_en": "I need water",

@@ -36,10 +36,13 @@ def test_switching_language_keeps_everything_and_new_calls_follow_it(env):
     assert [{**p, "sample_count": 0} for p in before["/me/phrases"]] == after["/me/phrases"]
     assert next(p for p in before["/me/phrases"] if p["id"] == water["id"])["sample_count"] == 2
 
-    # The defaults for the new language join the old ones; text already there is skipped.
+    # The defaults for the new language join the old ones. "I need help" was added while the
+    # user spoke Hindi, so it is a Hindi phrase; English gets its own.
     help_id = phrase_id(client, "I need help")
     phrases = client.post("/me/phrases/default").json()
-    assert len(phrases) == 2 * 51 and phrase_id(client, "I need help") == help_id
+    assert len(phrases) == 2 * 51 + 1 and phrase_id(client, "I need help") == help_id
+    assert [p["language"] for p in phrases if p["text"] == "I need help"] == ["hi", "en"]
+    assert len(client.post("/me/phrases/default").json()) == len(phrases)  # again: nothing new
     assert phrase_id(client, "पानी चाहिए") == water["id"]
 
     env.enroll_phrase(client, "I need water")
@@ -74,8 +77,10 @@ def block_ids(blocks, text):
     return [b["id"] for b in blocks if b["text"] == text]
 
 
-def test_only_hi_and_en_are_languages(env):
+def test_only_the_ten_languages_are_languages(env):
     client = env.signup("hi")
+    assert client.patch("/me", json={"language": "ta"}).json()["language"] == "ta"
+    client.patch("/me", json={"language": "hi"}).raise_for_status()
     for language in ("hinglish", "hi-IN", "EN", ""):
         refused = client.patch("/me", json={"language": language})
         assert refused.status_code == 422 and refused.json()["error"] == "invalid_input", language
@@ -100,11 +105,12 @@ def test_the_matcher_ignores_samples_in_another_language(env):
     english = env.recognize(client, "I need water")["candidates"]
     assert [c["text"] for c in english] == ["I need water"]
 
-    # Back to Hindi: the Hindi samples were never deleted, so they count again.
+    # Back to Hindi: the Hindi samples were never deleted, so they count again, and the user's
+    # English phrases stay candidates too.
     client.patch("/me", json={"language": "hi"}).raise_for_status()
     hindi_again = env.recognize(client, "paani chahiye")["candidates"]
     assert hindi_again[0]["phrase_id"] == water["id"]
-    assert "I need water" not in [c["text"] for c in hindi_again]
+    assert "I need water" in [c["text"] for c in hindi_again]
 
 
 def test_deleting_an_old_language_sample_removes_its_own_cache_entry(env):

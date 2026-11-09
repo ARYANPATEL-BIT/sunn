@@ -488,7 +488,8 @@ def test_edit_and_delete_phrases_and_samples(env):
     phrase = env.enroll_phrase(client, "पानी चाहिए")
     edited = client.patch(f"/me/phrases/{phrase['id']}", json={
         "text": "ठंडा पानी चाहिए", "contexts": ["home", "market"], "urgent": True}).json()
-    assert edited == {"id": phrase["id"], "text": "ठंडा पानी चाहिए", "contexts": ["home", "market"], "urgent": True}
+    assert edited == {"id": phrase["id"], "text": "ठंडा पानी चाहिए", "contexts": ["home", "market"], "urgent": True,
+                      "language": "hi"}
     assert client.patch(f"/me/phrases/{phrase['id']}", json={"contexts": ["office"]}).json()["error"] == "invalid_input"
     assert client.patch(f"/me/phrases/{phrase['id']}", json={"text": "नमस्ते"}).json()["error"] == "phrase_exists"
 
