@@ -69,7 +69,7 @@ export function SpeakWithMeStep({
   const [recordedBlob, setRecordedBlob] = useState(null)
   const [attemptResult, setAttemptResult] = useState(null)
   const [checking, setChecking] = useState(false)
-  const [checksLeft, setChecksLeft] = useState(24)
+  const [checksLeft, setChecksLeft] = useState(20)
 
   const audioRef = useRef(null)
   const animFrameRef = useRef(null)

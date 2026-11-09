@@ -13,7 +13,7 @@ export function ReadAloudStep({ step, isKids = false, isSmoothOrKids = false }) 
   const [recordedBlob, setRecordedBlob] = useState(null)
   const [attemptResult, setAttemptResult] = useState(null)
   const [checking, setChecking] = useState(false)
-  const [checksLeft, setChecksLeft] = useState(24)
+  const [checksLeft, setChecksLeft] = useState(20)
 
   const title = step.title?.[lang] || step.title?.en || ''
 
