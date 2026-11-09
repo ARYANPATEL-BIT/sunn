@@ -69,13 +69,13 @@ def test_gnani_unconfigured_key_safeguard(monkeypatch=None):
     if monkeypatch is None or pytest is None:
         return
     import gnani
-    monkeypatch.setenv('GNANI_API_KEY', '')
+    monkeypatch.setenv('GNANI_STT_API_KEY', '')
     with pytest.raises(gnani.GnaniError) as exc_info:
         gnani.post('stt', 'http://example.com')
     assert exc_info.value.code == 'gnani_unreachable'
     assert exc_info.value.status == 502
 
-    monkeypatch.setenv('GNANI_API_KEY', 'your-key-here')
+    monkeypatch.setenv('GNANI_STT_API_KEY', 'your-stt-key-here')
     with pytest.raises(gnani.GnaniError) as exc_info:
         gnani.post('stt', 'http://example.com')
     assert exc_info.value.code == 'gnani_unreachable'

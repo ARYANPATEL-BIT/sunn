@@ -12,7 +12,10 @@ def test_env_example_has_only_safe_placeholders():
     parsed = dict(line.split("=", 1) for line in lines)
 
     # Required environment keys must exist
-    assert "GNANI_API_KEY" in parsed
+    assert "GNANI_STT_API_KEY" in parsed
+    assert "GNANI_TTS_API_KEY" in parsed
+    assert "GROQ_API_KEY" in parsed
+    assert "GROQ_MODEL" in parsed
     assert "JWT_SECRET" in parsed
     assert "GNANI_CALL_LIMIT" in parsed
     assert "OWNER_EMAIL" in parsed
@@ -21,7 +24,10 @@ def test_env_example_has_only_safe_placeholders():
     assert "TRUST_PROXY" in parsed
 
     # Sensitive values must contain only placeholders
-    assert parsed["GNANI_API_KEY"] == "your-key-here"
+    assert parsed["GNANI_STT_API_KEY"] == "your-stt-key-here"
+    assert parsed["GNANI_TTS_API_KEY"] == "your-tts-key-here"
+    assert parsed["GROQ_API_KEY"] == ""
+    assert parsed["GROQ_MODEL"] == "openai/gpt-oss-120b"
     assert parsed["JWT_SECRET"] == "generate-one-with-the-command-above"
     assert parsed["OWNER_EMAIL"] == "you@example.com"
     assert parsed["DEMO_INVITE_CODE"] == ""

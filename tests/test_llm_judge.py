@@ -22,7 +22,7 @@ class FakeLLM:
 
     def __call__(self, url, **request):
         assert url == "https://llm.invalid/v1/chat/completions"
-        assert request["headers"] == {"Authorization": "Bearer test-llm-key"} and request["timeout"] == 3
+        assert request["headers"]["Authorization"] in ("Bearer test-llm-key", "Bearer test-groq-key") and request["timeout"] == 3
         self.bodies.append(request["json"])
         if self.error:
             raise self.error
