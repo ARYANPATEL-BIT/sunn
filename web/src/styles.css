@@ -1635,11 +1635,35 @@ input:focus-visible + .file-pick {
 }
 
 .wide-only {
-  display: none;
+  display: inline-flex;
 }
 
 .narrow-only {
   display: inline-flex;
+}
+
+@media (max-width: 47.99rem) {
+  .wide-only,
+  .nav-link.wide-only,
+  .button.wide-only,
+  button.wide-only,
+  span.wide-only,
+  div.wide-only,
+  a.wide-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 48rem) {
+  .narrow-only,
+  .nav-link.narrow-only,
+  .button.narrow-only,
+  button.narrow-only,
+  span.narrow-only,
+  div.narrow-only,
+  a.narrow-only {
+    display: none !important;
+  }
 }
 
 .app-main {
@@ -1710,6 +1734,83 @@ input:focus-visible + .file-pick {
   :root {
     --tabs-h: 68px;
     --gutter: 12px;
+  }
+
+  .bar {
+    padding: 6px 6px;
+    gap: 4px;
+    min-height: 3.5rem;
+  }
+
+  .bar-end {
+    gap: 4px;
+  }
+
+  .trainings-nav-start {
+    gap: 4px;
+  }
+
+  .wordmark .wordmark-hi {
+    display: none;
+  }
+
+  .mobile-nav-toggle {
+    min-width: 2.25rem !important;
+    min-height: 2.25rem !important;
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .trainings-back-link {
+    min-width: 2rem;
+    min-height: 2.25rem;
+    padding: 0 4px;
+  }
+
+  .lang-toggle {
+    padding: 2px;
+  }
+
+  .lang-toggle button {
+    min-width: 2rem;
+    min-height: 2.25rem;
+    padding: 0 4px;
+    font-size: 0.8125rem;
+  }
+
+  .presenter-toggle {
+    width: 2.25rem;
+    height: 2.25rem;
+    min-height: 2.25rem;
+    padding: 0;
+  }
+
+  .icon-button {
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+  }
+
+  .trainings-days-block {
+    padding: 12px;
+  }
+
+  .site-nav .bar {
+    gap: 4px;
+  }
+
+  .nav-link {
+    padding: 0 8px;
+    margin-left: 2px;
+    font-size: 0.8125rem;
+    min-height: 2.25rem;
+  }
+
+  .wordmark {
+    gap: 4px;
+    font-size: 1.2rem;
   }
 
   .tabs-inner {
@@ -1814,10 +1915,6 @@ input:focus-visible + .file-pick {
 }
 
 @media (min-width: 48rem) {
-  .wide-only {
-    display: inline-flex;
-  }
-
   .bar {
     padding-right: var(--gutter);
   }
@@ -3238,6 +3335,10 @@ input:focus-visible + .file-pick {
 @media (min-width: 64rem) {
   :root {
     --gutter: 32px;
+  }
+
+  .mobile-nav-toggle {
+    display: none !important;
   }
 
   .narrow-only {
@@ -5895,7 +5996,7 @@ input:focus-visible + .file-pick {
   background: var(--raised);
   border: 1px solid var(--line);
   border-radius: var(--r-well);
-  padding: 20px;
+  padding: 16px;
   text-align: left;
 }
 
@@ -5906,10 +6007,11 @@ input:focus-visible + .file-pick {
 }
 
 .days-practised-grid {
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: clamp(4px, 1.5vw, 10px);
   max-width: 24rem;
+  width: 100%;
 }
 
 .day-square-box {
@@ -5917,11 +6019,15 @@ input:focus-visible + .file-pick {
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .day-square {
-  width: 36px;
-  height: 36px;
+  width: 100%;
+  max-width: 36px;
+  aspect-ratio: 1;
+  height: auto;
+  min-height: 26px;
   border-radius: 4px;
   border: 2px solid var(--line);
   background: var(--well);
