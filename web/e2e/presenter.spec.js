@@ -92,28 +92,64 @@ test('presenter mode supports keyboard navigation, collapse toggle, and spotligh
   await expect(bar).toHaveCount(0)
 })
 
-test('direct step pill navigation and previous button backwards flow', async ({ page }) => {
+test('compact spotlight tour side placement avoids covering the active target', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
   const user = await signUp(page.request)
   await markOnboarded(page, user)
   await page.goto('/app/onboarding')
 
   await page.getByRole('button', { name: t('en', 'presenter.enter') }).click()
-  const bar = page.getByRole('region', { name: t('en', 'presenter.title') })
-  await expect(bar).toBeVisible()
+  const tourCard = page.locator('.presenter-tour-card')
+  await expect(tourCard).toBeVisible()
 
-  // Directly click Step 4 (Settings) pill if wide stepper is present
-  const wideStepper = bar.locator('.wide-stepper')
-  if (await wideStepper.isVisible()) {
-    const step4Btn = wideStepper.getByRole('button', { name: /4|Settings/i })
-    await step4Btn.click()
-    await expect(page).toHaveURL(/\/app\/settings$/)
-    await expect(bar.getByText(t('en', 'presenter.stepIndicator', { current: 4, total: 5 }))).toBeVisible()
+  // Verify old wide stepper is completely absent
+  await expect(tourCard.locator('.wide-stepper')).toHaveCount(0)
 
-    // Step backwards using Previous button
-    await bar.getByRole('button', { name: t('en', 'presenter.prev') }).click()
-    await expect(page).toHaveURL(/\/app\/speak$/)
-    await expect(bar.getByText(t('en', 'presenter.stepIndicator', { current: 3, total: 5 }))).toBeVisible()
-  }
+  // Verify only current step is displayed
+  await expect(tourCard.getByText(t('en', 'presenter.stepIndicator', { current: 1, total: 5 }))).toBeVisible()
+
+  // Target element has spotlight class
+  const target = page.locator('.presenter-target-highlight')
+  await expect(target).toBeVisible()
+
+  // Verify card and target do not overlap on 1440px desktop
+  const cardBox = await tourCard.boundingBox()
+  const targetBox = await target.boundingBox()
+  expect(cardBox).not.toBeNull()
+  expect(targetBox).not.toBeNull()
+
+  // On desktop with left placement, card's right edge does not overlap target
+  const overlapsHorizontally = !(cardBox.x + cardBox.width <= targetBox.x || targetBox.x + targetBox.width <= cardBox.x)
+  const overlapsVertically = !(cardBox.y + cardBox.height <= targetBox.y || targetBox.y + targetBox.height <= cardBox.y)
+  const isOverlapping = overlapsHorizontally && overlapsVertically
+  expect(isOverlapping).toBe(false)
+
+  // Step forward then backward using Next and Prev buttons
+  await tourCard.getByRole('button', { name: t('en', 'presenter.next') }).click()
+  await expect(page).toHaveURL(/\/app\/phrases$/)
+  await expect(tourCard.getByText(t('en', 'presenter.stepIndicator', { current: 2, total: 5 }))).toBeVisible()
+
+  await tourCard.getByRole('button', { name: t('en', 'presenter.prev') }).click()
+  await expect(page).toHaveURL(/\/app\/onboarding$/)
+  await expect(tourCard.getByText(t('en', 'presenter.stepIndicator', { current: 1, total: 5 }))).toBeVisible()
+})
+
+test('presenter spotlight tour adapts cleanly to dark theme', async ({ page }) => {
+  const user = await signUp(page.request)
+  await markOnboarded(page, user)
+  await page.goto('/app/speak')
+
+  // Set dark theme
+  await page.evaluate(() => {
+    localStorage.setItem('sunn.theme', 'dark')
+    document.documentElement.dataset.theme = 'dark'
+  })
+
+  await page.getByRole('button', { name: t('en', 'presenter.enter') }).click()
+  const tourCard = page.locator('.presenter-tour-card')
+  await expect(tourCard).toBeVisible()
+  await expect(page.locator('.presenter-target-highlight')).toBeVisible()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
 })
 
 test('mobile 320px viewport renders compact progress without horizontal scroll overflow', async ({ page }) => {

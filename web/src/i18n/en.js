@@ -387,7 +387,7 @@ export default {
   'presenter.next': 'Next step',
   'presenter.stepOnboardingTitle': '1. Onboarding and language selection',
   'presenter.stepOnboardingCue':
-    'Show language selection (Hindi or Indian English) and explain how 3 recordings per phrase teach Sunn the user pronunciation.',
+    'Show speech language selection across 10 Indic languages and explain how personalized recordings teach Sunn the user pronunciation.',
   'presenter.stepPhrasesTitle': '2. Personal phrase library',
   'presenter.stepPhrasesCue':
     'Highlight everyday phrases, urgency tags, and demo data labels (Pilot vs Simulated). Emphasize that custom phrases are stored privately.',
