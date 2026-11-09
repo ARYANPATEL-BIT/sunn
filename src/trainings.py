@@ -2,13 +2,17 @@
 Training progress, reflections and attempts are stored in the database.
 docs/TRAININGS_CONTRACT.md is the contract. Browsing the content (content/trainings/,
 read through src/trainings_content.py) needs no session; everything under /me does."""
+import json
 import os
 import re
 import subprocess
 import tempfile
+import threading
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
-from typing import Literal
+from typing import Any, Literal
 
+import httpx
 from fastapi import APIRouter, Cookie, Depends, File, Form, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -19,10 +23,13 @@ import auth
 import db
 import gnani
 import gnani_mock
+import llm_judge
 import matcher
 import prisma
 import schemas
 import trainings_content as content
+
+router = APIRouter()
 from api import Refused, current_user, get_user
 
 # Once, at start: content that breaks the contract stops the server here, not on a request.
@@ -39,7 +46,126 @@ TRAINING_CHECKS_PER_DAY = int(os.environ.get("TRAINING_CHECKS_PER_DAY", 20))
 WORD_CLEAR_THRESHOLD = float(os.environ.get("WORD_CLEAR_THRESHOLD", 0.70))
 MAX_AUDIO_BYTES = 10 * 1024 * 1024  # 10 MB upload cap
 
-router = APIRouter()
+DEV_CHAR_TO_SOUND: dict[str, str] = {
+    'प': 'p',
+    'ब': 'b',
+    'त': 't-dental',
+    'ट': 't-retroflex',
+    'द': 'd', 'ड': 'd', 'ड़': 'd',
+    'क': 'k', 'क़': 'k',
+    'ग': 'g', 'ग़': 'g',
+    'च': 'ch',
+    'ज': 'j', 'ज़': 'j',
+    'स': 's',
+    'श': 'sh', 'ष': 'sh',
+    'र': 'r',
+    'ल': 'l',
+    'ख': 'aspirated', 'ख़': 'aspirated', 'घ': 'aspirated', 'छ': 'aspirated',
+    'झ': 'aspirated', 'ठ': 'aspirated', 'ढ': 'aspirated', 'ढ़': 'aspirated',
+    'थ': 'aspirated', 'ध': 'aspirated', 'फ': 'aspirated', 'फ़': 'aspirated', 'भ': 'aspirated',
+    'म': 'nasal', 'न': 'nasal', 'ण': 'nasal', 'ङ': 'nasal', 'ञ': 'nasal',
+}
+
+
+def extract_word_sounds(word: str) -> set[str]:
+    """Sounds a word contains: word-initial consonant, clusters, and character sounds."""
+    sounds: set[str] = set()
+    cleaned = word.strip("।,?!'\"()[]{}")
+    if not cleaned:
+        return sounds
+    w_lower = cleaned.lower()
+
+    if "th" in w_lower:
+        sounds.add("th-english")
+    if "sh" in w_lower:
+        sounds.add("sh")
+    if "ch" in w_lower:
+        sounds.add("ch")
+    for k in ["kh", "gh", "chh", "jh", "dh", "bh", "ph"]:
+        if k in w_lower:
+            sounds.add("aspirated")
+
+    if re.search(r"[\u0915-\u0939]\u094d[\u0915-\u0939]", cleaned):
+        sounds.add("clusters")
+    if re.search(r"(?:sk|pr|kr|pl|bl|st|sp|cl|gl|dr|tr|br|str|spr|sch)", w_lower):
+        sounds.add("clusters")
+
+    for char in cleaned:
+        if char in DEV_CHAR_TO_SOUND:
+            sounds.add(DEV_CHAR_TO_SOUND[char])
+            break
+
+    for char in cleaned:
+        if char in DEV_CHAR_TO_SOUND:
+            sounds.add(DEV_CHAR_TO_SOUND[char])
+        elif char in ("\u0902", "\u0901"):
+            sounds.add("nasal")
+
+    if "p" in w_lower:
+        sounds.add("p")
+    if "b" in w_lower:
+        sounds.add("b")
+    if "d" in w_lower:
+        sounds.add("d")
+    if "k" in w_lower or ("c" in w_lower and "ch" not in w_lower):
+        sounds.add("k")
+    if "g" in w_lower:
+        sounds.add("g")
+    if "j" in w_lower:
+        sounds.add("j")
+    if "s" in w_lower and "sh" not in w_lower:
+        sounds.add("s")
+    if "r" in w_lower:
+        sounds.add("r")
+    if "l" in w_lower:
+        sounds.add("l")
+    if any(c in w_lower for c in ["m", "n"]):
+        sounds.add("nasal")
+
+    return sounds
+
+
+def extract_text_sounds(text: str) -> set[str]:
+    """All speech sounds present in a sentence or phrase."""
+    sounds: set[str] = set()
+    for word in text.split():
+        sounds.update(extract_word_sounds(word))
+    return sounds
+
+
+ALTERNATIVES_PATH = os.path.join(content.ROOT, "alternatives.json")
+TAGGED_ALTERNATIVES = []
+if os.path.exists(ALTERNATIVES_PATH):
+    with open(ALTERNATIVES_PATH, encoding="utf-8") as _f:
+        _raw_meanings = json.load(_f)
+    for _m in _raw_meanings:
+        _meaning_item = {
+            "meaning_id": _m.get("meaning_id", ""),
+            "meaning_en": _m.get("meaning_en", ""),
+            "category": _m.get("category", ""),
+            "urgent": bool(_m.get("urgent", False)),
+            "variants": [],
+        }
+        for _idx, _v in enumerate(_m.get("variants", [])):
+            _v_text = _v.get("text", "")
+            _v_latin = _v.get("latin", _v_text)
+            _v_lang = _v.get("lang", "hi")
+            _v_sounds = extract_text_sounds(_v_text) | extract_text_sounds(_v_latin)
+            _meaning_item["variants"].append({
+                "text": _v_text,
+                "latin": _v_latin,
+                "lang": _v_lang,
+                "sounds": _v_sounds,
+                "norm": matcher.normalize(_v_text),
+                "norm_latin": matcher.normalize(_v_latin),
+                "index": _idx,
+            })
+        TAGGED_ALTERNATIVES.append(_meaning_item)
+
+
+_assistant_calls_today: dict[tuple[int, str], int] = defaultdict(int)
+_alternatives_cache: dict[tuple, Any] = {}
+_alternatives_lock = threading.Lock()
 
 
 # --- responses
