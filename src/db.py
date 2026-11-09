@@ -87,6 +87,44 @@ CREATE TABLE IF NOT EXISTS api_calls (
     created_at TEXT NOT NULL,
     user_id INTEGER
 );
+-- Trainings progress: each lesson started, step index, when finished, and last update.
+CREATE TABLE IF NOT EXISTS training_progress (
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    lesson_id TEXT NOT NULL,
+    step_index INTEGER NOT NULL,
+    completed_at TEXT,
+    updated_at TEXT NOT NULL,
+    UNIQUE (user_id, lesson_id)
+);
+-- Attempts at recorded training steps.
+CREATE TABLE IF NOT EXISTS training_attempts (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    lesson_id TEXT NOT NULL,
+    step_id TEXT NOT NULL,
+    item_id TEXT,
+    transcript TEXT,
+    similarity REAL,
+    wpm INTEGER,
+    checked INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+);
+-- User reflections at the end of lessons.
+CREATE TABLE IF NOT EXISTS training_reflections (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    lesson_id TEXT NOT NULL,
+    step_id TEXT NOT NULL,
+    feeling TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+-- Minutes practised per user per day.
+CREATE TABLE IF NOT EXISTS training_minutes (
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    day TEXT NOT NULL,
+    seconds INTEGER NOT NULL,
+    UNIQUE (user_id, day)
+);
 """
 
 # Columns added after the first release, so an existing data/app.db gains them on start.
@@ -151,4 +189,5 @@ def delete_user(user_id):
     transaction(("UPDATE api_calls SET user_id = NULL WHERE user_id = ?", (user_id,)),
                 *[(f"DELETE FROM {table} WHERE {column} = ?", (user_id,)) for table, column in [
                     ("uses", "user_id"), ("samples", "user_id"), ("phrases", "user_id"), ("slot_words", "user_id"),
-                    ("templates", "user_id"), ("users", "id")]])
+                    ("templates", "user_id"), ("training_progress", "user_id"), ("training_attempts", "user_id"),
+                    ("training_reflections", "user_id"), ("training_minutes", "user_id"), ("users", "id")]])

@@ -1,11 +1,9 @@
 """Trainings: speaking practice in short course-style lessons, a practice and confidence tool that
-never claims to treat anything. docs/TRAININGS_CONTRACT.md is the contract. Browsing the content
-(content/trainings/, read through src/trainings_content.py) needs no session; everything under
-/me does.
-
-The /me routes are stubs (TODO(person A)): each checks its ids against the content and answers
-made-up data of exactly the contract's shape, but hears, stores and remembers nothing."""
+Training progress, reflections and attempts are stored in the database.
+docs/TRAININGS_CONTRACT.md is the contract. Browsing the content (content/trainings/,
+read through src/trainings_content.py) needs no session; everything under /me does."""
 import os
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Cookie, Depends, File, Form, UploadFile
@@ -182,9 +180,14 @@ def first_course():
 
 
 def done_lessons(user):
-    """TODO(person A): the lessons user completed, from the database. Until then everyone signed
-    in has done the first lesson of the first course."""
-    return {first_course().lessons[0].id} if user else set()
+    """The set of lesson ids user has completed, from the database."""
+    if not user:
+        return set()
+    result = db.rows(
+        "SELECT lesson_id FROM training_progress WHERE user_id = ? AND completed_at IS NOT NULL",
+        (user["id"],)
+    )
+    return {r["lesson_id"] for r in result if r["lesson_id"] in LIBRARY.lessons}
 
 
 def percent(lessons, done):
@@ -253,14 +256,66 @@ def audio(audio_key: str):
     return FileResponse(path, media_type="audio/wav")
 
 
-# --- the user's own practice: stubs, TODO(person A)
+# --- the user's own practice
 
 @router.get("/me/trainings/progress", response_model=Progress)
 def progress(user=Depends(current_user)):
-    course = first_course()
-    return {"courses": [{"id": course.id, "percent": percent(course.lessons, done_lessons(user))}],
-            "resume": {"course_id": course.id, "lesson_id": course.lessons[-1].id, "step_index": 2},
-            "lessons_done": 1, "minutes_practised": 9, "days_this_week": 2}
+    done = done_lessons(user)
+
+    # Every course the user has started (has any row in training_progress)
+    prog_rows = db.rows(
+        "SELECT lesson_id, updated_at FROM training_progress WHERE user_id = ? ORDER BY updated_at DESC",
+        (user["id"],)
+    )
+    started_courses = set()
+    for r in prog_rows:
+        if r["lesson_id"] in LIBRARY.lessons:
+            c, _ = LIBRARY.lessons[r["lesson_id"]]
+            started_courses.add(c.id)
+
+    courses = [
+        {"id": c.id, "percent": percent(c.lessons, done)}
+        for c in LIBRARY.courses.values()
+        if c.id in started_courses
+    ]
+
+    # Resume: the most recently updated unfinished lesson
+    unfinished = db.row(
+        "SELECT lesson_id, step_index FROM training_progress WHERE user_id = ? AND completed_at IS NULL ORDER BY updated_at DESC, rowid DESC LIMIT 1",
+        (user["id"],)
+    )
+    resume = None
+    if unfinished and unfinished["lesson_id"] in LIBRARY.lessons:
+        c, _ = LIBRARY.lessons[unfinished["lesson_id"]]
+        resume = {"course_id": c.id, "lesson_id": unfinished["lesson_id"], "step_index": unfinished["step_index"]}
+
+    # Minutes practised: sum of seconds across all days in training_minutes, rounded to nearest minute
+    min_row = db.row(
+        "SELECT COALESCE(SUM(seconds), 0) AS total_seconds FROM training_minutes WHERE user_id = ?",
+        (user["id"],)
+    )
+    total_seconds = min_row["total_seconds"] if min_row else 0
+    minutes_practised = round(total_seconds / 60)
+
+    # Days this week: distinct days with any activity in the last 7 days
+    cutoff = (datetime.now(timezone.utc).date() - timedelta(days=6)).isoformat()
+    day_row = db.row(
+        "SELECT COUNT(DISTINCT day) AS cnt FROM ("
+        "  SELECT day FROM training_minutes WHERE user_id = ? AND day >= ? AND seconds > 0"
+        "  UNION"
+        "  SELECT substr(updated_at, 1, 10) AS day FROM training_progress WHERE user_id = ? AND updated_at >= ?"
+        ")",
+        (user["id"], cutoff, user["id"], cutoff)
+    )
+    days_this_week = day_row["cnt"] if day_row else 0
+
+    return {
+        "courses": courses,
+        "resume": resume,
+        "lessons_done": len(done),
+        "minutes_practised": minutes_practised,
+        "days_this_week": days_this_week,
+    }
 
 
 @router.post("/me/trainings/progress", response_model=LessonProgress)
@@ -268,9 +323,56 @@ def save_progress(body: ProgressUpdate, user=Depends(current_user)):
     found_course, found = find(LIBRARY.lessons, body.lesson_id, "lesson")
     if body.step_index >= len(found.steps):
         raise Refused(400, "invalid_input", f"step_index: the lesson has {len(found.steps)} steps")
-    done = done_lessons(user) | ({found.id} if body.completed else set())
-    return {"lesson_id": found.id, "course_id": found_course.id, "step_index": body.step_index,
-            "completed": body.completed, "course_percent": percent(found_course.lessons, done)}
+
+    now_dt = datetime.now(timezone.utc)
+    now_str = now_dt.isoformat(timespec="milliseconds")
+    today_str = now_dt.date().isoformat()
+
+    # Time tracking: add elapsed seconds since last update to training_minutes (capped at 10 minutes)
+    prev = db.row("SELECT updated_at FROM training_progress WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1", (user["id"],))
+    if prev and prev.get("updated_at"):
+        try:
+            prev_dt = datetime.fromisoformat(prev["updated_at"])
+            if prev_dt.tzinfo is None:
+                prev_dt = prev_dt.replace(tzinfo=timezone.utc)
+            delta = int((now_dt - prev_dt).total_seconds())
+            seconds = min(600, max(15, delta))
+        except Exception:
+            seconds = 60
+    else:
+        seconds = 60
+
+    db.execute(
+        "INSERT INTO training_minutes (user_id, day, seconds) VALUES (?, ?, ?)"
+        " ON CONFLICT(user_id, day) DO UPDATE SET seconds = seconds + excluded.seconds",
+        (user["id"], today_str, seconds)
+    )
+
+    # Progress upsert: completed only moves forward, never back
+    completed_at = now_str if body.completed else None
+    db.execute(
+        "INSERT INTO training_progress (user_id, lesson_id, step_index, completed_at, updated_at)"
+        " VALUES (?, ?, ?, ?, ?)"
+        " ON CONFLICT(user_id, lesson_id) DO UPDATE SET"
+        " step_index = excluded.step_index,"
+        " completed_at = COALESCE(training_progress.completed_at, excluded.completed_at),"
+        " updated_at = excluded.updated_at",
+        (user["id"], body.lesson_id, body.step_index, completed_at, now_str)
+    )
+
+    # Fetch stored completion state
+    stored = db.row("SELECT completed_at FROM training_progress WHERE user_id = ? AND lesson_id = ?",
+                    (user["id"], body.lesson_id))
+    is_completed = bool(stored and stored["completed_at"])
+    done = done_lessons(user)
+
+    return {
+        "lesson_id": found.id,
+        "course_id": found_course.id,
+        "step_index": body.step_index,
+        "completed": is_completed,
+        "course_percent": percent(found_course.lessons, done),
+    }
 
 
 @router.post("/me/trainings/reflect", response_model=schemas.Ok)
@@ -278,6 +380,12 @@ def reflect(body: Reflection, user=Depends(current_user)):
     _, found = find(LIBRARY.lessons, body.lesson_id, "lesson")
     if not any(step.id == body.step_id and isinstance(step, content.Reflect) for step in found.steps):
         raise Refused(404, "not_found", "no reflect step with that id in the lesson")
+    now_str = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    db.execute(
+        "INSERT INTO training_reflections (user_id, lesson_id, step_id, feeling, created_at)"
+        " VALUES (?, ?, ?, ?, ?)",
+        (user["id"], body.lesson_id, body.step_id, body.feeling, now_str)
+    )
     return {"ok": True}
 
 
@@ -296,18 +404,35 @@ def attempt(audio_file: UploadFile = File(alias="audio"), step_id: str = Form(),
             check: bool = Form(False), user=Depends(current_user)):
     """One try at a step (item_id names the item of a listen_repeat step). With check and a step
     whose feedback isn't none, Prisma hears it and it is scored; the recording is never kept."""
-    step, text = attempted(step_id, item_id)
+    found_course, found_lesson, step = find(LIBRARY.steps, step_id, "step")
+    if not isinstance(step, RECORDED):
+        raise Refused(400, "invalid_input", "step_id: attempts are for listen_repeat, speak_with_me and read_aloud")
+    if isinstance(step, content.ListenRepeat):
+        text = find({item.id: item for item in step.items}, item_id, "item").text
+    else:
+        text = step.paragraph if isinstance(step, content.ReadAloud) else step.text
+
     unchecked = {"checked": False, "words": None, "similarity": None, "wpm": None, "pace": None,
                  "message_key": "practised", "checks_left_today": 24}
-    if not check or step.feedback == "none":
-        return unchecked
-    if step.feedback == "pace":
-        return {**unchecked, "checked": True, "wpm": 84, "pace": "good", "message_key": "pace_good"}
-    words = [word.strip("।,.?!'\"") for word in text.split()]
-    statuses = ["clear"] * (len(words) - 1) + ["practise" if len(words) > 1 else "clear"]
-    return {**unchecked, "checked": True, "words": [{"text": w, "status": s} for w, s in zip(words, statuses)],
-            "similarity": 0.82 if len(words) > 1 else 0.93,
-            "message_key": "words_practise" if len(words) > 1 else "words_clear", "checks_left_today": 23}
+    res = unchecked
+    if check and step.feedback != "none":
+        if step.feedback == "pace":
+            res = {**unchecked, "checked": True, "wpm": 84, "pace": "good", "message_key": "pace_good"}
+        else:
+            words = [word.strip("।,.?!'\"") for word in text.split()]
+            statuses = ["clear"] * (len(words) - 1) + ["practise" if len(words) > 1 else "clear"]
+            res = {**unchecked, "checked": True, "words": [{"text": w, "status": s} for w, s in zip(words, statuses)],
+                   "similarity": 0.82 if len(words) > 1 else 0.93,
+                   "message_key": "words_practise" if len(words) > 1 else "words_clear", "checks_left_today": 23}
+
+    now_str = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    transcript = None if found_course.category_id == "kids-speaking" else text
+    db.execute(
+        "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (user["id"], found_lesson.id, step_id, item_id, transcript, res.get("similarity"), res.get("wpm"), int(res["checked"]), now_str)
+    )
+    return res
 
 
 @router.get("/me/trainings/tricky-sounds", response_model=list[TrickySound])

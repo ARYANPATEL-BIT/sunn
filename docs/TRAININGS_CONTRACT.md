@@ -216,7 +216,7 @@ With `GNANI_MOCK` on, a listed key without audio answers half a second of silenc
 
 Errors: `not_found`.
 
-### `GET /me/trainings/progress` · stub
+### `GET /me/trainings/progress` · real
 
 Every course the user has started, where to pick up again (`step_index` is 0-based; `resume`
 is null before any progress), and this week's totals (`days_this_week` counts days since
@@ -230,7 +230,7 @@ Monday with any practice).
 
 Errors: `not_logged_in`.
 
-### `POST /me/trainings/progress` · stub
+### `POST /me/trainings/progress` · real
 
 `{"lesson_id": "easy-starts-2", "step_index": 3, "completed": false}`. Send it when the user
 moves to a step, and with `completed: true` after the last one. Answers that lesson's progress.
@@ -241,7 +241,7 @@ moves to a step, and with `completed: true` after the last one. Answers that les
 
 Errors: `not_logged_in`, `not_found`, `invalid_input` (a `step_index` past the last step).
 
-### `POST /me/trainings/reflect` · stub
+### `POST /me/trainings/reflect` · real
 
 `{"lesson_id": "easy-starts-1", "step_id": "easy-starts-1-reflect", "feeling": "okay"}`.
 `feeling` is `easy`, `okay` or `hard`; the step must be a `reflect` step of that lesson.
