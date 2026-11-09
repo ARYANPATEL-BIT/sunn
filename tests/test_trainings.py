@@ -589,3 +589,49 @@ def test_pace_math(env):
     slow = client.post("/me/trainings/attempts", data={"step_id": "easy-starts-2-paced", "check": "true"},
                        files=env.recording(seconds=15.0)).json()
     assert slow["wpm"] == 32 and slow["pace"] == "faster"
+
+
+def test_cross_user_training_isolation(env):
+    user_a = env.signup()
+    user_b = env.signup()
+
+    # User A records completed progress on lesson 1 and starts lesson 2
+    user_a.post("/me/trainings/progress", json={"lesson_id": "easy-starts-1", "step_index": 5, "completed": True})
+    user_a.post("/me/trainings/progress", json={"lesson_id": "easy-starts-2", "step_index": 3, "completed": False})
+    user_a.post("/me/trainings/reflect", json={"lesson_id": "easy-starts-1", "step_id": "easy-starts-1-reflect", "feeling": "okay"})
+
+    env.fake.transcripts.append("मेरे पास बोलने के लिए पूरा समय है")
+    user_a.post("/me/trainings/attempts", data={"step_id": "easy-starts-2-paced", "check": "true"},
+                files=env.recording(seconds=7.0))
+
+    # User B checks their progress and course status: must be completely empty and isolated
+    b_progress = user_b.get("/me/trainings/progress").json()
+    assert b_progress["lessons_done"] == 0
+    assert b_progress["courses"] == []
+    assert b_progress["resume"] is None
+
+    b_course = user_b.get("/trainings/courses/easy-starts").json()
+    assert b_course["percent"] == 0
+    assert all(lesson["completed"] is False for lesson in b_course["lessons"])
+
+    # User B updates their own progress on lesson 1
+    user_b.post("/me/trainings/progress", json={"lesson_id": "easy-starts-1", "step_index": 2, "completed": False})
+
+    # User A's progress and course status remain untouched
+    a_course = user_a.get("/trainings/courses/easy-starts").json()
+    assert a_course["percent"] == 25
+    assert a_course["lessons"][0]["completed"] is True
+    assert a_course["lessons"][1]["completed"] is False
+
+    a_progress = user_a.get("/me/trainings/progress").json()
+    assert a_progress["lessons_done"] == 1
+    assert a_progress["resume"] == {"course_id": "easy-starts", "lesson_id": "easy-starts-2", "step_index": 3}
+
+    # User B's course status reflects only User B's progress
+    b_course_after = user_b.get("/trainings/courses/easy-starts").json()
+    assert b_course_after["percent"] == 0
+    assert b_course_after["lessons"][0]["completed"] is False
+
+    b_progress_after = user_b.get("/me/trainings/progress").json()
+    assert b_progress_after["lessons_done"] == 0
+    assert b_progress_after["resume"] == {"course_id": "easy-starts", "lesson_id": "easy-starts-1", "step_index": 2}
