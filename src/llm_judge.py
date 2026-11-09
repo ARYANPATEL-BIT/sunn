@@ -103,20 +103,31 @@ def ask(heard, candidates, context):
     base = setting("LLM_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
     key = setting("GROQ_API_KEY") or setting("LLM_API_KEY")
     model = setting("GROQ_MODEL") or setting("LLM_MODEL", "openai/gpt-oss-120b")
-    body = {"model": model, "temperature": 0, "max_tokens": 120, "response_format": {"type": "json_object"},
+    max_tokens = int(setting("LLM_MAX_TOKENS", "120"))
+    body = {"model": model, "temperature": 0, "max_tokens": max_tokens, "response_format": {"type": "json_object"},
             "messages": [{"role": "system", "content": SYSTEM},
                          {"role": "user", "content": USER.format(
                              heard=heard, candidates=json.dumps(candidates, ensure_ascii=False),
                              context=json.dumps(context, ensure_ascii=False))}]}
-    if setting("LLM_REASONING_EFFORT"):  # reasoning models only: keeps the thinking inside max_tokens
-        body["reasoning_effort"] = setting("LLM_REASONING_EFFORT")
+    effort = setting("LLM_REASONING_EFFORT", "low").strip().lower()
+    if effort in ("low", "medium", "high"):
+        body["reasoning_effort"] = effort
     started, verdict, status = time.monotonic(), None, None
     try:
         if not (base and key and model):
             raise LookupError("GROQ_API_KEY (or LLM_API_KEY), LLM_BASE_URL, or GROQ_MODEL (or LLM_MODEL) is empty")
-        response = httpx.post(f"{base}/chat/completions", headers={"Authorization": f"Bearer {key}"}, json=body,
-                              timeout=float(setting("LLM_TIMEOUT_S", "3")))
+        headers = {"Authorization": f"Bearer {key}"}
+        timeout_s = float(setting("LLM_TIMEOUT_S", "3"))
+        response = httpx.post(f"{base}/chat/completions", headers=headers, json=body, timeout=timeout_s)
         status = response.status_code
+        if status == 400 and "reasoning_effort" in body:
+            # Model or provider does not support reasoning_effort: retry once without it
+            retry_body = dict(body)
+            retry_body.pop("reasoning_effort", None)
+            retry_resp = httpx.post(f"{base}/chat/completions", headers=headers, json=retry_body, timeout=timeout_s)
+            status = retry_resp.status_code
+            if retry_resp.status_code == 200:
+                response = retry_resp
         response.raise_for_status()
         verdict = parse(response.json()["choices"][0]["message"]["content"], [c["id"] for c in candidates])
         outcome = "ok" if verdict else "invalid_answer"
@@ -173,7 +184,7 @@ def judge(heard, ranked, place, recent, times_used, user_id):
     top = ranked[:TOP_K]
     ids = [candidate_id(c) for c in top]
     result = {"shown": ranked[:SHOWN], "chosen_by": "matcher", "reason": None, "verdict": None}
-    key = hashlib.sha256(json.dumps([heard, ids, place], ensure_ascii=False).encode("utf-8")).hexdigest()
+    key = hashlib.sha256(json.dumps([user_id, heard, ids, place], ensure_ascii=False).encode("utf-8")).hexdigest()
     verdict = remember(key)
     if verdict is None:
         if not take_slot(user_id):
