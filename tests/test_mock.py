@@ -53,10 +53,12 @@ def test_mock_transcript_by_audio_hash(env, monkeypatch, tmp_path):
     assert response.status_code == 422 and response.json()["error"] == "no_speech"
 
 
-def test_the_shipped_fixtures_cover_both_languages():
+def test_the_shipped_fixtures_cover_every_language():
+    import languages
+
     with open(gnani_mock.FIXTURES, encoding="utf-8") as f:
         fixtures = json.load(f)
-    assert set(fixtures["default"]) == {"hi", "en"} and isinstance(fixtures["by_sha256"], dict)
+    assert set(fixtures["default"]) == set(languages.CODES) and isinstance(fixtures["by_sha256"], dict)
 
 
 @pytest.mark.parametrize("trust_proxy, starts", [("0", True), ("1", False)])
