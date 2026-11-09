@@ -71,6 +71,31 @@ def seed():
                 (uid, p["id"], j * 4)
             )
 
+    # Add training progress and practice minutes
+    db.execute(
+        "INSERT OR REPLACE INTO training_progress (user_id, lesson_id, step_index, completed_at, updated_at) "
+        "VALUES (?, 'easy-starts-1', 5, datetime('now', '-2 days'), datetime('now', '-2 days'))",
+        (uid,)
+    )
+    db.execute(
+        "INSERT OR REPLACE INTO training_progress (user_id, lesson_id, step_index, completed_at, updated_at) "
+        "VALUES (?, 'easy-starts-2', 3, NULL, datetime('now', '-1 hours'))",
+        (uid,)
+    )
+    for d in range(5):
+        db.execute(
+            "INSERT OR REPLACE INTO training_minutes (user_id, day, seconds) "
+            "VALUES (?, date('now', '-' || ? || ' days'), ?)",
+            (uid, d, 420 + d * 60)
+        )
+    # Reflections and attempts for tricky sounds evidence ('s' and 'sh')
+    for _ in range(2):
+        db.execute(
+            "INSERT INTO training_reflections (user_id, lesson_id, step_id, feeling, created_at) "
+            "VALUES (?, 's-and-sh-2', 's-and-sh-2-reflect', 'hard', datetime('now'))",
+            (uid,)
+        )
+
     print("Demo account successfully seeded!")
 
 if __name__ == "__main__":
