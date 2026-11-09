@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { Navigate, useLocation } from 'react-router-dom'
 import * as api from './api.js'
 import { useLang } from './i18n/index.jsx'
-import { forgetUser } from './prefs.js'
+import { forgetUser, isOnboarded } from './prefs.js'
 import { Alert } from './ui/index.js'
 
 const AuthContext = createContext(null)
@@ -24,18 +24,48 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     refresh()
     const signedOut = () => setState({ status: 'ready', user: null, error: null })
+    const handleStorage = (e) => {
+      if (e.key === 'sunn.auth_change') {
+        refresh()
+      }
+    }
     addEventListener(api.SIGNED_OUT, signedOut)
-    return () => removeEventListener(api.SIGNED_OUT, signedOut)
+    window.addEventListener('storage', handleStorage)
+    return () => {
+      removeEventListener(api.SIGNED_OUT, signedOut)
+      window.removeEventListener('storage', handleStorage)
+    }
   }, [refresh])
+
+  useEffect(() => {
+    if (state.left) {
+      const timer = setTimeout(() => {
+        setState((s) => (s.left ? { ...s, left: false } : s))
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [state.left])
+
+  const notifyAuthChange = () => {
+    try {
+      localStorage.setItem('sunn.auth_change', String(Date.now()))
+    } catch {
+      // storage blocked
+    }
+  }
 
   const left = () => {
     api.stopAudio()
     setState({ status: 'ready', user: null, error: null, left: true })
+    notifyAuthChange()
   }
   const value = {
     ...state,
     refresh,
-    signedIn: (user) => setState({ status: 'ready', user, error: null }),
+    signedIn: (user) => {
+      setState({ status: 'ready', user, error: null, left: false })
+      notifyAuthChange()
+    },
     async logout() {
       await api.logout().catch(() => {}) // even if the server is down, forget the user here
       left()
@@ -43,8 +73,9 @@ export function AuthProvider({ children }) {
     // Deletes the account on the server (which also ends the session), then everything this
     // browser kept about it. Display preferences belong to the device and stay.
     async deleteAccount() {
+      const userId = state.user?.id
       await api.deleteAccount()
-      forgetUser(state.user?.id)
+      forgetUser(userId)
       left()
     },
   }
@@ -59,6 +90,23 @@ export function safeNext(next) {
 }
 
 export const loginPath = (next) => `/login?next=${encodeURIComponent(next)}`
+
+// Public routes: signed-in users are redirected to the application
+export function RedirectIfAuthenticated({ children }) {
+  const { status, user } = useAuth()
+  const location = useLocation()
+
+  if (status === 'loading') {
+    return null
+  }
+  if (user) {
+    const searchParams = new URLSearchParams(location.search)
+    const next = safeNext(searchParams.get('next'))
+    const defaultRoute = isOnboarded(user.id) ? '/app/speak' : '/app/onboarding'
+    return <Navigate replace to={next || defaultRoute} />
+  }
+  return children
+}
 
 // /app/*: signed-out visitors go to /login, which brings them back here afterwards.
 export function RequireAuth({ children }) {

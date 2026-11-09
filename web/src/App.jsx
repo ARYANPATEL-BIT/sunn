@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef } from 'react'
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, ScrollRestoration, useLocation } from 'react-router-dom'
 import AppShell from './AppShell.jsx'
-import { AuthProvider, RequireAuth } from './auth.jsx'
+import { AuthProvider, RedirectIfAuthenticated, RequireAuth } from './auth.jsx'
 import { LoginPage, SignupPage } from './AuthPages.jsx'
 import Enroll from './Enroll.jsx'
 import { LanguageProvider } from './i18n/index.jsx'
@@ -49,9 +49,70 @@ const router = createBrowserRouter([
   {
     element: <Root />,
     children: [
-      { path: '/', element: <Landing /> },
-      { path: '/login', element: <LoginPage /> },
-      { path: '/signup', element: <SignupPage /> },
+      {
+        path: '/',
+        element: (
+          <RedirectIfAuthenticated>
+            <Landing />
+          </RedirectIfAuthenticated>
+        ),
+      },
+      {
+        path: '/privacy',
+        element: (
+          <RedirectIfAuthenticated>
+            <Landing initialSection="privacy" />
+          </RedirectIfAuthenticated>
+        ),
+      },
+      {
+        path: '/faq',
+        element: (
+          <RedirectIfAuthenticated>
+            <Landing initialSection="faq" />
+          </RedirectIfAuthenticated>
+        ),
+      },
+      {
+        path: '/questions',
+        element: (
+          <RedirectIfAuthenticated>
+            <Landing initialSection="faq" />
+          </RedirectIfAuthenticated>
+        ),
+      },
+      {
+        path: '/how',
+        element: (
+          <RedirectIfAuthenticated>
+            <Landing initialSection="how" />
+          </RedirectIfAuthenticated>
+        ),
+      },
+      {
+        path: '/how-it-works',
+        element: (
+          <RedirectIfAuthenticated>
+            <Landing initialSection="how" />
+          </RedirectIfAuthenticated>
+        ),
+      },
+      {
+        path: '/login',
+        element: (
+          <RedirectIfAuthenticated>
+            <LoginPage />
+          </RedirectIfAuthenticated>
+        ),
+      },
+      {
+        path: '/signup',
+        element: (
+          <RedirectIfAuthenticated>
+            <SignupPage />
+          </RedirectIfAuthenticated>
+        ),
+      },
       { path: '/trainings', element: <TrainingsHome /> },
       { path: '/trainings/easier-ways', element: <EasierWays /> },
       { path: '/trainings/:categoryId', element: <CategoryPage /> },

@@ -6,7 +6,7 @@ import { LessonsLangNote } from './HonestNote.jsx'
 import { TabFace, TABS } from '../ui/Tabs.jsx'
 
 export function TrainingsNav({ backTo, backLabel }) {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { t } = useLang()
   const location = useLocation()
 
@@ -37,9 +37,10 @@ export function TrainingsNav({ backTo, backLabel }) {
                   <span className="visually-hidden">{t('app.signedIn', { name: user.name })}</span>
                   <span aria-hidden="true">{user.name}</span>
                 </span>
-                <Link to="/app/speak" className="nav-link wide-only" viewTransition={!reducedMotion()}>
-                  {t('nav.openApp')}
-                </Link>
+                <button type="button" className="button small wide-only" onClick={logout}>
+                  <Icon name="logOut" />
+                  <span>{t('app.logOut')}</span>
+                </button>
               </>
             ) : (
               <Link

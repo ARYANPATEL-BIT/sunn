@@ -53,9 +53,31 @@ export default function PresenterBar({ onClose }) {
   const [collapsed, setCollapsed] = useState(false)
   const [completed, setCompleted] = useState(false)
 
-  // Find step from current location, default to 0 (Step 1)
-  const activeIndex = DEMO_STEPS.findIndex((s) => location.pathname.startsWith(s.path))
-  const stepIndex = activeIndex >= 0 ? activeIndex : 0
+  // Step 1 (index 0) is always the starting state on fresh launch
+  const [stepIndex, setStepIndex] = useState(0)
+  const freshLaunchRef = useRef(true)
+
+  // On mount: explicitly lock to Step 1 and navigate to /app/onboarding
+  useEffect(() => {
+    setStepIndex(0)
+    setCompleted(false)
+    navigate(DEMO_STEPS[0].path, { replace: true })
+    const timer = setTimeout(() => {
+      freshLaunchRef.current = false
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [navigate])
+
+  // Sync step only when user navigates routes after the fresh launch window
+  useEffect(() => {
+    if (freshLaunchRef.current) return
+    const matched = DEMO_STEPS.findIndex((s) => location.pathname.startsWith(s.path))
+    if (matched >= 0 && matched !== stepIndex) {
+      setStepIndex(matched)
+      setCompleted(false)
+    }
+  }, [location.pathname, stepIndex])
+
   const currentStep = DEMO_STEPS[stepIndex]
 
   // Spotlight target reference
@@ -64,7 +86,9 @@ export default function PresenterBar({ onClose }) {
   // Navigate to step
   function goToStep(index) {
     if (index >= 0 && index < DEMO_STEPS.length) {
+      freshLaunchRef.current = false
       setCompleted(false)
+      setStepIndex(index)
       navigate(DEMO_STEPS[index].path, { viewTransition: !reducedMotion() })
     }
   }
@@ -87,8 +111,13 @@ export default function PresenterBar({ onClose }) {
   }
 
   function handleRestart() {
+    freshLaunchRef.current = true
     setCompleted(false)
-    goToStep(0)
+    setStepIndex(0)
+    navigate(DEMO_STEPS[0].path, { viewTransition: !reducedMotion() })
+    setTimeout(() => {
+      freshLaunchRef.current = false
+    }, 400)
   }
 
   // Highlight effect

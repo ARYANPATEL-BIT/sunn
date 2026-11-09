@@ -22,9 +22,8 @@ function useStartSpeaking() {
   }
 }
 
-function SiteNav() {
+function SiteNav({ activeSection = 'how', onNavigate }) {
   const { t } = useLang()
-  const { user } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -36,29 +35,58 @@ function SiteNav() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [mobileMenuOpen])
 
+  const handleLinkClick = (e, sectionId) => {
+    setMobileMenuOpen(false)
+    onNavigate?.(e, sectionId)
+  }
+
   return (
     <header className="site-nav">
       <nav className="bar" aria-label={t('nav.main')}>
         <Wordmark />
         <ul className="nav-links">
           <li>
-            <a href="#how">{t('how.title')}</a>
+            <a
+              href="#how"
+              className={activeSection === 'how' ? 'active' : ''}
+              onClick={(e) => handleLinkClick(e, 'how')}
+            >
+              {t('how.title')}
+            </a>
           </li>
           <li>
-            <Link to="/trainings">{t('nav.trainings')}</Link>
+            <Link
+              to="/trainings"
+              className={activeSection === 'trainings' ? 'active' : ''}
+              viewTransition={!reducedMotion()}
+            >
+              {t('nav.trainings')}
+            </Link>
           </li>
           <li>
-            <a href="#privacy">{t('privacy.title')}</a>
+            <a
+              href="#privacy"
+              className={activeSection === 'privacy' ? 'active' : ''}
+              onClick={(e) => handleLinkClick(e, 'privacy')}
+            >
+              {t('privacy.title')}
+            </a>
           </li>
           <li>
-            <a href="#faq">{t('nav.faq')}</a>
+            <a
+              href="#faq"
+              className={activeSection === 'faq' ? 'active' : ''}
+              onClick={(e) => handleLinkClick(e, 'faq')}
+            >
+              {t('nav.faq')}
+            </a>
           </li>
         </ul>
         <div className="bar-end">
           <LanguagePicker />
           <ThemeToggle />
-          <Link className="nav-link" to={user ? '/app/speak' : '/login'} viewTransition={!reducedMotion()}>
-            {t(user ? 'nav.openApp' : 'nav.signIn')}
+          <Link className="nav-link" to="/login" viewTransition={!reducedMotion()}>
+            {t('nav.signIn')}
           </Link>
           <button
             type="button"
@@ -96,22 +124,39 @@ function SiteNav() {
             </div>
             <ul className="mobile-nav-list">
               <li>
-                <a href="#how" onClick={() => setMobileMenuOpen(false)}>
+                <a
+                  href="#how"
+                  className={activeSection === 'how' ? 'active' : ''}
+                  onClick={(e) => handleLinkClick(e, 'how')}
+                >
                   {t('how.title')}
                 </a>
               </li>
               <li>
-                <Link to="/trainings" onClick={() => setMobileMenuOpen(false)} viewTransition={!reducedMotion()}>
+                <Link
+                  to="/trainings"
+                  className={activeSection === 'trainings' ? 'active' : ''}
+                  onClick={() => setMobileMenuOpen(false)}
+                  viewTransition={!reducedMotion()}
+                >
                   {t('nav.trainings')}
                 </Link>
               </li>
               <li>
-                <a href="#privacy" onClick={() => setMobileMenuOpen(false)}>
+                <a
+                  href="#privacy"
+                  className={activeSection === 'privacy' ? 'active' : ''}
+                  onClick={(e) => handleLinkClick(e, 'privacy')}
+                >
                   {t('privacy.title')}
                 </a>
               </li>
               <li>
-                <a href="#faq" onClick={() => setMobileMenuOpen(false)}>
+                <a
+                  href="#faq"
+                  className={activeSection === 'faq' ? 'active' : ''}
+                  onClick={(e) => handleLinkClick(e, 'faq')}
+                >
                   {t('nav.faq')}
                 </a>
               </li>
@@ -119,11 +164,11 @@ function SiteNav() {
             <div className="mobile-nav-footer">
               <Link
                 className="button primary mobile-nav-auth-btn"
-                to={user ? '/app/speak' : '/login'}
+                to="/login"
                 onClick={() => setMobileMenuOpen(false)}
                 viewTransition={!reducedMotion()}
               >
-                {t(user ? 'nav.openApp' : 'nav.signIn')}
+                {t('nav.signIn')}
               </Link>
             </div>
           </div>
@@ -350,11 +395,79 @@ function Footer() {
   )
 }
 
-export default function Landing() {
+export default function Landing({ initialSection }) {
   const start = useStartSpeaking()
+  const [activeSection, setActiveSection] = useState(initialSection || 'how')
+
+  const scrollToId = (id) => {
+    const el = document.getElementById(id)
+    if (el) {
+      try {
+        el.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' })
+      } catch {
+        // fallback
+      }
+    }
+  }
+
+  const handleNavigate = (e, id) => {
+    e?.preventDefault?.()
+    setActiveSection(id)
+    scrollToId(id)
+    window.history.pushState(null, '', `#${id}`)
+  }
+
+  // Handle URL hash changes or browser back/forward
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace('#', '')
+      if (hash && ['how', 'privacy', 'faq'].includes(hash)) {
+        setActiveSection(hash)
+        scrollToId(hash)
+      }
+    }
+    window.addEventListener('hashchange', handleHash)
+    window.addEventListener('popstate', handleHash)
+    return () => {
+      window.removeEventListener('hashchange', handleHash)
+      window.removeEventListener('popstate', handleHash)
+    }
+  }, [])
+
+  // Handle initialSection or initial hash on mount
+  useEffect(() => {
+    const target = initialSection || window.location.hash.replace('#', '')
+    if (target && ['how', 'privacy', 'faq'].includes(target)) {
+      setActiveSection(target)
+      const timer = setTimeout(() => scrollToId(target), 120)
+      return () => clearTimeout(timer)
+    }
+  }, [initialSection])
+
+  // Observe active section on scroll
+  useEffect(() => {
+    const ids = ['how', 'privacy', 'faq']
+    const targets = ids.map((id) => document.getElementById(id)).filter(Boolean)
+    if (!targets.length) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id)
+            break
+          }
+        }
+      },
+      { rootMargin: '-20% 0px -60% 0px', threshold: 0.1 }
+    )
+    targets.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <div className="landing">
-      <SiteNav />
+      <SiteNav activeSection={activeSection} onNavigate={handleNavigate} />
       <main>
         <Hero onStart={start} />
         <Specs />
