@@ -1,71 +1,514 @@
 {
-  "easy-starts-aam": {"text": "आम", "lang": "hi"},
-  "easy-starts-aaj": {"text": "आज", "lang": "hi"},
-  "easy-starts-ek": {"text": "एक", "lang": "hi"},
-  "easy-starts-oopar": {"text": "ऊपर", "lang": "hi"},
-  "easy-starts-achchha": {"text": "अच्छा", "lang": "hi"},
-  "easy-starts-mausam": {"text": "आज मौसम अच्छा है", "lang": "hi"},
-  "easy-starts-pal": {"text": "पल", "lang": "hi"},
-  "easy-starts-bal": {"text": "बल", "lang": "hi"},
-  "easy-starts-padaa": {"text": "पड़ा", "lang": "hi"},
-  "easy-starts-badaa": {"text": "बड़ा", "lang": "hi"},
-  "easy-starts-chaay": {"text": "मुझे एक कप चाय चाहिए", "lang": "hi"},
-  "easy-starts-morning": {"text": "सुबह की हवा ठंडी और ताज़ा है। बाहर पेड़ों पर चिड़ियाँ बोल रही हैं। आज का दिन आराम से शुरू हो रहा है।", "lang": "hi"},
-  "easy-starts-stall-1": {"text": "नमस्ते! क्या लेंगे?", "lang": "hi"},
-  "easy-starts-stall-2": {"text": "ठीक है, बीस रुपये।", "lang": "hi"},
-  "introductions-good-morning": {"text": "Good morning", "lang": "en"},
-  "introductions-nice-to-meet-you": {"text": "Nice to meet you", "lang": "en"},
-  "introductions-how-are-you": {"text": "How are you?", "lang": "en"},
-  "introductions-fine-thank-you": {"text": "I'm fine, thank you", "lang": "en"},
-  "introductions-see-you-soon": {"text": "See you soon", "lang": "en"},
-  "introductions-meera": {"text": "Hello, I'm Meera. I live in Jaipur.", "lang": "en"},
-  "introductions-neighbour-1": {"text": "Hi! I just moved in next door.", "lang": "en"},
-  "introductions-neighbour-2": {"text": "Nice to meet you too. How long have you lived here?", "lang": "en"},
-  "introductions-neighbour-3": {"text": "Lovely. See you around!", "lang": "en"},
-  "introductions-thank-you": {"text": "Thank you", "lang": "en"},
-  "introductions-thursday": {"text": "Thursday", "lang": "en"},
-  "introductions-three": {"text": "three", "lang": "en"},
-  "introductions-this": {"text": "this", "lang": "en"},
-  "introductions-thin": {"text": "thin", "lang": "en"},
-  "introductions-sin": {"text": "sin", "lang": "en"},
-  "introductions-think": {"text": "think", "lang": "en"},
-  "introductions-sink": {"text": "sink", "lang": "en"},
-  "introductions-voicemail": {"text": "Hi, this is Meera. I'm calling about my appointment on Thursday. Please call me back after three. Thank you.", "lang": "en"},
-  "introductions-clinic-1": {"text": "Good morning, City Clinic. How can I help?", "lang": "en"},
-  "introductions-clinic-2": {"text": "Of course. Which day suits you?", "lang": "en"},
-  "introductions-clinic-3": {"text": "Done. We will send you a message with the time.", "lang": "en"},
-  "s-and-sh-sab": {"text": "सब", "lang": "hi"},
-  "s-and-sh-saal": {"text": "साल", "lang": "hi"},
-  "s-and-sh-sona": {"text": "सोना", "lang": "hi"},
-  "s-and-sh-bas": {"text": "बस", "lang": "hi"},
-  "s-and-sh-raasta": {"text": "रास्ता", "lang": "hi"},
-  "s-and-sh-sonu": {"text": "सोनू सुबह सात बजे स्कूल जाता है", "lang": "hi"},
-  "s-and-sh-saadi": {"text": "सादी", "lang": "hi"},
-  "s-and-sh-shaadi": {"text": "शादी", "lang": "hi"},
-  "s-and-sh-ser": {"text": "सेर", "lang": "hi"},
-  "s-and-sh-sher": {"text": "शेर", "lang": "hi"},
-  "s-and-sh-shaam-word": {"text": "शाम", "lang": "hi"},
-  "s-and-sh-shahar": {"text": "शहर", "lang": "hi"},
-  "s-and-sh-shuru": {"text": "शुरू", "lang": "hi"},
-  "s-and-sh-desh": {"text": "देश", "lang": "hi"},
-  "s-and-sh-shaam": {"text": "शाम को सब साथ बैठते हैं", "lang": "hi"},
-  "s-and-sh-evening": {"text": "शाम को शहर की सड़कों पर बहुत शोर होता है। सब लोग अपने घर जाने की जल्दी में रहते हैं।", "lang": "hi"},
-  "s-and-sh-store-1": {"text": "नमस्ते, बताइए क्या चाहिए?", "lang": "hi"},
-  "s-and-sh-store-2": {"text": "यह लीजिए। और कुछ?", "lang": "hi"},
-  "sound-play-cow": {"text": "गाय बोले, मू", "lang": "hi"},
-  "sound-play-cat": {"text": "बिल्ली बोले, म्याऊँ", "lang": "hi"},
-  "sound-play-dog": {"text": "कुत्ता बोले, भौं भौं", "lang": "hi"},
-  "sound-play-crow": {"text": "कौआ बोले, काँव काँव", "lang": "hi"},
-  "sound-play-papa": {"text": "पापा", "lang": "hi"},
-  "sound-play-baba": {"text": "बाबा", "lang": "hi"},
-  "sound-play-gaana": {"text": "गाना", "lang": "hi"},
-  "sound-play-khaana": {"text": "खाना", "lang": "hi"},
-  "sound-play-count": {"text": "एक, दो, तीन, चार, पाँच", "lang": "hi"},
-  "sound-play-laal": {"text": "लाल", "lang": "hi"},
-  "sound-play-peela": {"text": "पीला", "lang": "hi"},
-  "sound-play-hara": {"text": "हरा", "lang": "hi"},
-  "sound-play-neela": {"text": "नीला", "lang": "hi"},
-  "sound-play-shop-1": {"text": "आओ आओ! कौन सा खिलौना चाहिए?", "lang": "hi"},
-  "sound-play-shop-2": {"text": "यह लो! बहुत अच्छे से माँगा।", "lang": "hi"},
-  "sound-play-story": {"text": "छोटी चिड़िया ने एक दाना देखा। उसने दाना उठाया और पेड़ पर उड़ गई। पेड़ पर उसके दोस्त उसका इंतज़ार कर रहे थे।", "lang": "hi"}
+  "easy-starts-1-vowels-aam": {
+    "text": "आम",
+    "lang": "hi"
+  },
+  "easy-starts-1-vowels-aaj": {
+    "text": "आज",
+    "lang": "hi"
+  },
+  "easy-starts-1-vowels-ek": {
+    "text": "एक",
+    "lang": "hi"
+  },
+  "easy-starts-1-vowels-oopar": {
+    "text": "ऊपर",
+    "lang": "hi"
+  },
+  "easy-starts-1-vowels-achchha": {
+    "text": "अच्छा",
+    "lang": "hi"
+  },
+  "easy-starts-1-vowels-naam": {
+    "text": "नाम",
+    "lang": "hi"
+  },
+  "easy-starts-1-together-mausam": {
+    "text": "आज मौसम अच्छा है",
+    "lang": "hi"
+  },
+  "easy-starts-2-pairs-pal": {
+    "text": "पल",
+    "lang": "hi"
+  },
+  "easy-starts-2-pairs-bal": {
+    "text": "बल",
+    "lang": "hi"
+  },
+  "easy-starts-2-pairs-padaa": {
+    "text": "पड़ा",
+    "lang": "hi"
+  },
+  "easy-starts-2-pairs-badaa": {
+    "text": "बड़ा",
+    "lang": "hi"
+  },
+  "easy-starts-2-echo-chaay": {
+    "text": "मुझे एक कप चाय चाहिए",
+    "lang": "hi"
+  },
+  "easy-starts-2-read-morning": {
+    "text": "सुबह की हवा ठंडी और ताज़ा है। बाहर पेड़ों पर चिड़ियाँ बोल रही हैं। आज का दिन आराम से शुरू हो रहा है।",
+    "lang": "hi"
+  },
+  "easy-starts-2-stall-1": {
+    "text": "नमस्ते! क्या लेंगे?",
+    "lang": "hi"
+  },
+  "easy-starts-2-stall-2": {
+    "text": "ठीक है, बीस रुपये।",
+    "lang": "hi"
+  },
+  "easy-starts-3-clusters-school": {
+    "text": "स्कूल",
+    "lang": "hi"
+  },
+  "easy-starts-3-clusters-raasta": {
+    "text": "रास्ता",
+    "lang": "hi"
+  },
+  "easy-starts-3-clusters-dost": {
+    "text": "दोस्त",
+    "lang": "hi"
+  },
+  "easy-starts-3-clusters-dhyaan": {
+    "text": "ध्यान",
+    "lang": "hi"
+  },
+  "easy-starts-3-clusters-swaad": {
+    "text": "स्वाद",
+    "lang": "hi"
+  },
+  "easy-starts-3-choral-together": {
+    "text": "हम सब मिलकर धीरे-धीरे आगे बढ़ रहे हैं",
+    "lang": "hi"
+  },
+  "easy-starts-3-read-river": {
+    "text": "नदी किनारे ठंडी हवा चल रही है। दूर एक छोटा सा गाँव दिखाई देता है। शाम का समय बहुत शांत लगता है।",
+    "lang": "hi"
+  },
+  "easy-starts-4-choral-confidence": {
+    "text": "मेरी बात महत्वपूर्ण है और मैं अपनी रफ़्तार से बोलूँगा",
+    "lang": "hi"
+  },
+  "easy-starts-4-dialogue-1": {
+    "text": "नमस्ते! आज आप कैसे हैं?",
+    "lang": "hi"
+  },
+  "easy-starts-4-dialogue-2": {
+    "text": "बहुत बढ़िया, मिलकर अच्छा लगा।",
+    "lang": "hi"
+  },
+  "s-and-sh-1-words-sab": {
+    "text": "सब",
+    "lang": "hi"
+  },
+  "s-and-sh-1-words-saal": {
+    "text": "साल",
+    "lang": "hi"
+  },
+  "s-and-sh-1-words-sona": {
+    "text": "सोना",
+    "lang": "hi"
+  },
+  "s-and-sh-1-words-bas": {
+    "text": "बस",
+    "lang": "hi"
+  },
+  "s-and-sh-1-words-raasta": {
+    "text": "रास्ता",
+    "lang": "hi"
+  },
+  "s-and-sh-1-pairs-saadi": {
+    "text": "सादी",
+    "lang": "hi"
+  },
+  "s-and-sh-1-pairs-shaadi": {
+    "text": "शादी",
+    "lang": "hi"
+  },
+  "s-and-sh-1-pairs-ser": {
+    "text": "सेर",
+    "lang": "hi"
+  },
+  "s-and-sh-1-pairs-sher": {
+    "text": "शेर",
+    "lang": "hi"
+  },
+  "s-and-sh-1-echo-sonu": {
+    "text": "सोनू सुबह सात बजे स्कूल जाता है",
+    "lang": "hi"
+  },
+  "s-and-sh-1-read-evening": {
+    "text": "शाम को शहर की सड़कों पर बहुत चहल-पहल होती है। सब लोग आराम से घर लौटते हैं।",
+    "lang": "hi"
+  },
+  "s-and-sh-2-words-roti": {
+    "text": "रोटी",
+    "lang": "hi"
+  },
+  "s-and-sh-2-words-raat": {
+    "text": "रात",
+    "lang": "hi"
+  },
+  "s-and-sh-2-words-laal": {
+    "text": "लाल",
+    "lang": "hi"
+  },
+  "s-and-sh-2-words-ladka": {
+    "text": "लड़का",
+    "lang": "hi"
+  },
+  "s-and-sh-2-words-rang": {
+    "text": "रंग",
+    "lang": "hi"
+  },
+  "s-and-sh-2-words-log": {
+    "text": "लोग",
+    "lang": "hi"
+  },
+  "s-and-sh-2-pairs-raat": {
+    "text": "रात",
+    "lang": "hi"
+  },
+  "s-and-sh-2-pairs-laat": {
+    "text": "लात",
+    "lang": "hi"
+  },
+  "s-and-sh-2-pairs-rol": {
+    "text": "रोल",
+    "lang": "hi"
+  },
+  "s-and-sh-2-pairs-lol": {
+    "text": "लोल",
+    "lang": "hi"
+  },
+  "s-and-sh-2-choral-train": {
+    "text": "रेल गाड़ी रात को लाल बत्ती देखकर रुकी",
+    "lang": "hi"
+  },
+  "s-and-sh-2-read-meal": {
+    "text": "रमेश बाज़ार से लाल टमाटर लाया। उसने रोटी के साथ दाल और सलाद खाया। सब लोगों ने मिलकर भोजन किया।",
+    "lang": "hi"
+  },
+  "s-and-sh-3-pairs-taal": {
+    "text": "ताल",
+    "lang": "hi"
+  },
+  "s-and-sh-3-pairs-ttaal": {
+    "text": "टाल",
+    "lang": "hi"
+  },
+  "s-and-sh-3-pairs-daal": {
+    "text": "दाल",
+    "lang": "hi"
+  },
+  "s-and-sh-3-pairs-ddaal": {
+    "text": "डाल",
+    "lang": "hi"
+  },
+  "s-and-sh-3-words-teen": {
+    "text": "तीन",
+    "lang": "hi"
+  },
+  "s-and-sh-3-words-taara": {
+    "text": "तारा",
+    "lang": "hi"
+  },
+  "s-and-sh-3-words-tamaatar": {
+    "text": "टमाटर",
+    "lang": "hi"
+  },
+  "s-and-sh-3-words-topi": {
+    "text": "टोपी",
+    "lang": "hi"
+  },
+  "s-and-sh-3-words-darvaaza": {
+    "text": "दरवाज़ा",
+    "lang": "hi"
+  },
+  "s-and-sh-3-echo-basket": {
+    "text": "छोटे बच्चे ने टोकरी में टमाटर डाले",
+    "lang": "hi"
+  },
+  "s-and-sh-3-dialogue-1": {
+    "text": "नमस्ते! आज क्या सब्ज़ी लेंगे?",
+    "lang": "hi"
+  },
+  "s-and-sh-3-dialogue-2": {
+    "text": "बिल्कुल, टोकरी में रख दिया है।",
+    "lang": "hi"
+  },
+  "s-and-sh-4-pairs-pal": {
+    "text": "पल",
+    "lang": "hi"
+  },
+  "s-and-sh-4-pairs-phal": {
+    "text": "फल",
+    "lang": "hi"
+  },
+  "s-and-sh-4-pairs-kal": {
+    "text": "कल",
+    "lang": "hi"
+  },
+  "s-and-sh-4-pairs-khal": {
+    "text": "खल",
+    "lang": "hi"
+  },
+  "s-and-sh-4-words-khaana": {
+    "text": "खाना",
+    "lang": "hi"
+  },
+  "s-and-sh-4-words-ghar": {
+    "text": "घर",
+    "lang": "hi"
+  },
+  "s-and-sh-4-words-bhaalu": {
+    "text": "भालू",
+    "lang": "hi"
+  },
+  "s-and-sh-4-words-thoda": {
+    "text": "थोड़ा",
+    "lang": "hi"
+  },
+  "s-and-sh-4-words-kheer": {
+    "text": "खीर",
+    "lang": "hi"
+  },
+  "s-and-sh-4-choral-fruit": {
+    "text": "कमल ने फल खाकर पानी पिया",
+    "lang": "hi"
+  },
+  "s-and-sh-4-read-dinner": {
+    "text": "आज घर में गरमा-गरम खाना बना है। थाली में खीर और फल भी रखे हैं। सबने खुशी-खुशी भोजन किया।",
+    "lang": "hi"
+  },
+  "sound-play-1-animals-lion": {
+    "text": "शेर बोला दहाड़",
+    "lang": "hi"
+  },
+  "sound-play-1-animals-cow": {
+    "text": "गाय बोली मूँ-मूँ",
+    "lang": "hi"
+  },
+  "sound-play-1-animals-bird": {
+    "text": "चिड़िया बोली चीं-चीं",
+    "lang": "hi"
+  },
+  "sound-play-1-animals-cat": {
+    "text": "बिल्ली बोली म्याऊँ",
+    "lang": "hi"
+  },
+  "sound-play-1-vehicles-train": {
+    "text": "छुक-छुक रेल",
+    "lang": "hi"
+  },
+  "sound-play-1-vehicles-car": {
+    "text": "पी-पी कार",
+    "lang": "hi"
+  },
+  "sound-play-1-vehicles-bus": {
+    "text": "पूँ-पूँ बस",
+    "lang": "hi"
+  },
+  "sound-play-1-choral-train": {
+    "text": "छुक-छुक रेल चली, पी-पी हॉर्न बजा",
+    "lang": "hi"
+  },
+  "sound-play-2-rhyme-butterfly": {
+    "text": "तितली उड़ी बस पर चढ़ी, सीट ना मिली तो रोने लगी। ड्राइवर ने बोला आजा मेरे पास, तितली बोली ना बाबा ना!",
+    "lang": "hi"
+  },
+  "sound-play-2-shop-1": {
+    "text": "नमस्ते दोस्त! आपको कौन सा खिलौना चाहिए?",
+    "lang": "hi"
+  },
+  "sound-play-2-shop-2": {
+    "text": "ये लीजिए! बहुत प्यारा खिलौना है।",
+    "lang": "hi"
+  },
+  "sound-play-2-echo-monkey": {
+    "text": "नटखट बंदर डाल पर कूदा",
+    "lang": "hi"
+  },
+  "sound-play-3-pairs-gaay": {
+    "text": "गाय",
+    "lang": "hi"
+  },
+  "sound-play-3-pairs-bhaalu": {
+    "text": "भालू",
+    "lang": "hi"
+  },
+  "sound-play-3-robot-hello": {
+    "text": "ह-लो दो-स्त",
+    "lang": "hi"
+  },
+  "sound-play-3-robot-namaste": {
+    "text": "न-म-स्ते",
+    "lang": "hi"
+  },
+  "sound-play-3-robot-super": {
+    "text": "सु-प-र रो-बो-ट",
+    "lang": "hi"
+  },
+  "sound-play-3-lion-roar": {
+    "text": "शेर बोला आहा, आज बड़ा मज़ा आया",
+    "lang": "hi"
+  },
+  "sound-play-3-dialogue-1": {
+    "text": "बीप-बीप! आज हम क्या खेलेंगे?",
+    "lang": "hi"
+  },
+  "sound-play-3-dialogue-2": {
+    "text": "वाह! बीप-बीप, चलो शुरू करते हैं!",
+    "lang": "hi"
+  },
+  "sound-play-4-story-munnu": {
+    "text": "एक नन्हीं गिलहरी थी। उसका नाम मुन्नू था। मुन्नू को हरे-भरे आम के पेड़ पर चढ़ना बहुत पसंद था। वह रोज़ नए दोस्त बनाती थी।",
+    "lang": "hi"
+  },
+  "sound-play-4-dialogue-1": {
+    "text": "पेड़ पर मुन्नू को क्या मिला होगा?",
+    "lang": "hi"
+  },
+  "sound-play-4-dialogue-2": {
+    "text": "अरे वाह! दोनों ने मिलकर खुशी मनाई।",
+    "lang": "hi"
+  },
+  "introductions-1-pairs-baat": {
+    "text": "बात",
+    "lang": "hi"
+  },
+  "introductions-1-pairs-bhaat": {
+    "text": "भात",
+    "lang": "hi"
+  },
+  "introductions-1-greetings-namaste": {
+    "text": "नमस्ते",
+    "lang": "hi"
+  },
+  "introductions-1-greetings-suprabhaat": {
+    "text": "सुप्रभात",
+    "lang": "hi"
+  },
+  "introductions-1-greetings-aap-kaise-hain": {
+    "text": "आप कैसे हैं?",
+    "lang": "hi"
+  },
+  "introductions-1-greetings-main-theek-hoon": {
+    "text": "मैं ठीक हूँ",
+    "lang": "hi"
+  },
+  "introductions-1-dialogue-1": {
+    "text": "नमस्ते! मेरा नाम रोहन है।",
+    "lang": "hi"
+  },
+  "introductions-1-dialogue-2": {
+    "text": "आपसे मिलकर बहुत अच्छा लगा!",
+    "lang": "hi"
+  },
+  "introductions-1-echo-rahul": {
+    "text": "नमस्ते, मेरा नाम राहुल है",
+    "lang": "hi"
+  },
+  "introductions-1-read-intro": {
+    "text": "नमस्ते, मेरा नाम समीर है। मैं दिल्ली में रहता हूँ। मुझे नई किताबें पढ़ना और संगीत सुनना पसंद है।",
+    "lang": "hi"
+  },
+  "introductions-2-shop-1": {
+    "text": "नमस्ते जी, क्या चाहिए?",
+    "lang": "hi"
+  },
+  "introductions-2-shop-2": {
+    "text": "यह लीजिए। कुल तीस रुपये हुए।",
+    "lang": "hi"
+  },
+  "introductions-2-phone-1": {
+    "text": "हेलो, क्या मेरी बात अमित जी से हो रही है?",
+    "lang": "hi"
+  },
+  "introductions-2-phone-2": {
+    "text": "आपका पार्सल आ गया है, नीचे आकर ले लीजिए।",
+    "lang": "hi"
+  },
+  "introductions-2-english-thank-you": {
+    "text": "Thank you very much",
+    "lang": "hi"
+  },
+  "introductions-2-english-three-please": {
+    "text": "Three items please",
+    "lang": "hi"
+  },
+  "introductions-2-english-this-one": {
+    "text": "I would like this one",
+    "lang": "hi"
+  },
+  "introductions-2-choral-day": {
+    "text": "धन्यवाद, आपका दिन शुभ हो",
+    "lang": "hi"
+  },
+  "introductions-3-phrases-sir-dard": {
+    "text": "सिर में दर्द है",
+    "lang": "hi"
+  },
+  "introductions-3-phrases-pet-dard": {
+    "text": "पेट में दर्द है",
+    "lang": "hi"
+  },
+  "introductions-3-phrases-dawa-chaahiye": {
+    "text": "मुझे दवा चाहिए",
+    "lang": "hi"
+  },
+  "introductions-3-phrases-aaraam-karoonga": {
+    "text": "मैं थोड़ा आराम करूँगा",
+    "lang": "hi"
+  },
+  "introductions-3-clinic-1": {
+    "text": "नमस्ते, बताइए क्या परेशानी है?",
+    "lang": "hi"
+  },
+  "introductions-3-clinic-2": {
+    "text": "चिंता मत कीजिए, यह दवा ले लीजिए और आराम कीजिए।",
+    "lang": "hi"
+  },
+  "introductions-3-wait-1": {
+    "text": "फॉर्म भरकर काउंटर नंबर तीन पर जमा करा दीजिए।",
+    "lang": "hi"
+  },
+  "introductions-3-wait-2": {
+    "text": "ज़रूर, काउंटर नंबर तीन पर फॉर्म देना है।",
+    "lang": "hi"
+  },
+  "introductions-3-echo-wait": {
+    "text": "कृपया एक पल रुकिए, मैं फिर से बताता हूँ",
+    "lang": "hi"
+  },
+  "introductions-4-pairs-water-1": {
+    "text": "पानी चाहिए",
+    "lang": "hi"
+  },
+  "introductions-4-pairs-water-2": {
+    "text": "पानी मिलेगा?",
+    "lang": "hi"
+  },
+  "introductions-4-pairs-thanks-1": {
+    "text": "धन्यवाद",
+    "lang": "hi"
+  },
+  "introductions-4-pairs-thanks-2": {
+    "text": "शुक्रिया",
+    "lang": "hi"
+  },
+  "introductions-4-dialogue-1": {
+    "text": "बताइए, आपके लिए क्या लाऊँ?",
+    "lang": "hi"
+  },
+  "introductions-4-dialogue-2": {
+    "text": "अभी लाता हूँ, एक मिनट रुकिए।",
+    "lang": "hi"
+  },
+  "introductions-4-read-flexibility": {
+    "text": "बोलते समय शब्द बदलना बिल्कुल स्वाभाविक है। सबसे ज़रूरी बात यह है कि आप अपनी बात आराम से कह सकें।",
+    "lang": "hi"
+  }
 }

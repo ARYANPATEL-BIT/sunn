@@ -1,119 +1,234 @@
 {
   "id": "easy-starts",
   "category_id": "smooth-speaking",
-  "title": {"en": "Easy starts", "hi": "आराम से शुरुआत"},
+  "title": {
+    "en": "Easy starts",
+    "hi": "आराम से शुरुआत"
+  },
   "summary": {
-    "en": "Begin words gently, on a slow breath out. Two short lessons.",
-    "hi": "शब्दों को धीमी साँस छोड़ते हुए हल्के से शुरू कीजिए। दो छोटे पाठ।"
+    "en": "Begin words gently on a calm breath out, stretch sounds, and speak with confidence across four progressive lessons.",
+    "hi": "चार पाठों में शब्दों को धीमी साँस पर शुरू करना, ठहराव लेना और आत्मविश्वास से बोलना सीखिए।"
   },
   "what_you_practise": {
-    "en": ["Breathing out slowly before you speak", "Starting the first sound softly", "Speaking along with Sunn at a calm pace"],
-    "hi": ["बोलने से पहले धीरे-धीरे साँस छोड़ना", "पहली आवाज़ हल्के से शुरू करना", "Sunn के साथ आराम की रफ़्तार से बोलना"]
+    "en": [
+      "Breathing out slowly before you speak",
+      "Starting sounds softly with light contact",
+      "Pausing at natural phrase breaks",
+      "Speaking with ease and confidence at your own pace"
+    ],
+    "hi": [
+      "बोलने से पहले धीरे-धीरे साँस छोड़ना",
+      "हल्के स्पर्श के साथ आवाज़ शुरू करना",
+      "वाक्यों के बीच सहज ठहराव लेना",
+      "अपनी रफ़्तार से आत्मविश्वास के साथ बोलना"
+    ]
   },
   "level": "beginner",
-  "minutes": 13,
+  "minutes": 32,
   "practice_lang": "hi",
   "lessons": [
     {
       "id": "easy-starts-1",
-      "title": {"en": "Breath and a soft start", "hi": "साँस और हल्की शुरुआत"},
-      "minutes": 6,
+      "title": {
+        "en": "Breath and a gentle start",
+        "hi": "साँस और हल्की शुरुआत"
+      },
+      "minutes": 8,
       "steps": [
         {
           "id": "easy-starts-1-welcome",
           "type": "intro",
-          "title": {"en": "Welcome", "hi": "स्वागत है"},
+          "title": {
+            "en": "Welcome",
+            "hi": "स्वागत है"
+          },
           "body": {
-            "en": "This is a quiet place to practise. There is no rush and no test, and you can stop whenever you like. Take your time and practise with ease at your own pace.",
-            "hi": "यह अभ्यास की एक शांत जगह है। यहाँ कोई जल्दी नहीं है और कोई परीक्षा नहीं। जब चाहें रुक जाइए। अपनी रफ़्तार से आराम से अभ्यास कीजिए।"
+            "en": "This is a quiet place to practise. There is no rush and no test. Take your time and practise at your own pace.",
+            "hi": "यह अभ्यास की एक शांत जगह है। यहाँ कोई जल्दी नहीं है और कोई परीक्षा नहीं। अपनी रफ़्तार से आराम से अभ्यास कीजिए।"
           }
         },
         {
           "id": "easy-starts-1-breathe",
           "type": "breathing",
-          "title": {"en": "Slow breaths", "hi": "धीमी साँसें"},
-          "body": {
-            "en": "Breathe in through your nose, then let the air out slowly through your mouth. There is no need to hold your breath.",
-            "hi": "नाक से साँस लीजिए, फिर मुँह से धीरे-धीरे छोड़िए। साँस रोकने की ज़रूरत नहीं है।"
+          "title": {
+            "en": "Relaxed breathing",
+            "hi": "आराम से साँसें"
           },
-          "pattern": {"in_s": 3, "out_s": 5},
+          "body": {
+            "en": "Breathe in through your nose for 4 seconds, then let the air out slowly for 6 seconds. There is no need to hold.",
+            "hi": "नाक से 4 सेकंड साँस लीजिए, फिर 6 सेकंड में धीरे-धीरे छोड़िए। साँस रोकने की ज़रूरत नहीं है।"
+          },
+          "pattern": {
+            "in_s": 4,
+            "out_s": 6
+          },
           "rounds": 4
         },
         {
           "id": "easy-starts-1-soft-start",
           "type": "tip",
-          "title": {"en": "A soft start", "hi": "हल्की शुरुआत"},
+          "title": {
+            "en": "Gentle start",
+            "hi": "हल्की शुरुआत"
+          },
           "body": {
-            "en": "Let a little air flow out first. Then let the first sound begin softly, as if it rides on that breath.",
-            "hi": "पहले थोड़ी हवा बाहर निकलने दीजिए। फिर पहली आवाज़ को हल्के से शुरू होने दीजिए, जैसे वह उसी साँस पर चल रही हो।"
+            "en": "Many people find it helpful to let a little air out first. Then let the first sound begin softly, as if it rides on that breath.",
+            "hi": "कई लोग पहले थोड़ी हवा बाहर निकलने देते हैं। फिर पहली आवाज़ को हल्के से शुरू होने दीजिए, जैसे वह उसी साँस पर चल रही हो।"
           },
           "technique_id": "easy-start"
         },
         {
           "id": "easy-starts-1-vowels",
           "type": "listen_repeat",
-          "title": {"en": "Words that start with a vowel", "hi": "स्वर से शुरू होने वाले शब्द"},
+          "title": {
+            "en": "Soft vowel and nasal starts",
+            "hi": "स्वर और नाक वाली सरल शुरुआत"
+          },
           "items": [
-            {"id": "aam", "text": "आम", "latin": "aam", "meaning_en": "mango", "audio_key": "easy-starts-aam"},
-            {"id": "aaj", "text": "आज", "latin": "aaj", "meaning_en": "today", "audio_key": "easy-starts-aaj"},
-            {"id": "ek", "text": "एक", "latin": "ek", "meaning_en": "one", "audio_key": "easy-starts-ek"},
-            {"id": "oopar", "text": "ऊपर", "latin": "oopar", "meaning_en": "up", "audio_key": "easy-starts-oopar"},
-            {"id": "achchha", "text": "अच्छा", "latin": "achchha", "meaning_en": "good", "audio_key": "easy-starts-achchha"}
+            {
+              "id": "aam",
+              "text": "आम",
+              "latin": "aam",
+              "meaning_en": "mango",
+              "focus_sound": "nasal",
+              "audio_key": "easy-starts-1-vowels-aam"
+            },
+            {
+              "id": "aaj",
+              "text": "आज",
+              "latin": "aaj",
+              "meaning_en": "today",
+              "focus_sound": "nasal",
+              "audio_key": "easy-starts-1-vowels-aaj"
+            },
+            {
+              "id": "ek",
+              "text": "एक",
+              "latin": "ek",
+              "meaning_en": "one",
+              "focus_sound": "nasal",
+              "audio_key": "easy-starts-1-vowels-ek"
+            },
+            {
+              "id": "oopar",
+              "text": "ऊपर",
+              "latin": "oopar",
+              "meaning_en": "up",
+              "focus_sound": "nasal",
+              "audio_key": "easy-starts-1-vowels-oopar"
+            },
+            {
+              "id": "achchha",
+              "text": "अच्छा",
+              "latin": "achchha",
+              "meaning_en": "good",
+              "focus_sound": "nasal",
+              "audio_key": "easy-starts-1-vowels-achchha"
+            },
+            {
+              "id": "naam",
+              "text": "नाम",
+              "latin": "naam",
+              "meaning_en": "name",
+              "focus_sound": "nasal",
+              "audio_key": "easy-starts-1-vowels-naam"
+            }
           ],
           "feedback": "none"
         },
         {
           "id": "easy-starts-1-together",
           "type": "speak_with_me",
-          "title": {"en": "Say it together", "hi": "साथ में बोलिए"},
+          "title": {
+            "en": "Choral practice with Sunn",
+            "hi": "Sunn के साथ बोलिए"
+          },
           "text": "आज मौसम अच्छा है",
           "latin": "aaj mausam achchha hai",
-          "meaning_en": "The weather is nice today.",
+          "meaning_en": "The weather is pleasant today.",
           "mode": "choral",
-          "pace_wpm": [60, 90],
-          "audio_key": "easy-starts-mausam",
+          "pace_wpm": [
+            60,
+            90
+          ],
+          "audio_key": "easy-starts-1-together-mausam",
           "feedback": "pace"
         },
         {
           "id": "easy-starts-1-reflect",
           "type": "reflect",
-          "title": {"en": "How was that?", "hi": "कैसा लगा?"},
-          "prompt": {"en": "How did the soft starts feel today?", "hi": "आज हल्की शुरुआत कैसी लगी?"},
-          "choices": ["easy", "okay", "hard"]
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did the gentle starts feel today?",
+            "hi": "आज हल्की शुरुआत कैसी लगी?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
         }
       ]
     },
     {
       "id": "easy-starts-2",
-      "title": {"en": "Light touches", "hi": "हल्का स्पर्श"},
-      "minutes": 7,
+      "title": {
+        "en": "Light touches on sounds",
+        "hi": "आवाज़ों पर हल्का स्पर्श"
+      },
+      "minutes": 8,
       "steps": [
         {
           "id": "easy-starts-2-light-lips",
           "type": "tip",
-          "title": {"en": "Light lips", "hi": "हल्के होंठ"},
+          "title": {
+            "en": "Light contact",
+            "hi": "हल्का स्पर्श"
+          },
           "body": {
-            "en": "For p and b, let your lips meet lightly and part easily. There is no need to press them together.",
-            "hi": "प और ब के लिए होंठों को हल्के से मिलने दीजिए और आराम से खुलने दीजिए। उन्हें दबाने की ज़रूरत नहीं है।"
+            "en": "For sounds like p and b, many people find it helpful when the lips meet lightly and part easily, without extra tension.",
+            "hi": "प और ब जैसी आवाज़ों के लिए होंठों को हल्के से मिलने दीजिए और आराम से खुलने दीजिए।"
           },
           "technique_id": "light-touch"
         },
         {
           "id": "easy-starts-2-pairs",
           "type": "minimal_pairs",
-          "title": {"en": "Two close words", "hi": "दो मिलते-जुलते शब्द"},
+          "title": {
+            "en": "Two close words",
+            "hi": "दो मिलते-जुलते शब्द"
+          },
           "pairs": [
             {
               "id": "pal-bal",
-              "a": {"text": "पल", "latin": "pal", "audio_key": "easy-starts-pal"},
-              "b": {"text": "बल", "latin": "bal", "audio_key": "easy-starts-bal"},
+              "a": {
+                "text": "पल",
+                "latin": "pal",
+                "audio_key": "easy-starts-2-pairs-pal"
+              },
+              "b": {
+                "text": "बल",
+                "latin": "bal",
+                "audio_key": "easy-starts-2-pairs-bal"
+              },
               "sound_a": "p",
               "sound_b": "b"
             },
             {
               "id": "padaa-badaa",
-              "a": {"text": "पड़ा", "latin": "padaa", "audio_key": "easy-starts-padaa"},
-              "b": {"text": "बड़ा", "latin": "badaa", "audio_key": "easy-starts-badaa"},
+              "a": {
+                "text": "पड़ा",
+                "latin": "padaa",
+                "audio_key": "easy-starts-2-pairs-padaa"
+              },
+              "b": {
+                "text": "बड़ा",
+                "latin": "badaa",
+                "audio_key": "easy-starts-2-pairs-badaa"
+              },
               "sound_a": "p",
               "sound_b": "b"
             }
@@ -122,61 +237,387 @@
         {
           "id": "easy-starts-2-echo",
           "type": "speak_with_me",
-          "title": {"en": "Sunn first, then you", "hi": "पहले Sunn, फिर आप"},
+          "title": {
+            "en": "Echo: Sunn first, then you",
+            "hi": "पहले Sunn, फिर आप"
+          },
           "text": "मुझे एक कप चाय चाहिए",
           "latin": "mujhe ek cup chaay chaahiye",
           "meaning_en": "I would like a cup of tea.",
           "mode": "echo",
-          "pace_wpm": [60, 90],
-          "audio_key": "easy-starts-chaay",
+          "pace_wpm": [
+            60,
+            90
+          ],
+          "audio_key": "easy-starts-2-echo-chaay",
           "feedback": "pace"
         },
         {
           "id": "easy-starts-2-paced",
           "type": "speak_with_me",
-          "title": {"en": "Follow the words", "hi": "शब्दों के साथ चलिए"},
+          "title": {
+            "en": "Paced reading",
+            "hi": "रफ़्तार के साथ चलिए"
+          },
           "text": "मेरे पास बोलने के लिए पूरा समय है",
           "latin": "mere paas bolne ke liye poora samay hai",
           "meaning_en": "I have all the time I need to speak.",
           "mode": "paced",
-          "pace_wpm": [50, 80],
+          "pace_wpm": [
+            50,
+            80
+          ],
           "feedback": "pace"
         },
         {
           "id": "easy-starts-2-read",
           "type": "read_aloud",
-          "title": {"en": "Read a short note", "hi": "एक छोटा नोट पढ़िए"},
+          "title": {
+            "en": "Read with light touches",
+            "hi": "हल्के स्पर्श से पढ़िए"
+          },
           "paragraph": "सुबह की हवा ठंडी और ताज़ा है। बाहर पेड़ों पर चिड़ियाँ बोल रही हैं। आज का दिन आराम से शुरू हो रहा है।",
           "latin": "subah ki hawa thandi aur taaza hai. baahar pedon par chidiyaan bol rahi hain. aaj ka din aaraam se shuru ho raha hai.",
-          "audio_key": "easy-starts-morning",
+          "audio_key": "easy-starts-2-read-morning",
           "feedback": "pace"
         },
         {
           "id": "easy-starts-2-tea-stall",
           "type": "dialogue",
-          "title": {"en": "At the tea stall", "hi": "चाय की दुकान पर"},
+          "title": {
+            "en": "At the tea stall",
+            "hi": "चाय की दुकान पर"
+          },
           "scenario": {
-            "en": "You are at a tea stall. Take one slow breath before each of your turns.",
-            "hi": "आप चाय की दुकान पर हैं। अपनी हर बारी से पहले एक धीमी साँस लीजिए।"
+            "en": "You are at a tea stall. Take one relaxed breath before each turn.",
+            "hi": "आप चाय की दुकान पर हैं। अपनी हर बारी से पहले एक सहज साँस लीजिए।"
           },
           "turns": [
-            {"speaker": "sunn", "text": "नमस्ते! क्या लेंगे?", "latin": "namaste! kya lenge?", "audio_key": "easy-starts-stall-1"},
+            {
+              "speaker": "sunn",
+              "text": "नमस्ते! क्या लेंगे?",
+              "latin": "namaste! kya lenge?",
+              "audio_key": "easy-starts-2-stall-1"
+            },
             {
               "speaker": "you",
               "text": "एक चाय, कम चीनी वाली।",
               "latin": "ek chaay, kam cheeni waali.",
-              "options": [{"text": "एक चाय और दो बिस्कुट।", "latin": "ek chaay aur do biscuit."}]
+              "options": [
+                {
+                  "text": "एक चाय और दो बिस्कुट।",
+                  "latin": "ek chaay aur do biscuit."
+                }
+              ]
             },
-            {"speaker": "sunn", "text": "ठीक है, बीस रुपये।", "latin": "theek hai, bees rupaye.", "audio_key": "easy-starts-stall-2"},
-            {"speaker": "you", "text": "धन्यवाद।", "latin": "dhanyavaad."}
+            {
+              "speaker": "sunn",
+              "text": "ठीक है, बीस रुपये।",
+              "latin": "theek hai, bees rupaye.",
+              "audio_key": "easy-starts-2-stall-2"
+            },
+            {
+              "speaker": "you",
+              "text": "धन्यवाद।",
+              "latin": "dhanyavaad."
+            }
           ]
         },
         {
           "id": "easy-starts-2-reflect",
           "type": "reflect",
-          "title": {"en": "How was that?", "hi": "कैसा लगा?"},
-          "prompt": {"en": "How did the light touches feel?", "hi": "हल्का स्पर्श कैसा लगा?"},
-          "choices": ["easy", "okay", "hard"]
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did the light touches feel?",
+            "hi": "हल्का स्पर्श कैसा लगा?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "easy-starts-3",
+      "title": {
+        "en": "Slow pace and phrase breaks",
+        "hi": "धीमी चाल और ठहराव"
+      },
+      "minutes": 8,
+      "steps": [
+        {
+          "id": "easy-starts-3-intro",
+          "type": "intro",
+          "title": {
+            "en": "Pausing at natural breaks",
+            "hi": "वाक्य में छोटे ठहराव"
+          },
+          "body": {
+            "en": "When speaking a longer thought, pausing at natural breaks gives your breath time to reset.",
+            "hi": "लंबी बात कहते समय बीच में छोटे ठहराव लेने से साँस को आराम मिलता है।"
+          }
+        },
+        {
+          "id": "easy-starts-3-tip",
+          "type": "tip",
+          "title": {
+            "en": "Stretching words",
+            "hi": "शब्दों को थोड़ा फैलाना"
+          },
+          "body": {
+            "en": "Many people find that stretching vowel sounds slightly keeps the airflow smooth and comfortable.",
+            "hi": "कई लोगों को लगता है कि स्वरों को थोड़ा सा खींचकर बोलने से आवाज़ सहज बनी रहती है।"
+          },
+          "technique_id": "slow-pace"
+        },
+        {
+          "id": "easy-starts-3-breathe",
+          "type": "breathing",
+          "title": {
+            "en": "Calm breath",
+            "hi": "शांत साँस"
+          },
+          "body": {
+            "en": "Take 4 slow breaths in and out before speaking phrases.",
+            "hi": "वाक्य बोलने से पहले 4 धीमी साँसें लीजिए और छोड़िए।"
+          },
+          "pattern": {
+            "in_s": 4,
+            "out_s": 6
+          },
+          "rounds": 4
+        },
+        {
+          "id": "easy-starts-3-clusters",
+          "type": "listen_repeat",
+          "title": {
+            "en": "Smooth clustered phrases",
+            "hi": "जुड़े अक्षरों वाले शब्द"
+          },
+          "items": [
+            {
+              "id": "school",
+              "text": "स्कूल",
+              "latin": "school",
+              "meaning_en": "school",
+              "focus_sound": "clusters",
+              "audio_key": "easy-starts-3-clusters-school"
+            },
+            {
+              "id": "raasta",
+              "text": "रास्ता",
+              "latin": "raasta",
+              "meaning_en": "path",
+              "focus_sound": "clusters",
+              "audio_key": "easy-starts-3-clusters-raasta"
+            },
+            {
+              "id": "dost",
+              "text": "दोस्त",
+              "latin": "dost",
+              "meaning_en": "friend",
+              "focus_sound": "clusters",
+              "audio_key": "easy-starts-3-clusters-dost"
+            },
+            {
+              "id": "dhyaan",
+              "text": "ध्यान",
+              "latin": "dhyaan",
+              "meaning_en": "attention",
+              "focus_sound": "clusters",
+              "audio_key": "easy-starts-3-clusters-dhyaan"
+            },
+            {
+              "id": "swaad",
+              "text": "स्वाद",
+              "latin": "swaad",
+              "meaning_en": "taste",
+              "focus_sound": "clusters",
+              "audio_key": "easy-starts-3-clusters-swaad"
+            }
+          ],
+          "feedback": "none"
+        },
+        {
+          "id": "easy-starts-3-choral",
+          "type": "speak_with_me",
+          "title": {
+            "en": "Choral reading with pauses",
+            "hi": "ठहराव के साथ बोलना"
+          },
+          "text": "हम सब मिलकर धीरे-धीरे आगे बढ़ रहे हैं",
+          "latin": "hum sab milkar dheere-dheere aage badh rahe hain",
+          "meaning_en": "Together we are moving forward at an easy pace.",
+          "mode": "choral",
+          "pace_wpm": [
+            55,
+            80
+          ],
+          "audio_key": "easy-starts-3-choral-together",
+          "feedback": "pace"
+        },
+        {
+          "id": "easy-starts-3-read",
+          "type": "read_aloud",
+          "title": {
+            "en": "Read with comfortable pauses",
+            "hi": "सहज ठहराव से पढ़िए"
+          },
+          "paragraph": "नदी किनारे ठंडी हवा चल रही है। दूर एक छोटा सा गाँव दिखाई देता है। शाम का समय बहुत शांत लगता है।",
+          "latin": "nadi kinaare thandi hawa chal rahi hai. door ek chhota sa gaanv dikhaai deta hai. shaam ka samay bahut shaant lagta hai.",
+          "audio_key": "easy-starts-3-read-river",
+          "feedback": "pace"
+        },
+        {
+          "id": "easy-starts-3-reflect",
+          "type": "reflect",
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did pausing between phrases feel?",
+            "hi": "वाक्यों के बीच ठहराव कैसा लगा?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "easy-starts-4",
+      "title": {
+        "en": "Speaking with confidence",
+        "hi": "आत्मविश्वास से बोलना"
+      },
+      "minutes": 8,
+      "steps": [
+        {
+          "id": "easy-starts-4-intro",
+          "type": "intro",
+          "title": {
+            "en": "Your voice matters",
+            "hi": "आपकी आवाज़ का स्वागत है"
+          },
+          "body": {
+            "en": "Stammering is completely okay. You deserve to be heard at your own pace. There is never any need to rush for anyone.",
+            "hi": "हकलाहट बिल्कुल स्वाभाविक है। आपको अपनी रफ़्तार से सुने जाने का पूरा अधिकार है। किसी के लिए भी जल्दी करने की ज़रूरत नहीं है।"
+          }
+        },
+        {
+          "id": "easy-starts-4-tip",
+          "type": "tip",
+          "title": {
+            "en": "Taking your time",
+            "hi": "पूरा समय लीजिए"
+          },
+          "body": {
+            "en": "Many people find peace in remembering that listeners are glad to wait. Take a steady breath before you begin.",
+            "hi": "यह याद रखना मददगार होता है कि सुनने वाले इंतज़ार करने को तैयार हैं। शुरू करने से पहले एक सहज साँस लीजिए।"
+          },
+          "technique_id": "pausing"
+        },
+        {
+          "id": "easy-starts-4-choral",
+          "type": "speak_with_me",
+          "title": {
+            "en": "Speak together with Sunn",
+            "hi": "Sunn के साथ बोलिए"
+          },
+          "text": "मेरी बात महत्वपूर्ण है और मैं अपनी रफ़्तार से बोलूँगा",
+          "latin": "meri baat mahatvapurna hai aur main apni raftaar se boloonga",
+          "meaning_en": "My words matter and I will speak at my own pace.",
+          "mode": "choral",
+          "pace_wpm": [
+            55,
+            80
+          ],
+          "audio_key": "easy-starts-4-choral-confidence",
+          "feedback": "pace"
+        },
+        {
+          "id": "easy-starts-4-dialogue",
+          "type": "dialogue",
+          "title": {
+            "en": "Speaking in public without rush",
+            "hi": "बिना जल्दबाज़ी के बातचीत"
+          },
+          "scenario": {
+            "en": "You are talking to an acquaintance. Take your own time to reply.",
+            "hi": "आप किसी परिचित से बात कर रहे हैं। जवाब देने में अपना पूरा समय लीजिए।"
+          },
+          "turns": [
+            {
+              "speaker": "sunn",
+              "text": "नमस्ते! आज आप कैसे हैं?",
+              "latin": "namaste! aaj aap kaise hain?",
+              "audio_key": "easy-starts-4-dialogue-1"
+            },
+            {
+              "speaker": "you",
+              "text": "नमस्ते, मैं बिल्कुल ठीक हूँ।",
+              "latin": "namaste, main bilkul theek hoon.",
+              "options": [
+                {
+                  "text": "नमस्ते, सब बहुत अच्छा चल रहा है।",
+                  "latin": "namaste, sab bahut achchha chal raha hai."
+                }
+              ]
+            },
+            {
+              "speaker": "sunn",
+              "text": "बहुत बढ़िया, मिलकर अच्छा लगा।",
+              "latin": "bahut badhiya, milkar achchha laga.",
+              "audio_key": "easy-starts-4-dialogue-2"
+            },
+            {
+              "speaker": "you",
+              "text": "मुझे भी आपसे बात करके अच्छा लगा।",
+              "latin": "mujhe bhi aap se baat karke achchha laga."
+            }
+          ]
+        },
+        {
+          "id": "easy-starts-4-paced",
+          "type": "speak_with_me",
+          "title": {
+            "en": "Steady pacing",
+            "hi": "सधी हुई गति"
+          },
+          "text": "धीमी गति से बोलना बहुत स्वाभाविक है",
+          "latin": "dheemi gati se bolna bahut swaabhaavik hai",
+          "meaning_en": "Speaking calmly and slowly is very natural.",
+          "mode": "paced",
+          "pace_wpm": [
+            50,
+            75
+          ],
+          "feedback": "pace"
+        },
+        {
+          "id": "easy-starts-4-reflect",
+          "type": "reflect",
+          "title": {
+            "en": "How was that?",
+            "hi": "कैसा लगा?"
+          },
+          "prompt": {
+            "en": "How did speaking at your own pace feel today?",
+            "hi": "आज अपनी रफ़्तार से बोलना कैसा लगा?"
+          },
+          "choices": [
+            "easy",
+            "okay",
+            "hard"
+          ]
         }
       ]
     }
