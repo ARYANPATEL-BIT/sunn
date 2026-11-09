@@ -129,7 +129,7 @@ export async function record(page, lang, seconds = 1.5) {
 // No interface text in the other language: Latin words in Hindi mode, Devanagari in English
 // mode. Text marked with another lang (the user's own phrases, the EN / हिं toggle, the wordmark)
 // is data or a name and is skipped, as are product names and `data`, like the user's name.
-const NAMES = new Set(['Sunn', 'Gnani', 'Prisma', 'Timbre', 'WhatsApp', 'English', 'Hindi', 'TORGO',
+const NAMES = new Set(['Sunn', 'Gnani', 'Prisma', 'Timbre', 'WhatsApp', 'English', 'Hindi', 'TORGO', 'Google',
   'Great', 'Indian', 'AI', 'Internship', 'Challenge']) // the challenge's name
 export async function expectNoLeaks(page, lang, data = []) {
   const texts = await page.evaluate(() => {

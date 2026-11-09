@@ -4,6 +4,35 @@ import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { Alert, Button, Icon, Sheet, useGo } from './ui/index.js'
 
+const COURSE_METADATA = {
+  'easy-starts': {
+    title: { en: 'Easy starts', hi: 'आराम से शुरुआत' },
+    categoryId: 'smooth-speaking',
+  },
+  's-and-sh': {
+    title: { en: 'S and Sh', hi: 'स और श' },
+    categoryId: 'clear-sounds',
+  },
+  introductions: {
+    title: { en: 'Introductions', hi: 'परिचय' },
+    categoryId: 'everyday-talk',
+  },
+  'sound-play': {
+    title: { en: 'Fun with sounds', hi: 'आवाज़ों से खेल' },
+    categoryId: 'kids-speaking',
+  },
+}
+
+const WEEK_DAYS = [
+  'progress.dayM',
+  'progress.dayT',
+  'progress.dayW',
+  'progress.dayTh',
+  'progress.dayF',
+  'progress.daySa',
+  'progress.daySu',
+]
+
 function formatWeekStart(isoDate, currentLang) {
   try {
     const d = new Date(isoDate)
@@ -109,6 +138,7 @@ export default function Progress() {
 
   const [stats, setStats] = useState(null)
   const [phrases, setPhrases] = useState(null)
+  const [trainingsProgress, setTrainingsProgress] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [playingPhrase, setPlayingPhrase] = useState(null)
@@ -135,10 +165,15 @@ export default function Progress() {
     setLoading(true)
     setError(null)
     try {
-      const [statsData, phrasesData] = await Promise.all([api.stats(), api.listPhrases().catch(() => [])])
+      const [statsData, phrasesData, progData] = await Promise.all([
+        api.stats(),
+        api.listPhrases().catch(() => []),
+        api.getTrainingsProgress().catch(() => null),
+      ])
       if (isMounted.current) {
         setStats(statsData)
         setPhrases(phrasesData)
+        setTrainingsProgress(progData)
       }
     } catch (err) {
       if (isMounted.current) {
@@ -359,6 +394,97 @@ export default function Progress() {
         ) : (
           <p className="empty-note">{t('progress.noActivity')}</p>
         )}
+      </section>
+
+      {/* Trainings Section */}
+      <section className="progress-section trainings-progress-section" aria-labelledby="heading-trainings">
+        <div className="section-header-row">
+          <div>
+            <h2 id="heading-trainings" className="title-2">
+              {t('progress.trainingsHeading')}
+            </h2>
+            <p className="section-sub">{t('progress.trainingsDesc')}</p>
+          </div>
+        </div>
+
+        {/* Trainings overview numbers */}
+        <div className="metrics">
+          <div className="metric-card">
+            <span className="metric-value">{trainingsProgress?.lessons_done ?? 0}</span>
+            <span className="metric-label">{t('progress.lessonsDone')}</span>
+          </div>
+          <div className="metric-card">
+            <span className="metric-value">{trainingsProgress?.minutes_practised ?? 0}</span>
+            <span className="metric-label">{t('progress.minutesPractised')}</span>
+          </div>
+        </div>
+
+        {/* Days practised this week: 7 simple squares with a check, not dots */}
+        <div className="trainings-days-block">
+          <span className="days-block-title">{t('progress.daysThisWeek')}</span>
+          <div className="days-practised-grid" role="group" aria-label={t('progress.daysThisWeek')}>
+            {WEEK_DAYS.map((dayKey, idx) => {
+              const daysCount = trainingsProgress?.days_this_week ?? 0
+              const isDone = idx < daysCount
+              return (
+                <div key={idx} className={`day-square-box ${isDone ? 'done' : ''}`}>
+                  <div className="day-square" aria-hidden="true">
+                    {isDone && <Icon name="check" className="day-check-icon" />}
+                  </div>
+                  <span className="day-label">{t(dayKey)}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Courses in progress */}
+        <div className="trainings-courses-block">
+          <h3 className="courses-block-title">{t('progress.coursesInProgress')}</h3>
+          {trainingsProgress?.courses && trainingsProgress.courses.length > 0 ? (
+            <div className="trainings-courses-list">
+              {trainingsProgress.courses.map((c) => {
+                const meta = COURSE_METADATA[c.id] || {}
+                const courseTitle = meta.title?.[lang] || meta.title?.en || c.id
+                const catId = meta.categoryId || 'smooth-speaking'
+                return (
+                  <div key={c.id} className="course-progress-card">
+                    <div className="course-progress-header">
+                      <span className="course-progress-name">{courseTitle}</span>
+                      <span className="course-progress-percent">{c.percent}%</span>
+                    </div>
+                    <div
+                      className="meter"
+                      role="progressbar"
+                      aria-valuenow={c.percent}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`${courseTitle}: ${c.percent}%`}
+                    >
+                      <div style={{ transform: `scaleX(${c.percent / 100})` }} />
+                    </div>
+                    <div className="course-progress-action">
+                      <button
+                        type="button"
+                        className="button small"
+                        onClick={() => go(`/trainings/${catId}/${c.id}`)}
+                      >
+                        {t('progress.continueCourse')}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="trainings-empty-box">
+              <p className="empty-note">{t('progress.noTrainingsYet')}</p>
+              <Button onClick={() => go('/trainings')}>
+                {t('progress.exploreTrainings')}
+              </Button>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Supportive suggestions */}
