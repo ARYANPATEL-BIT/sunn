@@ -100,7 +100,9 @@ def parse(content, ids):
 
 def ask(heard, candidates, context):
     """The model's verdict on candidates (described), or None, logged, when there isn't a valid one."""
-    base, key, model = setting("LLM_BASE_URL").rstrip("/"), setting("LLM_API_KEY"), setting("LLM_MODEL")
+    base = setting("LLM_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
+    key = setting("GROQ_API_KEY") or setting("LLM_API_KEY")
+    model = setting("GROQ_MODEL") or setting("LLM_MODEL", "openai/gpt-oss-120b")
     body = {"model": model, "temperature": 0, "max_tokens": 120, "response_format": {"type": "json_object"},
             "messages": [{"role": "system", "content": SYSTEM},
                          {"role": "user", "content": USER.format(
@@ -111,7 +113,7 @@ def ask(heard, candidates, context):
     started, verdict, status = time.monotonic(), None, None
     try:
         if not (base and key and model):
-            raise LookupError("LLM_BASE_URL, LLM_API_KEY or LLM_MODEL is empty")
+            raise LookupError("GROQ_API_KEY (or LLM_API_KEY), LLM_BASE_URL, or GROQ_MODEL (or LLM_MODEL) is empty")
         response = httpx.post(f"{base}/chat/completions", headers={"Authorization": f"Bearer {key}"}, json=body,
                               timeout=float(setting("LLM_TIMEOUT_S", "3")))
         status = response.status_code
