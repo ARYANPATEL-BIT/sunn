@@ -921,7 +921,112 @@ def tricky_sounds(user=Depends(current_user)):
     return get_user_tricky_sounds(user)
 
 
+def call_groq_alternatives(text: str, lang: str, tricky_ids: list[str]) -> Alternatives | None:
+    try:
+        base = llm_judge.setting("LLM_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
+        model = llm_judge.setting("LLM_MODEL", "llama-3.3-70b-versatile")
+        key = llm_judge.setting("LLM_API_KEY")
+        timeout = float(llm_judge.setting("LLM_TIMEOUT_S", "3"))
 
+        sounds_dict = {s.id: s for s in LIBRARY.sounds}
+        if tricky_ids:
+            sound_desc_list = []
+            for tid in tricky_ids:
+                if tid in sounds_dict:
+                    s = sounds_dict[tid]
+                    label = s.label.hi if lang == "hi" else s.label.en
+                    eg = s.examples[0].text if s.examples else tid
+                    sound_desc_list.append(f"{tid} ({label}, e.g. {eg})")
+                else:
+                    sound_desc_list.append(tid)
+            sounds_str = ", ".join(sound_desc_list)
+        else:
+            sounds_str = "none"
+
+        lang_name = "Hindi" if lang == "hi" else "English"
+        system_prompt = (
+            f"you help a person who finds some speech sounds hard. give 3 short, natural ways to say the same thing in {lang_name}, "
+            f"keeping exactly the same meaning and the same urgency. avoid these sounds where you can: {sounds_str}. "
+            "if the meaning is about pain, help, a doctor or danger, keep it just as clear and urgent. "
+            'reply with json only: {"meaning_en": "...", "alternatives": [{"text": "...", "latin": "..."}]}'
+        )
+
+        body = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": text},
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.2,
+        }
+
+        resp = httpx.post(f"{base}/chat/completions", headers={"Authorization": f"Bearer {key}"}, json=body, timeout=timeout)
+        if resp.status_code != 200:
+            return None
+
+        data = resp.json()
+        raw_content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        parsed = json.loads(raw_content)
+
+        meaning_en = parsed.get("meaning_en")
+        raw_alts = parsed.get("alternatives")
+        if not isinstance(meaning_en, str) or not isinstance(raw_alts, list):
+            return None
+        if not (1 <= len(raw_alts) <= 3):
+            return None
+
+        text_lower = text.lower()
+        is_urgent_input = any(w in text_lower for w in ["pain", "hurt", "doctor", "help", "sos", "danger", "दर्द", "डॉक्टर", "मदद", "सांस", "तकलीफ़"])
+
+        valid_alts = []
+        for item in raw_alts:
+            if not isinstance(item, dict):
+                continue
+            alt_text = item.get("text", "").strip()
+            alt_latin = item.get("latin", alt_text).strip()
+            if not alt_text or len(alt_text) >= 60:
+                continue
+            if alt_text.lower() == text.strip().lower() or matcher.normalize(alt_text) == matcher.normalize(text):
+                continue
+
+            if is_urgent_input:
+                dismissive_words = ["fine", "ok", "all good", "no problem", "better", "nothing", "सब ठीक", "कोई बात नहीं", "दर्द नहीं"]
+                if any(dw in alt_text.lower() for dw in dismissive_words):
+                    continue
+
+            v_sounds = extract_text_sounds(alt_text) | extract_text_sounds(alt_latin)
+            avoids = [s for s in tricky_ids if s not in v_sounds]
+            valid_alts.append({
+                "text": alt_text,
+                "latin": alt_latin,
+                "meaning_en": meaning_en,
+                "avoids": avoids,
+                "source": "assistant",
+                "sounds": v_sounds,
+            })
+
+        if not valid_alts:
+            return None
+
+        tricky_set = set(tricky_ids)
+        valid_alts.sort(key=lambda x: (len(x["sounds"] & tricky_set), len(x["text"])))
+
+        return Alternatives(
+            meaning_en=meaning_en,
+            alternatives=[
+                Alternative(
+                    text=a["text"],
+                    latin=a["latin"],
+                    meaning_en=a["meaning_en"],
+                    avoids=a["avoids"],
+                    source="assistant",
+                )
+                for a in valid_alts
+            ]
+        )
+    except Exception:
+        return None
 
 
 @router.post("/me/trainings/alternatives", response_model=Alternatives)
@@ -981,7 +1086,30 @@ def alternatives(body: AlternativesRequest, user=Depends(current_user)):
             ))
         return Alternatives(meaning_en=best_meaning["meaning_en"], alternatives=alts)
 
-    # Fallback to closest library results if similarity >= 0.60
+    # 2. Not found in library: check Groq assistant if LLM_ENABLED
+    cache_key = (user["id"], norm_input, body.lang, tuple(sorted(tricky_ids)))
+    with _alternatives_lock:
+        if cache_key in _alternatives_cache:
+            return _alternatives_cache[cache_key]
+
+    if llm_judge.enabled():
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        with _alternatives_lock:
+            calls_today = _assistant_calls_today[(user["id"], today_str)]
+            if calls_today < 20:
+                _assistant_calls_today[(user["id"], today_str)] += 1
+                can_call = True
+            else:
+                can_call = False
+
+        if can_call:
+            assistant_res = call_groq_alternatives(body.text, body.lang, tricky_ids)
+            if assistant_res is not None:
+                with _alternatives_lock:
+                    _alternatives_cache[cache_key] = assistant_res
+                return assistant_res
+
+    # 3. Fallback: closest library results if similarity >= 0.60, or empty list
     if best_meaning and best_sim >= 0.60:
         other_variants = [v for v in best_meaning["variants"] if v["text"] != body.text and v["norm"] != norm_input]
         if not other_variants:
