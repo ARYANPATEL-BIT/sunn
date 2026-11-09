@@ -209,6 +209,8 @@ def save_wav(upload, folder, limits, rate=16000):
     """Store the upload in folder as a wav (see audio.to_wav) and return its path. Refuses a
     file over MAX_UPLOAD_BYTES or a recording outside limits, (min, max) seconds."""
     data = upload.file.read(MAX_UPLOAD_BYTES + 1)
+    if len(data) == 0:
+        raise Refused(400, "bad_audio", "the audio file is empty")
     if len(data) > MAX_UPLOAD_BYTES:
         raise Refused(413, "file_too_large", f"the audio file is over {MAX_UPLOAD_BYTES // 2**20} MB")
     os.makedirs(folder, exist_ok=True)

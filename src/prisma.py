@@ -41,10 +41,16 @@ def transcribe(wav_path, language="hi", user_id=None):
 
     response = gnani.post("stt", URL, audio_seconds=seconds, user_id=user_id, data=request_form(language),
                           files={"audio_file": ("audio.wav", audio_bytes, "audio/wav")})
-    result = response.json()
-    if not result.get("success"):
+    try:
+        result = response.json()
+    except Exception:
+        raise gnani.GnaniError("gnani_rejected", "Prisma returned a malformed response")
+    if not isinstance(result, dict) or not result.get("success"):
         raise gnani.GnaniError("gnani_rejected", "Prisma could not transcribe the audio")
+    transcript = result.get("transcript")
+    if transcript is None:
+        raise gnani.GnaniError("gnani_rejected", "Prisma response is missing the transcript field")
     os.makedirs(CACHE_DIR, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False)
-    return result["transcript"]
+    return transcript

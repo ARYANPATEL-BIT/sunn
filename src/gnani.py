@@ -57,13 +57,24 @@ def record(kind, cached, audio_seconds, user_id=None):
         log.event("gnani_call", kind=kind, cached=True)
 
 
+def mask_secrets(text: str) -> str:
+    if not isinstance(text, str):
+        return text
+    for key_var in ("GNANI_STT_API_KEY", "GNANI_TTS_API_KEY", "GROQ_API_KEY", "JWT_SECRET"):
+        val = os.environ.get(key_var, "").strip()
+        if val and val not in ("your-key-here", "your-stt-key-here", "your-tts-key-here", "your-groq-key-here", "placeholder"):
+            text = text.replace(val, "[REDACTED]")
+    return text
+
+
 def reason(response):
     """Gnani's own error message: the docs' error body is {"success": false, "error": {"type", "message"}}."""
     try:
         error = response.json().get("error")
     except (ValueError, AttributeError):
-        return response.text[:200]
-    return error.get("message", "") if isinstance(error, dict) else str(error or "")[:200]
+        return mask_secrets(response.text[:200])
+    msg = error.get("message", "") if isinstance(error, dict) else str(error or "")[:200]
+    return mask_secrets(msg)
 
 
 def post(kind, url, audio_seconds=None, user_id=None, **request):

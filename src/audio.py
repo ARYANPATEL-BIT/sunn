@@ -21,5 +21,5 @@ def seconds(audio):
     """Duration of a wav given as a path or as bytes, or None if it can't be read."""
     try:
         return soundfile.info(io.BytesIO(audio) if isinstance(audio, bytes) else audio).duration
-    except RuntimeError:
+    except Exception:
         return None
