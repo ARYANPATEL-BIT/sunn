@@ -3,11 +3,13 @@ Training progress, reflections and attempts are stored in the database.
 docs/TRAININGS_CONTRACT.md is the contract. Browsing the content (content/trainings/,
 read through src/trainings_content.py) needs no session; everything under /me does."""
 import json
+import logging
 import os
 import re
 import subprocess
 import tempfile
 import threading
+import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
@@ -24,6 +26,7 @@ import db
 import gnani
 import gnani_mock
 import llm_judge
+import log
 import matcher
 import prisma
 import schemas
@@ -924,11 +927,15 @@ def tricky_sounds(user=Depends(current_user)):
 
 
 def call_groq_alternatives(text: str, lang: str, tricky_ids: list[str]) -> Alternatives | None:
+    started, status = time.monotonic(), None
     try:
         base = llm_judge.setting("LLM_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
         model = llm_judge.setting("GROQ_MODEL") or llm_judge.setting("LLM_MODEL", "openai/gpt-oss-120b")
         key = llm_judge.setting("GROQ_API_KEY") or llm_judge.setting("LLM_API_KEY")
         timeout = float(llm_judge.setting("LLM_TIMEOUT_S", "3"))
+
+        if not (base and key and model):
+            return None
 
         sounds_dict = {s.id: s for s in LIBRARY.sounds}
         if tricky_ids:
@@ -948,8 +955,9 @@ def call_groq_alternatives(text: str, lang: str, tricky_ids: list[str]) -> Alter
         lang_name = "Hindi" if lang == "hi" else "English"
         system_prompt = (
             f"you help a person who finds some speech sounds hard. give 3 short, natural ways to say the same thing in {lang_name}, "
-            f"keeping exactly the same meaning and the same urgency. avoid these sounds where you can: {sounds_str}. "
-            "if the meaning is about pain, help, a doctor or danger, keep it just as clear and urgent. "
+            f"keeping exactly the same meaning and urgency. avoid these sounds where you can: {sounds_str}. "
+            "if the meaning is about pain, help, a doctor or danger, keep it just as clear and urgent. never use dismissive words "
+            "for urgent needs. alternatives must preserve communicative intent without medical or clinical claims. "
             'reply with json only: {"meaning_en": "...", "alternatives": [{"text": "...", "latin": "..."}]}'
         )
 
@@ -962,9 +970,27 @@ def call_groq_alternatives(text: str, lang: str, tricky_ids: list[str]) -> Alter
             "response_format": {"type": "json_object"},
             "temperature": 0.2,
         }
+        effort = llm_judge.setting("LLM_REASONING_EFFORT", "low").strip().lower()
+        if effort in ("low", "medium", "high"):
+            body["reasoning_effort"] = effort
+        max_tokens = int(llm_judge.setting("LLM_ALT_MAX_TOKENS", "400"))
+        body["max_tokens"] = max_tokens
 
-        resp = httpx.post(f"{base}/chat/completions", headers={"Authorization": f"Bearer {key}"}, json=body, timeout=timeout)
+        headers = {"Authorization": f"Bearer {key}"}
+        resp = httpx.post(f"{base}/chat/completions", headers=headers, json=body, timeout=timeout)
+        status = resp.status_code
+        if status == 400 and "reasoning_effort" in body:
+            # Model or provider does not support reasoning_effort: retry once without it
+            retry_body = dict(body)
+            retry_body.pop("reasoning_effort", None)
+            retry_resp = httpx.post(f"{base}/chat/completions", headers=headers, json=retry_body, timeout=timeout)
+            status = retry_resp.status_code
+            if retry_resp.status_code == 200:
+                resp = retry_resp
+
         if resp.status_code != 200:
+            log.event("groq_alternatives", level=logging.WARNING, outcome=f"http_{resp.status_code}", status=status,
+                      ms=round(1000 * (time.monotonic() - started)))
             return None
 
         data = resp.json()
@@ -974,8 +1000,12 @@ def call_groq_alternatives(text: str, lang: str, tricky_ids: list[str]) -> Alter
         meaning_en = parsed.get("meaning_en")
         raw_alts = parsed.get("alternatives")
         if not isinstance(meaning_en, str) or not isinstance(raw_alts, list):
+            log.event("groq_alternatives", level=logging.WARNING, outcome="invalid_schema", status=status,
+                      ms=round(1000 * (time.monotonic() - started)))
             return None
         if not (1 <= len(raw_alts) <= 3):
+            log.event("groq_alternatives", level=logging.WARNING, outcome="unexpected_alts_count", status=status,
+                      ms=round(1000 * (time.monotonic() - started)))
             return None
 
         text_lower = text.lower()
@@ -1009,11 +1039,15 @@ def call_groq_alternatives(text: str, lang: str, tricky_ids: list[str]) -> Alter
             })
 
         if not valid_alts:
+            log.event("groq_alternatives", level=logging.WARNING, outcome="no_valid_alts", status=status,
+                      ms=round(1000 * (time.monotonic() - started)))
             return None
 
         tricky_set = set(tricky_ids)
         valid_alts.sort(key=lambda x: (len(x["sounds"] & tricky_set), len(x["text"])))
 
+        log.event("groq_alternatives", level=logging.INFO, outcome="ok", status=status,
+                  ms=round(1000 * (time.monotonic() - started)))
         return Alternatives(
             meaning_en=meaning_en,
             alternatives=[
@@ -1027,7 +1061,13 @@ def call_groq_alternatives(text: str, lang: str, tricky_ids: list[str]) -> Alter
                 for a in valid_alts
             ]
         )
-    except Exception:
+    except httpx.TimeoutException:
+        log.event("groq_alternatives", level=logging.WARNING, outcome="timeout", status=status,
+                  ms=round(1000 * (time.monotonic() - started)))
+        return None
+    except Exception as e:
+        log.event("groq_alternatives", level=logging.WARNING, outcome=type(e).__name__, status=status,
+                  ms=round(1000 * (time.monotonic() - started)))
         return None
 
 
@@ -1098,7 +1138,7 @@ def alternatives(body: AlternativesRequest, user=Depends(current_user)):
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         with _alternatives_lock:
             calls_today = _assistant_calls_today[(user["id"], today_str)]
-            if calls_today < 20:
+            if calls_today < 20 and llm_judge.take_slot(user["id"]):
                 _assistant_calls_today[(user["id"], today_str)] += 1
                 can_call = True
             else:
