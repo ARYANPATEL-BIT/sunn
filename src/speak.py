@@ -24,10 +24,14 @@ OUT = "results/tts_test.wav"
 def request_body(text, language, embedding=None):
     """The stock voice for the language, or the cloned voice when embedding is given. The VC
     request takes no language or voice, and its sample_rate tops out at 44100."""
+    if not text or not text.strip():
+        raise ValueError("text to synthesize cannot be empty")
     if embedding is not None:
         return {"text": text, "model": "vachana-vc-v1", "speaker_embedding": embedding,
                 "audio_config": {"sample_rate": 44100, "num_channels": 1, "sample_width": 2,
                                  "encoding": "linear_pcm", "container": "wav"}}
+    if language not in VOICES:
+        raise ValueError(f"unsupported language '{language}'; supported languages are {sorted(VOICES)}")
     code, voice = VOICES[language]
     return {
         "text": text,
@@ -53,6 +57,8 @@ def synthesize(text, language="hi", embedding=None, cache_dir=CACHE_DIR, user_id
         return path
 
     response = gnani.post("tts", URL, user_id=user_id, json=body)
+    if not response.content or len(response.content) < 44 or audio.seconds(response.content) is None:
+        raise gnani.GnaniError("gnani_rejected", "Gnani returned an empty or invalid audio response")
     os.makedirs(cache_dir, exist_ok=True)
     with open(path, "wb") as f:
         f.write(response.content)
@@ -76,7 +82,10 @@ def clone_voice(wav_path, cache_dir, user_id=None):
 
     response = gnani.post("clone", CLONE_URL, audio_seconds=seconds, user_id=user_id,
                           files={"audio_file": ("voice.wav", audio_bytes, "audio/wav")})
-    result = response.json()
+    try:
+        result = response.json()
+    except Exception:
+        raise gnani.GnaniError("gnani_rejected", "Gnani voice clone returned a malformed response")
     # The endpoint's schema nests it under data.voice_clone_embedding; the quick start shows
     # it at the top level. Accept either.
     found = (result.get("data") or {}).get("voice_clone_embedding") or result
