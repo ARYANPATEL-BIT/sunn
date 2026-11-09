@@ -444,6 +444,21 @@ export default function Phrases() {
             {t(isPlaying ? 'phrases.stopPlaying' : 'phrases.listen')}
           </PrimaryButton>
           <Button
+            icon="idea"
+            onClick={() => {
+              handleCloseDetails()
+              go('/trainings/easier-ways', {
+                state: {
+                  text: phrase.text,
+                  lang: user?.language || 'hi',
+                  urgent: phrase.urgent,
+                },
+              })
+            }}
+          >
+            {t('trainings.easierWaysTitle')}
+          </Button>
+          <Button
             icon="pencil"
             onClick={() => handleOpenEdit(phrase)}
             disabled={busy !== null}
@@ -600,6 +615,22 @@ export default function Phrases() {
                       ))}
                     </span>
                   </span>
+                  <button
+                    type="button"
+                    className="button small text-btn phrase-easier-ways-btn"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      go('/trainings/easier-ways', {
+                        state: {
+                          text: phrase.text,
+                          lang: user?.language || 'hi',
+                          urgent: phrase.urgent,
+                        },
+                      })
+                    }}
+                  >
+                    {t('phrases.easierWaysBtn')}
+                  </button>
                   <Icon name="chevronRight" className="row-chevron" />
                 </button>
                 <Sheet
