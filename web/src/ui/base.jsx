@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useLang } from '../i18n/index.jsx'
-import { nextTheme, useTheme } from '../theme.js'
+import { nextTheme, resolveTheme, useTheme } from '../theme.js'
 import { Icon } from './icons.jsx'
 
 export const reducedMotion = () =>
@@ -60,16 +60,25 @@ export function Toast({ children }) {
   )
 }
 
-const THEME_ICON = { light: 'sun', dark: 'moon', system: 'contrast' }
-
-// Steps through system, the opposite of the device, and back; Settings has all three as a list.
+// Two-state toggle in header: switches strictly between light and dark based on effective theme.
+// Settings page retains full three-option selector (Light, Dark, Automatic).
 export function ThemeToggle() {
   const { t } = useLang()
   const [theme, setTheme] = useTheme()
-  const label = t('theme.toggle', { theme: t(`theme.${theme}`) })
+  const effective = resolveTheme(theme)
+  const isDark = effective === 'dark'
+  const next = isDark ? 'light' : 'dark'
+  const label = t('theme.toggle', { theme: t(`theme.${next}`) })
+
   return (
-    <button type="button" className="icon-button" onClick={() => setTheme(nextTheme(theme))} aria-label={label} title={label}>
-      <Icon name={THEME_ICON[theme]} />
+    <button
+      type="button"
+      className="icon-button theme-toggle"
+      onClick={() => setTheme(next)}
+      aria-label={label}
+      title={label}
+    >
+      <Icon name={isDark ? 'moon' : 'sun'} />
     </button>
   )
 }
