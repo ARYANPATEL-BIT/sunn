@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useLang } from './i18n/index.jsx'
 import { Icon, reducedMotion } from './ui/index.js'
@@ -18,7 +18,7 @@ export const DEMO_STEPS = [
     shortKey: 'presenter.stepShort_2',
     titleKey: 'presenter.stepPhrasesTitle',
     cueKey: 'presenter.stepPhrasesCue',
-    targetSelector: '.phrases-search, .phrase-card, .screen-header, .phrases-screen',
+    targetSelector: '.phrases-list, .phrase-card, .phrases-search, .phrases-screen',
   },
   {
     id: 'speak',
@@ -34,7 +34,7 @@ export const DEMO_STEPS = [
     shortKey: 'presenter.stepShort_4',
     titleKey: 'presenter.stepSettingsTitle',
     cueKey: 'presenter.stepSettingsCue',
-    targetSelector: '#heading-accessibility, [aria-labelledby="heading-accessibility"], .settings-screen .group-wrap, .settings-screen',
+    targetSelector: '[aria-labelledby="heading-accessibility"], #heading-accessibility, .settings-screen .group-wrap, .settings-screen',
   },
   {
     id: 'progress',
@@ -42,7 +42,7 @@ export const DEMO_STEPS = [
     shortKey: 'presenter.stepShort_5',
     titleKey: 'presenter.stepProgressTitle',
     cueKey: 'presenter.stepProgressCue',
-    targetSelector: '.chart, [aria-labelledby="heading-overview"], #your-data, .progress-screen',
+    targetSelector: '[aria-labelledby="heading-overview"], .chart, #your-data, .progress-screen',
   },
 ]
 
@@ -56,6 +56,14 @@ export default function PresenterBar({ onClose }) {
   // Step 1 (index 0) is always the starting state on fresh launch
   const [stepIndex, setStepIndex] = useState(0)
   const freshLaunchRef = useRef(true)
+
+  // Side positioning state
+  const [placement, setPlacement] = useState('left')
+  const [cardStyle, setCardStyle] = useState({})
+  const cardRef = useRef(null)
+
+  // Spotlight target reference
+  const highlightedRef = useRef(null)
 
   // On mount: explicitly lock to Step 1 and navigate to /app/onboarding
   useEffect(() => {
@@ -80,8 +88,84 @@ export default function PresenterBar({ onClose }) {
 
   const currentStep = DEMO_STEPS[stepIndex]
 
-  // Spotlight target reference
-  const highlightedRef = useRef(null)
+  // Intelligent side positioning calculation
+  const updatePosition = useCallback(() => {
+    if (typeof window === 'undefined') return
+    const width = window.innerWidth
+    const height = window.innerHeight
+
+    // Narrow / mobile viewports (< 1040px): bottom sheet mode
+    if (width < 1040) {
+      setPlacement('bottom')
+      setCardStyle({})
+      return
+    }
+
+    const target = document.querySelector(currentStep.targetSelector)
+    const cardEl = cardRef.current
+    const cardHeight = cardEl ? cardEl.offsetHeight : 320
+    const cardWidth = 320
+    const margin = 20
+
+    if (target) {
+      const rect = target.getBoundingClientRect()
+      const leftSpace = rect.left
+      const rightSpace = width - rect.right
+
+      let top = Math.max(76, rect.top)
+      const maxTop = height - cardHeight - margin
+      if (top > maxTop) top = Math.max(76, maxTop)
+
+      // Prefer left side if there is sufficient margin
+      if (leftSpace >= cardWidth + margin * 2) {
+        const left = Math.max(margin, (leftSpace - cardWidth) / 2)
+        setPlacement('left')
+        setCardStyle({
+          position: 'fixed',
+          top: `${Math.round(top)}px`,
+          left: `${Math.round(left)}px`,
+          right: 'auto',
+          bottom: 'auto',
+        })
+      } else if (rightSpace >= cardWidth + margin * 2) {
+        // Use right side if left is too narrow
+        const right = Math.max(margin, (rightSpace - cardWidth) / 2)
+        setPlacement('right')
+        setCardStyle({
+          position: 'fixed',
+          top: `${Math.round(top)}px`,
+          right: `${Math.round(right)}px`,
+          left: 'auto',
+          bottom: 'auto',
+        })
+      } else {
+        // Fallback for compact desktop viewports
+        if (width >= 960) {
+          setPlacement('left')
+          setCardStyle({
+            position: 'fixed',
+            top: `${Math.round(top)}px`,
+            left: `${margin}px`,
+            right: 'auto',
+            bottom: 'auto',
+          })
+        } else {
+          setPlacement('bottom')
+          setCardStyle({})
+        }
+      }
+    } else {
+      // Fallback when target is not yet in DOM
+      setPlacement('left')
+      setCardStyle({
+        position: 'fixed',
+        top: '80px',
+        left: `${margin}px`,
+        right: 'auto',
+        bottom: 'auto',
+      })
+    }
+  }, [currentStep.targetSelector])
 
   // Navigate to step
   function goToStep(index) {
@@ -120,14 +204,17 @@ export default function PresenterBar({ onClose }) {
     }, 400)
   }
 
-  // Highlight effect
+  // Highlight and scroll target into view
   useEffect(() => {
     if (highlightedRef.current) {
       highlightedRef.current.classList.remove('presenter-target-highlight')
       highlightedRef.current = null
     }
 
-    if (completed || collapsed) return
+    if (completed || collapsed) {
+      updatePosition()
+      return
+    }
 
     const timer = setTimeout(() => {
       const target = document.querySelector(currentStep.targetSelector)
@@ -143,6 +230,7 @@ export default function PresenterBar({ onClose }) {
           // ignore scroll errors
         }
       }
+      updatePosition()
     }, 150)
 
     return () => {
@@ -152,7 +240,17 @@ export default function PresenterBar({ onClose }) {
         highlightedRef.current = null
       }
     }
-  }, [location.pathname, stepIndex, completed, collapsed, currentStep.targetSelector])
+  }, [location.pathname, stepIndex, completed, collapsed, currentStep.targetSelector, updatePosition])
+
+  // Recalculate position on resize and scroll
+  useEffect(() => {
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, { passive: true })
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition)
+    }
+  }, [updatePosition])
 
   // Keyboard navigation
   useEffect(() => {
@@ -174,22 +272,17 @@ export default function PresenterBar({ onClose }) {
 
   return (
     <aside
-      className={`presenter-bar ${collapsed ? 'collapsed' : ''} ${completed ? 'completed-view' : ''}`}
+      ref={cardRef}
+      className={`presenter-tour-card presenter-bar ${placement} ${collapsed ? 'collapsed' : ''} ${completed ? 'completed-view' : ''}`}
       aria-label={t('presenter.title')}
       role="region"
+      style={cardStyle}
     >
-      <div className="presenter-bar-header">
-        <div className="presenter-title-wrap">
-          <Icon name="presentation" className="presenter-icon" />
-          <span className="presenter-heading">{t('presenter.title')}</span>
-          <span className="presenter-step-badge">
-            {completed
-              ? t('presenter.finish')
-              : t('presenter.stepIndicator', {
-                  current: stepIndex + 1,
-                  total: DEMO_STEPS.length,
-                })}
-          </span>
+      {/* Tour Card Header */}
+      <div className="presenter-card-header presenter-bar-header">
+        <div className="presenter-brand presenter-title-wrap">
+          <Icon name="presentation" className="presenter-brand-icon presenter-icon" />
+          <span className="presenter-brand-title presenter-heading">{t('presenter.title')}</span>
         </div>
 
         <div className="presenter-header-actions">
@@ -201,7 +294,7 @@ export default function PresenterBar({ onClose }) {
             title={collapsed ? t('presenter.expand') : t('presenter.collapse')}
             aria-label={collapsed ? t('presenter.expand') : t('presenter.collapse')}
           >
-            <Icon name={collapsed ? 'chevronDown' : 'chevronUp'} />
+            <Icon name={collapsed ? 'chevronUp' : 'chevronDown'} />
           </button>
           <button
             type="button"
@@ -228,50 +321,29 @@ export default function PresenterBar({ onClose }) {
 
       {/* Expanded Walkthrough state */}
       {!collapsed && !completed && (
-        <div className="presenter-bar-body">
-          {/* Desktop step pills */}
-          <nav className="presenter-step-pills wide-stepper" aria-label={t('presenter.navAria')}>
-            {DEMO_STEPS.map((step, idx) => {
-              const isCurrent = idx === stepIndex
-              const isPast = idx < stepIndex
-              return (
-                <button
-                  key={step.id}
-                  type="button"
-                  className={`presenter-step ${isCurrent ? 'active' : ''} ${isPast ? 'completed' : ''}`}
-                  onClick={() => goToStep(idx)}
-                  aria-current={isCurrent ? 'step' : undefined}
-                >
-                  {isPast ? (
-                    <Icon name="check" className="presenter-step-icon" />
-                  ) : (
-                    <span className="presenter-step-num">{idx + 1}</span>
-                  )}
-                  <span className="presenter-step-text">{t(step.shortKey)}</span>
-                </button>
-              )
-            })}
-          </nav>
+        <div className="presenter-card-body presenter-bar-body">
+          {/* Step indicator and progress meter */}
+          <div className="presenter-step-meta">
+            <span className="presenter-step-pill presenter-step-badge">
+              {t('presenter.stepIndicator', {
+                current: stepIndex + 1,
+                total: DEMO_STEPS.length,
+              })}
+            </span>
 
-          {/* Mobile step progress indicator */}
-          <div className="presenter-mobile-progress" aria-hidden="true">
-            <div className="presenter-progress-dots">
+            <div className="presenter-segment-meter presenter-mobile-progress" aria-hidden="true">
               {DEMO_STEPS.map((step, idx) => (
                 <span
                   key={step.id}
-                  className={`presenter-dot ${idx === stepIndex ? 'active' : ''} ${idx < stepIndex ? 'completed' : ''}`}
+                  className={`presenter-segment presenter-dot ${idx === stepIndex ? 'active' : ''} ${idx < stepIndex ? 'completed' : ''}`}
                 />
               ))}
             </div>
-            <span className="presenter-mobile-title">{t(currentStep.shortKey)}</span>
           </div>
 
-          {/* Cue card */}
-          <div className="presenter-cue-card">
-            <div className="presenter-cue-header">
-              <Icon name="idea" className="presenter-cue-icon" />
-              <strong className="presenter-cue-title">{t(currentStep.titleKey)}</strong>
-            </div>
+          {/* Current Step Content */}
+          <div className="presenter-step-content presenter-cue-card">
+            <h2 className="presenter-step-heading presenter-cue-title">{t(currentStep.titleKey)}</h2>
             <p className="presenter-cue-text">{t(currentStep.cueKey)}</p>
             <div className="presenter-hint">
               <Icon name="eye" className="presenter-hint-icon" />
@@ -283,19 +355,16 @@ export default function PresenterBar({ onClose }) {
           <div className="presenter-actions-row">
             <button
               type="button"
-              className="presenter-action-btn"
+              className="presenter-action-btn subtle"
               onClick={handleRestart}
               title={t('presenter.restart')}
+              aria-label={t('presenter.restart')}
             >
               <Icon name="rotate" />
               <span>{t('presenter.restart')}</span>
             </button>
 
-            <span className="presenter-keyboard-hint wide-only">
-              {t('presenter.keyboardHint')}
-            </span>
-
-            <div className="presenter-prev-next">
+            <div className="presenter-nav-buttons presenter-prev-next">
               <button
                 type="button"
                 className="presenter-action-btn"
@@ -317,17 +386,19 @@ export default function PresenterBar({ onClose }) {
               </button>
             </div>
           </div>
+
+          <div className="presenter-keyboard-hint wide-only">
+            {t('presenter.keyboardHint')}
+          </div>
         </div>
       )}
 
       {/* Completed celebration view */}
       {!collapsed && completed && (
-        <div className="presenter-bar-body presenter-completed-body">
+        <div className="presenter-card-body presenter-bar-body presenter-completed-body">
           <div className="presenter-completed-card">
-            <div className="presenter-completed-header">
-              <Icon name="checkCircle" className="presenter-completed-icon" />
-              <h2 className="presenter-completed-title">{t('presenter.completedTitle')}</h2>
-            </div>
+            <Icon name="checkCircle" className="presenter-completed-icon" />
+            <h2 className="presenter-completed-title">{t('presenter.completedTitle')}</h2>
             <p className="presenter-completed-text">{t('presenter.completedDesc')}</p>
 
             <div className="presenter-completed-steps">
@@ -343,15 +414,16 @@ export default function PresenterBar({ onClose }) {
           <div className="presenter-actions-row">
             <button
               type="button"
-              className="presenter-action-btn"
+              className="presenter-action-btn subtle"
               onClick={handleRestart}
               title={t('presenter.restart')}
+              aria-label={t('presenter.restart')}
             >
               <Icon name="rotate" />
               <span>{t('presenter.restart')}</span>
             </button>
 
-            <div className="presenter-prev-next">
+            <div className="presenter-nav-buttons presenter-prev-next">
               <button
                 type="button"
                 className="presenter-action-btn"
