@@ -47,9 +47,9 @@ def synthesize(text, language="hi", embedding=None, cache_dir=CACHE_DIR, user_id
     """Return the path of a cached wav for text; calls Gnani only on a cache miss. The cache
     key covers the whole request body, so the language and the voice (stock or cloned) are
     part of it. user_id is who the call is for (see gnani.post)."""
+    body = request_body(text, language, embedding)
     if gnani_mock.on():
         return gnani_mock.silence()
-    body = request_body(text, language, embedding)
     key = hashlib.sha256(repr(sorted(body.items())).encode("utf-8")).hexdigest()
     path = os.path.join(cache_dir, f"{key}.wav")
     if os.path.exists(path):
