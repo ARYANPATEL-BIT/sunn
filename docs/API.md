@@ -102,7 +102,7 @@ Hugging Face's) the IP is the client's own when the server sets `TRUST_PROXY` (d
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": null, "caregiver_phone": null,
- "has_own_voice": false, "use_own_voice": false, "can_clone_voice": true}
+ "has_own_voice": false, "use_own_voice": false, "can_clone_voice": true, "phrase_goal": 10}
 ```
 
 Errors: `invite_required`, `too_many_attempts`, `consent_required`, `no_name`, `bad_email`,
@@ -115,7 +115,7 @@ Errors: `invite_required`, `too_many_attempts`, `consent_required`, `no_name`, `
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
- "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": true}
+ "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": true, "phrase_goal": 10}
 ```
 
 Errors: `bad_login`, `too_many_attempts`, `invalid_input`.
@@ -127,7 +127,7 @@ Errors: `bad_login`, `too_many_attempts`, `invalid_input`.
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
- "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": true}
+ "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": true, "phrase_goal": 10}
 ```
 
 Errors: `invalid_google_token`, `google_unreachable`, `unverified_email`, `invite_required`, `too_many_attempts`, `consent_required`, `email_taken`, `invalid_input`.
@@ -149,7 +149,7 @@ The signed-in user. Use this on app start to see whether there is a session.
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
- "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": true}
+ "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": true, "phrase_goal": 10}
 ```
 
 Errors: `not_logged_in`.
@@ -440,9 +440,10 @@ Errors: `not_logged_in`, `not_owner`.
 
 ### `PATCH /me` · real
 
-Any of `{"use_own_voice": true, "caregiver_name": "राहुल", "caregiver_phone": "+91 98765 43210", "language": "en"}`.
+Any of `{"use_own_voice": true, "caregiver_name": "राहुल", "caregiver_phone": "+91 98765 43210", "language": "en", "phrase_goal": 20}`.
 `null` or `""` clears a caregiver field. `caregiver_phone` comes back as digits with the
 country code, ready for `https://wa.me/<phone>`. `use_own_voice: true` needs a recorded voice.
+`phrase_goal` (positive integer) sets how many phrases to prepare before Speak opens.
 
 `language` (`en`, `hi`, `ta`, `te`, `kn`, `ml`, `mr`, `gu`, `bn` or `pa`; anything else is
 `invalid_input`, and Hinglish is `hi`) is the language the person speaks, not the app's display
@@ -456,7 +457,7 @@ back. Call
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "en",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
- "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": false}
+ "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": false, "phrase_goal": 10}
 ```
 
 Errors: `not_logged_in`, `invalid_input`, `no_voice`.
@@ -470,7 +471,7 @@ turns it on.
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
- "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": false, "can_clone_voice": true}
+ "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": false, "can_clone_voice": true, "phrase_goal": 10}
 ```
 
 Errors: `not_logged_in`, `consent_required`, `invalid_input`, `file_too_large`, `bad_audio`,
@@ -484,7 +485,7 @@ Forgets the cloned voice and everything spoken in it; `use_own_voice` goes off.
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
  "consent_given_at": "2026-10-01T09:30:00Z", "caregiver_name": "राहुल",
- "caregiver_phone": "919876543210", "has_own_voice": false, "use_own_voice": false, "can_clone_voice": true}
+ "caregiver_phone": "919876543210", "has_own_voice": false, "use_own_voice": false, "can_clone_voice": true, "phrase_goal": 10}
 ```
 
 Errors: `not_logged_in`.

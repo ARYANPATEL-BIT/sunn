@@ -78,7 +78,7 @@ class User(BaseModel):
     model_config = example(id=7, name="सुनीता", email="sunita@example.com", language="hi",
                            consent_given_at="2026-10-01T09:30:00Z", caregiver_name="राहुल",
                            caregiver_phone="919876543210", has_own_voice=True, use_own_voice=True,
-                           can_clone_voice=True)
+                           can_clone_voice=True, phrase_goal=10)
     id: int
     name: str
     email: str
@@ -89,6 +89,7 @@ class User(BaseModel):
     has_own_voice: bool  # a cloned voice is recorded
     use_own_voice: bool  # /speak uses it
     can_clone_voice: bool  # own voice is offered in the language the user speaks (speak.CLONE_LANGUAGES)
+    phrase_goal: int = 10
 
 
 class UserUpdate(Request):
@@ -97,6 +98,7 @@ class UserUpdate(Request):
     caregiver_name: str | None = None
     caregiver_phone: str | None = None  # spaces, dashes, brackets and + are dropped
     language: Language | None = None  # Prisma and new phrases follow it; nothing is deleted
+    phrase_goal: int | None = None
 
 
 class Config(BaseModel):

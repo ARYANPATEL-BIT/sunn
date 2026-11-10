@@ -4,14 +4,14 @@ import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
 import { formatDate, language } from './i18n/languages.js'
 import { applyPreferences, getPreferences, setPreference } from './prefs.js'
-import { waterPhrase } from './quickstart.js'
+import { getGoalOptions, waterPhrase } from './quickstart.js'
 import { useTheme } from './theme.js'
 import {
   Alert, Button, Choices, Group, Icon, languageOptions, PrimaryButton, Row as SwitchRow, Sheet, Toast, useGo,
 } from './ui/index.js'
 
 export default function Settings() {
-  const { user, signedIn, deleteAccount, logout } = useAuth()
+  const { user, updateUser, signedIn, deleteAccount, logout } = useAuth()
   const { lang, locale, setLang, t } = useLang()
   const go = useGo()
   const [theme, setTheme] = useTheme()
@@ -19,6 +19,7 @@ export default function Settings() {
   const [prefs, setPrefs] = useState(getPreferences)
   const [caregiverName, setCaregiverName] = useState(user?.caregiver_name || '')
   const [caregiverPhone, setCaregiverPhone] = useState(user?.caregiver_phone || '')
+  const [phraseCount, setPhraseCount] = useState(50)
 
   const [busy, setBusy] = useState(null) // 'caregiver' | 'voice' | 'upload' | 'language' | 'account'
   const [playingSample, setPlayingSample] = useState(false)
@@ -48,6 +49,24 @@ export default function Settings() {
       setCaregiverPhone(user.caregiver_phone || '')
     }
   }, [user])
+
+  useEffect(() => {
+    api.listPhrases().then((list) => {
+      if (Array.isArray(list) && list.length > 0) setPhraseCount(list.length)
+    }).catch(() => {})
+  }, [])
+
+  async function handleSetGoal(newGoalStr) {
+    const goal = Number(newGoalStr)
+    if (!goal || goal === user?.phrase_goal) return
+    try {
+      await api.updateMe({ phrase_goal: goal })
+      updateUser?.({ phrase_goal: goal })
+      flashFeedback('settings.savedSuccess')
+    } catch (e) {
+      setError(e)
+    }
+  }
 
   const flashFeedback = (msgKey) => {
     setFeedback(msgKey)
@@ -277,6 +296,23 @@ export default function Settings() {
           options={languageOptions()}
           value={user?.language}
           onChange={(code) => setConfirmSpeak(code === user?.language ? null : code)}
+          disabled={busy !== null}
+        />
+      </Group>
+
+      <Group bare title={t('settings.phraseGoalTitle')} titleId="phrase-goal-label" footer={t('settings.phraseGoalHelp')}>
+        <Choices
+          labelledBy="phrase-goal-label"
+          options={getGoalOptions(phraseCount).map((count) => ({
+            value: String(count),
+            label: count === phraseCount && count !== 10
+              ? t('enroll.goalAll', { count })
+              : count === 10
+              ? t('enroll.goalCountRecommended', { count })
+              : t('enroll.goalCount', { count }),
+          }))}
+          value={String(user?.phrase_goal || 10)}
+          onChange={handleSetGoal}
           disabled={busy !== null}
         />
       </Group>

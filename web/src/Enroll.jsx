@@ -3,22 +3,24 @@ import { useLocation } from 'react-router-dom'
 import * as api from './api.js'
 import { useAuth } from './auth.jsx'
 import { useLang } from './i18n/index.jsx'
-import { NEEDED, needsRerecord, quickStart, ready } from './quickstart.js'
+import { NEEDED, getGoalOptions, needsRerecord, ready, speakProgress } from './quickstart.js'
 import { useRecorder } from './record.jsx'
 import { Alert, Button, Grille, Label, PrimaryButton, PushButton, Readout, ReadoutRow, useGo } from './ui/index.js'
 
-// One phrase at a time, NEEDED saved recordings each, the 10 quick-start phrases first. Every
-// save is stored on the server, so leaving is pausing: coming back resumes at the first phrase
-// that still needs recordings. Recording here is the same device as Speak: readout, blob, key.
+// One phrase at a time, NEEDED saved recordings each, prioritized by the chosen initial goal.
+// Every save is stored on the server, so leaving is pausing: coming back resumes at the first
+// phrase that still needs recordings. Recording here is the same device as Speak: readout, blob, key.
 export default function Enroll() {
   const { t } = useLang()
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const go = useGo()
   const { state } = useLocation()
   const [phrases, setPhrases] = useState(null)
   const [blob, setBlob] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [choosingGoal, setChoosingGoal] = useState(false)
+  const [selectedGoal, setSelectedGoal] = useState(user?.phrase_goal || 10)
   const recorder = useRecorder(setBlob)
 
   async function run(action) {
@@ -40,6 +42,31 @@ export default function Enroll() {
       api.stopAudio()
     }
   }, [])
+
+  useEffect(() => {
+    if (user?.phrase_goal) {
+      setSelectedGoal(user.phrase_goal)
+    }
+  }, [user?.phrase_goal])
+
+  useEffect(() => {
+    if (state?.chooseGoal) {
+      setChoosingGoal(true)
+    }
+  }, [state])
+
+  useEffect(() => {
+    if (phrases && phrases.length > 0) {
+      const readyCount = phrases.filter(ready).length
+      let confirmed = false
+      try {
+        confirmed = localStorage.getItem(`goal_confirmed_${user?.id}`) === '1'
+      } catch {}
+      if (readyCount === 0 && !confirmed) {
+        setChoosingGoal(true)
+      }
+    }
+  }, [phrases, user?.id])
 
   if (!phrases) {
     return (
@@ -68,40 +95,145 @@ export default function Enroll() {
     )
   }
 
-  const first = quickStart(phrases, user.language)
-  const order = [...first, ...phrases.filter((p) => !first.includes(p))]
-  const done = phrases.filter(ready).length
-  const firstDone = first.filter(ready).length
-  const phrase = order.find((p) => !ready(p))
+  async function confirmGoal() {
+    await run(async () => {
+      await api.updateMe({ phrase_goal: selectedGoal })
+      if (updateUser) {
+        updateUser({ phrase_goal: selectedGoal })
+      }
+      try {
+        localStorage.setItem(`goal_confirmed_${user?.id}`, '1')
+      } catch {}
+      setChoosingGoal(false)
+    })
+  }
 
-  const progress = (
+  const goalOptions = getGoalOptions(phrases.length)
+
+  if (choosingGoal) {
+    const readyCount = phrases.filter(ready).length
+    return (
+      <section className="screen narrow goal-selection">
+        <div className="device-card goal-card">
+          <Grille className="grille-strip" />
+          <h1 className="large-title">{t('enroll.goalTitle')}</h1>
+          <p className="lede-sm">{t('enroll.goalDesc')}</p>
+          <div className="goal-options" role="radiogroup" aria-label={t('enroll.goalTitle')}>
+            {goalOptions.map((opt) => {
+              const isAll = opt === phrases.length && opt !== 10
+              const isRecommended = opt === 10
+              const isSelected = selectedGoal === opt
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  className={`goal-option-card ${isSelected ? 'selected' : ''}`}
+                  onClick={() => setSelectedGoal(opt)}
+                >
+                  <div className="goal-option-main">
+                    <span className="goal-option-count">
+                      {isAll
+                        ? t('enroll.goalAll', { count: opt })
+                        : isRecommended
+                        ? t('enroll.goalCountRecommended', { count: opt })
+                        : t('enroll.goalCount', { count: opt })}
+                    </span>
+                  </div>
+                  <span className={`goal-radio-circle ${isSelected ? 'checked' : ''}`} />
+                </button>
+              )
+            })}
+          </div>
+          <Alert error={error} />
+          <div className="actions goal-actions">
+            <PrimaryButton onClick={confirmGoal} disabled={busy}>
+              {t('enroll.goalContinue')}
+            </PrimaryButton>
+            {readyCount > 0 && (
+              <Button onClick={() => setChoosingGoal(false)} disabled={busy}>
+                {t('speak.cancel')}
+              </Button>
+            )}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  const effectiveGoal = user?.phrase_goal || selectedGoal || 10
+  const progress = speakProgress(phrases, user?.language, effectiveGoal)
+  const targetPhrases = progress.targetPhrases
+  const phrase = progress.nextPhrase
+
+  const progressBar = (
     <div className="learned">
-      <Label k="device.learned" inline className="learned-label" />
-      <span className="learned-count" aria-hidden="true">
-        {done} / {phrases.length}
-      </span>
+      <div className="learned-header">
+        <div className="learned-title-group">
+          <Label k="device.learned" inline className="learned-label" />
+          <span className="learned-count" aria-label={t('enroll.goalReady', { ready: progress.ready, total: progress.total })}>
+            {progress.ready} / {progress.total}
+          </span>
+        </div>
+        <button
+          type="button"
+          className="text-button change-goal-btn"
+          onClick={() => {
+            setSelectedGoal(progress.total)
+            setChoosingGoal(true)
+          }}
+        >
+          {t('enroll.goalChange')}
+        </button>
+      </div>
       <div
         className="progress-line"
         role="progressbar"
         aria-label={t('enroll.progress')}
         aria-valuemin={0}
-        aria-valuemax={phrases.length}
-        aria-valuenow={done}
+        aria-valuemax={progress.total}
+        aria-valuenow={progress.ready}
       >
-        <div style={{ transform: `scaleX(${done / phrases.length})` }} />
+        <div style={{ transform: `scaleX(${progress.total === 0 ? 0 : Math.min(1, progress.ready / progress.total)})` }} />
       </div>
+      <p className="learned-subtitle">
+        {t('enroll.goalReady', { ready: progress.ready, total: progress.total })}
+        {progress.available > progress.total && (
+          <span className="learned-context">
+            {' '}({t('enroll.goalSubtitle', { selected: progress.total, available: progress.available })})
+          </span>
+        )}
+      </p>
     </div>
   )
 
-  if (!phrase) {
+  if (progress.open || !phrase) {
+    const allDone = progress.ready >= progress.available
     return (
       <section className="screen narrow empty-state">
-        {progress}
-        <h1 className="large-title">{t('enroll.done')}</h1>
-        <p className="lede-sm">{t('enroll.doneBody')}</p>
-        <PrimaryButton icon="mic" onClick={() => go('/app/speak')}>
-          {t('enroll.goSpeak')}
-        </PrimaryButton>
+        {progressBar}
+        <h1 className="large-title">{t(allDone ? 'enroll.done' : 'enroll.goalDoneTitle')}</h1>
+        <p className="lede-sm">
+          {allDone
+            ? t('enroll.doneBody')
+            : t('enroll.goalDoneDesc', { ready: progress.ready, total: progress.total })}
+        </p>
+        <div className="actions">
+          <PrimaryButton icon="mic" onClick={() => go('/app/speak')}>
+            {t('enroll.goSpeak')}
+          </PrimaryButton>
+          {!allDone && (
+            <Button
+              onClick={() => {
+                setSelectedGoal(progress.total)
+                setChoosingGoal(true)
+              }}
+            >
+              {t('enroll.prepareMore')}
+            </Button>
+          )}
+        </div>
       </section>
     )
   }
@@ -118,6 +250,8 @@ export default function Enroll() {
     })
   }
 
+  const targetIndex = targetPhrases.indexOf(phrase)
+  const currentPhraseNum = targetIndex >= 0 ? targetIndex + 1 : progress.ready + 1
   const saved = Math.min(phrase.sample_count, NEEDED)
   const problem = error || recorder.error
   const blobState = recorder.recording ? 'listening' : busy ? 'thinking' : problem ? 'error' : 'rest'
@@ -126,28 +260,15 @@ export default function Enroll() {
     <section className="screen enroll">
       <div className="device enroll-device">
         <Grille className="grille-strip" />
-        {progress}
-        {first.length > 0 &&
-          (firstDone < first.length ? (
-            <p className="note">
-              {t('enroll.quickStart')} {t('enroll.quickProgress', { n: firstDone, total: first.length })}
-            </p>
-          ) : (
-            <p className="note">
-              {t('enroll.quickDone')}{' '}
-              <button type="button" className="text-button" onClick={() => go('/app/speak')}>
-                {t('enroll.goSpeak')}
-              </button>
-            </p>
-          ))}
+        {progressBar}
 
         <Readout
           blobState={blobState}
           level={recorder.level}
-          top={<span className="readout-step">{t('enroll.step', { n: done + 1, total: phrases.length })}</span>}
+          top={<span className="readout-step">{t('enroll.step', { n: currentPhraseNum, total: progress.total })}</span>}
         >
           <ReadoutRow label="device.say">
-            <h1 className="readout-phrase" lang={user.language}>
+            <h1 className="readout-phrase" lang={user?.language}>
               <span className="visually-hidden">{t('enroll.say')}: </span>
               {phrase.text}
             </h1>

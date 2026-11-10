@@ -66,6 +66,12 @@ export function AuthProvider({ children }) {
       setState({ status: 'ready', user, error: null, left: false })
       notifyAuthChange()
     },
+    async updateUser(changes) {
+      const updated = await api.updateMe(changes)
+      setState((s) => ({ ...s, user: updated }))
+      notifyAuthChange()
+      return updated
+    },
     async logout() {
       await api.logout().catch(() => {}) // even if the server is down, forget the user here
       left()

@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS users (
     use_own_voice INTEGER NOT NULL DEFAULT 0,
     caregiver_name TEXT,
     caregiver_phone TEXT,
-    google_id TEXT
+    google_id TEXT,
+    phrase_goal INTEGER NOT NULL DEFAULT 10
 );
 -- contexts is comma separated: home, hospital, market, or any. language is the one the phrase
 -- is in: Timbre says it in that language, and it is matched only to recordings in it (or English).
@@ -143,6 +144,7 @@ ADDED_COLUMNS = [
     ("users", "caregiver_name", "TEXT"),
     ("users", "caregiver_phone", "TEXT"),
     ("users", "google_id", "TEXT"),
+    ("users", "phrase_goal", "INTEGER NOT NULL DEFAULT 10"),
     ("phrases", "contexts", "TEXT NOT NULL DEFAULT 'any'"),
     ("phrases", "urgent", "INTEGER NOT NULL DEFAULT 0"),
     ("phrases", "language", f"TEXT {LANGUAGE_CHECK}"),
