@@ -168,13 +168,35 @@ export default function PresenterBar({ onClose }) {
     }
   }, [currentStep.targetSelector])
 
+  function scrollToTarget(target, isSmooth = true) {
+    if (!target) return
+    const header = document.querySelector('.app-header')
+    const headerHeight = header ? header.offsetHeight : 64
+    const rect = target.getBoundingClientRect()
+    const targetY = Math.max(0, window.scrollY + rect.top - headerHeight - 16)
+
+    try {
+      target.scrollIntoView({
+        behavior: isSmooth && !reducedMotion() ? 'smooth' : 'auto',
+        block: 'start',
+      })
+    } catch {
+      // ignore scroll error
+    }
+
+    window.scrollTo({
+      top: targetY,
+      behavior: isSmooth && !reducedMotion() ? 'smooth' : 'auto',
+    })
+  }
+
   // Navigate to step
   function goToStep(index) {
     if (index >= 0 && index < DEMO_STEPS.length) {
       freshLaunchRef.current = false
       setCompleted(false)
       setStepIndex(index)
-      navigate(DEMO_STEPS[index].path, { viewTransition: !reducedMotion() })
+      navigate(DEMO_STEPS[index].path)
     }
   }
 
@@ -200,7 +222,7 @@ export default function PresenterBar({ onClose }) {
     lastScrolledStepRef.current = -1
     setCompleted(false)
     setStepIndex(0)
-    navigate(DEMO_STEPS[0].path, { viewTransition: !reducedMotion() })
+    navigate(DEMO_STEPS[0].path)
     setTimeout(() => {
       freshLaunchRef.current = false
     }, 400)
@@ -220,7 +242,21 @@ export default function PresenterBar({ onClose }) {
 
     let attempts = 0
     let cancelled = false
-    let timerId = null
+    const timers = []
+
+    function verifyScroll() {
+      if (cancelled) return
+      const currentTarget = highlightedRef.current
+      if (!currentTarget) return
+      const header = document.querySelector('.app-header')
+      const headerHeight = header ? header.offsetHeight : 64
+      const rect = currentTarget.getBoundingClientRect()
+      const diffFromHeader = rect.top - headerHeight
+      if (Math.abs(diffFromHeader - 16) > 30) {
+        scrollToTarget(currentTarget, false)
+        updatePosition()
+      }
+    }
 
     function findAndPosition() {
       if (cancelled) return
@@ -228,34 +264,28 @@ export default function PresenterBar({ onClose }) {
       if (target) {
         target.classList.add('presenter-target-highlight')
         highlightedRef.current = target
-        if (lastScrolledStepRef.current !== stepIndex) {
-          lastScrolledStepRef.current = stepIndex
-          try {
-            target.scrollIntoView({
-              behavior: reducedMotion() ? 'auto' : 'smooth',
-              block: 'start',
-            })
-          } catch {
-            // ignore scroll errors
-          }
-        }
+        scrollToTarget(target, true)
         updatePosition()
+
+        timers.push(setTimeout(verifyScroll, 120))
+        timers.push(setTimeout(verifyScroll, 300))
+        timers.push(setTimeout(verifyScroll, 550))
         return
       }
 
       attempts++
-      if (attempts < 6) {
-        timerId = setTimeout(findAndPosition, 100)
+      if (attempts < 25) {
+        timers.push(setTimeout(findAndPosition, 80))
       } else {
         updatePosition()
       }
     }
 
-    timerId = setTimeout(findAndPosition, 80)
+    timers.push(setTimeout(findAndPosition, 60))
 
     return () => {
       cancelled = true
-      if (timerId) clearTimeout(timerId)
+      timers.forEach(clearTimeout)
       if (highlightedRef.current) {
         highlightedRef.current.classList.remove('presenter-target-highlight')
         highlightedRef.current = null
