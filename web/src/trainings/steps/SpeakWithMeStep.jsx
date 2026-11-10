@@ -142,16 +142,18 @@ export function SpeakWithMeStep({
 
   // Helper to compute word highlight based on elapsed seconds
   const updateHighlight = (elapsedSec, totalDuration) => {
-    if (elapsedSec >= totalDuration) {
+    if (totalDuration <= 0) return true
+    const progress = Math.min(1.0, Math.max(0.0, elapsedSec / totalDuration))
+    if (progress >= 1.0) {
       setActiveWordIndex(words.length)
       return true
     }
     let cumulative = 0
     for (let i = 0; i < words.length; i++) {
-      const start = (cumulative / totalSyllables) * totalDuration
+      const startProg = cumulative / totalSyllables
       cumulative += syllables[i]
-      const end = (cumulative / totalSyllables) * totalDuration
-      if (elapsedSec >= start && elapsedSec < end) {
+      const endProg = cumulative / totalSyllables
+      if (progress >= startProg && progress < endProg) {
         setActiveWordIndex(i)
         return false
       }
@@ -160,30 +162,46 @@ export function SpeakWithMeStep({
     return true
   }
 
-  // Choral and Paced animation tick loop
-  const startHighlightLoop = (audioEl = null, targetDuration = 2.5) => {
-    totalDurationRef.current = targetDuration
+  // Choral and Paced animation tick loop synchronized with audio playback
+  const startHighlightLoop = (audioEl = null, baseDuration = 2.5) => {
+    totalDurationRef.current = baseDuration
     startTimeRef.current = performance.now()
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current)
+      animFrameRef.current = null
+    }
 
     const tick = () => {
       let elapsed
-      if (audioEl && audioEl.duration > 0.5) {
+      let dur = totalDurationRef.current
+      if (audioEl && audioEl.duration && audioEl.duration > 0.1) {
         elapsed = audioEl.currentTime
+        dur = audioEl.duration
+        if (audioEl.ended || elapsed >= dur) {
+          setActiveWordIndex(words.length)
+          setPlaying(false)
+          elapsedOffsetRef.current = 0
+          if (recorder.recording && recordMeToo) {
+            recorder.toggle()
+          }
+          return
+        }
       } else {
         const now = performance.now()
         elapsed = elapsedOffsetRef.current + (now - startTimeRef.current) / 1000
+        if (elapsed >= dur) {
+          setActiveWordIndex(words.length)
+          setPlaying(false)
+          elapsedOffsetRef.current = 0
+          if (recorder.recording && recordMeToo) {
+            recorder.toggle()
+          }
+          return
+        }
       }
 
-      const done = updateHighlight(elapsed, totalDurationRef.current)
-      if (done) {
-        setPlaying(false)
-        elapsedOffsetRef.current = 0
-        if (recorder.recording && recordMeToo) {
-          recorder.toggle()
-        }
-      } else {
-        animFrameRef.current = requestAnimationFrame(tick)
-      }
+      updateHighlight(elapsed, dur)
+      animFrameRef.current = requestAnimationFrame(tick)
     }
 
     animFrameRef.current = requestAnimationFrame(tick)
@@ -213,8 +231,15 @@ export function SpeakWithMeStep({
     if (playing) {
       wordLoopAbortRef.current = true
       api.stopAudio()
-      if (audioRef.current) audioRef.current.pause()
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+      if (audioRef.current) {
+        audioRef.current.pause()
+      } else {
+        elapsedOffsetRef.current += (performance.now() - startTimeRef.current) / 1000
+      }
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current)
+        animFrameRef.current = null
+      }
       setPlaying(false)
       if (recorder.recording && recordMeToo) recorder.toggle()
       return
@@ -245,7 +270,7 @@ export function SpeakWithMeStep({
     }
 
     if (audio) {
-      const baseDuration = audio.duration && audio.duration > 0.5 ? audio.duration : Math.max(2.0, words.length * 0.7)
+      const baseDuration = audio.duration && audio.duration > 0.1 ? audio.duration : Math.max(2.0, words.length * 0.7)
       const baseWpm = Math.max(25, Math.round((words.length * 60) / baseDuration))
       const rate = Math.max(0.5, Math.min(2.0, wpm / baseWpm))
       audio.playbackRate = rate
@@ -261,9 +286,10 @@ export function SpeakWithMeStep({
       } catch {
         // Non-blocking
       }
-      startHighlightLoop(audio, baseDuration / rate)
+      startHighlightLoop(audio, baseDuration)
     } else {
       // Fallback synthesis
+      const targetDuration = Math.max(1.5, (words.length * 60) / wpm)
       api.say(step.text, { fallback: true, language: practiceLang })
         .then(() => {
           setPlaying(false)
@@ -271,7 +297,6 @@ export function SpeakWithMeStep({
           if (recorder.recording && recordMeToo) recorder.toggle()
         })
         .catch(() => {})
-      const targetDuration = (words.length * 60) / wpm
       startHighlightLoop(null, targetDuration)
     }
 

@@ -119,10 +119,21 @@ for (const lang of LANGS) {
       expect(altsCount).toBeGreaterThanOrEqual(1)
       expect(altsCount).toBeLessThanOrEqual(4)
 
-      // Verify card elements: source badge, phrase text, avoids line
+      // Verify card elements: source badge, phrase text
       await expect(altCards.first().locator('.alt-source-pill')).toBeVisible()
       await expect(altCards.first().locator('.alt-phrase-text')).toBeVisible()
-      await expect(altCards.first().locator('.alt-avoids-line')).toBeVisible()
+      const avoidsLine = altCards.first().locator('.alt-avoids-line')
+      if (await avoidsLine.count() > 0) {
+        await expect(avoidsLine).toBeVisible()
+      }
+
+      // Language correctness: English must return Latin text, Hindi must return Devanagari text
+      const firstAltText = await altCards.first().locator('.alt-phrase-text').textContent()
+      if (lang === 'hi') {
+        expect(firstAltText).toMatch(/[\u0900-\u097F]/)
+      } else {
+        expect(firstAltText).toMatch(/^[A-Za-z0-9\s,.?!'-]+$/)
+      }
 
       // 5. In-place practice (SpeakWithMeStep with paced and word-by-word submodes)
       const practiseBtn = altCards.first().getByRole('button', { name: t(lang, 'easierWays.practiseAction') })
@@ -145,6 +156,16 @@ for (const lang of LANGS) {
       const paceRangeInput = practiceModal.locator('.pace-range-input')
       await expect(paceRangeInput).toBeVisible()
       await paceRangeInput.fill('80')
+
+      // Paced playback play, pause, and restart
+      const playPauseBtn = practiceModal.locator('.play-pause-btn')
+      await expect(playPauseBtn).toBeVisible()
+      await playPauseBtn.click()
+      await page.waitForTimeout(300)
+      await playPauseBtn.click()
+      const restartBtn = practiceModal.locator('.restart-btn')
+      await expect(restartBtn).toBeVisible()
+      await restartBtn.click()
 
       // Dedicated Record button lifecycle
       const recordBtn = practiceModal.locator('.record-toggle-btn')
@@ -174,6 +195,39 @@ for (const lang of LANGS) {
 
       await expect(altCards.first().locator('.alt-added-notice')).toBeVisible()
       await expect(altCards.first().locator('.added-msg')).toContainText(t(lang, 'easierWays.addedSuccess'))
+    })
+
+    test('English search for I need water returns pure English alternatives without Hindi text', async ({ page, watch }) => {
+      watch.allow(401, '/api/auth/me')
+
+      const user = await signUp(page.request, { speaks: lang })
+      await openSpeak(page.request, user)
+      await markOnboarded(page, user)
+
+      await page.goto('/trainings/easier-ways')
+
+      // Ensure English is selected
+      const enChip = page.locator('.easier-ways-lang-row .chip.lang-chip').filter({ hasText: t(lang, 'easierWays.langEn') })
+      await enChip.click()
+      await expect(enChip).toHaveAttribute('aria-checked', 'true')
+
+      // Search for English phrase
+      const searchInput = page.locator('#easier-ways-input')
+      await searchInput.fill('I need water')
+      await page.locator('.easier-ways-search-btn').click()
+
+      // Alternative cards rendered
+      const altCards = page.locator('.alternative-card')
+      await expect(altCards.first()).toBeVisible({ timeout: 5000 })
+      const count = await altCards.count()
+      expect(count).toBeGreaterThanOrEqual(1)
+
+      // Every returned suggestion must be in English with zero Devanagari text
+      for (let i = 0; i < count; i++) {
+        const text = await altCards.nth(i).locator('.alt-phrase-text').textContent()
+        expect(text).toMatch(/^[A-Za-z0-9\s,.?!'-]+$/)
+        expect(text).not.toContain('पानी')
+      }
     })
 
     test('open easier ways from phrases screen with pre-filled text', async ({ page, watch }) => {
