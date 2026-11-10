@@ -390,7 +390,10 @@ All external service credentials reside strictly on the server:
 | `LLM_ENABLED` | No | `true` | Enable or disable LLM alternative phrasing |
 | `LLM_TIMEOUT_S` | No | `3` | Maximum timeout for LLM inference |
 | `DATA_DIR` | No | `data` | Directory for SQLite database and audio files |
-| `DEMO_INVITE_CODE` | No | `""` | Optional invite passcode for registration gates |
+| `STT_DAILY_LIMIT` | No | `20` | Prisma calls per account in a rolling 24 hours (Speak, training checks) |
+| `TTS_DAILY_LIMIT` | No | `20` | Timbre calls per account in a rolling 24 hours (speaking, previews, voice cloning) |
+| `ENROLL_DAILY_LIMIT` | No | `40` | Prisma calls per account in a rolling 24 hours for recording phrases while teaching Sunn |
+| `LIMIT_EXEMPT_EMAILS` | No | `OWNER_EMAIL` | Comma-separated accounts the daily limits never apply to |
 
 > **Credit Conservation Guarantee**: Setting `GNANI_MOCK=1` enables full local speech simulation, ensuring development and automated testing consume **0** live Gnani credits.
 

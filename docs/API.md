@@ -41,10 +41,10 @@ add one field: `seconds` (`audio_too_short`, `audio_too_long`), `retry_after` in
 | `gnani_unreachable` | 502 | the speech service didn't answer: try again shortly |
 | `gnani_rejected` | 502 | the speech service refused the request |
 | `credit_limit_reached` | 429 | the speech service credits for this server are used up |
-| `daily_cap_reached` | 429 | this account's speech service calls for today (`DAILY_CALL_CAP_PER_USER`, default 60) are used up; cached ones still work, and it resets at midnight UTC |
-| `invite_required` | 403 | sign-up needs the invite code, and `invite_code` was missing or wrong (see `GET /config`) |
-| `bad_login` | 401 | wrong email or password |
-| `too_many_attempts` | 429 | 5 failed logins for this email, or 5 wrong invite codes from this IP, in 15 minutes: wait `retry_after` seconds |
+| `daily_limit` | 429 | one of this account's daily limits is used up (see `GET /me/usage`). Also has `kind` (`stt`, `tts` or `enroll`), `limit`, `used` and `resets_at`, when the oldest counted call stops counting. Cached answers still work |
+| `no_account` | 401 | no account has this email: offer sign-up |
+| `bad_login` | 401 | wrong password |
+| `too_many_attempts` | 429 | 5 failed logins for this email in 15 minutes, or 5 new accounts from this IP in an hour: wait `retry_after` seconds |
 | `email_taken` | 409 | an account with this email exists |
 | `no_name`, `bad_email`, `short_password` | 400 | sign-up fields (password needs 8+ characters) |
 | `phrase_exists` | 409 | another phrase already has this text |
@@ -56,17 +56,6 @@ add one field: `seconds` (`audio_too_short`, `audio_too_long`), `retry_after` in
 | `server_error` | 500 | a bug on our side |
 
 ## Onboarding
-
-### `GET /config` · real
-
-No session needed. Whether sign-up needs an invite code: true when the server sets
-`DEMO_INVITE_CODE` in `.env`. Ask for the code on the sign-up screen only when it is true.
-
-```json
-{"invite_required": false}
-```
-
-Errors: none.
 
 ### `GET /auth/google/config` · real
 
@@ -91,13 +80,12 @@ Errors: none.
 ### `POST /auth/signup` · real
 
 `{"name": "सुनीता", "email": "sunita@example.com", "password": "8 or more", "language": "hi", "consent": true}`.
-`language` is the language the person speaks, `hi` or `en`. Add `"invite_code": "..."` when
-`GET /config` says `invite_required`; otherwise it can be left out and is ignored. Sets the
-session cookie and gives the account the default slot words and templates.
+`language` is the language the person speaks (one of the ten codes). Anyone can sign up. Sets
+the session cookie and gives the account the default slot words and templates.
 
-After 5 wrong invite codes from one IP in 15 minutes, sign-up from that IP answers
-`too_many_attempts` until `retry_after` passes, even with the right code. Behind a proxy (like
-Hugging Face's) the IP is the client's own when the server sets `TRUST_PROXY` (docs/DEPLOY.md).
+After 5 new accounts (by email or Google) from one IP in an hour, sign-up from that IP answers
+`too_many_attempts` until `retry_after` passes. Behind a proxy (like Hugging Face's) the IP is
+the client's own when the server sets `TRUST_PROXY` (docs/DEPLOY.md).
 
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
@@ -105,8 +93,8 @@ Hugging Face's) the IP is the client's own when the server sets `TRUST_PROXY` (d
  "has_own_voice": false, "use_own_voice": false, "can_clone_voice": true, "phrase_goal": 10}
 ```
 
-Errors: `invite_required`, `too_many_attempts`, `consent_required`, `no_name`, `bad_email`,
-`short_password`, `email_taken`, `invalid_input`.
+Errors: `too_many_attempts`, `consent_required`, `no_name`, `bad_email`, `short_password`,
+`email_taken`, `invalid_input`.
 
 ### `POST /auth/login` · real
 
@@ -118,11 +106,11 @@ Errors: `invite_required`, `too_many_attempts`, `consent_required`, `no_name`, `
  "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": true, "phrase_goal": 10}
 ```
 
-Errors: `bad_login`, `too_many_attempts`, `invalid_input`.
+Errors: `no_account`, `bad_login`, `too_many_attempts`, `invalid_input`.
 
 ### `POST /auth/google` · real
 
-`{"id_token": "...", "language": "hi", "invite_code": "...", "consent": true}`. Authenticates an existing user or registers a new account using a Google Identity Services ID token. `invite_code` is required when `GET /config` says `invite_required` and the account does not exist yet. Sets the session cookie.
+`{"id_token": "...", "language": "hi", "consent": true}`. Signs in the account with that Google email, or makes one when there is none (counted like an email sign-up per IP), using a Google Identity Services ID token. Sets the session cookie.
 
 ```json
 {"id": 7, "name": "सुनीता", "email": "sunita@example.com", "language": "hi",
@@ -130,7 +118,7 @@ Errors: `bad_login`, `too_many_attempts`, `invalid_input`.
  "caregiver_phone": "919876543210", "has_own_voice": true, "use_own_voice": true, "can_clone_voice": true, "phrase_goal": 10}
 ```
 
-Errors: `invalid_google_token`, `google_unreachable`, `unverified_email`, `invite_required`, `too_many_attempts`, `consent_required`, `email_taken`, `invalid_input`.
+Errors: `invalid_google_token`, `google_unreachable`, `unverified_email`, `too_many_attempts`, `consent_required`, `email_taken`, `invalid_input`.
 
 ### `POST /auth/logout` · real
 
@@ -181,7 +169,7 @@ back `null`.
 
 Errors: `not_logged_in`, `not_found`, `invalid_input`, `file_too_large`, `bad_audio`,
 `audio_too_short`, `audio_too_long`, `no_speech`, `gnani_unreachable`, `gnani_rejected`,
-`credit_limit_reached`, `daily_cap_reached`.
+`credit_limit_reached`, `daily_limit`.
 
 ## Speak
 
@@ -218,7 +206,7 @@ here, since Timbre runs in `POST /speak`.
 
 Errors: `not_logged_in`, `invalid_input`, `file_too_large`, `bad_audio`, `audio_too_short`,
 `audio_too_long`, `no_speech`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`,
-`daily_cap_reached`.
+`daily_limit`.
 
 ### `POST /me/confirm` · real
 
@@ -241,7 +229,7 @@ else that language's stock voice. Its `Server-Timing` header (`tts;dur=<ms>`) sa
 long Timbre took.
 
 Errors: `not_logged_in`, `invalid_input`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`,
-`daily_cap_reached`.
+`daily_limit`.
 
 ## Phrases
 
@@ -348,7 +336,7 @@ Form: `audio` (0.3–15 s), the word said on its own. Optional `source`, as for 
 
 Errors: `not_logged_in`, `not_found`, `invalid_input`, `file_too_large`, `bad_audio`, `audio_too_short`,
 `audio_too_long`, `no_speech`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`,
-`daily_cap_reached`.
+`daily_limit`.
 
 ### `GET /me/templates` · real
 
@@ -391,7 +379,7 @@ Form: `audio` (0.3–15 s), the fixed part alone, like "चाहिए" for `{i
 
 Errors: `not_logged_in`, `not_found`, `invalid_input`, `file_too_large`, `bad_audio`, `audio_too_short`,
 `audio_too_long`, `no_speech`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`,
-`daily_cap_reached`.
+`daily_limit`.
 
 ## Progress
 
@@ -423,9 +411,27 @@ Errors: `not_logged_in`.
 
 ### `GET /me/usage` · real
 
-Speech service calls by everyone, against the server's limit (`GNANI_CALL_LIMIT`). Each
-account also has a daily cap of its own; this doesn't show it. Only for the owner
-(`OWNER_EMAIL` in `.env`), so most screens won't need it.
+This account's calls sent to the speech service in the last 24 hours (a rolling window, not a
+calendar day), against each daily limit: `stt` is Prisma for Speak, training checks and any other
+recognition (`STT_DAILY_LIMIT`, default 20); `tts` is Timbre for speaking, listening, voice
+previews and voice cloning (`TTS_DAILY_LIMIT`, default 20); `enroll` is Prisma for recording
+phrases while teaching Sunn (`ENROLL_DAILY_LIMIT`, default 40). Cached answers and the training
+audio made ahead of time never count, and a retry counts once. `resets_at` is when the oldest
+counted call stops counting, null when there are none. Accounts in `LIMIT_EXEMPT_EMAILS`
+(default `OWNER_EMAIL`) are counted but never limited.
+
+```json
+{"stt": {"used": 7, "limit": 20, "resets_at": "2026-11-11T11:00:00Z"},
+ "tts": {"used": 3, "limit": 20, "resets_at": "2026-11-11T09:12:00Z"},
+ "enroll": {"used": 0, "limit": 40, "resets_at": null}}
+```
+
+Errors: `not_logged_in`.
+
+### `GET /admin/usage` · real
+
+Speech service calls by everyone, against the server's limit (`GNANI_CALL_LIMIT`). Only for the
+owner (`OWNER_EMAIL` in `.env`), so most screens won't need it.
 
 ```json
 {"limit": 4000, "sent": 212, "remaining": 3788, "by_kind": {
@@ -476,7 +482,7 @@ turns it on.
 
 Errors: `not_logged_in`, `consent_required`, `invalid_input`, `file_too_large`, `bad_audio`,
 `audio_too_short`, `audio_too_long`, `gnani_unreachable`, `gnani_rejected`, `credit_limit_reached`,
-`daily_cap_reached`.
+`daily_limit`.
 
 ### `DELETE /me/voice` · real
 

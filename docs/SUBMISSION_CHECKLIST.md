@@ -16,7 +16,7 @@ This document tracks all submission deliverables for the Gnani Great Indian AI I
 | **Presenter Demo Mode** | Collapsible cue bar, 5-step navigation, provenance badges (`pilot`, `simulated`) | `web/src/PresenterBar.jsx` | **Complete** |
 | **Resilient TTS Fallback** | Automatic client-side Web Speech API playback when Gnani TTS is unreachable | `web/src/api.js`, `web/src/Speak.jsx` | **Complete** |
 | **Health Probe & Operations** | Liveness health probe at `/api/health` and `/health`, log rotation | `src/api.py`, `src/server.py`, `tests/test_deploy.py` | **Complete** |
-| **Deployment Security Guard** | Invite code restriction in UI & API, path traversal protection, quota enforcement | `web/src/AuthPages.jsx`, `tests/test_deploy.py`, `docs/DEPLOY.md` | **Complete** |
+| **Deployment Security Guard** | Sign-up limit per IP, path traversal protection, per-account daily speech limits | `web/src/AuthPages.jsx`, `tests/test_deploy.py`, `docs/DEPLOY.md` | **Complete** |
 | **Automated Test Suite** | Backend tests covering API, contracts, privacy, deploy, and demo logic; end-to-end tests of every screen in both languages (counts in docs/AUDIT.md) | `uv run pytest`, `cd web; npm run e2e` | **Complete (all pass)** |
 | **Production Build** | Clean Vite build producing production bundles without errors | `cd web && npm run build` | **Complete** |
 | **Deployment Package** | Single Docker image serving API on `/api` and web app on port 7860 | `Dockerfile`, `src/server.py`, `docs/DEPLOY.md` | **Complete** |
@@ -37,7 +37,7 @@ This document tracks all submission deliverables for the Gnani Great Indian AI I
     - `GROQ_API_KEY`: Optional API key for Groq AI assistant features.
     - `JWT_SECRET`: Random 48-byte URL-safe string.
     - `TRUST_PROXY`: `1` (required for correct client IP detection behind HF proxy).
-    - `DEMO_INVITE_CODE`: Optional invite code to prevent unauthorized traffic.
+    - `LIMIT_EXEMPT_EMAILS`: Optional; the presenter account, so the daily limits never block it (default `OWNER_EMAIL`).
 
 ---
 
