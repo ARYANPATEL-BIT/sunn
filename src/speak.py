@@ -58,10 +58,10 @@ def synthesize(text, language="hi", embedding=None, cache_dir=CACHE_DIR, user_id
     key = hashlib.sha256(repr(sorted(body.items())).encode("utf-8")).hexdigest()
     path = os.path.join(cache_dir, f"{key}.wav")
     if os.path.exists(path):
-        gnani.record("tts", True, audio.seconds(path), user_id)
+        gnani.record_cached("tts", audio.seconds(path), user_id)
         return path
 
-    response = gnani.post("tts", URL, user_id=user_id, json=body)
+    response = gnani.post("tts", URL, user_id=user_id, quota="tts", json=body)
     if not response.content or len(response.content) < 44 or audio.seconds(response.content) is None:
         raise gnani.GnaniError("gnani_rejected", "Gnani returned an empty or invalid audio response")
     os.makedirs(cache_dir, exist_ok=True)
@@ -81,11 +81,11 @@ def clone_voice(wav_path, cache_dir, user_id=None):
     seconds = audio.seconds(audio_bytes)
     path = os.path.join(cache_dir, f"{hashlib.sha256(audio_bytes).hexdigest()}.json")
     if os.path.exists(path):
-        gnani.record("clone", True, seconds, user_id)
+        gnani.record_cached("clone", seconds, user_id)
         with open(path, encoding="utf-8") as f:
             return json.load(f)
 
-    response = gnani.post("clone", CLONE_URL, audio_seconds=seconds, user_id=user_id,
+    response = gnani.post("clone", CLONE_URL, audio_seconds=seconds, user_id=user_id, quota="tts",
                           files={"audio_file": ("voice.wav", audio_bytes, "audio/wav")})
     try:
         result = response.json()
