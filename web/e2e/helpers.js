@@ -109,6 +109,7 @@ export async function enroll(request, phraseId, times = 1, source) {
 
 // Records the quick-start phrases 3 times each, so Speak opens.
 export async function openSpeak(request, user) {
+  await request.patch('/api/me', { data: { phrase_goal: 10 } })
   for (const text of QUICK_START[user.language]) {
     const phrase = user.phrases.find((p) => p.text === text)
     await enroll(request, phrase.id, 3)
