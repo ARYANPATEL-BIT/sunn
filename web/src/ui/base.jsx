@@ -31,7 +31,12 @@ export const failure = (kind) => Object.assign(new Error(kind), { kind })
 
 // What happened and what to do, in the current language. A refusal the API explains with a
 // code (bad_login, email_taken…) gets its own words; anything else is worded by its kind.
-export function errorText({ t, has }, error) {
+export function errorText({ t, has, locale }, error) {
+  if (error.limit) {
+    const { kind, limit, resets_at: resetsAt } = error.limit
+    const time = resetsAt ? new Date(resetsAt).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' }) : ''
+    return t(`error.daily_limit_${kind}`, { limit, time })
+  }
   if (error.code && has(`error.${error.code}`)) {
     return t(`error.${error.code}`, { minutes: Math.max(1, Math.ceil((error.retryAfter || 0) / 60)) })
   }
@@ -39,13 +44,16 @@ export function errorText({ t, has }, error) {
 }
 
 // A problem: the icon and the words, in ink. Color never carries it alone.
-export function Alert({ error, id }) {
+export function Alert({ error, id, children }) {
   const i18n = useLang()
   if (!error) return null
   return (
     <p className="alert" role="alert" id={id}>
       <Icon name="alert" className="alert-icon" />
-      <span>{errorText(i18n, error)}</span>
+      <span>
+        {errorText(i18n, error)}
+        {children && <> {children}</>}
+      </span>
     </p>
   )
 }

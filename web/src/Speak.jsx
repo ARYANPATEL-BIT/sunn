@@ -40,6 +40,7 @@ export default function Speak() {
   const [busy, setBusy] = useState(null) // 'listening' while Prisma works, 'playing' while Timbre speaks
   const [error, setError] = useState(null)
   const [fallbackUsed, setFallbackUsed] = useState(false)
+  const [showing, setShowing] = useState(null) // a phrase shown big for the listener: Timbre's daily limit is used up
   const confirmedSampleRef = useRef(null)
   const confirmingSampleRef = useRef(null)
   const isMountedRef = useRef(true)
@@ -70,6 +71,17 @@ export default function Speak() {
       api.stopAudio()
     }
   }, [])
+
+  // Say text aloud; past the daily Timbre limit, show it big instead.
+  async function sayOrShow(text) {
+    try {
+      const playback = await api.say(text, { fallback: true, keepLimit: true, language: user?.language })
+      setFallbackUsed(Boolean(playback?.fallback))
+    } catch (e) {
+      if (e.limit) setShowing(text)
+      throw e
+    }
+  }
 
   async function run(kind, action) {
     if (!isMountedRef.current) return
@@ -135,12 +147,8 @@ export default function Speak() {
       }
 
       try {
-        const [playback] = await Promise.all([
-          api.say(candidate.text, { fallback: true, language: user?.language }),
-          confirmPromise,
-        ])
+        await Promise.all([sayOrShow(candidate.text), confirmPromise])
         setSpoken(candidate)
-        setFallbackUsed(Boolean(playback?.fallback))
       } catch (e) {
         setError(e)
         if (!confirmed && confirmedSampleRef.current !== sampleId) {
@@ -173,8 +181,7 @@ export default function Speak() {
       setSpoken(targetPhrase)
       setTyping(false)
       try {
-        const playback = await api.say(targetPhrase.text, { fallback: true, language: user?.language })
-        setFallbackUsed(Boolean(playback?.fallback))
+        await sayOrShow(targetPhrase.text)
       } catch (e) {
         setError(e)
       }
@@ -409,7 +416,7 @@ export default function Speak() {
           </div>
         )}
 
-        {problem && !typing && (
+        {problem && !typing && !problem.limit && (
           <div className="actions">
             <Button icon="rotate" onClick={retry}>
               {t('speak.retry')}
@@ -434,6 +441,13 @@ export default function Speak() {
           label={result ? t('sun.again') : undefined}
         />
       </div>
+
+      <Sheet open={Boolean(showing)} onClose={() => setShowing(null)} label={showing} closable>
+        <p className="listener-text" lang={user.language}>
+          {showing}
+        </p>
+        <Alert error={error} />
+      </Sheet>
 
       <Sheet open={typing} onClose={() => setTyping(false)} label={t(shown.length ? 'speak.noneOfThese' : 'speak.typeIt')}>
         <form className="sheet-form" onSubmit={submitNewText}>
