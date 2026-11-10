@@ -2890,7 +2890,9 @@ input:focus-visible + .file-pick {
   z-index: 1000;
   width: 320px;
   max-width: calc(100vw - 32px);
-  padding: 14px 16px;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 14px 14px;
   border-radius: var(--r-well, 16px);
   border: 1px solid var(--edge);
   background: var(--raised);
@@ -3071,81 +3073,154 @@ input:focus-visible + .file-pick {
   flex-shrink: 0;
 }
 
-/* Actions Row */
+/* Footer & Actions */
+.presenter-footer,
 .presenter-actions-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 8px;
-  padding-top: 8px;
+  padding-top: 10px;
   border-top: 1px solid var(--line);
+  margin-top: auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .presenter-nav-buttons,
 .presenter-prev-next {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.presenter-nav-buttons.has-finish,
+.presenter-prev-next.has-finish {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.28fr);
+}
+
+.presenter-nav-buttons.has-finish .presenter-action-btn,
+.presenter-prev-next.has-finish .presenter-action-btn {
+  letter-spacing: -0.012em;
+  padding: 0 6px;
 }
 
 .presenter-action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 2.25rem;
-  padding: 0 10px;
-  border-radius: 8px;
+  gap: 5px;
+  height: 2.375rem;
+  min-height: 2.375rem;
+  padding: 0 8px;
+  border-radius: var(--r-button, 8px);
   border: 1px solid var(--edge);
   background: var(--panel);
   color: var(--ink);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  width: 100%;
+  user-select: none;
+}
+
+.presenter-action-btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .presenter-action-btn:hover:not(:disabled) {
   background: var(--well);
 }
 
-.presenter-action-btn.subtle {
-  border-color: transparent;
-  background: transparent;
-  color: var(--ink-2);
-  padding: 0 6px;
+.presenter-action-btn.secondary,
+.presenter-btn-prev {
+  background: var(--panel);
+  border-color: var(--edge);
+  color: var(--ink);
 }
 
-.presenter-action-btn.subtle:hover {
-  color: var(--ink);
+.presenter-action-btn.secondary:hover:not(:disabled),
+.presenter-btn-prev:hover:not(:disabled) {
   background: var(--well);
 }
 
-.presenter-action-btn.primary {
+.presenter-action-btn.primary,
+.presenter-btn-next {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--on-ink);
 }
 
-.presenter-action-btn.primary:hover:not(:disabled) {
+.presenter-action-btn.primary:hover:not(:disabled),
+.presenter-btn-next:hover:not(:disabled) {
   opacity: 0.9;
 }
 
 .presenter-action-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .presenter-action-btn .icon {
-  width: 1rem;
-  height: 1rem;
+  width: 0.9375rem;
+  height: 0.9375rem;
+  flex-shrink: 0;
+}
+
+.presenter-secondary-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.presenter-btn-restart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 1.875rem;
+  min-height: 1.875rem;
+  padding: 0 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink-2);
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  width: auto;
+  user-select: none;
+}
+
+.presenter-btn-restart:hover {
+  color: var(--ink);
+  background: var(--well);
+}
+
+.presenter-btn-restart .icon {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  flex-shrink: 0;
 }
 
 .presenter-keyboard-hint {
   font-size: 0.6875rem;
   color: var(--ink-2);
   text-align: center;
-  opacity: 0.8;
+  opacity: 0.75;
+  margin-top: 2px;
 }
 
 /* Collapsed State */

@@ -351,23 +351,12 @@ export default function PresenterBar({ onClose }) {
             </div>
           </div>
 
-          {/* Actions row */}
-          <div className="presenter-actions-row">
-            <button
-              type="button"
-              className="presenter-action-btn subtle"
-              onClick={handleRestart}
-              title={t('presenter.restart')}
-              aria-label={t('presenter.restart')}
-            >
-              <Icon name="rotate" />
-              <span>{t('presenter.restart')}</span>
-            </button>
-
-            <div className="presenter-nav-buttons presenter-prev-next">
+          {/* Actions footer */}
+          <div className="presenter-footer presenter-actions-row">
+            <div className={`presenter-nav-buttons presenter-prev-next ${stepIndex >= DEMO_STEPS.length - 1 ? 'has-finish' : ''}`}>
               <button
                 type="button"
-                className="presenter-action-btn"
+                className="presenter-action-btn secondary presenter-btn-prev"
                 onClick={handlePrev}
                 disabled={stepIndex <= 0}
                 aria-label={t('presenter.prev')}
@@ -377,12 +366,25 @@ export default function PresenterBar({ onClose }) {
               </button>
               <button
                 type="button"
-                className="presenter-action-btn primary"
+                className={`presenter-action-btn primary presenter-btn-next ${stepIndex >= DEMO_STEPS.length - 1 ? 'is-finish' : ''}`}
                 onClick={handleNext}
                 aria-label={stepIndex >= DEMO_STEPS.length - 1 ? t('presenter.finish') : t('presenter.next')}
               >
                 <span>{stepIndex >= DEMO_STEPS.length - 1 ? t('presenter.finish') : t('presenter.next')}</span>
                 <Icon name={stepIndex >= DEMO_STEPS.length - 1 ? 'check' : 'chevronRight'} />
+              </button>
+            </div>
+
+            <div className="presenter-secondary-row">
+              <button
+                type="button"
+                className="presenter-action-btn subtle presenter-btn-restart"
+                onClick={handleRestart}
+                title={t('presenter.restart')}
+                aria-label={t('presenter.restart')}
+              >
+                <Icon name="rotate" />
+                <span>{t('presenter.restart')}</span>
               </button>
             </div>
           </div>
@@ -411,22 +413,11 @@ export default function PresenterBar({ onClose }) {
             </div>
           </div>
 
-          <div className="presenter-actions-row">
-            <button
-              type="button"
-              className="presenter-action-btn subtle"
-              onClick={handleRestart}
-              title={t('presenter.restart')}
-              aria-label={t('presenter.restart')}
-            >
-              <Icon name="rotate" />
-              <span>{t('presenter.restart')}</span>
-            </button>
-
-            <div className="presenter-nav-buttons presenter-prev-next">
+          <div className="presenter-footer presenter-actions-row">
+            <div className="presenter-nav-buttons presenter-prev-next has-finish">
               <button
                 type="button"
-                className="presenter-action-btn"
+                className="presenter-action-btn secondary presenter-btn-prev"
                 onClick={handlePrev}
                 aria-label={t('presenter.prev')}
               >
@@ -435,12 +426,25 @@ export default function PresenterBar({ onClose }) {
               </button>
               <button
                 type="button"
-                className="presenter-action-btn primary"
+                className="presenter-action-btn primary is-finish"
                 onClick={onClose}
                 aria-label={t('presenter.exit')}
               >
                 <Icon name="check" />
                 <span>{t('presenter.finish')}</span>
+              </button>
+            </div>
+
+            <div className="presenter-secondary-row">
+              <button
+                type="button"
+                className="presenter-action-btn subtle presenter-btn-restart"
+                onClick={handleRestart}
+                title={t('presenter.restart')}
+                aria-label={t('presenter.restart')}
+              >
+                <Icon name="rotate" />
+                <span>{t('presenter.restart')}</span>
               </button>
             </div>
           </div>
