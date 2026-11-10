@@ -71,3 +71,73 @@ for (const lang of LANGS) {
   })
 }
 
+test.describe('signup page typography and layout', () => {
+  test('signup password helper text and form hints have compact typography', async ({ page, watch }) => {
+    watch.allow(401, '/api/auth/me')
+    await page.goto('/signup')
+
+    const hint = page.locator('#signup-password-hint')
+    await expect(hint).toBeVisible()
+    await expect(hint).toHaveText('At least 8 characters.')
+
+    const styles = await hint.evaluate((el) => {
+      const cs = window.getComputedStyle(el)
+      return {
+        fontSize: parseFloat(cs.fontSize),
+        fontWeight: cs.fontWeight,
+        textAlign: cs.textAlign,
+        paddingTop: parseFloat(cs.paddingTop),
+        paddingBottom: parseFloat(cs.paddingBottom),
+      }
+    })
+
+    // The helper text must be compact (approx 14px / 0.875rem), not headline clamp (32px to 56px)
+    expect(styles.fontSize).toBeLessThanOrEqual(16)
+    expect(styles.fontSize).toBeGreaterThanOrEqual(12)
+    expect(styles.fontWeight).toMatch(/^(400|normal)$/)
+    expect(styles.textAlign).not.toBe('center')
+    expect(styles.paddingTop).toBeLessThan(10)
+
+    // Form hint under submit button should also be compact
+    const consentHint = page.locator('#consent-needed')
+    await expect(consentHint).toBeVisible()
+    const consentHintFontSize = await consentHint.evaluate((el) => parseFloat(window.getComputedStyle(el).fontSize))
+    expect(consentHintFontSize).toBeLessThanOrEqual(16)
+    expect(consentHintFontSize).toBeGreaterThanOrEqual(12)
+
+    // Visual hierarchy: language fieldset is positioned directly under fields
+    const fieldsBox = await page.locator('.auth-form .fields').boundingBox()
+    const languageBox = await page.locator('.auth-form .group-wrap').first().boundingBox()
+    expect(fieldsBox).not.toBeNull()
+    expect(languageBox).not.toBeNull()
+    expect(languageBox.y - (fieldsBox.y + fieldsBox.height)).toBeLessThanOrEqual(50)
+  })
+
+  test('signup password hint retains compact typography in dark mode and during validation errors', async ({ page, watch }) => {
+    watch.allow(401, '/api/auth/me')
+    await page.goto('/signup')
+
+    // Switch to dark theme
+    await page.evaluate(() => {
+      document.documentElement.dataset.theme = 'dark'
+    })
+
+    const hint = page.locator('#signup-password-hint')
+    const darkFontSize = await hint.evaluate((el) => parseFloat(window.getComputedStyle(el).fontSize))
+    expect(darkFontSize).toBeLessThanOrEqual(16)
+
+    // Trigger validation error on short password
+    await page.locator('#signup-name').fill('Test User')
+    await page.locator('#signup-email').fill('test@example.com')
+    await page.locator('#signup-password').fill('short')
+    await page.getByLabel(t('en', 'signup.consent')).check()
+    await page.getByRole('button', { name: t('en', 'signup.submit') }).click()
+
+    // Hint is still compact alongside error
+    const err = page.locator('#signup-password-error')
+    await expect(err).toBeVisible()
+    const hintAfterError = await hint.evaluate((el) => parseFloat(window.getComputedStyle(el).fontSize))
+    expect(hintAfterError).toBeLessThanOrEqual(16)
+  })
+})
+

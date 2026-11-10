@@ -1548,6 +1548,12 @@ textarea:disabled {
 }
 
 .field-hint,
+.form-hint {
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
 /* A phrase shown big for the listener to read, when it can't be spoken (Speak.jsx) */
 .listener-text {
   margin: 0;
@@ -1557,11 +1563,6 @@ textarea:disabled {
   line-height: 1.25;
   text-align: center;
   overflow-wrap: anywhere;
-}
-
-.form-hint {
-  color: var(--ink-2);
-  font-size: 0.875rem;
 }
 
 .field-error {
