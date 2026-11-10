@@ -232,9 +232,26 @@ export default function Progress() {
 
   return (
     <section className="screen progress-screen">
-      <h1 className="large-title">{t('progress.title')}</h1>
+      <div className="progress-header-summary" data-tour="progress-summary">
+        <h1 className="large-title">{t('progress.title')}</h1>
 
-      <Alert error={error} />
+        <Alert error={error} />
+
+        {/* Overview: the big numbers */}
+        <section className="progress-section" aria-labelledby="heading-overview">
+          <h2 id="heading-overview" className="title-2">
+            {t('progress.overviewHeading')}
+          </h2>
+          <div className="metrics">
+            {metrics.map(([key, value]) => (
+              <div className="metric-card" key={key}>
+                <span className="metric-value">{value}</span>
+                <span className="metric-label">{t(key)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
 
       {stats?.recognitions === 0 && (
         <article className="status-card" aria-labelledby="empty-progress-title">
@@ -251,21 +268,6 @@ export default function Progress() {
           </div>
         </article>
       )}
-
-      {/* Overview: the big numbers */}
-      <section className="progress-section" aria-labelledby="heading-overview">
-        <h2 id="heading-overview" className="title-2">
-          {t('progress.overviewHeading')}
-        </h2>
-        <div className="metrics">
-          {metrics.map(([key, value]) => (
-            <div className="metric-card" key={key}>
-              <span className="metric-value">{value}</span>
-              <span className="metric-label">{t(key)}</span>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* How often the first suggestion was the one */}
       {Boolean(stats?.confirmed) && (
