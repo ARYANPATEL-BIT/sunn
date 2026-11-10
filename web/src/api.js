@@ -145,7 +145,8 @@ export const confirm = (body) => post('/me/confirm', body).then(json)
 // --- Speech Synthesis and Audio Playback ---
 
 // Synthesize speech to a WAV Blob via Gnani Timbre / cloned voice
-export const speak = (text) => post('/speak', { text }).then((r) => r.blob())
+export const speak = (text, language = null) =>
+  post('/speak', { text, ...(language ? { language } : {}) }).then((r) => r.blob())
 
 // Speaks using the browser's native Web Speech API (window.speechSynthesis)
 export function speakBrowserFallback(text, language = 'hi-IN') {
@@ -172,7 +173,7 @@ export function speakBrowserFallback(text, language = 'hi-IN') {
 export async function say(text, options = {}) {
   const playId = ++currentPlayId
   try {
-    const blob = await speak(text)
+    const blob = await speak(text, options.language)
     if (playId !== currentPlayId) return { blob, fallback: false }
     await play(blob, playId)
     return { blob, fallback: false }
@@ -273,12 +274,14 @@ export const postTrainingsReflection = (lessonId, stepId, feeling) =>
   post('/me/trainings/reflect', { lesson_id: lessonId, step_id: stepId, feeling }).then(json)
 
 // Send an attempt for a step
-export const postTrainingsAttempt = async (audioBlob, stepId, itemId = null, check = false) => {
+export const postTrainingsAttempt = async (audioBlob, stepId, itemId = null, check = false, text = null, language = null) => {
   const form = new FormData()
   form.append('audio', audioBlob, 'attempt.wav')
   form.append('step_id', stepId)
   if (itemId) form.append('item_id', itemId)
   form.append('check', String(check))
+  if (text) form.append('text', text)
+  if (language) form.append('language', language)
   const res = await request('/me/trainings/attempts', { method: 'POST', body: form })
   return json(res)
 }

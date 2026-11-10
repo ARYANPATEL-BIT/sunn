@@ -84,14 +84,35 @@ for (const lang of LANGS) {
       // Example is visible when no search has been performed
       await expect(page.locator('.easier-ways-example-box')).toBeVisible()
 
-      // 2. Search for a phrase
+      // 2. Language selection chips
+      const hiLangChip = page.locator('.easier-ways-lang-row .chip.lang-chip').filter({ hasText: t(lang, 'easierWays.langHi') })
+      const enLangChip = page.locator('.easier-ways-lang-row .chip.lang-chip').filter({ hasText: t(lang, 'easierWays.langEn') })
+      await expect(hiLangChip).toBeVisible()
+      await expect(enLangChip).toBeVisible()
+
+      // Switch language chip and verify state
+      if (lang === 'hi') {
+        await expect(hiLangChip).toHaveAttribute('aria-checked', 'true')
+        await enLangChip.click()
+        await expect(enLangChip).toHaveAttribute('aria-checked', 'true')
+        await hiLangChip.click()
+        await expect(hiLangChip).toHaveAttribute('aria-checked', 'true')
+      } else {
+        await expect(enLangChip).toHaveAttribute('aria-checked', 'true')
+        await hiLangChip.click()
+        await expect(hiLangChip).toHaveAttribute('aria-checked', 'true')
+        await enLangChip.click()
+        await expect(enLangChip).toHaveAttribute('aria-checked', 'true')
+      }
+
+      // 3. Search for a phrase
       const searchInput = page.locator('#easier-ways-input')
       await searchInput.fill(lang === 'hi' ? 'शुक्रिया' : 'Thank you')
 
       const searchBtn = page.locator('.easier-ways-search-btn')
       await searchBtn.click()
 
-      // 3. Alternative cards rendered
+      // 4. Alternative cards rendered
       const altCards = page.locator('.alternative-card')
       await expect(altCards.first()).toBeVisible({ timeout: 5000 })
       const altsCount = await altCards.count()
@@ -103,21 +124,51 @@ for (const lang of LANGS) {
       await expect(altCards.first().locator('.alt-phrase-text')).toBeVisible()
       await expect(altCards.first().locator('.alt-avoids-line')).toBeVisible()
 
-      // 4. In-place practice (SpeakWithMeStep in paced mode)
+      // 5. In-place practice (SpeakWithMeStep with paced and word-by-word submodes)
       const practiseBtn = altCards.first().getByRole('button', { name: t(lang, 'easierWays.practiseAction') })
       await practiseBtn.click()
 
       const practiceModal = page.locator('.easier-ways-practice-modal')
       await expect(practiceModal).toBeVisible()
       await expect(practiceModal.locator('.step-speak-with-me')).toBeVisible()
-      await expect(practiceModal.locator('.pace-range-input')).toBeVisible()
+
+      // Verify practice submode chips
+      const pacedSubmodeChip = practiceModal.locator('.submode-chip').filter({ hasText: t(lang, 'speakWithMe.fullPhrase') })
+      const wordSubmodeChip = practiceModal.locator('.submode-chip').filter({ hasText: t(lang, 'speakWithMe.wordByWord') })
+      await expect(pacedSubmodeChip).toHaveAttribute('aria-checked', 'true')
+      await wordSubmodeChip.click()
+      await expect(wordSubmodeChip).toHaveAttribute('aria-checked', 'true')
+      await pacedSubmodeChip.click()
+      await expect(pacedSubmodeChip).toHaveAttribute('aria-checked', 'true')
+
+      // Verify WPM slider
+      const paceRangeInput = practiceModal.locator('.pace-range-input')
+      await expect(paceRangeInput).toBeVisible()
+      await paceRangeInput.fill('80')
+
+      // Dedicated Record button lifecycle
+      const recordBtn = practiceModal.locator('.record-toggle-btn')
+      await expect(recordBtn).toBeVisible()
+      await recordBtn.click()
+      await page.waitForTimeout(400)
+      await recordBtn.click()
+      await expect(practiceModal.locator('.recorded-status-badge')).toBeVisible()
+
+      // Check my reading
+      const checkBtn = practiceModal.locator('.check-reading-btn')
+      await expect(checkBtn).toBeVisible()
+      await checkBtn.click()
+
+      // Verify transcript and feedback appear
+      await expect(practiceModal.locator('.check-results-stage')).toBeVisible({ timeout: 8000 })
+      await expect(practiceModal.locator('.check-transcript-card')).toBeVisible()
 
       // Close practice
       const closePracticeBtn = practiceModal.getByRole('button', { name: t(lang, 'easierWays.closePractice') })
       await closePracticeBtn.click()
       await expect(practiceModal).toHaveCount(0)
 
-      // 5. Add alternative to my phrases
+      // 6. Add alternative to my phrases
       const addBtn = altCards.first().getByRole('button', { name: t(lang, 'easierWays.addPhraseAction') })
       await addBtn.click()
 
