@@ -449,10 +449,10 @@ export default function PresenterBar({ onClose }) {
                 type="button"
                 className="presenter-action-btn primary is-finish"
                 onClick={onClose}
-                aria-label={t('presenter.exit')}
+                aria-label={t('presenter.close')}
               >
-                <Icon name="check" />
-                <span>{t('presenter.finish')}</span>
+                <Icon name="x" />
+                <span>{t('presenter.close')}</span>
               </button>
             </div>
 

@@ -402,6 +402,7 @@ export default {
   'presenter.stepProgressCue':
     'ਸਮਝਾਓ ਕਿ ਅੰਕੜੇ ਬੋਲੀ ਦੀ ਪਛਾਣ ਦੀ ਲਗਾਤਾਰਤਾ ਦਿਖਾਉਂਦੇ ਹਨ, ਡਾਕਟਰੀ ਸੁਧਾਰ ਨਹੀਂ। ਪੂਰਾ ਖਾਤਾ ਮਿਟਾਉਣ ਦੀ ਗਾਰੰਟੀ ਦਿਖਾਓ।',
   'presenter.finish': 'ਟੂਰ ਖਤਮ ਕਰੋ',
+  'presenter.close': 'ਬੰਦ ਕਰੋ',
   'presenter.completedTitle': 'ਵਾਕਥਰੂ ਪੂਰਾ ਹੋਇਆ',
   'presenter.completedDesc':
     'ਤੁਸੀਂ ਸੁੰਨ ਦੇ ਸਾਰੇ 5 ਮੁੱਖ ਮਾਡਿਊਲ ਦੇਖ ਲਏ ਹਨ: ਆਨਬੋਰਡਿੰਗ, ਵਾਕੰਸ਼, ਬੋਲ ਪਛਾਣ, ਪਹੁੰਚਯੋਗਤਾ ਅਤੇ ਪਰਦੇਦਾਰੀ।',

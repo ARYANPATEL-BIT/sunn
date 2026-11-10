@@ -1,4 +1,4 @@
-import { expect, markOnboarded, signUp, t, test } from './helpers.js'
+import { expect, markOnboarded, openSpeak, signUp, t, test } from './helpers.js'
 
 test('presenter mode initializes at step 1, steps through all 5 screens to completion, and restarts', async ({ page }) => {
   const user = await signUp(page.request)
@@ -41,12 +41,33 @@ test('presenter mode initializes at step 1, steps through all 5 screens to compl
   await expect(bar.getByRole('heading', { name: t('en', 'presenter.completedTitle') })).toBeVisible()
   await expect(bar.getByText(t('en', 'presenter.completedDesc'))).toBeVisible()
 
-  // Restart returns to Step 1
+  // On completion, Finish walkthrough is replaced with Close
+  await expect(bar.getByRole('button', { name: t('en', 'presenter.finish') })).toHaveCount(0)
+  const closeBtn = bar.getByRole('button', { name: t('en', 'presenter.close') })
+  await expect(closeBtn).toBeVisible()
+
+  // Clicking Previous returns to Step 5 without corrupting state
+  await bar.getByRole('button', { name: t('en', 'presenter.prev') }).click()
+  await expect(page).toHaveURL(/\/app\/progress$/)
+  await expect(bar.getByText(t('en', 'presenter.stepIndicator', { current: 5, total: 5 }))).toBeVisible()
+  await expect(bar.getByRole('button', { name: t('en', 'presenter.finish') })).toBeVisible()
+
+  // Re-advance to completion and verify Close dismisses panel cleanly
+  await bar.getByRole('button', { name: t('en', 'presenter.finish') }).click()
+  await expect(bar.getByRole('heading', { name: t('en', 'presenter.completedTitle') })).toBeVisible()
+  await bar.getByRole('button', { name: t('en', 'presenter.close') }).click()
+  await expect(bar).toHaveCount(0)
+
+  // Reopen with Alt+P and verify Restart returns to Step 1
+  await page.locator('body').click()
+  await page.keyboard.press('Alt+P')
+  await expect(bar).toBeVisible()
+  await expect(page).toHaveURL(/\/app\/onboarding$/)
   await bar.getByRole('button', { name: t('en', 'presenter.restart') }).click()
   await expect(page).toHaveURL(/\/app\/onboarding$/)
   await expect(bar.getByText(t('en', 'presenter.stepIndicator', { current: 1, total: 5 }))).toBeVisible()
 
-  // Close and reopen with Alt+P
+  // Close with header exit button
   await bar.getByRole('button', { name: t('en', 'presenter.exit') }).click()
   await expect(bar).toHaveCount(0)
   await page.locator('body').click()
@@ -198,4 +219,49 @@ test('presenter mode walkthrough does not make automatic Gnani API calls', async
 
   // Verify Gnani was never triggered automatically
   expect(gnaniApiCalled).toBe(false)
+})
+
+test('spotlight targets are properly scoped and scroll to top for all 5 steps', async ({ page }) => {
+  const user = await signUp(page.request)
+  await page.request.patch('/api/me', { data: { phrase_goal: 10 } })
+  await openSpeak(page.request, user)
+  await markOnboarded(page, user)
+  await page.goto('/app/onboarding')
+
+  await page.getByRole('button', { name: t('en', 'presenter.enter') }).click()
+  const bar = page.getByRole('region', { name: t('en', 'presenter.title') })
+  await expect(bar).toBeVisible()
+
+  // Step 1: Onboarding target
+  await expect(page.locator('.presenter-target-highlight')).toBeVisible()
+
+  // Step 2: Phrases target is heading/controls (.phrases-header), NOT .phrases-list
+  await bar.getByRole('button', { name: t('en', 'presenter.next') }).click()
+  await expect(page).toHaveURL(/\/app\/phrases$/)
+  const phrasesTarget = page.locator('.presenter-target-highlight')
+  await expect(phrasesTarget).toBeVisible()
+  await expect(phrasesTarget).toHaveClass(/phrases-header/)
+  await expect(page.locator('.phrases-list')).not.toHaveClass(/presenter-target-highlight/)
+
+  // Step 3: Speak target is recording interface (.speak-device), NOT entire page
+  await bar.getByRole('button', { name: t('en', 'presenter.next') }).click()
+  await expect(page).toHaveURL(/\/app\/speak$/)
+  const speakTarget = page.locator('.presenter-target-highlight')
+  await expect(speakTarget).toBeVisible()
+  await expect(speakTarget).toHaveClass(/speak-device/)
+  await expect(page.locator('section.speak')).not.toHaveClass(/presenter-target-highlight/)
+
+  // Step 4: Settings target is accessibility section
+  await bar.getByRole('button', { name: t('en', 'presenter.next') }).click()
+  await expect(page).toHaveURL(/\/app\/settings$/)
+  const settingsTarget = page.locator('.presenter-target-highlight')
+  await expect(settingsTarget).toBeVisible()
+  await expect(settingsTarget).toHaveClass(/settings-accessibility-group/)
+
+  // Step 5: Progress target is heading and summary metrics
+  await bar.getByRole('button', { name: t('en', 'presenter.next') }).click()
+  await expect(page).toHaveURL(/\/app\/progress$/)
+  const progressTarget = page.locator('.presenter-target-highlight')
+  await expect(progressTarget).toBeVisible()
+  await expect(progressTarget).toHaveClass(/progress-header-summary/)
 })
