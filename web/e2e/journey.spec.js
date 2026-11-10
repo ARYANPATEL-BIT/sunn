@@ -1,4 +1,4 @@
-import { enroll, expect, expectNoLeaks, INVITE, LANGS, phraseCard, QUICK_START, record, refuseOnce, t, test } from './helpers.js'
+import { enroll, expect, expectNoLeaks, LANGS, phraseCard, QUICK_START, record, refuseOnce, t, test } from './helpers.js'
 
 // Counts audio that really started playing, whatever made the Audio element.
 const COUNT_PLAYBACK = () => {
@@ -19,14 +19,12 @@ for (const lang of LANGS) {
   test.describe(`new user, ${lang}`, () => {
     test.use({ lang })
 
-    test('sign up with an invite, onboarding, quick start, speak, correct, see it in the library', async ({ page, watch }) => {
+    test('sign up, onboarding, quick start, speak, correct, see it in the library', async ({ page, watch }) => {
       watch.allow(401, '/api/auth/me')
       await page.addInitScript(COUNT_PLAYBACK)
 
-      // --- sign up: the invite field shows because GET /api/config says it is needed
+      // --- sign up: open to anyone, no code
       await page.goto('/signup')
-      const invite = page.getByLabel(t(lang, 'signup.inviteCode'))
-      await expect(invite).toBeVisible()
       await expectNoLeaks(page, lang)
       const email = `e2e-journey-${lang}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@example.com`
       await page.getByLabel(t(lang, 'signup.name')).fill(lang === 'hi' ? 'आशा' : 'Asha')
@@ -35,21 +33,16 @@ for (const lang of LANGS) {
       await page.getByRole('checkbox', { name: t(lang, 'signup.consent') }).check()
       const submit = page.getByRole('button', { name: t(lang, 'signup.submit') })
 
-      // The server's own refusal of a wrong code is auth.spec.js's; here, how the app words it.
-      await refuseOnce(page, watch, '/api/auth/signup', 403, { error: 'invite_required' })
-      await invite.fill('not-the-code')
-      await submit.click()
-      await expect(page.getByText(t(lang, 'error.invite_required'))).toBeVisible()
-      await expect(invite).toBeFocused()
-
+      // Too many new accounts from this address (tests/test_signup.py); here, how the app words it.
       await refuseOnce(page, watch, '/api/auth/signup', 429, { error: 'too_many_attempts', retry_after: 600 })
       await submit.click()
       await expect(page.getByRole('alert')).toHaveText(t(lang, 'error.too_many_attempts', { minutes: 10 }))
 
       const signedUp = page.waitForRequest('**/api/auth/signup')
-      await invite.fill(INVITE)
       await submit.click()
-      expect((await signedUp).postDataJSON()).toMatchObject({ invite_code: INVITE, language: lang, consent: true })
+      const sent = (await signedUp).postDataJSON()
+      expect(sent).toMatchObject({ language: lang, consent: true })
+      expect(sent).not.toHaveProperty('invite_code')
 
       // --- onboarding: four steps, then Teach, since nothing is recorded yet
       await expect(page).toHaveURL(/\/app\/onboarding$/)

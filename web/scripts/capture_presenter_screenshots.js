@@ -20,7 +20,6 @@ async function makeUser() {
     const user = await loginRes.json()
     return { user, state: await api.storageState() }
   }
-  const inviteCode = process.env.DEMO_INVITE_CODE || 'YOUR_DEMO_INVITE_CODE'
   const signup = await api.post('/api/auth/signup', {
     data: {
       name: 'Presenter Demo User',
@@ -28,7 +27,6 @@ async function makeUser() {
       password: 'demo-password-1',
       language: 'en',
       consent: true,
-      invite_code: inviteCode,
     },
   })
   const user = await signup.json()

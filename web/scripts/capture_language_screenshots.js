@@ -30,7 +30,7 @@ const server = spawn('uv', ['run', 'src/server.py', '--port', String(PORT)], {
     LLM_ENABLED: '0',
     RERANKER_ENABLED: '0',
     GOOGLE_CLIENT_ID: '',
-    DEMO_INVITE_CODE: 'shots-invite',
+    SIGNUPS_PER_IP_PER_HOUR: '100000',
     DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'sunn-shots-data-')),
   },
 })
@@ -52,7 +52,7 @@ async function makeUser() {
   const api = await request.newContext({ baseURL: BASE })
   const signup = await api.post('/api/auth/signup', {
     data: { name: 'आशा', email: `shots-${Date.now()}@example.com`, password: 'shots-password-1', language: 'hi',
-      consent: true, invite_code: 'shots-invite' },
+      consent: true },
   })
   const user = await signup.json()
   const phrases = await (await api.post('/api/me/phrases/default')).json()
