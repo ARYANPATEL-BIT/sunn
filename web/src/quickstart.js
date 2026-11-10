@@ -141,7 +141,7 @@ export function quickStart(phrases, language) {
 // Returns user-selectable goal targets adapted dynamically to totalAvailable.
 export function getGoalOptions(totalAvailable) {
   if (!totalAvailable || totalAvailable <= 0) return [10]
-  const steps = [10, 20, 25, 50]
+  const steps = [10, 20, 30]
   const options = []
   for (const s of steps) {
     if (s < totalAvailable) {
