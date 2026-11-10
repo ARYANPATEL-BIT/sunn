@@ -68,19 +68,19 @@ test.describe('dynamic phrase onboarding goal', () => {
     await page.getByText(t('en', 'enroll.goalChange')).click()
     await expect(page.getByRole('heading', { name: t('en', 'enroll.goalTitle') })).toBeVisible()
 
-    // Select 25
-    await page.getByRole('radio', { name: t('en', 'enroll.goalCount', { count: 25 }) }).click()
+    // Select 30
+    await page.getByRole('radio', { name: t('en', 'enroll.goalCount', { count: 30 }) }).click()
     await page.getByRole('button', { name: t('en', 'enroll.goalContinue') }).click()
 
-    // Now Teach shows 0 / 25
-    await expect(page.getByText('0 / 25')).toBeVisible()
-    await expect(page.getByText(t('en', 'enroll.step', { n: 1, total: 25 }))).toBeVisible()
+    // Now Teach shows 0 / 30
+    await expect(page.getByText('0 / 30')).toBeVisible()
+    await expect(page.getByText(t('en', 'enroll.step', { n: 1, total: 30 }))).toBeVisible()
 
     // Verify in Settings page
     await page.goto('/app/settings')
     await expect(page.getByRole('heading', { name: t('en', 'settings.phraseGoalTitle') })).toBeVisible()
-    const radio25 = page.getByRole('radio', { name: t('en', 'enroll.goalCount', { count: 25 }) })
-    await expect(radio25).toHaveAttribute('aria-checked', 'true')
+    const radio30 = page.getByRole('radio', { name: t('en', 'enroll.goalCount', { count: 30 }) })
+    await expect(radio30).toHaveAttribute('aria-checked', 'true')
   })
 
   test('Scenario D: goal completion unlocks Speak mode and offers Prepare more phrases', async ({ page }) => {

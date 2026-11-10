@@ -3,14 +3,14 @@ import { test } from 'node:test'
 import { getGoalOptions, getTargetPhrases, speakProgress, NEEDED } from './quickstart.js'
 
 test('getGoalOptions adapts dynamically to total available phrases', () => {
-  // 51 available phrases (e.g. Hindi default library)
-  assert.deepEqual(getGoalOptions(51), [10, 20, 25, 50, 51])
+  // 51 available phrases (e.g. Hindi default library): 4 clean buttons
+  assert.deepEqual(getGoalOptions(51), [10, 20, 30, 51])
 
   // 18 available phrases
   assert.deepEqual(getGoalOptions(18), [10, 18])
 
-  // Exactly 25 available phrases (no duplicate 25)
-  assert.deepEqual(getGoalOptions(25), [10, 20, 25])
+  // Exactly 30 available phrases (no duplicate 30)
+  assert.deepEqual(getGoalOptions(30), [10, 20, 30])
 
   // 8 available phrases (< 10)
   assert.deepEqual(getGoalOptions(8), [8])
