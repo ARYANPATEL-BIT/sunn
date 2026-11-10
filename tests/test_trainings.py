@@ -496,16 +496,12 @@ def test_attempts_cap_reaching_zero(env):
     import auth
     client = env.signup()
     uid = auth.user_id_from_token(client.cookies.get("sunn_session"))
-    today = datetime.now(timezone.utc).date().isoformat()
     now_str = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
-    # Insert 20 checks today to exhaust daily allowance
+    # 20 Prisma calls in the last 24 hours use up the STT daily limit, which checks count against
     for i in range(20):
-        db.execute(
-            "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (uid, "easy-starts-1", "easy-starts-1-together", None, "test", None, 80, 1, now_str),
-        )
+        db.execute("INSERT INTO api_calls (kind, cached, created_at, user_id, quota) VALUES ('stt', 0, ?, ?, 'stt')",
+                   (now_str, uid))
 
     # Calling with check=true when cap is 0 returns checked=false with friendly message
     env.fake.transcripts.append("आज मौसम अच्छा है")
@@ -516,7 +512,7 @@ def test_attempts_cap_reaching_zero(env):
     assert data["checked"] is False
     assert data["message_key"] == "no_checks_left"
     assert data["checks_left_today"] == 0
-    # STT should not have been called because cap was already 0
+    # STT should not have been called because the limit was already used up
     assert not env.fake.sent("stt")
 
 

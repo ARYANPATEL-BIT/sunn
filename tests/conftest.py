@@ -25,7 +25,7 @@ os.environ["LLM_API_KEY"] = "test-llm-key"
 os.environ["LLM_MODEL"] = "test-model"
 os.environ["RERANKER_ENABLED"] = "0"
 for name in ("LLM_MODE", "LLM_MARGIN", "LLM_MIN_SCORE", "LLM_TIMEOUT_S", "LLM_RATE_PER_MIN", "LLM_REASONING_EFFORT",
-             "RERANKER_PATH", "RERANKER_WEIGHT", "RERANKER_THREADS", "DEMO_INVITE_CODE"):
+             "RERANKER_PATH", "RERANKER_WEIGHT", "RERANKER_THREADS", "SIGNUPS_PER_IP_PER_HOUR"):
     os.environ[name] = ""  # empty is the code's default
 
 import auth  # noqa: E402
@@ -130,9 +130,10 @@ def env(tmp_path, monkeypatch):
     """The API in an empty folder of its own: its own data/app.db, recordings and caches."""
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("GNANI_CALL_LIMIT", "4000")
-    monkeypatch.setenv("DAILY_CALL_CAP_PER_USER", "60")
+    for name, default in (("STT_DAILY_LIMIT", "20"), ("TTS_DAILY_LIMIT", "20"), ("ENROLL_DAILY_LIMIT", "40")):
+        monkeypatch.setenv(name, default)  # the defaults, whatever .env says
     monkeypatch.delenv("OWNER_EMAIL", raising=False)
-    monkeypatch.setenv("DEMO_INVITE_CODE", "")  # open sign-up, whatever .env says
+    monkeypatch.delenv("LIMIT_EXEMPT_EMAILS", raising=False)
     monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
     monkeypatch.delenv("TRUST_PROXY", raising=False)
     monkeypatch.delenv("GNANI_MOCK", raising=False)  # FakeGnani, not mock mode, unless a test sets it

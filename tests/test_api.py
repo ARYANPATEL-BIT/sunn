@@ -128,30 +128,6 @@ def test_google_auth_invalid_tokens_and_lockout(env, monkeypatch):
         assert res.json()["error"] == "invalid_google_token"
 
 
-def test_google_auth_invite_code_enforcement(env, monkeypatch):
-    monkeypatch.setenv("DEMO_INVITE_CODE", "judge-secret-2026")
-    client = env.client()
-
-    mock_res = MagicMock()
-    mock_res.status_code = 200
-    mock_res.json.return_value = {
-        "iss": "https://accounts.google.com",
-        "sub": "invite-sub-555",
-        "email": "invite_google@example.com",
-        "email_verified": "true",
-        "name": "Invited User",
-    }
-
-    with patch("requests.get", return_value=mock_res):
-        # Missing invite code should be rejected with 403
-        bad = client.post("/auth/google", json={"id_token": "token-1", "consent": True})
-        assert bad.status_code == 403
-        assert bad.json()["error"] == "invite_required"
-
-        # Correct invite code succeeds
-        good = client.post("/auth/google", json={"id_token": "token-1", "invite_code": "judge-secret-2026", "consent": True})
-        assert good.status_code == 200
-        assert good.json()["email"] == "invite_google@example.com"
 
 
 def test_google_auth_password_login_refused_gracefully(env):
@@ -378,23 +354,6 @@ def test_credit_limit_refuses_new_calls_but_not_cached_ones(env, monkeypatch):
     assert db.row("SELECT SUM(cached = 0) AS sent, SUM(cached) AS cached FROM api_calls") == {"sent": 1, "cached": 1}
 
 
-def test_daily_cap_is_per_user_and_per_day(env, monkeypatch):
-    client = env.signup()
-    pid = phrase_id(client, "पानी चाहिए")
-    monkeypatch.setenv("DAILY_CALL_CAP_PER_USER", "1")
-    first = env.recording()
-    env.fake.transcripts.append("पानी चाहिए")
-    assert client.post("/me/enroll", data={"phrase_id": pid}, files=first).status_code == 200
-
-    refused = client.post("/me/enroll", data={"phrase_id": pid}, files=env.recording())
-    assert refused.status_code == 429 and refused.json()["error"] == "daily_cap_reached"
-    assert client.post("/speak", json={"text": "नमस्ते"}).json()["error"] == "daily_cap_reached"
-    assert client.post("/me/enroll", data={"phrase_id": pid}, files=first).status_code == 200  # cached
-    env.enroll_phrase(env.signup(), "पानी चाहिए")  # someone else has a cap of their own
-
-    db.execute("UPDATE api_calls SET created_at = '2026-01-01T23:59:59+00:00'")  # those were yesterday
-    env.enroll_phrase(client, "पानी चाहिए")
-    assert len(env.fake.sent("stt")) == 3
 
 
 def test_deleting_an_account_unties_its_calls(env):
@@ -424,15 +383,15 @@ def test_demo_recordings_keep_their_source(env):
     assert len(env.fake.sent("stt")) == 3  # refused before Prisma
 
 
-def test_usage_is_for_the_owner_only(env, monkeypatch):
+def test_server_usage_is_for_the_owner_only(env, monkeypatch):
     client = env.signup()
-    assert client.get("/me/usage").json()["error"] == "not_owner"
+    assert client.get("/admin/usage").json()["error"] == "not_owner"
     monkeypatch.setenv("OWNER_EMAIL", client.get("/auth/me").json()["email"].upper())
     env.enroll_phrase(client, "पानी चाहिए")
-    usage = client.get("/me/usage").json()
+    usage = client.get("/admin/usage").json()
     assert usage["limit"] == 4000 and usage["sent"] == 1 and usage["remaining"] == 3999
     assert usage["by_kind"]["stt"]["sent"] == 1 and usage["by_kind"]["stt"]["sent_audio_seconds"] == 1.0
-    assert env.signup().get("/me/usage").status_code == 403
+    assert env.signup().get("/admin/usage").status_code == 403
 
 
 # --- own voice ---

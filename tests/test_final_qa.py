@@ -19,7 +19,8 @@ def test_env_example_has_only_safe_placeholders():
     assert "JWT_SECRET" in parsed
     assert "GNANI_CALL_LIMIT" in parsed
     assert "OWNER_EMAIL" in parsed
-    assert "DAILY_CALL_CAP_PER_USER" in parsed
+    assert "STT_DAILY_LIMIT" in parsed
+    assert "DAILY_CALL_CAP_PER_USER" not in parsed and "DEMO_INVITE_CODE" not in parsed
     assert "DATA_DIR" in parsed
     assert "TRUST_PROXY" in parsed
 
@@ -30,7 +31,7 @@ def test_env_example_has_only_safe_placeholders():
     assert parsed["GROQ_MODEL"] == "openai/gpt-oss-120b"
     assert parsed["JWT_SECRET"] == "generate-one-with-the-command-above"
     assert parsed["OWNER_EMAIL"] == "you@example.com"
-    assert parsed["DEMO_INVITE_CODE"] == ""
+    assert (parsed["STT_DAILY_LIMIT"], parsed["TTS_DAILY_LIMIT"], parsed["ENROLL_DAILY_LIMIT"]) == ("20", "20", "40")
     assert parsed["TRUST_PROXY"] == "0"
 
 

@@ -188,8 +188,8 @@ def test_stt_missing_transcript_field(tmp_path, monkeypatch):
     assert "missing the transcript field" in exc.value.detail
 
 
-def test_stt_rate_limit_and_daily_cap(tmp_path, monkeypatch):
-    """Global limit and user daily cap reject before making network calls."""
+def test_stt_rate_limit_and_daily_limit(tmp_path, monkeypatch):
+    """Global limit and user daily limit reject before making network calls."""
     wav_path = str(tmp_path / "test.wav")
     with open(wav_path, "wb") as f:
         f.write(make_test_wav_bytes(1.0))
@@ -210,13 +210,17 @@ def test_stt_rate_limit_and_daily_cap(tmp_path, monkeypatch):
     assert exc_limit.value.status == 429
     assert exc_limit.value.code == "credit_limit_reached"
 
-    # Exceed user daily cap
+    # Exceed user daily limit
     monkeypatch.setenv("GNANI_CALL_LIMIT", "1000")
-    monkeypatch.setenv("DAILY_CALL_CAP_PER_USER", "0")
+    monkeypatch.setenv("STT_DAILY_LIMIT", "0")
+    monkeypatch.delenv("LIMIT_EXEMPT_EMAILS", raising=False)
+    monkeypatch.delenv("OWNER_EMAIL", raising=False)
+    user_id = db.execute("INSERT INTO users (name, email, password_hash, language, consent_given_at)"
+                         " VALUES ('A', 'a@example.com', 'x', 'hi', '2026-01-01')")
     with pytest.raises(gnani.GnaniError) as exc_cap:
-        gnani.post("stt", prisma.URL, user_id=99, data={}, files={})
+        gnani.post("stt", prisma.URL, user_id=user_id, quota="stt", data={}, files={})
     assert exc_cap.value.status == 429
-    assert exc_cap.value.code == "daily_cap_reached"
+    assert exc_cap.value.code == "daily_limit" and exc_cap.value.extra["kind"] == "stt"
 
 
 # =============================================================================
