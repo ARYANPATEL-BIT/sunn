@@ -1,6 +1,43 @@
 import { enroll, expect, signUp, t, test } from './helpers.js'
 
 test.describe('dynamic phrase onboarding goal', () => {
+  test('Scenario 0: new user starts with no goal; Speak shows intro, not 0 of 10; Record phrases opens goal selection', async ({ page }) => {
+    const user = await signUp(page.request, { speaks: 'en' })
+
+    // Visit /app/speak directly as a brand new user
+    await page.goto('/app/speak')
+
+    // Verifies introductory text is displayed
+    await expect(page.getByRole('heading', { name: t('en', 'speak.chooseGoalTitle') })).toBeVisible()
+    await expect(page.getByText(t('en', 'speak.chooseGoalSubtitle'))).toBeVisible()
+    const recordPhrasesBtn = page.getByRole('button', { name: t('en', 'speak.recordPhrases') })
+    await expect(recordPhrasesBtn).toBeVisible()
+
+    // Verifies that misleading defaults are NOT displayed
+    await expect(page.getByText('0 of 10 are ready')).toHaveCount(0)
+    await expect(page.getByText('0 / 10')).toHaveCount(0)
+    await expect(page.getByText('10 selected')).toHaveCount(0)
+
+    // Click Record phrases opens goal selection at /app/enroll
+    await recordPhrasesBtn.click()
+    await expect(page).toHaveURL(/\/app\/enroll$/)
+    await expect(page.getByRole('heading', { name: t('en', 'enroll.goalTitle') })).toBeVisible()
+
+    // Confirm 10 phrases goal
+    await page.getByRole('button', { name: t('en', 'enroll.goalContinue') }).click()
+
+    // Teach now reflects 0 / 10
+    await expect(page.getByText('0 / 10')).toBeVisible()
+
+    // Returning to Speak now reflects 0 of 10
+    await page.goto('/app/speak')
+    await expect(page.getByText(t('en', 'speak.noneBody', { n: 0, total: 10 }))).toBeVisible()
+
+    // Persists across reload
+    await page.reload()
+    await expect(page.getByText(t('en', 'speak.noneBody', { n: 0, total: 10 }))).toBeVisible()
+  })
+
   test('Scenario A: new user selects 10 phrases goal and records first phrase', async ({ page }) => {
     const user = await signUp(page.request, { speaks: 'en' })
     await page.goto('/app/enroll')

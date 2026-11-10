@@ -57,16 +57,11 @@ export default function Enroll() {
 
   useEffect(() => {
     if (phrases && phrases.length > 0) {
-      const readyCount = phrases.filter(ready).length
-      let confirmed = false
-      try {
-        confirmed = localStorage.getItem(`goal_confirmed_${user?.id}`) === '1'
-      } catch {}
-      if (readyCount === 0 && !confirmed) {
+      if (!user?.phrase_goal) {
         setChoosingGoal(true)
       }
     }
-  }, [phrases, user?.id])
+  }, [phrases, user?.phrase_goal])
 
   if (!phrases) {
     return (

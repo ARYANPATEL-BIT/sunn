@@ -191,9 +191,26 @@ export default function Speak() {
     recorder.reset?.()
   }
 
+  if (!user?.phrase_goal) {
+    return (
+      <section className="screen narrow empty-state speak-intro-screen" data-tour="speak-intro">
+        <div className="device-card goal-card speak-intro-card">
+          <Grille className="grille-strip" />
+          <h1 className="large-title">{t('speak.chooseGoalTitle')}</h1>
+          <p className="lede-sm">{t('speak.chooseGoalSubtitle')}</p>
+          <div className="actions">
+            <PrimaryButton icon="mic" onClick={() => go('/app/enroll', { state: { chooseGoal: true } })}>
+              {t('speak.recordPhrases')}
+            </PrimaryButton>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   if (learned && !learned.open) {
     return (
-      <section className="screen narrow empty-state">
+      <section className="screen narrow empty-state" data-tour="speak-gate">
         <h1 className="large-title">{t('speak.none')}</h1>
         <p className="lede-sm">{t('speak.noneBody', { n: learned.ready, total: learned.total })}</p>
         <PrimaryButton icon="mic" onClick={() => go('/app/enroll')}>
@@ -258,7 +275,7 @@ export default function Speak() {
                 : null}
       </div>
 
-      <div className="device speak-device">
+      <div className="device speak-device" data-tour="speak-recording">
         <Grille className="grille-strip" />
 
         <Readout

@@ -166,15 +166,17 @@ export function getTargetPhrases(phrases, language, goal = 10) {
 
 // Central calculation for preparation progress toward the chosen goal.
 // Speak opens once every phrase in the target goal is ready.
-export function speakProgress(phrases, language, userGoal = 10) {
+export function speakProgress(phrases, language, userGoal = null) {
+  const hasUserGoal = userGoal != null && userGoal > 0
   if (!Array.isArray(phrases) || !phrases.length) {
-    const fallbackGoal = userGoal || 10
+    const fallbackGoal = hasUserGoal ? userGoal : 10
     return {
+      hasGoal: hasUserGoal,
       ready: 0,
       total: fallbackGoal,
       open: false,
       available: 0,
-      goal: fallbackGoal,
+      goal: hasUserGoal ? userGoal : null,
       targetPhrases: [],
       nextPhrase: null,
       totalDone: 0,
@@ -189,11 +191,12 @@ export function speakProgress(phrases, language, userGoal = 10) {
 
   if (!starter.length && totalAvailable === 0) {
     return {
+      hasGoal: hasUserGoal,
       ready: 0,
       total: 1,
       open: false,
       available: 0,
-      goal: 1,
+      goal: hasUserGoal ? 1 : null,
       targetPhrases: [],
       nextPhrase: null,
       totalDone: 0,
@@ -201,7 +204,7 @@ export function speakProgress(phrases, language, userGoal = 10) {
     }
   }
 
-  const effectiveGoal = Math.max(1, Math.min(userGoal || 10, totalAvailable))
+  const effectiveGoal = hasUserGoal ? Math.max(1, Math.min(userGoal, totalAvailable)) : Math.min(10, totalAvailable)
   const targetPhrases = fullOrder.slice(0, effectiveGoal)
 
   const done = targetPhrases.filter(ready).length
@@ -209,11 +212,12 @@ export function speakProgress(phrases, language, userGoal = 10) {
   const nextPhrase = targetPhrases.find((p) => !ready(p)) || fullOrder.find((p) => !ready(p)) || null
 
   return {
+    hasGoal: hasUserGoal,
     ready: done,
     total: effectiveGoal,
-    open: done >= effectiveGoal,
+    open: hasUserGoal && done >= effectiveGoal,
     available: totalAvailable,
-    goal: effectiveGoal,
+    goal: hasUserGoal ? effectiveGoal : null,
     targetPhrases,
     nextPhrase,
     totalDone,

@@ -145,7 +145,7 @@ def public(user):
                                           "caregiver_name", "caregiver_phone")},
             "has_own_voice": user["voice_embedding"] is not None, "use_own_voice": bool(user["use_own_voice"]),
             "can_clone_voice": user["language"] in speak.CLONE_LANGUAGES,
-            "phrase_goal": int(user["phrase_goal"]) if user.get("phrase_goal") is not None else 10}
+            "phrase_goal": int(user["phrase_goal"]) if user.get("phrase_goal") is not None else None}
 
 
 def get_user(user_id):
