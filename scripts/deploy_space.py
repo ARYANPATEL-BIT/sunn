@@ -142,5 +142,6 @@ if __name__ == "__main__":
     print(f"open it at {api.space_info(args.space).host} (follow the build in the Logs tab of "
           f"https://huggingface.co/spaces/{args.space})")
     print("the Space needs these in Settings > Variables and secrets:\n"
-          "  secrets:   GNANI_STT_API_KEY, GNANI_TTS_API_KEY, JWT_SECRET, GROQ_API_KEY, DEMO_INVITE_CODE\n"
-          "  variables: TRUST_PROXY=1, GNANI_CALL_LIMIT, DAILY_CALL_CAP_PER_USER, GROQ_MODEL")
+          "  secrets:   GNANI_STT_API_KEY, GNANI_TTS_API_KEY, JWT_SECRET, GROQ_API_KEY\n"
+          "  variables: TRUST_PROXY=1, GNANI_CALL_LIMIT, GROQ_MODEL, and optionally OWNER_EMAIL,\n"
+          "             STT_DAILY_LIMIT, TTS_DAILY_LIMIT, ENROLL_DAILY_LIMIT, LIMIT_EXEMPT_EMAILS")
