@@ -129,5 +129,9 @@ def post(kind, url, audio_seconds=None, user_id=None, **request):
     else:
         raise GnaniError("gnani_unreachable", f"the Gnani {kind} service did not answer ({failure})")
     if not response.ok:
+        if response.status_code in (401, 403):
+            raise GnaniError("gnani_rejected", f"Gnani {kind} authentication failed ({response.status_code}): {reason(response)}", status=502)
+        if response.status_code == 429:
+            raise GnaniError("credit_limit_reached", f"Gnani {kind} rate limit or quota reached (429): {reason(response)}", status=429)
         raise GnaniError("gnani_rejected", f"Gnani refused the {kind} request ({response.status_code}): {reason(response)}")
     return response
