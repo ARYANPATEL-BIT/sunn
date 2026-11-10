@@ -26,6 +26,16 @@
         "lang": "hi"
       },
       {
+        "text": "मुझे पानी चाहिए",
+        "latin": "mujhe paani chaahiye",
+        "lang": "hi"
+      },
+      {
+        "text": "जल चाहिए",
+        "latin": "jal chaahiye",
+        "lang": "hi"
+      },
+      {
         "text": "I need water",
         "latin": "I need water",
         "lang": "en"
@@ -38,6 +48,11 @@
       {
         "text": "Can I have some water?",
         "latin": "Can I have some water?",
+        "lang": "en"
+      },
+      {
+        "text": "Please give me water",
+        "latin": "Please give me water",
         "lang": "en"
       }
     ]
@@ -100,6 +115,16 @@
         "text": "बाथरूम जाना है",
         "latin": "bathroom jaana hai",
         "lang": "hi"
+      },
+      {
+        "text": "मुझे बाथरूम जाना है",
+        "latin": "mujhe bathroom jaana hai",
+        "lang": "hi"
+      },
+      {
+        "text": "I need the bathroom",
+        "latin": "I need the bathroom",
+        "lang": "en"
       },
       {
         "text": "Where is the restroom?",
@@ -672,13 +697,33 @@
         "lang": "hi"
       },
       {
+        "text": "मदद चाहिए",
+        "latin": "madad chaahiye",
+        "lang": "hi"
+      },
+      {
+        "text": "मुझे मदद चाहिए",
+        "latin": "mujhe madad chaahiye",
+        "lang": "hi"
+      },
+      {
         "text": "Emergency help needed",
         "latin": "Emergency help needed",
         "lang": "en"
       },
       {
+        "text": "I need help",
+        "latin": "I need help",
+        "lang": "en"
+      },
+      {
         "text": "Please help me!",
         "latin": "Please help me!",
+        "lang": "en"
+      },
+      {
+        "text": "Could someone help?",
+        "latin": "Could someone help?",
         "lang": "en"
       },
       {
