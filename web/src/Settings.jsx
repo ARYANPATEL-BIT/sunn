@@ -348,7 +348,13 @@ export default function Settings() {
       </Group>
 
       {/* Accessibility */}
-      <Group title={t('settings.sectionAccessibility')} titleId="heading-accessibility" footer={t('settings.touchHelp')}>
+      <Group
+        title={t('settings.sectionAccessibility')}
+        titleId="heading-accessibility"
+        footer={t('settings.touchHelp')}
+        className="settings-accessibility-group"
+        data-tour="settings-accessibility"
+      >
         <SwitchRow
           id="motion"
           title={t('settings.motionLabel')}

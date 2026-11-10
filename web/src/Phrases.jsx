@@ -481,7 +481,7 @@ export default function Phrases() {
 
   return (
     <section className="screen phrases-screen">
-      <header className="screen-header">
+      <header className="screen-header phrases-header" data-tour="phrases-header">
         <div>
           <h1 className="large-title">{t('phrases.title')}</h1>
           {totalCount > 0 && (

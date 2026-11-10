@@ -2492,6 +2492,12 @@ input:focus-visible + .file-pick {
 
 /* ---------- Progress ---------- */
 
+.progress-header-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .progress-section {
   display: grid;
   gap: 12px;
@@ -3326,6 +3332,7 @@ input:focus-visible + .file-pick {
 .presenter-target-highlight {
   position: relative !important;
   z-index: 40 !important;
+  scroll-margin-top: calc(var(--header-height, 4rem) + 16px) !important;
   outline: 3px solid var(--accent, #ea580c) !important;
   outline-offset: 4px !important;
   box-shadow: 0 0 0 5px rgba(234, 88, 12, 0.22),

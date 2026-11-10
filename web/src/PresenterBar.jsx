@@ -10,7 +10,7 @@ export const DEMO_STEPS = [
     shortKey: 'presenter.stepShort_1',
     titleKey: 'presenter.stepOnboardingTitle',
     cueKey: 'presenter.stepOnboardingCue',
-    targetSelector: '.onboarding-step, .onboarding, .screen',
+    targetSelector: '[data-tour="onboarding-step"], .onboarding-step, .onboarding, .screen',
   },
   {
     id: 'phrases',
@@ -18,7 +18,7 @@ export const DEMO_STEPS = [
     shortKey: 'presenter.stepShort_2',
     titleKey: 'presenter.stepPhrasesTitle',
     cueKey: 'presenter.stepPhrasesCue',
-    targetSelector: '.phrases-list, .phrase-card, .phrases-search, .phrases-screen',
+    targetSelector: '[data-tour="phrases-header"], .phrases-header, .phrases-screen .screen-header',
   },
   {
     id: 'speak',
@@ -26,7 +26,7 @@ export const DEMO_STEPS = [
     shortKey: 'presenter.stepShort_3',
     titleKey: 'presenter.stepSpeakTitle',
     cueKey: 'presenter.stepSpeakCue',
-    targetSelector: '.speak-device, .push-button, .readout, .speak',
+    targetSelector: '[data-tour="speak-recording"], .speak-device, [data-tour="speak-intro"], .speak-intro-card',
   },
   {
     id: 'settings',
@@ -34,7 +34,7 @@ export const DEMO_STEPS = [
     shortKey: 'presenter.stepShort_4',
     titleKey: 'presenter.stepSettingsTitle',
     cueKey: 'presenter.stepSettingsCue',
-    targetSelector: '[aria-labelledby="heading-accessibility"], #heading-accessibility, .settings-screen .group-wrap, .settings-screen',
+    targetSelector: '[data-tour="settings-accessibility"], .settings-accessibility-group, [aria-labelledby="heading-accessibility"]',
   },
   {
     id: 'progress',
@@ -42,7 +42,7 @@ export const DEMO_STEPS = [
     shortKey: 'presenter.stepShort_5',
     titleKey: 'presenter.stepProgressTitle',
     cueKey: 'presenter.stepProgressCue',
-    targetSelector: '[aria-labelledby="heading-overview"], .chart, #your-data, .progress-screen',
+    targetSelector: '[data-tour="progress-summary"], .progress-header-summary, [aria-labelledby="heading-overview"]',
   },
 ]
 
@@ -64,6 +64,7 @@ export default function PresenterBar({ onClose }) {
 
   // Spotlight target reference
   const highlightedRef = useRef(null)
+  const lastScrolledStepRef = useRef(-1)
 
   // On mount: explicitly lock to Step 1 and navigate to /app/onboarding
   useEffect(() => {
@@ -196,6 +197,7 @@ export default function PresenterBar({ onClose }) {
 
   function handleRestart() {
     freshLaunchRef.current = true
+    lastScrolledStepRef.current = -1
     setCompleted(false)
     setStepIndex(0)
     navigate(DEMO_STEPS[0].path, { viewTransition: !reducedMotion() })
@@ -216,25 +218,44 @@ export default function PresenterBar({ onClose }) {
       return
     }
 
-    const timer = setTimeout(() => {
+    let attempts = 0
+    let cancelled = false
+    let timerId = null
+
+    function findAndPosition() {
+      if (cancelled) return
       const target = document.querySelector(currentStep.targetSelector)
       if (target) {
         target.classList.add('presenter-target-highlight')
         highlightedRef.current = target
-        try {
-          target.scrollIntoView({
-            behavior: reducedMotion() ? 'auto' : 'smooth',
-            block: 'center',
-          })
-        } catch {
-          // ignore scroll errors
+        if (lastScrolledStepRef.current !== stepIndex) {
+          lastScrolledStepRef.current = stepIndex
+          try {
+            target.scrollIntoView({
+              behavior: reducedMotion() ? 'auto' : 'smooth',
+              block: 'start',
+            })
+          } catch {
+            // ignore scroll errors
+          }
         }
+        updatePosition()
+        return
       }
-      updatePosition()
-    }, 150)
+
+      attempts++
+      if (attempts < 6) {
+        timerId = setTimeout(findAndPosition, 100)
+      } else {
+        updatePosition()
+      }
+    }
+
+    timerId = setTimeout(findAndPosition, 80)
 
     return () => {
-      clearTimeout(timer)
+      cancelled = true
+      if (timerId) clearTimeout(timerId)
       if (highlightedRef.current) {
         highlightedRef.current.classList.remove('presenter-target-highlight')
         highlightedRef.current = null
@@ -428,10 +449,10 @@ export default function PresenterBar({ onClose }) {
                 type="button"
                 className="presenter-action-btn primary is-finish"
                 onClick={onClose}
-                aria-label={t('presenter.exit')}
+                aria-label={t('presenter.close')}
               >
-                <Icon name="check" />
-                <span>{t('presenter.finish')}</span>
+                <Icon name="x" />
+                <span>{t('presenter.close')}</span>
               </button>
             </div>
 

@@ -168,6 +168,9 @@ export default {
   'speak.title': 'Speak',
   'speak.none': 'Record your first phrases',
   'speak.noneBody': '{n} of {total} are ready. Each one needs 3 recordings.',
+  'speak.chooseGoalTitle': 'Choose how many phrases you want to prepare first',
+  'speak.chooseGoalSubtitle': 'Each phrase needs 3 recordings.',
+  'speak.recordPhrases': 'Record phrases',
   'speak.goTeach': 'Record phrases',
   'speak.maybe': 'Maybe',
   'speak.unknown': "This phrase wasn't recognised. Speak again, or type the right phrase below.",
@@ -401,6 +404,7 @@ export default {
   'presenter.stepProgressCue':
     'Explain that metrics track speech recognition consistency, not medical recovery. Highlight the complete account deletion guarantee.',
   'presenter.finish': 'Finish walkthrough',
+  'presenter.close': 'Close',
   'presenter.completedTitle': 'Walkthrough Completed',
   'presenter.completedDesc':
     'You have explored all 5 core modules of Sunn: onboarding, phrases, speech recognition, accessibility, and privacy.',

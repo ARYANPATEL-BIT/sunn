@@ -169,6 +169,9 @@ export default {
   'speak.title': 'बोला',
   'speak.none': 'तुमची पहिली वाक्ये रेकॉर्ड करा',
   'speak.noneBody': '{total} पैकी {n} तयार आहेत. प्रत्येकाला 3 रेकॉर्डिंग लागतात.',
+  'speak.chooseGoalTitle': 'प्रथम किती वाक्ये तयार करायची आहेत ते निवडा',
+  'speak.chooseGoalSubtitle': 'प्रत्येक वाक्यासाठी ३ रेकॉर्डिंग आवश्यक आहेत.',
+  'speak.recordPhrases': 'वाक्ये रेकॉर्ड करा',
   'speak.goTeach': 'वाक्ये रेकॉर्ड करा',
   'speak.maybe': 'कदाचित',
   'speak.unknown': 'हे वाक्य ओळखता आले नाही. पुन्हा बोला, किंवा योग्य वाक्य खाली टाइप करा.',
@@ -402,6 +405,7 @@ export default {
   'presenter.stepProgressCue':
     'आकडे बोलण्याच्या ओळखीतील सातत्य दाखवतात, वैद्यकीय सुधारणा नाही, हे समजावा. खाते पूर्ण हटवण्याची हमी दाखवा.',
   'presenter.finish': 'टूर पूर्ण करा',
+  'presenter.close': 'बंद करा',
   'presenter.completedTitle': 'वॉकथ्रू पूर्ण झाले',
   'presenter.completedDesc':
     'तुम्ही सुन्नचे सर्व ५ मुख्य मॉड्युल्स पाहिले आहेत: ऑनबोर्डिंग, वाक्ये, आवाज ओळख, सुलभता आणि गोपनीयता.',

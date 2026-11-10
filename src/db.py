@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS users (
     caregiver_name TEXT,
     caregiver_phone TEXT,
     google_id TEXT,
-    phrase_goal INTEGER NOT NULL DEFAULT 10
+    phrase_goal INTEGER
 );
 -- contexts is comma separated: home, hospital, market, or any. language is the one the phrase
 -- is in: Timbre says it in that language, and it is matched only to recordings in it (or English).
@@ -144,7 +144,7 @@ ADDED_COLUMNS = [
     ("users", "caregiver_name", "TEXT"),
     ("users", "caregiver_phone", "TEXT"),
     ("users", "google_id", "TEXT"),
-    ("users", "phrase_goal", "INTEGER NOT NULL DEFAULT 10"),
+    ("users", "phrase_goal", "INTEGER DEFAULT 10"),
     ("phrases", "contexts", "TEXT NOT NULL DEFAULT 'any'"),
     ("phrases", "urgent", "INTEGER NOT NULL DEFAULT 0"),
     ("phrases", "language", f"TEXT {LANGUAGE_CHECK}"),
@@ -171,11 +171,27 @@ def widen_language_checks(conn):
         conn.execute(f"ALTER TABLE {table}_wide RENAME TO {table}")
 
 
+def relax_phrase_goal_notnull(conn):
+    """If users table has a NOT NULL constraint on phrase_goal from earlier schema, relax it."""
+    cols = conn.execute("PRAGMA table_info(users)").fetchall()
+    phrase_goal_col = next((c for c in cols if c[1] == "phrase_goal"), None)
+    if phrase_goal_col and phrase_goal_col[3] == 1:
+        sql = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'").fetchone()[0]
+        new_sql = sql.replace("phrase_goal INTEGER NOT NULL DEFAULT 10", "phrase_goal INTEGER").replace("users", "users_relax", 1)
+        columns = ", ".join(r[1] for r in cols)
+        conn.execute("DROP TABLE IF EXISTS users_relax")
+        conn.execute(new_sql)
+        conn.execute(f"INSERT INTO users_relax ({columns}) SELECT {columns} FROM users")
+        conn.execute("DROP TABLE users")
+        conn.execute("ALTER TABLE users_relax RENAME TO users")
+
+
 def init():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     with closing(sqlite3.connect(DB_PATH)) as conn, conn:
         conn.executescript(SCHEMA)
         widen_language_checks(conn)
+        relax_phrase_goal_notnull(conn)
         for table, column, declaration in ADDED_COLUMNS:
             if column not in {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}:
                 conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {declaration}")
@@ -183,6 +199,9 @@ def init():
         # which could not change then.
         conn.execute("UPDATE samples SET language = (SELECT language FROM users WHERE users.id = samples.user_id)"
                      " WHERE language IS NULL")
+        # Existing users with 0 recordings who received an automatic default 10 have phrase_goal reset to NULL
+        # so they can explicitly choose their starting goal; users with recordings retain their goals.
+        conn.execute("UPDATE users SET phrase_goal = NULL WHERE phrase_goal = 10 AND id NOT IN (SELECT DISTINCT user_id FROM samples)")
         # Phrases from before phrases.language: Devanagari ones are Hindi (the only such language
         # then), the rest are in the language they were recorded in, else their user's.
         for p in conn.execute("SELECT p.id, p.text, u.language AS user_language, (SELECT s.language FROM samples s"

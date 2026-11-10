@@ -7,7 +7,7 @@ import db
 def test_user_signup_default_phrase_goal(env):
     user_client = env.signup("hi")
     me = user_client.get("/auth/me").json()
-    assert me["phrase_goal"] == 10
+    assert me["phrase_goal"] is None
 
 
 def test_update_phrase_goal_success(env):
@@ -39,7 +39,7 @@ def test_phrase_goal_cross_user_isolation(env):
 
     user1.patch("/me", json={"phrase_goal": 25})
     assert user1.get("/auth/me").json()["phrase_goal"] == 25
-    assert user2.get("/auth/me").json()["phrase_goal"] == 10
+    assert user2.get("/auth/me").json()["phrase_goal"] is None
 
 
 def test_db_migration_phrase_goal(tmp_path, monkeypatch):
@@ -62,8 +62,25 @@ def test_db_migration_phrase_goal(tmp_path, monkeypatch):
         caregiver_phone TEXT,
         google_id TEXT
     );
+    CREATE TABLE samples (
+        id INTEGER PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        audio_path TEXT NOT NULL,
+        duration_ms INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        hypothesis TEXT,
+        phrase_id INTEGER,
+        slot_word_id INTEGER,
+        template_id INTEGER,
+        language TEXT,
+        speech_source TEXT
+    );
     INSERT INTO users (id, name, email, password_hash, language, consent_given_at)
-    VALUES (1, 'Legacy User', 'legacy@sunn.app', 'hash123', 'hi', '2026-01-01');
+    VALUES (1, 'Legacy User With Samples', 'legacy1@sunn.app', 'hash123', 'hi', '2026-01-01');
+    INSERT INTO users (id, name, email, password_hash, language, consent_given_at)
+    VALUES (2, 'Legacy User Without Samples', 'legacy2@sunn.app', 'hash123', 'hi', '2026-01-01');
+    INSERT INTO samples (id, user_id, audio_path, duration_ms, created_at)
+    VALUES (1, 1, '/audio/1.wav', 1200, '2026-01-01T00:00:00Z');
     """
     with closing(sqlite3.connect(test_db)) as conn, conn:
         conn.executescript(legacy_schema)
@@ -71,9 +88,12 @@ def test_db_migration_phrase_goal(tmp_path, monkeypatch):
     # Run db.init() migration
     db.init()
 
-    # Verify column was added with default value 10
+    # User 1 had samples -> retains goal (10)
+    # User 2 had no samples -> phrase_goal is None
     with closing(sqlite3.connect(test_db)) as conn:
-        row = conn.execute("SELECT id, name, phrase_goal FROM users WHERE id = 1").fetchone()
-        assert row[0] == 1
-        assert row[1] == "Legacy User"
-        assert row[2] == 10
+        row1 = conn.execute("SELECT id, name, phrase_goal FROM users WHERE id = 1").fetchone()
+        assert row1[0] == 1
+        assert row1[2] == 10
+        row2 = conn.execute("SELECT id, name, phrase_goal FROM users WHERE id = 2").fetchone()
+        assert row2[0] == 2
+        assert row2[2] is None

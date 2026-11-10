@@ -17,9 +17,9 @@ export function Toggle({ on, labelledBy, describedBy, ...props }) {
 
 // A plate of rows: a title above, rows with hairlines between, a footnote below. With bare,
 // the children bring their own plate (a radiogroup of Choices, a form).
-export function Group({ title, titleId, footer, footerId, bare, children }) {
+export function Group({ title, titleId, footer, footerId, bare, className, children, ...props }) {
   return (
-    <div className="group-wrap">
+    <div className={`group-wrap ${className || ''}`} {...props}>
       {title && (
         <h2 className="group-title" id={titleId}>
           {title}

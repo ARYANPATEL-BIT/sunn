@@ -169,6 +169,9 @@ export default {
   'speak.title': 'ਬੋਲੋ',
   'speak.none': 'ਆਪਣੇ ਪਹਿਲੇ ਵਾਕ ਰਿਕਾਰਡ ਕਰੋ',
   'speak.noneBody': '{total} ਵਿੱਚੋਂ {n} ਤਿਆਰ ਹਨ। ਹਰ ਇੱਕ ਲਈ 3 ਰਿਕਾਰਡਿੰਗਾਂ ਚਾਹੀਦੀਆਂ ਹਨ।',
+  'speak.chooseGoalTitle': 'ਪਹਿਲਾਂ ਕਿੰਨੇ ਵਾਕ ਤਿਆਰ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ ਚੁਣੋ',
+  'speak.chooseGoalSubtitle': 'ਹਰੇਕ ਵਾਕ ਲਈ 3 ਰਿਕਾਰਡਿੰਗਾਂ ਦੀ ਲੋੜ ਹੈ।',
+  'speak.recordPhrases': 'ਵਾਕ ਰਿਕਾਰਡ ਕਰੋ',
   'speak.goTeach': 'ਵਾਕ ਰਿਕਾਰਡ ਕਰੋ',
   'speak.maybe': 'ਸ਼ਾਇਦ',
   'speak.unknown': 'ਇਹ ਵਾਕ ਪਛਾਣਿਆ ਨਹੀਂ ਗਿਆ। ਫਿਰ ਬੋਲੋ, ਜਾਂ ਸਹੀ ਵਾਕ ਹੇਠਾਂ ਲਿਖੋ।',
@@ -402,6 +405,7 @@ export default {
   'presenter.stepProgressCue':
     'ਸਮਝਾਓ ਕਿ ਅੰਕੜੇ ਬੋਲੀ ਦੀ ਪਛਾਣ ਦੀ ਲਗਾਤਾਰਤਾ ਦਿਖਾਉਂਦੇ ਹਨ, ਡਾਕਟਰੀ ਸੁਧਾਰ ਨਹੀਂ। ਪੂਰਾ ਖਾਤਾ ਮਿਟਾਉਣ ਦੀ ਗਾਰੰਟੀ ਦਿਖਾਓ।',
   'presenter.finish': 'ਟੂਰ ਖਤਮ ਕਰੋ',
+  'presenter.close': 'ਬੰਦ ਕਰੋ',
   'presenter.completedTitle': 'ਵਾਕਥਰੂ ਪੂਰਾ ਹੋਇਆ',
   'presenter.completedDesc':
     'ਤੁਸੀਂ ਸੁੰਨ ਦੇ ਸਾਰੇ 5 ਮੁੱਖ ਮਾਡਿਊਲ ਦੇਖ ਲਏ ਹਨ: ਆਨਬੋਰਡਿੰਗ, ਵਾਕੰਸ਼, ਬੋਲ ਪਛਾਣ, ਪਹੁੰਚਯੋਗਤਾ ਅਤੇ ਪਰਦੇਦਾਰੀ।',

@@ -169,6 +169,9 @@ export default {
   'speak.title': 'બોલો',
   'speak.none': 'તમારાં પહેલાં વાક્યો રેકોર્ડ કરો',
   'speak.noneBody': '{total} માંથી {n} તૈયાર છે. દરેકને 3 રેકોર્ડિંગ જોઈએ.',
+  'speak.chooseGoalTitle': 'પહેલા કેટલા વાક્યો તૈયાર કરવા માંગો છો તે પસંદ કરો',
+  'speak.chooseGoalSubtitle': 'દરેક વાક્ય માટે ૩ રેકોર્ડિંગની જરૂર છે.',
+  'speak.recordPhrases': 'વાક્યો રેકોર્ડ કરો',
   'speak.goTeach': 'વાક્યો રેકોર્ડ કરો',
   'speak.maybe': 'કદાચ',
   'speak.unknown': 'આ વાક્ય ઓળખાયું નહીં. ફરી બોલો, અથવા સાચું વાક્ય નીચે ટાઇપ કરો.',
@@ -402,6 +405,7 @@ export default {
   'presenter.stepProgressCue':
     'આંકડા બોલીની ઓળખમાં સાતત્ય બતાવે છે, તબીબી સુધારો નહીં, તે સમજાવો. ખાતું પૂરેપૂરું કાઢી નાખવાની ખાતરી બતાવો.',
   'presenter.finish': 'ટૂર પૂર્ણ કરો',
+  'presenter.close': 'બંધ કરો',
   'presenter.completedTitle': 'વોકથ્રુ પૂર્ણ થયું',
   'presenter.completedDesc':
     'તમે સુન્નના તમામ ૫ મુખ્ય મોડ્યુલ જોઈ લીધા છે: ઓનબોર્ડિંગ, શબ્દસમૂહો, વાણી ઓળખ, ઍક્સેસિબિલિટી અને ગોપનીયતા.',

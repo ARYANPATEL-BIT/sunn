@@ -89,7 +89,7 @@ class User(BaseModel):
     has_own_voice: bool  # a cloned voice is recorded
     use_own_voice: bool  # /speak uses it
     can_clone_voice: bool  # own voice is offered in the language the user speaks (speak.CLONE_LANGUAGES)
-    phrase_goal: int = 10
+    phrase_goal: int | None = None
 
 
 class UserUpdate(Request):
