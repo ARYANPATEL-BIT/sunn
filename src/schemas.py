@@ -254,6 +254,7 @@ class Confirmed(BaseModel):
 
 class Speak(Request):
     text: str
+    language: Language | None = None
 
 
 # --- progress
