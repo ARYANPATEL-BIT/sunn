@@ -15,8 +15,6 @@ const FIELD_OF = {
   bad_email: 'email',
   email_taken: 'email',
   short_password: 'password',
-  invite_required: 'invite_code',
-  no_invite_code: 'invite_code',
 }
 
 // One field: the label above the input, then a hint and, under it, this field's error with an icon.
@@ -218,7 +216,7 @@ function useGoogleSignIn({ clientId, buttonRef, text = 'signin_with', onToken, o
 }
 
 export function LoginPage() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const { status, user, signedIn } = useAuth()
   const [params] = useSearchParams()
   const go = useGo()
@@ -255,7 +253,8 @@ export function LoginPage() {
       setBusy(true)
       show({})
       try {
-        const me = await api.authGoogle({ id_token: credential })
+        // A new Google account is made here too, speaking the page's language (Settings changes it).
+        const me = await api.authGoogle({ id_token: credential, language: lang, consent: true })
         leaving.current = true
         signedIn(me)
         const target = next || (isOnboarded(me.id) ? '/app/speak' : '/app/onboarding')
@@ -289,7 +288,6 @@ export function LoginPage() {
       const target = next || (isOnboarded(me.id) ? '/app/speak' : '/app/onboarding')
       go(target, { replace: true })
     } catch (error) {
-      // A wrong email and a wrong password get the same answer, so it isn't put under either.
       show({ form: error })
       setBusy(false)
     }
@@ -325,7 +323,13 @@ export function LoginPage() {
             )}
           </Field>
         </div>
-        <Alert error={errors.form} />
+        <Alert error={errors.form}>
+          {errors.form?.code === 'no_account' && (
+            <Link to={signupLink} viewTransition={!reducedMotion()}>
+              {t('login.createOne')}
+            </Link>
+          )}
+        </Alert>
         <PrimaryButton type="submit" className="block" disabled={busy}>
           {t(busy ? 'login.busy' : 'login.submit')}
         </PrimaryButton>
@@ -345,6 +349,7 @@ export function LoginPage() {
               <span>{t('auth.googleButton')}</span>
             </button>
           )}
+          <p className="form-hint">{t('login.googleNote')}</p>
         </div>
       </form>
     </AuthFrame>
@@ -360,31 +365,20 @@ export function SignupPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [inviteCode, setInviteCode] = useState(params.get('invite') || '')
-  const [inviteRequired, setInviteRequired] = useState(false)
   // The language the person speaks, not the page's, though it starts as the page's.
   const [speaks, setSpeaks] = useState(lang)
   const [consent, setConsent] = useState(false)
   const [busy, setBusy] = useState(false)
   const [googleClientId, setGoogleClientId] = useState('')
-  const refs = { name: useRef(null), email: useRef(null), password: useRef(null), invite_code: useRef(null) }
+  const refs = { name: useRef(null), email: useRef(null), password: useRef(null) }
   const googleBtnRef = useRef(null)
   const { errors, show, fromApi } = useFormErrors(refs)
   const leaving = useRef(false)
-  const signupStateRef = useRef({ inviteRequired, inviteCode, speaks, consent })
-  signupStateRef.current = { inviteRequired, inviteCode, speaks, consent }
+  const signupStateRef = useRef({ speaks, consent })
+  signupStateRef.current = { speaks, consent }
 
   useEffect(() => {
     let active = true
-    api
-      .config()
-      .then((cfg) => {
-        if (!active) return
-        if (cfg?.invite_required) {
-          setInviteRequired(true)
-        }
-      })
-      .catch(() => {})
     api
       .googleConfig()
       .then((cfg) => {
@@ -405,9 +399,6 @@ export function SignupPage() {
     text: 'signup_with',
     onToken: async (credential) => {
       const state = signupStateRef.current
-      if (state.inviteRequired && !state.inviteCode.trim()) {
-        return show({ invite_code: refusal('no_invite_code') })
-      }
       if (!state.consent) {
         return show({ form: refusal('consent_required') })
       }
@@ -417,7 +408,6 @@ export function SignupPage() {
       try {
         me = await api.authGoogle({
           id_token: credential,
-          invite_code: state.inviteCode.trim() || undefined,
           language: state.speaks,
           consent: true,
         })
@@ -444,7 +434,6 @@ export function SignupPage() {
     const found = {}
     if (!name.trim()) found.name = refusal('no_name')
     if (!EMAIL.test(email.trim())) found.email = refusal('bad_email')
-    if (inviteRequired && !inviteCode.trim()) found.invite_code = refusal('no_invite_code')
     if (password.length < MIN_PASSWORD) found.password = refusal('short_password')
     if (Object.keys(found).length) return show(found)
     setBusy(true)
@@ -456,7 +445,6 @@ export function SignupPage() {
         email: email.trim(),
         password,
         language: speaks,
-        invite_code: inviteCode.trim() || undefined,
       })
     } catch (error) {
       fromApi(error)
@@ -502,27 +490,6 @@ export function SignupPage() {
           <Field id="signup-email" label={t('auth.email')} error={errors.email}>
             {(aria) => <EmailInput value={email} onChange={setEmail} inputRef={refs.email} {...aria} />}
           </Field>
-          {inviteRequired && (
-            <Field
-              id="signup-invite"
-              label={t('signup.inviteCode')}
-              hint={t('signup.inviteHint')}
-              error={errors.invite_code}
-            >
-              {(aria) => (
-                <input
-                  ref={refs.invite_code}
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
-                  autoComplete="off"
-                  autoCapitalize="none"
-                  spellCheck={false}
-                  placeholder={t('signup.invitePlaceholder')}
-                  {...aria}
-                />
-              )}
-            </Field>
-          )}
           <Field
             id="signup-password"
             label={t('auth.password')}
