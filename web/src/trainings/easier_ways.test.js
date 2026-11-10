@@ -22,6 +22,26 @@ function calculateWordPause(wpm) {
   return Math.max(250, Math.round((60000 / wpm) * 0.45))
 }
 
+function computeActiveWordIndex(elapsedSec, totalDuration, words) {
+  if (totalDuration <= 0) return words.length
+  const progress = Math.min(1.0, Math.max(0.0, elapsedSec / totalDuration))
+  if (progress >= 1.0) return words.length
+
+  const syllables = words.map(countSyllables)
+  const totalSyllables = syllables.reduce((a, b) => a + b, 0) || 1
+
+  let cumulative = 0
+  for (let i = 0; i < words.length; i++) {
+    const startProg = cumulative / totalSyllables
+    cumulative += syllables[i]
+    const endProg = cumulative / totalSyllables
+    if (progress >= startProg && progress < endProg) {
+      return i
+    }
+  }
+  return words.length
+}
+
 test('countSyllables accurately counts Devanagari and Latin syllables', () => {
   // Devanagari
   assert.equal(countSyllables('पानी'), 2)
@@ -60,4 +80,48 @@ test('calculateWordPause scales inversely with WPM', () => {
   assert.ok(pause40 > pause60)
   assert.ok(pause60 > pause100)
   assert.ok(pause100 >= 250) // Minimum floor
+})
+
+test('computeActiveWordIndex synchronizes smoothly with audio progress', () => {
+  const words = ['Can', 'I', 'have', 'some', 'water?']
+  const duration = 2.5 // seconds
+
+  // Start of audio
+  assert.equal(computeActiveWordIndex(0.0, duration, words), 0)
+
+  // Progression through all words sequentially
+  const seenIndices = new Set()
+  const step = 0.05
+  for (let t = 0; t < duration; t += step) {
+    const idx = computeActiveWordIndex(t, duration, words)
+    seenIndices.add(idx)
+  }
+
+  // All 5 words must be visited sequentially
+  for (let i = 0; i < words.length; i++) {
+    assert.ok(seenIndices.has(i), `Word index ${i} was not highlighted`)
+  }
+
+  // At or past audio completion, index is words.length (cleared highlight)
+  assert.equal(computeActiveWordIndex(2.5, duration, words), words.length)
+  assert.equal(computeActiveWordIndex(3.0, duration, words), words.length)
+})
+
+test('computeActiveWordIndex handles pauses and resumes deterministically', () => {
+  const words = ['Water,', 'please']
+  const duration = 2.0
+
+  // Pause at 0.5s
+  const pausedIndex = computeActiveWordIndex(0.5, duration, words)
+  assert.equal(pausedIndex, 0)
+
+  // While paused, position does not change
+  assert.equal(computeActiveWordIndex(0.5, duration, words), pausedIndex)
+
+  // Resume from 0.5s to 1.5s
+  const resumedIndex = computeActiveWordIndex(1.5, duration, words)
+  assert.equal(resumedIndex, 1)
+
+  // Restart back to 0.0s
+  assert.equal(computeActiveWordIndex(0.0, duration, words), 0)
 })

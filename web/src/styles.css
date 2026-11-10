@@ -5892,7 +5892,7 @@ input:focus-visible + .file-pick {
   padding: 0 14px;
   font-size: 0.875rem;
   border: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--panel);
   color: var(--ink-2);
   border-radius: var(--r-button);
   cursor: pointer;
@@ -5900,16 +5900,29 @@ input:focus-visible + .file-pick {
 }
 
 .practice-submode-row .chip.submode-chip:hover {
-  background: var(--raised);
+  background: var(--body);
   color: var(--ink);
+  border-color: var(--edge);
+}
+
+.practice-submode-row .chip.submode-chip:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .practice-submode-row .chip.submode-chip[aria-checked='true'],
 .practice-submode-row .chip.submode-chip.selected {
-  background: var(--ink);
-  color: var(--paper);
-  border-color: var(--ink);
+  background: var(--well);
+  color: var(--ink);
+  border: 1.5px solid var(--edge);
   font-weight: 600;
+}
+
+:root[data-theme='dark'] .practice-submode-row .chip.submode-chip[aria-checked='true'],
+:root[data-theme='dark'] .practice-submode-row .chip.submode-chip.selected {
+  background: var(--raised);
+  color: var(--ink);
+  border: 1.5px solid var(--edge);
 }
 
 .record-toggle-btn.recording {
@@ -6468,7 +6481,7 @@ input:focus-visible + .file-pick {
   padding: 0 16px;
   border: 1px solid var(--line);
   border-radius: var(--r-button);
-  background: var(--surface);
+  background: var(--panel);
   color: var(--ink-2);
   font-weight: 500;
   cursor: pointer;
@@ -6476,23 +6489,31 @@ input:focus-visible + .file-pick {
 }
 
 .easier-ways-lang-row .chip.lang-chip:hover {
-  background: var(--raised);
+  background: var(--body);
   color: var(--ink);
   border-color: var(--edge);
 }
 
 .easier-ways-lang-row .chip.lang-chip:focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
 .easier-ways-lang-row .chip.lang-chip[aria-pressed='true'],
 .easier-ways-lang-row .chip.lang-chip[aria-checked='true'],
 .easier-ways-lang-row .chip.lang-chip.selected {
-  background: var(--ink);
-  color: var(--paper);
-  border-color: var(--ink);
+  background: var(--well);
+  color: var(--ink);
+  border: 1.5px solid var(--edge);
   font-weight: 600;
+}
+
+:root[data-theme='dark'] .easier-ways-lang-row .chip.lang-chip[aria-pressed='true'],
+:root[data-theme='dark'] .easier-ways-lang-row .chip.lang-chip[aria-checked='true'],
+:root[data-theme='dark'] .easier-ways-lang-row .chip.lang-chip.selected {
+  background: var(--raised);
+  color: var(--ink);
+  border: 1.5px solid var(--edge);
 }
 
 .lang-row-label {

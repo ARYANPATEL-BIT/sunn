@@ -684,3 +684,37 @@ def test_dynamic_alternative_attempts(env):
     speak_res = client.post("/speak", json={"text": "I want water", "language": "en"})
     assert speak_res.status_code == 200
     assert speak_res.headers["content-type"] == "audio/wav"
+
+
+def test_alternatives_language_matrix(env):
+    """Verify that English requests return English suggestions, and Hindi requests return Hindi suggestions."""
+    client = env.signup()
+
+    en_matrix = [
+        "I need water",
+        "I need help",
+        "I need the bathroom",
+    ]
+
+    for query in en_matrix:
+        res = client.post("/me/trainings/alternatives", json={"text": query, "lang": "en"})
+        assert res.status_code == 200
+        data = res.json()
+        assert len(data["alternatives"]) > 0, f"No English alternatives returned for: {query}"
+        for alt in data["alternatives"]:
+            assert alt["text"].isascii(), f"Non-English alternative returned for English query '{query}': {alt['text']}"
+            assert alt["text"] != query, f"Suggestion identical to query '{query}'"
+
+    hi_matrix = [
+        "मुझे पानी चाहिए",
+        "मुझे मदद चाहिए",
+        "मुझे बाथरूम जाना है",
+    ]
+
+    for query in hi_matrix:
+        res = client.post("/me/trainings/alternatives", json={"text": query, "lang": "hi"})
+        assert res.status_code == 200
+        data = res.json()
+        assert len(data["alternatives"]) > 0, f"No Hindi alternatives returned for: {query}"
+        for alt in data["alternatives"]:
+            assert not alt["text"].isascii(), f"Non-Hindi alternative returned for Hindi query '{query}': {alt['text']}"

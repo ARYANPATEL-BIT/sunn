@@ -1114,53 +1114,81 @@ def alternatives(body: AlternativesRequest, user=Depends(current_user)):
     norm_input = matcher.normalize(body.text)
     library = TAGGED_ALTERNATIVES if body.lang in ("hi", "en") else []  # other languages: Groq only
 
-    # 1. Search in Library: exact match or fuzzy match >= 0.85
-    best_meaning = None
-    best_variant = None
-    best_sim = 0.0
+    def get_ranked_alternatives(meaning):
+        """Return alternative suggestions strictly in the requested target language (body.lang)."""
+        lang_variants = [v for v in meaning["variants"] if v.get("lang") == body.lang]
+        if not lang_variants:
+            return []
 
-    for m in library:
-        for v in m["variants"]:
-            if norm_input == v["norm"] or norm_input == v["norm_latin"]:
-                best_meaning = m
-                best_variant = v
-                best_sim = 1.0
-                break
-        if best_meaning:
-            break
-
-    if not best_meaning:
-        for m in library:
-            for v in m["variants"]:
-                sim1 = Levenshtein.normalized_similarity(norm_input, v["norm"])
-                sim2 = Levenshtein.normalized_similarity(norm_input, v["norm_latin"])
-                sim = max(sim1, sim2)
-                if sim > best_sim:
-                    best_sim = sim
-                    best_meaning = m
-                    best_variant = v
-
-    if best_meaning and best_sim >= 0.85:
-        other_variants = [v for v in best_meaning["variants"] if v["text"] != body.text and v["norm"] != norm_input]
-        if not other_variants:
-            other_variants = best_meaning["variants"]
+        # Exclude the exact input phrase so we suggest alternatives, not the query itself
+        other_variants = [v for v in lang_variants if v["text"] != body.text and v["norm"] != norm_input]
+        candidates = other_variants if other_variants else lang_variants
 
         def rank_key(v):
             tricky_contained = len(v["sounds"] & tricky_set)
             return (tricky_contained, len(v["text"]), v["index"])
 
-        sorted_variants = sorted(other_variants, key=rank_key)
+        sorted_variants = sorted(candidates, key=rank_key)
         alts = []
         for v in sorted_variants[:4]:
             avoids = [s for s in tricky_ids if s not in v["sounds"]]
             alts.append(Alternative(
                 text=v["text"],
                 latin=v["latin"],
-                meaning_en=best_meaning["meaning_en"],
+                meaning_en=meaning["meaning_en"],
                 avoids=avoids,
                 source="library",
             ))
-        return Alternatives(meaning_en=best_meaning["meaning_en"], alternatives=alts)
+        return alts
+
+    # 1. Search in Library:
+    # First search within the requested language:
+    best_meaning = None
+    best_variant = None
+    best_sim = 0.0
+
+    # Primary pass: exact match in the requested language
+    for m in library:
+        for v in m["variants"]:
+            if v.get("lang") == body.lang:
+                if norm_input == v["norm"] or norm_input == v["norm_latin"]:
+                    best_meaning = m
+                    best_variant = v
+                    best_sim = 1.0
+                    break
+        if best_meaning and best_sim == 1.0:
+            break
+
+    # Secondary pass: fuzzy match in the requested language
+    if not best_meaning:
+        for m in library:
+            for v in m["variants"]:
+                if v.get("lang") == body.lang:
+                    sim1 = Levenshtein.normalized_similarity(norm_input, v["norm"])
+                    sim2 = Levenshtein.normalized_similarity(norm_input, v["norm_latin"])
+                    sim = max(sim1, sim2)
+                    if sim > best_sim:
+                        best_sim = sim
+                        best_meaning = m
+                        best_variant = v
+
+    # Tertiary pass: if not found in requested language, check cross-language variants to identify meaning
+    if not best_meaning or best_sim < 0.85:
+        for m in library:
+            for v in m["variants"]:
+                if v.get("lang") != body.lang:
+                    sim1 = Levenshtein.normalized_similarity(norm_input, v["norm"])
+                    sim2 = Levenshtein.normalized_similarity(norm_input, v["norm_latin"])
+                    sim = max(sim1, sim2)
+                    if sim > best_sim:
+                        best_sim = sim
+                        best_meaning = m
+                        best_variant = v
+
+    if best_meaning and best_sim >= 0.85:
+        alts = get_ranked_alternatives(best_meaning)
+        if alts:
+            return Alternatives(meaning_en=best_meaning["meaning_en"], alternatives=alts)
 
     # 2. Not found in library: check Groq assistant if LLM_ENABLED
     cache_key = (user["id"], norm_input, body.lang, tuple(sorted(tricky_ids)))
@@ -1187,25 +1215,8 @@ def alternatives(body: AlternativesRequest, user=Depends(current_user)):
 
     # 3. Fallback: closest library results if similarity >= 0.60, or empty list
     if best_meaning and best_sim >= 0.60:
-        other_variants = [v for v in best_meaning["variants"] if v["text"] != body.text and v["norm"] != norm_input]
-        if not other_variants:
-            other_variants = best_meaning["variants"]
+        alts = get_ranked_alternatives(best_meaning)
+        if alts:
+            return Alternatives(meaning_en=best_meaning["meaning_en"], alternatives=alts)
 
-        def rank_key(v):
-            tricky_contained = len(v["sounds"] & tricky_set)
-            return (tricky_contained, len(v["text"]), v["index"])
-
-        sorted_variants = sorted(other_variants, key=rank_key)
-        alts = []
-        for v in sorted_variants[:4]:
-            avoids = [s for s in tricky_ids if s not in v["sounds"]]
-            alts.append(Alternative(
-                text=v["text"],
-                latin=v["latin"],
-                meaning_en=best_meaning["meaning_en"],
-                avoids=avoids,
-                source="library",
-            ))
-        return Alternatives(meaning_en=best_meaning["meaning_en"], alternatives=alts)
-
-    return Alternatives(meaning_en="practice", alternatives=[])
+    return Alternatives(meaning_en=best_meaning["meaning_en"] if best_meaning else "practice", alternatives=[])
