@@ -5,8 +5,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-19+-61DAFB?style=flat&logo=react)](https://react.dev)
 [![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.14-blue?style=flat&logo=python)](https://python.org)
-[![Pytest](https://img.shields.io/badge/Pytest-282%20passed-success?style=flat&logo=pytest)](tests/)
-[![Playwright](https://img.shields.io/badge/Playwright-169%20passed-success?style=flat&logo=playwright)](web/e2e/)
+[![Pytest](https://img.shields.io/badge/Pytest-294%20passed-success?style=flat&logo=pytest)](tests/)
+[![Playwright](https://img.shields.io/badge/Playwright-196%20passed-success?style=flat&logo=playwright)](web/e2e/)
 [![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%20AA-purple?style=flat)](docs/AUDIT.md)
 [![Gnani AI](https://img.shields.io/badge/Gnani%20AI-Prisma%20%2B%20Timbre-orange?style=flat)](https://gnani.ai)
 [![Groq Cloud](https://img.shields.io/badge/Groq-gpt--oss--120b-red?style=flat)](https://groq.com)
@@ -145,7 +145,7 @@ Sunn addresses these challenges directly: it provides a personalized acoustic br
 - **Universal Design**: WCAG 2.1 AA compliant contrast ratios (minimum 4.5:1), scalable typography, and focus ring navigation.
 - **Reduced Motion**: Immediate deactivation of pulse animations and canvas motion when system reduced motion or the in-app toggle is set.
 - **Voice Cloning Profile**: Upload 5 to 30 seconds of speech to extract an acoustic speaker embedding stored locally in the user's data directory.
-- **Complete Account Deletion**: `DELETE /me/account` cascades across all 11 database tables and purges personal audio directories on disk.
+- **Complete Account Deletion**: `DELETE /me` cascades across all 11 database tables and purges personal audio directories on disk.
 
 ### 4.6 Presenter Demo Mode
 - **Zero-Mutation Walkthrough**: Evaluators can trigger Presenter Mode (header button or `Alt+P`) to step through a guided 5-screen product tour without modifying database state or consuming API quotas.
@@ -261,6 +261,10 @@ sunn/
 │   └── sounds.json             # Phoneme taxonomy and evidence rules
 ├── data/                       # Default phrase seed files (10 Indian languages)
 ├── docs/                       # Project engineering documentation and audits
+│   ├── FINAL_PRODUCT_AUDIT.md  # Comprehensive product and codebase audit
+│   ├── DEPLOYMENT_READINESS.md # Deployment architecture and pre-flight guide
+│   ├── HACKATHON_SUBMISSION_GUIDE.md # Hackathon submission dossier and pitch guide
+│   ├── DEMO_VIDEO_SCRIPT.md    # 2-3 minute timed presentation script and runbook
 │   ├── DYNAMIC_FUNCTIONALITY_AUDIT.md # End-to-end data flow and database audit
 │   ├── AUDIT.md                # WCAG accessibility and technical audit
 │   ├── DEPLOY.md               # Docker container and Hugging Face deployment
@@ -280,7 +284,7 @@ sunn/
 │   ├── server.py               # Single-port production server (API + static SPA)
 │   ├── speak.py                # Speech synthesis and voice cloning pipelines
 │   └── trainings.py            # Curriculum progress, attempts, and tricky sounds API
-├── tests/                      # Automated test suites (282 tests)
+├── tests/                      # Automated test suites (294 tests)
 │   ├── test_api.py             # API contracts and phrase CRUD
 │   ├── test_gnani_hardening.py # Gnani STT/TTS retry, timeout, and validation tests
 │   ├── test_groq_hardening.py  # Groq LLM integration and rate-limiting tests
@@ -441,27 +445,27 @@ The Sunn backend exposes 28 REST endpoints:
 Sunn maintains an exhaustive verification suite across backend and frontend:
 
 ```bash
-# 1. Run all backend unit and integration tests (282 tests)
+# 1. Run all backend unit and integration tests (294 tests)
 GNANI_MOCK=1 uv run pytest
 
-# 2. Run i18n translation key parity and unit checks (13 tests)
+# 2. Run i18n translation key parity and unit checks (18 tests)
 cd web && npm test && cd ..
 
 # 3. Build frontend assets for production
 cd web && npm run build && cd ..
 
-# 4. Run Playwright end-to-end browser tests across viewports (169 tests)
+# 4. Run Playwright end-to-end browser tests across viewports (196 tests)
 cd web && npx playwright test
 
-# 5. Verify deployment file packaging (524 files)
+# 5. Verify deployment file packaging (528 files)
 uv run scripts/deploy_space.py --check-only
 ```
 
 ### Verified Test Results
-- **Pytest**: `282 passed` (100% pass rate in 20.9s).
-- **Playwright**: `169 passed, 1 skipped` (the 1 skipped test is for live hardware microphone capture on headless CI).
-- **Frontend & i18n**: `13 passed` (10/10 languages maintaining 100% key parity + 3 phrase goal unit tests).
-- **Space Deployment Check**: `524 files validated` cleanly for container staging.
+- **Pytest**: `294 passed` (100% pass rate in 25.0s).
+- **Playwright**: `196 passed` across phone and desktop viewports.
+- **Frontend & i18n**: `18 passed` (10/10 languages maintaining 100% key parity + dynamic goal tests + paced speaking math tests).
+- **Space Deployment Check**: `528 files validated` cleanly for container staging.
 
 > **Deprecation Notice Note**: 88 warnings are emitted by Python 3.14 regarding `codecs.open()` in the third-party `indic_transliteration` library. These are upstream deprecation warnings and do not affect runtime functionality. 1 warning from Starlette TestClient relates to test timeouts and has zero production impact.
 
@@ -473,7 +477,7 @@ uv run scripts/deploy_space.py --check-only
 - **Local Audio Storage**: Recordings and voice embeddings are partitioned in user-specific local directories (`data/users/:id/`).
 - **Child Privacy**: Lessons in the `kids-speaking` category do not persist speech transcripts to disk or database.
 - **Zero Log Leakage**: Server logs (`logs/app.log`) capture operational metrics, timings, and status codes. Personal audio, phrase text, passwords, and tokens are never logged.
-- **Full Account Deletion**: `DELETE /me/account` completely removes user records from all SQLite tables and purges audio directories on disk.
+- **Full Account Deletion**: `DELETE /me` completely removes user records from all SQLite tables and purges audio directories on disk.
 
 ---
 
