@@ -5879,6 +5879,119 @@ input:focus-visible + .file-pick {
   height: 90px;
 }
 
+.practice-submode-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.practice-submode-row .chip.submode-chip {
+  min-height: 2.5rem;
+  padding: 0 14px;
+  font-size: 0.875rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-2);
+  border-radius: var(--r-button);
+  cursor: pointer;
+  transition: all var(--fast);
+}
+
+.practice-submode-row .chip.submode-chip:hover {
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.practice-submode-row .chip.submode-chip[aria-checked='true'],
+.practice-submode-row .chip.submode-chip.selected {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+  font-weight: 600;
+}
+
+.record-toggle-btn.recording {
+  background: #FF3B30 !important;
+  color: #FFFFFF !important;
+  border-color: #FF3B30 !important;
+  animation: pulse 1.2s infinite ease-in-out;
+}
+
+.shadowing-active-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: var(--r-well);
+  background: #FFD60A;
+  color: #101010;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 4px auto;
+}
+
+.recorded-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--r-well);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 4px auto;
+}
+
+.recorder-error-alert,
+.checking-error-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--r-well);
+  background: var(--surface);
+  border: 1px solid var(--signal-edge);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  margin: 8px auto;
+  max-width: 32rem;
+}
+
+.check-transcript-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 20px;
+  border-radius: var(--r-well);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  width: 100%;
+  max-width: 32rem;
+  margin: 6px auto;
+}
+
+.check-transcript-card .transcript-label {
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+.check-transcript-card .transcript-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.35;
+}
+
 /* Checking Feedback Experience */
 .checking-feedback-box {
   width: 100%;
@@ -6345,6 +6458,41 @@ input:focus-visible + .file-pick {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.easier-ways-lang-row .chip.lang-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 2.75rem;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-button);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--fast);
+}
+
+.easier-ways-lang-row .chip.lang-chip:hover {
+  background: var(--raised);
+  color: var(--ink);
+  border-color: var(--edge);
+}
+
+.easier-ways-lang-row .chip.lang-chip:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.easier-ways-lang-row .chip.lang-chip[aria-pressed='true'],
+.easier-ways-lang-row .chip.lang-chip[aria-checked='true'],
+.easier-ways-lang-row .chip.lang-chip.selected {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+  font-weight: 600;
 }
 
 .lang-row-label {

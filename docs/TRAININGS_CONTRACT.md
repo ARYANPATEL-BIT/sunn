@@ -278,7 +278,7 @@ when slower. `message_key` is what the app says, from its own i18n:
 ```json
 {"checked": true, "words": [{"text": "सोनू", "status": "clear"}, {"text": "सुबह", "status": "clear"},
   {"text": "सात", "status": "practise"}], "similarity": 0.82, "wpm": null, "pace": null,
- "message_key": "words_practise", "checks_left_today": 23}
+ "message_key": "words_practise", "checks_left_today": 23, "transcript": "सोनू सुबह सात"}
 ```
 
 Errors: `not_logged_in`, `not_found`, `invalid_input`, `file_too_large`, `bad_audio`,

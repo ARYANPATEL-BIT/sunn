@@ -106,7 +106,7 @@ def test_reflect(env):
 
 
 def test_attempts(env):
-    client, keys = env.signup(), {"checked", "words", "similarity", "wpm", "pace", "message_key", "checks_left_today"}
+    client, keys = env.signup(), {"checked", "words", "similarity", "wpm", "pace", "message_key", "checks_left_today", "transcript"}
 
     def attempt(rec=None, **form):
         response = client.post("/me/trainings/attempts", data=form, files=rec or env.recording())
@@ -635,3 +635,52 @@ def test_cross_user_training_isolation(env):
     b_progress_after = user_b.get("/me/trainings/progress").json()
     assert b_progress_after["lessons_done"] == 0
     assert b_progress_after["resume"] == {"course_id": "easy-starts", "lesson_id": "easy-starts-1", "step_index": 2}
+
+
+def test_dynamic_alternative_attempts(env):
+    """Verify attempts on dynamic steps (from Easier Ways) work for both unchecked and checked modes."""
+    client = env.signup()
+
+    # 1. Unchecked attempt on dynamic alternative step
+    uncheck_res = client.post(
+        "/me/trainings/attempts",
+        data={"step_id": "alt-pani-chahiye", "text": "पानी चाहिए", "language": "hi", "check": "false"},
+        files=env.recording(),
+    )
+    assert uncheck_res.status_code == 200
+    uncheck_data = uncheck_res.json()
+    assert uncheck_data["checked"] is False
+    assert uncheck_data["message_key"] == "practised"
+
+    # 2. Checked attempt on dynamic alternative step in Hindi
+    env.fake.transcripts.append("पानी चाहिए")
+    check_res = client.post(
+        "/me/trainings/attempts",
+        data={"step_id": "alt-pani-chahiye", "text": "पानी चाहिए", "language": "hi", "check": "true"},
+        files=env.recording(),
+    )
+    assert check_res.status_code == 200
+    check_data = check_res.json()
+    assert check_data["checked"] is True
+    assert check_data["transcript"] == "पानी चाहिए"
+    assert check_data["words"] is not None
+    assert check_data["similarity"] == 1.0
+    assert check_data["message_key"] == "words_clear"
+
+    # 3. Checked attempt on dynamic alternative step in English
+    env.fake.transcripts.append("I want water")
+    en_res = client.post(
+        "/me/trainings/attempts",
+        data={"step_id": "alt-i-want-water", "text": "I want water", "language": "en", "check": "true"},
+        files=env.recording(),
+    )
+    assert en_res.status_code == 200
+    en_data = en_res.json()
+    assert en_data["checked"] is True
+    assert en_data["transcript"] == "I want water"
+    assert en_data["similarity"] == 1.0
+
+    # 4. Speak with explicit language in body
+    speak_res = client.post("/speak", json={"text": "I want water", "language": "en"})
+    assert speak_res.status_code == 200
+    assert speak_res.headers["content-type"] == "audio/wav"

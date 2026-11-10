@@ -275,6 +275,7 @@ class Attempt(BaseModel):
     message_key: Literal["practised", "no_checks_left", "pace_good", "pace_slower", "pace_faster",
                          "words_clear", "words_practise", "nice_work", "take_your_time", "try_slower", "great_pace"]
     checks_left_today: int
+    transcript: str | None = None
 
 
 class Evidence(BaseModel):
@@ -603,17 +604,38 @@ def attempt(
     step_id: str = Form(),
     item_id: str | None = Form(None),
     check: bool = Form(False),
+    text: str | None = Form(None),
+    language: schemas.Language | None = Form(None),
     user=Depends(current_user),
 ):
     """One try at a step (item_id names the item of a listen_repeat step). With check=true and a step
     whose feedback isn't none, Prisma hears it and it is scored; the recording is never kept."""
-    found_course, found_lesson, step = find(LIBRARY.steps, step_id, "step")
-    if not isinstance(step, RECORDED):
-        raise Refused(400, "invalid_input", "step_id: attempts are for listen_repeat, speak_with_me and read_aloud")
-    if isinstance(step, content.ListenRepeat):
-        text = find({item.id: item for item in step.items}, item_id, "item").text
+    is_dynamic = step_id.startswith("alt-") or step_id not in LIBRARY.steps
+    if is_dynamic:
+        target_text = (text or (step_id[4:] if step_id.startswith("alt-") else "")).strip()
+        if not target_text:
+            raise Refused(400, "invalid_input", "target text required for dynamic step")
+        lang = language if (language and language in languages.CODES) else user["language"]
+        found_course = None
+        found_lesson = None
+        step = None
+        lesson_id = "easier-ways"
+        is_kids = False
+        feedback_type = "words"
+        pace_range = DEFAULT_PACE_WPM
     else:
-        text = step.paragraph if isinstance(step, content.ReadAloud) else step.text
+        found_course, found_lesson, step = find(LIBRARY.steps, step_id, "step")
+        if not isinstance(step, RECORDED):
+            raise Refused(400, "invalid_input", "step_id: attempts are for listen_repeat, speak_with_me and read_aloud")
+        if isinstance(step, content.ListenRepeat):
+            target_text = find({item.id: item for item in step.items}, item_id, "item").text
+        else:
+            target_text = step.paragraph if isinstance(step, content.ReadAloud) else step.text
+        lang = getattr(found_course, "practice_lang", "hi")
+        lesson_id = found_lesson.id
+        is_kids = (found_course.category_id == "kids-speaking")
+        feedback_type = step.feedback
+        pace_range = step.pace_wpm if getattr(step, "pace_wpm", None) else DEFAULT_PACE_WPM
 
     # Calculate remaining checks today
     today_str = datetime.now(timezone.utc).date().isoformat()
@@ -654,64 +676,63 @@ def attempt(
                           seconds=round(audio_seconds, 1))
 
         # 1. Not checked (check=False) or step feedback is "none"
-        if not check or step.feedback == "none":
+        if not check or feedback_type == "none":
             # If check requested on feedback="none" step:
             if check and checks_left > 0:
-                lang = getattr(found_course, "practice_lang", "hi")
                 try:
                     hypothesis = prisma.transcribe(wav_path, language=lang, user_id=user["id"])
                 except gnani.GnaniError as ge:
                     if ge.code in ("daily_cap_reached", "credit_limit_reached"):
                         return Attempt(
                             checked=False, words=None, similarity=None, wpm=None, pace=None,
-                            message_key="no_checks_left", checks_left_today=0,
+                            message_key="no_checks_left", checks_left_today=0, transcript=None,
                         )
                     raise
-                stored_transcript = None if found_course.category_id == "kids-speaking" else hypothesis
+                stored_transcript = None if is_kids else hypothesis
                 db.execute(
                     "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
                     " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (user["id"], found_lesson.id, step_id, item_id, stored_transcript, None, None, 1, now_str),
+                    (user["id"], lesson_id, step_id, item_id, stored_transcript, None, None, 1, now_str),
                 )
                 return Attempt(
                     checked=True, words=None, similarity=None, wpm=None, pace=None,
                     message_key="practised", checks_left_today=max(0, checks_left - 1),
+                    transcript=stored_transcript,
                 )
 
             # Plain practice without check
-            stored_transcript = None if found_course.category_id == "kids-speaking" else text
+            stored_transcript = None if is_kids else target_text
             db.execute(
                 "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
                 " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (user["id"], found_lesson.id, step_id, item_id, stored_transcript, None, None, 0, now_str),
+                (user["id"], lesson_id, step_id, item_id, stored_transcript, None, None, 0, now_str),
             )
             return Attempt(
                 checked=False, words=None, similarity=None, wpm=None, pace=None,
-                message_key="practised", checks_left_today=checks_left,
+                message_key="practised", checks_left_today=checks_left, transcript=None,
             )
 
         # 2. Check requested, but daily check cap reached
         if checks_left <= 0:
-            stored_transcript = None if found_course.category_id == "kids-speaking" else text
+            stored_transcript = None if is_kids else target_text
             db.execute(
                 "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
                 " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (user["id"], found_lesson.id, step_id, item_id, stored_transcript, None, None, 0, now_str),
+                (user["id"], lesson_id, step_id, item_id, stored_transcript, None, None, 0, now_str),
             )
             return Attempt(
                 checked=False, words=None, similarity=None, wpm=None, pace=None,
-                message_key="no_checks_left", checks_left_today=0,
+                message_key="no_checks_left", checks_left_today=0, transcript=None,
             )
 
         # 3. Check requested and cap available: transcribe with Prisma
-        lang = getattr(found_course, "practice_lang", "hi")
         try:
             hypothesis = prisma.transcribe(wav_path, language=lang, user_id=user["id"])
         except gnani.GnaniError as ge:
             if ge.code in ("daily_cap_reached", "credit_limit_reached"):
                 return Attempt(
                     checked=False, words=None, similarity=None, wpm=None, pace=None,
-                    message_key="no_checks_left", checks_left_today=0,
+                    message_key="no_checks_left", checks_left_today=0, transcript=None,
                 )
             raise
 
@@ -719,9 +740,9 @@ def attempt(
             raise Refused(422, "no_speech", "no speech was heard in the recording")
 
         # Compute WPM and pace
-        target_words = [w.strip("।,?!'\"") for w in text.split() if w.strip("।,?!'\"")]
+        target_words = [w.strip("।,?!'\"") for w in target_text.split() if w.strip("।,?!'\"")]
         wpm = round(60 * len(target_words) / audio_seconds) if audio_seconds > 0 else 0
-        pace_min, pace_max = step.pace_wpm if getattr(step, "pace_wpm", None) else DEFAULT_PACE_WPM
+        pace_min, pace_max = pace_range
         if wpm > pace_max:
             pace = "slower"
         elif wpm < pace_min:
@@ -729,38 +750,47 @@ def attempt(
         else:
             pace = "good"
 
-        # Apply feedback rule: smooth-speaking and kids-speaking never return words
-        is_speech_restricted = found_course.category_id in ("smooth-speaking", "kids-speaking")
-        effective_feedback = "pace" if (is_speech_restricted and step.feedback == "words") else step.feedback
-
-        if effective_feedback == "words":
-            words_scored = align_words(text, hypothesis)
-            overall_sim = round(Levenshtein.normalized_similarity(matcher.normalize(text), matcher.normalize(hypothesis)), 2)
+        if is_dynamic:
+            words_scored = align_words(target_text, hypothesis)
+            overall_sim = round(Levenshtein.normalized_similarity(matcher.normalize(target_text), matcher.normalize(hypothesis)), 2)
             all_clear = all(w.status == "clear" for w in words_scored)
             message_key = "words_clear" if all_clear else "words_practise"
             res_words = words_scored
             res_similarity = overall_sim
-            res_wpm = None
-            res_pace = None
-        elif effective_feedback == "pace":
-            res_words = None
-            res_similarity = None
             res_wpm = wpm
             res_pace = pace
-            message_key = f"pace_{pace}"
-        else:  # none
-            res_words = None
-            res_similarity = None
-            res_wpm = None
-            res_pace = None
-            message_key = "practised"
+        else:
+            is_speech_restricted = found_course.category_id in ("smooth-speaking", "kids-speaking")
+            effective_feedback = "pace" if (is_speech_restricted and feedback_type == "words") else feedback_type
+
+            if effective_feedback == "words":
+                words_scored = align_words(target_text, hypothesis)
+                overall_sim = round(Levenshtein.normalized_similarity(matcher.normalize(target_text), matcher.normalize(hypothesis)), 2)
+                all_clear = all(w.status == "clear" for w in words_scored)
+                message_key = "words_clear" if all_clear else "words_practise"
+                res_words = words_scored
+                res_similarity = overall_sim
+                res_wpm = None
+                res_pace = None
+            elif effective_feedback == "pace":
+                res_words = None
+                res_similarity = None
+                res_wpm = wpm
+                res_pace = pace
+                message_key = f"pace_{pace}"
+            else:  # none
+                res_words = None
+                res_similarity = None
+                res_wpm = None
+                res_pace = None
+                message_key = "practised"
 
         # Store attempt (never store audio; for kids-speaking store no transcript at all)
-        stored_transcript = None if found_course.category_id == "kids-speaking" else hypothesis
+        stored_transcript = None if is_kids else hypothesis
         db.execute(
             "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
             " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (user["id"], found_lesson.id, step_id, item_id, stored_transcript, res_similarity, res_wpm, 1, now_str),
+            (user["id"], lesson_id, step_id, item_id, stored_transcript, res_similarity, res_wpm, 1, now_str),
         )
 
         return Attempt(
@@ -771,6 +801,7 @@ def attempt(
             pace=res_pace,
             message_key=message_key,
             checks_left_today=max(0, checks_left - 1),
+            transcript=stored_transcript,
         )
 
     finally:

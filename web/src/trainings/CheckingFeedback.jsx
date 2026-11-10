@@ -37,15 +37,23 @@ export function CheckingFeedback({
   isKids = false,
   isSmoothOrKids = false,
   checksLeftToday = 20,
+  error = null,
 }) {
   const { t } = useLang()
 
-  if (!hasRecording) return null
+  if (!hasRecording && !error) return null
 
   const isExhausted = checksLeftToday === 0
 
   return (
     <div className="checking-feedback-box" aria-live="polite">
+      {error && (
+        <div className="checking-error-card" role="alert">
+          <Icon name="alert" />
+          <span>{error}</span>
+        </div>
+      )}
+
       {!attempt && (
         <div className="check-decision-actions">
           <div className="check-main-btn-wrap">
@@ -84,6 +92,14 @@ export function CheckingFeedback({
           {/* Kids character reaction */}
           {isKids && (
             <KidsBuddy message={t('kids.greatTry')} />
+          )}
+
+          {/* Recognized transcript card */}
+          {attempt.transcript && (
+            <div className="check-transcript-card" aria-label={t('check.heardLabel')}>
+              <span className="transcript-label">{t('check.heardLabel')}</span>
+              <p className="transcript-text">"{attempt.transcript}"</p>
+            </div>
           )}
 
           {/* Supportive message: for feedback 'none', show only the supportive note */}

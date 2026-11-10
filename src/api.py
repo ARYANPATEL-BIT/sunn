@@ -863,7 +863,7 @@ def speak_text(body: schemas.Speak, user=Depends(current_user)):
     text, timings = clean_text(body.text), {}
     phrase = db.row("SELECT language FROM phrases WHERE user_id = ? AND text = ? ORDER BY language = ? DESC,"
                     " language = 'en' DESC LIMIT 1", (user["id"], text, user["language"]))
-    language = phrase["language"] if phrase else user["language"]
+    language = body.language if (body.language and body.language in languages.CODES) else (phrase["language"] if phrase else user["language"])
     with timer(timings, "tts"):
         if user["use_own_voice"] and user["voice_embedding"] and language in speak.CLONE_LANGUAGES:
             path = speak.synthesize(text, language, json.loads(user["voice_embedding"]),

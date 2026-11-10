@@ -85,6 +85,19 @@ export function EasierWays() {
     }
   }, [initialText, initialLang])
 
+  const handleLanguageChange = (newLang) => {
+    if (newLang === inputLang) return
+    setInputLang(newLang)
+    api.stopAudio()
+    setPlayingText(null)
+    setPracticeAlt(null)
+    if (inputText.trim()) {
+      handleSearch(inputText, newLang)
+    } else {
+      setResults(null)
+    }
+  }
+
   const handleSearch = async (textToSearch = inputText, langToSearch = inputLang) => {
     const trimmed = (textToSearch || '').trim()
     if (!trimmed) return
@@ -173,20 +186,28 @@ export function EasierWays() {
             {/* Language toggle */}
             <div className="easier-ways-lang-row">
               <span className="lang-row-label">{t('lang.label')}:</span>
-              <div className="chips">
+              <div className="chips" role="radiogroup" aria-label={t('lang.label')}>
                 <button
                   type="button"
-                  className={`chip ${inputLang === 'hi' ? 'active' : ''}`}
-                  onClick={() => setInputLang('hi')}
+                  role="radio"
+                  aria-checked={inputLang === 'hi'}
+                  aria-pressed={inputLang === 'hi'}
+                  className={`chip lang-chip ${inputLang === 'hi' ? 'active selected' : ''}`}
+                  onClick={() => handleLanguageChange('hi')}
                 >
-                  {t('easierWays.langHi')}
+                  {inputLang === 'hi' && <Icon name="check" />}
+                  <span>{t('easierWays.langHi')}</span>
                 </button>
                 <button
                   type="button"
-                  className={`chip ${inputLang === 'en' ? 'active' : ''}`}
-                  onClick={() => setInputLang('en')}
+                  role="radio"
+                  aria-checked={inputLang === 'en'}
+                  aria-pressed={inputLang === 'en'}
+                  className={`chip lang-chip ${inputLang === 'en' ? 'active selected' : ''}`}
+                  onClick={() => handleLanguageChange('en')}
                 >
-                  {t('easierWays.langEn')}
+                  {inputLang === 'en' && <Icon name="check" />}
+                  <span>{t('easierWays.langEn')}</span>
                 </button>
               </div>
             </div>
@@ -294,9 +315,11 @@ export function EasierWays() {
                   latin: practiceAlt.latin,
                   meaning_en: practiceAlt.meaning_en,
                   mode: 'paced',
-                  pace_wpm: [50, 90],
-                  feedback: 'pace',
+                  pace_wpm: [40, 100],
+                  feedback: 'words',
+                  language: inputLang,
                 }}
+                language={inputLang}
                 isKids={false}
                 isSmoothOrKids={false}
               />
@@ -331,7 +354,7 @@ export function EasierWays() {
                       </div>
 
                       <div className="alt-card-body">
-                        <p className="alt-phrase-text" lang="hi">
+                        <p className="alt-phrase-text" lang={inputLang}>
                           {alt.text}
                         </p>
                         {alt.latin && <p className="alt-latin-text">{alt.latin}</p>}
