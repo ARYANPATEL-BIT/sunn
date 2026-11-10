@@ -335,24 +335,43 @@ sunn/
    ```
 
 5. **Start Local Development Servers**:
+
+   **Real API Mode (Live Gnani & Groq calls with credentials from .env)**:
    ```bash
    # Terminal 1: Backend API (port 8000)
-   GNANI_MOCK=1 uv run uvicorn api:app --app-dir src --port 8000
+   uv run uvicorn api:app --app-dir src --port 8000 --reload
 
-   # Terminal 2: Frontend Web App (port 5173)
+   # Terminal 2: Frontend Web App (port 5173, proxies /api and /speak to port 8000)
    cd web && npm run dev
    ```
    Open `http://localhost:5173` in your browser.
 
+   **Mock Development Mode (Zero-cost local testing without API credentials)**:
+   ```bash
+   # Terminal 1: Backend API with simulated responses
+   GNANI_MOCK=1 uv run uvicorn api:app --app-dir src --port 8000 --reload
+
+   # Terminal 2: Frontend Web App
+   cd web && npm run dev
+   ```
+
 6. **Single-Port Production Mode**:
+
+   **Real API Mode (Production build served on port 7860)**:
    ```bash
    # Build the frontend assets
    cd web && npm run build && cd ..
 
    # Run single-port unified server on port 7860
-   GNANI_MOCK=1 uv run src/server.py --port 7860
+   uv run src/server.py --port 7860
    ```
    Open `http://localhost:7860`.
+
+   **Mock Production Mode**:
+   ```bash
+   cd web && npm run build && cd ..
+   GNANI_MOCK=1 uv run src/server.py --port 7860
+   ```
 
 ---
 
@@ -360,18 +379,17 @@ sunn/
 
 All external service credentials reside strictly on the server:
 
-| Variable | Required | Default | Description |
+| Variable | Required in Real Mode | Default | Description |
 | :--- | :---: | :---: | :--- |
-| `GNANI_STT_API_KEY` | Optional | `""` | Gnani Prisma Speech-to-Text token |
-| `GNANI_TTS_API_KEY` | Optional | `""` | Gnani Timbre Text-to-Speech token |
-| `GNANI_ACCESS_TOKEN` | Optional | `""` | Legacy fallback Gnani API token |
-| `GNANI_MOCK` | Optional | `0` | Set `1` to run local mocked speech answers without API calls |
-| `GROQ_API_KEY` | Optional | `""` | Groq Cloud API key for semantic alternatives |
-| `GROQ_MODEL` | Optional | `openai/gpt-oss-120b` | Groq model identifier |
-| `LLM_ENABLED` | Optional | `true` | Enable or disable LLM alternative phrasing |
-| `LLM_TIMEOUT_S` | Optional | `3` | Maximum timeout for LLM inference |
-| `SUNN_DATA_DIR` | Optional | `data` | Directory for SQLite database and audio files |
-| `DEMO_INVITE_CODE` | Optional | `""` | Optional invite passcode for registration gates |
+| `GNANI_STT_API_KEY` | Yes | `""` | Gnani Prisma Speech-to-Text credential |
+| `GNANI_TTS_API_KEY` | Yes | `""` | Gnani Timbre Text-to-Speech credential |
+| `GNANI_MOCK` | No | `0` | Set `1` to run local mocked speech answers without API calls |
+| `GROQ_API_KEY` | Yes (if LLM_ENABLED) | `""` | Groq Cloud API key for semantic alternatives |
+| `GROQ_MODEL` | No | `openai/gpt-oss-120b` | Groq model identifier |
+| `LLM_ENABLED` | No | `true` | Enable or disable LLM alternative phrasing |
+| `LLM_TIMEOUT_S` | No | `3` | Maximum timeout for LLM inference |
+| `DATA_DIR` | No | `data` | Directory for SQLite database and audio files |
+| `DEMO_INVITE_CODE` | No | `""` | Optional invite passcode for registration gates |
 
 > **Credit Conservation Guarantee**: Setting `GNANI_MOCK=1` enables full local speech simulation, ensuring development and automated testing consume **0** live Gnani credits.
 

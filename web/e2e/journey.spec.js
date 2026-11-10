@@ -62,9 +62,11 @@ for (const lang of LANGS) {
       await expect(page.getByText(t(lang, 'onboarding.setupNeedTitle'))).toBeVisible()
       await page.getByRole('button', { name: t(lang, 'onboarding.finish') }).click()
 
-      // --- Teach: the 10 quick-start phrases first, with the line saying so
+      // --- Teach: initial goal selection dialog, then the 10 quick-start phrases
       await expect(page).toHaveURL(/\/app\/enroll$/)
-      await expect(page.getByText(t(lang, 'enroll.quickStart'))).toBeVisible()
+      await expect(page.getByRole('heading', { name: t(lang, 'enroll.goalTitle') })).toBeVisible()
+      await page.getByRole('button', { name: t(lang, 'enroll.goalContinue') }).click()
+      await expect(page.getByText(t(lang, 'enroll.goalReady', { ready: 0, total: 10 }))).toBeVisible()
       await expect(page.getByRole('heading', { level: 1 })).toContainText(QUICK_START[lang][0])
       await expectNoLeaks(page, lang)
       await record(page, lang)
@@ -88,7 +90,7 @@ for (const lang of LANGS) {
         await enroll(page.request, phrase.id, 3 - phrase.sample_count)
       }
       await page.getByRole('link', { name: t(lang, 'tab.enroll') }).click()
-      await expect(page.getByText(t(lang, 'enroll.quickDone'))).toBeVisible()
+      await expect(page.getByText(t(lang, 'enroll.goalDoneTitle'))).toBeVisible()
 
       // --- Speak: the chosen context goes with the recording; Any sends none
       await page.getByRole('link', { name: t(lang, 'tab.speak') }).click()
