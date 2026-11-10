@@ -5,8 +5,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-19+-61DAFB?style=flat&logo=react)](https://react.dev)
 [![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.14-blue?style=flat&logo=python)](https://python.org)
-[![Pytest](https://img.shields.io/badge/Pytest-225%20passed-success?style=flat&logo=pytest)](tests/)
-[![Playwright](https://img.shields.io/badge/Playwright-155%20passed-success?style=flat&logo=playwright)](web/e2e/)
+[![Pytest](https://img.shields.io/badge/Pytest-282%20passed-success?style=flat&logo=pytest)](tests/)
+[![Playwright](https://img.shields.io/badge/Playwright-169%20passed-success?style=flat&logo=playwright)](web/e2e/)
 [![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%20AA-purple?style=flat)](docs/AUDIT.md)
 [![Gnani AI](https://img.shields.io/badge/Gnani%20AI-Prisma%20%2B%20Timbre-orange?style=flat)](https://gnani.ai)
 [![Groq Cloud](https://img.shields.io/badge/Groq-gpt--oss--120b-red?style=flat)](https://groq.com)
@@ -259,12 +259,13 @@ sunn/
 │   ├── categories.json         # 4 Core training categories
 │   ├── courses/                # Course definitions (easy-starts, introductions, etc.)
 │   └── sounds.json             # Phoneme taxonomy and evidence rules
-├── data/                       # Default phrase seed files (English and Hindi)
+├── data/                       # Default phrase seed files (10 Indian languages)
 ├── docs/                       # Project engineering documentation and audits
 │   ├── DYNAMIC_FUNCTIONALITY_AUDIT.md # End-to-end data flow and database audit
 │   ├── AUDIT.md                # WCAG accessibility and technical audit
 │   ├── DEPLOY.md               # Docker container and Hugging Face deployment
 │   ├── DEMO_RUNBOOK.md         # Evaluator demonstration runbook
+│   ├── FINAL_SUBMISSION_READINESS.md # Complete release verification audit
 │   └── screenshots/            # Visual showcase gallery across devices
 ├── scripts/                    # Operational and evaluation utilities
 │   ├── deploy_space.py         # Hugging Face Spaces staging validation
@@ -279,7 +280,7 @@ sunn/
 │   ├── server.py               # Single-port production server (API + static SPA)
 │   ├── speak.py                # Speech synthesis and voice cloning pipelines
 │   └── trainings.py            # Curriculum progress, attempts, and tricky sounds API
-├── tests/                      # Automated test suites (225 tests)
+├── tests/                      # Automated test suites (282 tests)
 │   ├── test_api.py             # API contracts and phrase CRUD
 │   ├── test_gnani_hardening.py # Gnani STT/TTS retry, timeout, and validation tests
 │   ├── test_groq_hardening.py  # Groq LLM integration and rate-limiting tests
@@ -437,27 +438,27 @@ The Sunn backend exposes 28 REST endpoints:
 Sunn maintains an exhaustive verification suite across backend and frontend:
 
 ```bash
-# 1. Run all backend unit and integration tests (225 tests)
+# 1. Run all backend unit and integration tests (282 tests)
 GNANI_MOCK=1 uv run pytest
 
-# 2. Run i18n translation key parity checks (10 languages)
-node --test web/src/i18n/strings.test.js
+# 2. Run i18n translation key parity and unit checks (13 tests)
+cd web && npm test && cd ..
 
 # 3. Build frontend assets for production
 cd web && npm run build && cd ..
 
-# 4. Run Playwright end-to-end browser tests across viewports (155 tests)
+# 4. Run Playwright end-to-end browser tests across viewports (169 tests)
 cd web && npx playwright test
 
-# 5. Verify deployment file packaging (476 files)
+# 5. Verify deployment file packaging (524 files)
 uv run scripts/deploy_space.py --check-only
 ```
 
 ### Verified Test Results
-- **Pytest**: `225 passed` (100% pass rate in 18.8s).
-- **Playwright**: `155 passed, 1 skipped` (the 1 skipped test is for live hardware microphone capture on headless CI).
-- **i18n Parity**: `10/10 languages passed` with 100% translation key coverage.
-- **Space Deployment Check**: `476 files validated` cleanly for container staging.
+- **Pytest**: `282 passed` (100% pass rate in 20.9s).
+- **Playwright**: `169 passed, 1 skipped` (the 1 skipped test is for live hardware microphone capture on headless CI).
+- **Frontend & i18n**: `13 passed` (10/10 languages maintaining 100% key parity + 3 phrase goal unit tests).
+- **Space Deployment Check**: `524 files validated` cleanly for container staging.
 
 > **Deprecation Notice Note**: 88 warnings are emitted by Python 3.14 regarding `codecs.open()` in the third-party `indic_transliteration` library. These are upstream deprecation warnings and do not affect runtime functionality. 1 warning from Starlette TestClient relates to test timeouts and has zero production impact.
 
