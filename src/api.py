@@ -1,4 +1,3 @@
-import hmac
 import json
 import logging
 import os
@@ -83,7 +82,7 @@ def refused(request, exc):
 @app.exception_handler(gnani.GnaniError)
 def gnani_failed(request, exc):
     log.event("gnani_failed", level=logging.WARNING, path=request.url.path, code=exc.code)
-    return JSONResponse({"error": exc.code, "message": exc.detail}, status_code=exc.status)
+    return JSONResponse({"error": exc.code, "message": exc.detail, **exc.extra}, status_code=exc.status)
 
 
 @app.exception_handler(RequestValidationError)
@@ -240,12 +239,12 @@ def save_wav(upload, folder, limits, rate=16000):
     return wav
 
 
-def save_and_transcribe(user, upload):
+def save_and_transcribe(user, upload, quota="stt"):
     """Store a phrase-length upload under data/users/<id>/; returns (path, Prisma hypothesis).
-    Nothing is kept when Prisma fails or hears no speech."""
+    Nothing is kept when Prisma fails or hears no speech. quota is the daily limit it counts against."""
     wav = save_wav(upload, user_folder(user), PHRASE_SECONDS)
     try:
-        hypothesis = prisma.transcribe(wav, user["language"], user["id"])
+        hypothesis = prisma.transcribe(wav, user["language"], user["id"], quota)
     except gnani.GnaniError:
         os.remove(wav)
         raise
@@ -275,7 +274,7 @@ def audio_samples(user, column, value):
 def enroll_sample(user, upload, column, value, source=None):
     """Record an enrollment sample for a phrase, slot word or template fixed part. source says
     where a demo recording came from (pilot, torgo, simulated); None for one made in the app."""
-    path, hypothesis = save_and_transcribe(user, upload)
+    path, hypothesis = save_and_transcribe(user, upload, "enroll")
     sample_id = db.execute(
         f"INSERT INTO samples (user_id, {column}, audio_path, prisma_hypothesis, source, created_at, language,"
         " speech_source) VALUES (?, ?, ?, ?, 'enroll', ?, ?, ?)",
@@ -329,7 +328,7 @@ reranker.load()  # once, and only when RERANKER_ENABLED; a missing model is a wa
 
 
 def client_ip(request):
-    """The address sign-up attempts are counted by. Behind a proxy every request arrives from the
+    """The address new accounts are counted by. Behind a proxy every request arrives from the
     proxy, so with TRUST_PROXY on it is the left-most X-Forwarded-For entry, the client as the
     proxy saw it; otherwise the socket's own peer."""
     if trust_proxy():
@@ -339,30 +338,27 @@ def client_ip(request):
     return request.client.host if request.client else None
 
 
-def invite_code():
-    """DEMO_INVITE_CODE from .env; sign-up is open when it is unset or empty."""
-    return os.environ.get("DEMO_INVITE_CODE", "").strip()
-
-
-def check_invite(request, given):
-    """Refuse a sign-up without the invite code, when there is one. Wrong codes count per IP, like
-    failed logins per email, so the code can't be guessed."""
-    code = invite_code()
-    if not code:
-        return
-    attempts = ("signup", client_ip(request))
-    wait = auth.seconds_locked(attempts)
+def check_signup_rate(request):
+    """At most auth.MAX_SIGNUPS new accounts per IP an hour, by email or Google."""
+    wait = auth.seconds_locked(("signup", client_ip(request)), auth.MAX_SIGNUPS, auth.SIGNUP_WINDOW)
     if wait:
-        raise Refused(429, "too_many_attempts", "too many wrong invite codes, try again later", retry_after=wait)
-    if not hmac.compare_digest((given or "").strip().encode("utf-8"), code.encode("utf-8")):
-        auth.record_failure(attempts)
-        raise Refused(403, "invite_required", "sign-up needs a valid invite code")
+        raise Refused(429, "too_many_attempts", "too many new accounts from this address, try again later",
+                      retry_after=wait)
+
+
+def new_account(request, response, user_id, language, event):
+    """What every sign-up does once the user row exists."""
+    auth.record_failure(("signup", client_ip(request)))
+    add_default_building_blocks(user_id, language)
+    auth.set_session(response, user_id)
+    log.event(event, user_id=user_id)
+    return public(get_user(user_id))
 
 
 @app.post("/auth/signup", response_model=schemas.User)
 def signup(body: schemas.Signup, request: Request, response: Response):
     name, email, password, language = body.name.strip(), body.email.strip().lower(), body.password, body.language
-    check_invite(request, body.invite_code)
+    check_signup_rate(request)
     if not body.consent:
         raise Refused(400, "consent_required", "consent must be true")
     if not name:
@@ -377,10 +373,7 @@ def signup(body: schemas.Signup, request: Request, response: Response):
             (name, email, auth.hash_password(password), language, now()))
     except sqlite3.IntegrityError:
         raise Refused(409, "email_taken", "an account with this email already exists")
-    add_default_building_blocks(user_id, language)
-    auth.set_session(response, user_id)
-    log.event("signup", user_id=user_id)
-    return public(get_user(user_id))
+    return new_account(request, response, user_id, language, "signup")
 
 
 @app.post("/auth/login", response_model=schemas.User)
@@ -390,10 +383,11 @@ def login(body: schemas.Login, response: Response):
     if wait:
         raise Refused(429, "too_many_attempts", "too many failed attempts, try again later", retry_after=wait)
     user = db.row("SELECT * FROM users WHERE email = ?", (email,))
-    # One message for an unknown email and a wrong password, so neither gives away which.
-    if not auth.check_password(user and user["password_hash"], password):
+    if user is None:
+        raise Refused(401, "no_account", "no account with this email")
+    if not auth.check_password(user["password_hash"], password):
         auth.record_failure(email)
-        raise Refused(401, "bad_login", "wrong email or password")
+        raise Refused(401, "bad_login", "wrong password")
     auth.clear_failures(email)
     auth.set_session(response, user["id"])
     log.event("login", user_id=user["id"])
@@ -456,11 +450,9 @@ def auth_google(body: schemas.GoogleAuth, request: Request, response: Response):
         log.event("login_google", user_id=user["id"])
         return public(user)
 
-    # New user: check invite and consent
-    check_invite(request, body.invite_code)
+    check_signup_rate(request)
     if not body.consent:
         raise Refused(400, "consent_required", "consent must be true")
-
     language = body.language if body.language in languages.CODES else "en"
     try:
         user_id = db.execute(
@@ -470,11 +462,7 @@ def auth_google(body: schemas.GoogleAuth, request: Request, response: Response):
         )
     except sqlite3.IntegrityError:
         raise Refused(409, "email_taken", "an account with this email already exists")
-
-    add_default_building_blocks(user_id, language)
-    auth.set_session(response, user_id)
-    log.event("signup_google", user_id=user_id)
-    return public(get_user(user_id))
+    return new_account(request, response, user_id, language, "signup_google")
 
 
 @app.post("/auth/logout", response_model=schemas.Ok)
@@ -911,7 +899,13 @@ def stats(user=Depends(current_user)):
     return counts
 
 
-@app.get("/me/usage", response_model=schemas.Usage)
+@app.get("/me/usage", response_model=schemas.MyUsage)
+def my_usage(user=Depends(current_user)):
+    """This account's Gnani calls in the last 24 hours against each daily limit (see gnani.LIMITS)."""
+    return gnani.usage(user["id"])
+
+
+@app.get("/admin/usage", response_model=schemas.Usage)
 def usage(user=Depends(current_user)):
     """Gnani calls by everyone, against GNANI_CALL_LIMIT. Only for the owner: the account whose
     email is OWNER_EMAIL in .env."""
@@ -930,12 +924,6 @@ def usage(user=Depends(current_user)):
 def google_config():
     """Google OAuth client ID for Google Identity Services; empty when unconfigured."""
     return {"client_id": os.environ.get("GOOGLE_CLIENT_ID", "").strip()}
-
-
-@app.get("/config", response_model=schemas.Config)
-def config():
-    """What the app needs to know before anyone signs in."""
-    return {"invite_required": bool(invite_code())}
 
 
 @app.get("/health", response_model=schemas.Health)

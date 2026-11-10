@@ -11,10 +11,12 @@ from dotenv import load_dotenv
 COOKIE = "sunn_session"
 SESSION_SECONDS = 30 * 24 * 3600
 MIN_PASSWORD = 8
-MAX_FAILURES = 5  # failed logins per email, or sign-ups with a wrong invite code per IP ...
+MAX_FAILURES = 5  # failed logins per email ...
 FAILURE_WINDOW = 15 * 60  # ... within this many seconds
+SIGNUP_WINDOW = 3600  # new accounts per IP within this many seconds: SIGNUPS_PER_IP_PER_HOUR
 
 load_dotenv()
+MAX_SIGNUPS = int(os.environ.get("SIGNUPS_PER_IP_PER_HOUR") or 5)
 SECRET = os.environ.get("JWT_SECRET")
 if not SECRET:
     raise RuntimeError("JWT_SECRET is not set; add one to .env (see .env.example)")
@@ -61,30 +63,31 @@ def clear_session(response):
     response.delete_cookie(COOKIE, httponly=True, secure=True, samesite="lax", path="/")
 
 
-# In memory, so it resets when the server restarts; enough for one dev server. Keyed by the
-# email for a login and by ("signup", ip) for a sign-up, so the two never share a count.
+# In memory, so it resets when the server restarts; enough for one server. Keyed by the
+# email for failed logins and by ("signup", ip) for new accounts, so the two never share a count.
 _failures = defaultdict(deque)
 _lock = threading.Lock()
 
 
-def _recent(key, now):
+def _recent(key, now, window):
     attempts = _failures[key]
-    while attempts and attempts[0] <= now - FAILURE_WINDOW:
+    while attempts and attempts[0] <= now - window:
         attempts.popleft()
     return attempts
 
 
-def seconds_locked(key):
-    """Seconds until key may try again, or 0 if it has failed fewer than MAX_FAILURES times."""
+def seconds_locked(key, limit=MAX_FAILURES, window=FAILURE_WINDOW):
+    """Seconds until key may try again, or 0 if it has fewer than limit attempts in the last window seconds."""
     now = time.time()
     with _lock:
-        attempts = _recent(key, now)
-        return int(attempts[0] + FAILURE_WINDOW - now) + 1 if len(attempts) >= MAX_FAILURES else 0
+        attempts = _recent(key, now, window)
+        return int(attempts[0] + window - now) + 1 if len(attempts) >= limit else 0
 
 
 def record_failure(key):
+    """Count one attempt for key: a failed login, or a new account from an IP."""
     with _lock:
-        _recent(key, time.time()).append(time.time())
+        _failures[key].append(time.time())
 
 
 def clear_failures(key):
