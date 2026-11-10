@@ -9,7 +9,7 @@ export const SIGNED_OUT = 'sunn:signed-out'
 // offline (our server can't be reached), gnani (Prisma/Timbre failed), server (anything else).
 // code is the API's reason for a refusal (bad_login, email_taken, not_logged_in…), when it gives one.
 // Every API error is { error: code, message } (docs/API.md).
-const GNANI_CODES = ['gnani_unreachable', 'gnani_rejected', 'credit_limit_reached', 'daily_cap_reached']
+const GNANI_CODES = ['gnani_unreachable', 'gnani_rejected', 'credit_limit_reached', 'daily_limit']
 
 function apiError(kind, message, status, body) {
   const error = new Error(message || kind)
@@ -17,6 +17,8 @@ function apiError(kind, message, status, body) {
   error.status = status
   error.code = body?.error
   error.retryAfter = body?.retry_after
+  // daily_limit: { kind: 'stt' | 'tts' | 'enroll', limit, used, resets_at }
+  if (body?.error === 'daily_limit') error.limit = body
   return error
 }
 
@@ -72,8 +74,6 @@ function upload(path, blob, fields = {}) {
 
 // --- Authentication and Account ---
 
-// Server configuration (e.g. whether invite_required is true)
-export const config = () => request('/config').then(json)
 export const googleConfig = () => request('/auth/google/config').then(json)
 
 // language is the language the person speaks: one of the ten codes in i18n/languages.js
@@ -169,7 +169,8 @@ export function speakBrowserFallback(text, language = 'hi-IN') {
   })
 }
 
-// Speak text aloud using the browser Audio player, with optional browser fallback
+// Speak text aloud using the browser Audio player, with optional browser fallback.
+// keepLimit: a used-up daily limit is thrown, not spoken by the browser, so the screen can show the phrase.
 export async function say(text, options = {}) {
   const playId = ++currentPlayId
   try {
@@ -178,7 +179,8 @@ export async function say(text, options = {}) {
     await play(blob, playId)
     return { blob, fallback: false }
   } catch (err) {
-    if (options.fallback && typeof window !== 'undefined' && window.speechSynthesis) {
+    const keep = options.keepLimit && err.code === 'daily_limit'
+    if (options.fallback && !keep && typeof window !== 'undefined' && window.speechSynthesis) {
       await speakBrowserFallback(text, `${options.language || 'hi'}-IN`)
       return { blob: null, fallback: true }
     }
@@ -237,6 +239,9 @@ export function stopAudio() {
 
 // Totals, top 5 phrases, and 8-week clear_without_help_rate trend
 export const stats = () => request('/me/stats').then(json)
+
+// This account's speech calls in the last 24 hours: { stt, tts, enroll }, each { used, limit, resets_at }
+export const usage = () => request('/me/usage').then(json)
 
 // --- Trainings ---
 

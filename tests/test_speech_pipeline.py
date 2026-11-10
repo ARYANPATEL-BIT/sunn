@@ -123,7 +123,7 @@ def test_attempt_audio_cleanup_and_kids_privacy(tmp_path, monkeypatch):
     dummy_user = {"id": "test-user-speech", "email": "speech@example.com", "name": "Speech Tester", "language": "hi"}
 
     # Mock db calls
-    monkeypatch.setattr(db, "row", lambda q, p=(): {"n": 0})
+    monkeypatch.setattr(db, "row", lambda q, p=(): {"n": 0, "oldest": None})
     monkeypatch.setattr(db, "rows", lambda q, p=(): [{"n": 0}])
     inserted = []
     monkeypatch.setattr(db, "execute", lambda q, p=(): inserted.append((q, p)))

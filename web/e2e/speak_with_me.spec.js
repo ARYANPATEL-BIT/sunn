@@ -116,7 +116,8 @@ for (const lang of LANGS) {
       // Results display words feedback and practise tags
       await expect(page.locator('.words-check-grid')).toBeVisible()
       await expect(page.locator('.word-practise-tag').first()).toBeVisible()
-      await expect(page.locator('.checks-counter-meta')).toContainText(t(lang, 'check.checksLeft', { count: 19 }))
+      // Checks count against the STT daily limit only when sent to Gnani, and mock mode sends nothing.
+      await expect(page.locator('.checks-counter-meta')).toContainText(t(lang, 'check.checksLeft', { count: 20 }))
 
       // Practise again resets to record state
       await practiseAgainBtn.click()

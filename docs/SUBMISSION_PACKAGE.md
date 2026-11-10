@@ -53,7 +53,7 @@ Judges and challenge mentors can evaluate Sunn either through a deployed instanc
 
 | Step | Action | Route | Expected Result |
 | :--- | :--- | :--- | :--- |
-| **1. Sign Up** | Enter Name, Email, Invite Code (if configured), Password, the language you speak (Hindi or English), and tick consent. | `/signup` | Explicit consent captured; the 51 everyday phrases and starter building blocks are added. |
+| **1. Sign Up** | Enter Name, Email, Password, the language you speak (Hindi or English), and tick consent. | `/signup` | Explicit consent captured; the 51 everyday phrases and starter building blocks are added. |
 | **2. Welcome Guide** | Four short steps: welcome, the app's language (only the screen's; the language spoken is in Settings), how Sunn learns, getting ready. | `/app/onboarding` | Explains the tap-to-record interaction and the 3 recordings per phrase. |
 | **3. Teach** | Record the 10 quick-start phrases (help, pain, basic needs), 3 times each. Speak opens once all 10 are ready. | `/app/enroll` | Each saved recording fills a dot; a note says when Speak is open. |
 | **4. Live Speak** | Tap the central sun button, say an enrolled phrase (e.g. *पानी चाहिए* or *I need help*), tap to stop. | `/app/speak` | The sun's glow follows the voice; Prisma transcribes; the 3 closest phrases are shown, best first ("Maybe" when the match is weak). |
@@ -144,8 +144,8 @@ Expected output: Lists the tracked deployment files and reports `checks passed: 
 | **Microphone blocked / red icon** | Non-secure origin on mobile, or permission denied in browser | On desktop, use `http://localhost:7860` (treated as secure origin). On mobile, access via HTTPS direct URL. Check browser site permissions to allow microphone access. |
 | **502 `gnani_unreachable`** | Gnani didn't answer, or `GNANI_STT_API_KEY` / `GNANI_TTS_API_KEY` is not set | The API fails safely without crashing. Playback falls back to browser speech synthesis (`window.speechSynthesis`), with an on-screen notice; recognition waits for Prisma. |
 | **502 `gnani_rejected`** | Gnani refused the request, for example an invalid key (HTTP 401) | Check the key in the Space's secrets. |
-| **403 `invite_required`** | Sign-up attempted without invite code when `DEMO_INVITE_CODE` is set | Enter the designated evaluator invite code in the signup form. |
-| **429 `too_many_attempts`** | 5 wrong invite codes from one address, or 5 failed logins for one email, within 15 minutes | Locked for up to 15 minutes; the message says how long. |
+| **429 `daily_limit`** | This account used up 20 recordings, 20 spoken phrases or 40 setup recordings in the last 24 hours | The app says when more are available; the phrase is shown big on screen instead of spoken. |
+| **429 `too_many_attempts`** | 5 new accounts from one address in an hour, or 5 failed logins for one email in 15 minutes | The message says how long to wait. |
 | **429 `credit_limit_reached`** | Global `GNANI_CALL_LIMIT` reached | Previously cached phrases continue to play without spending new credits. Local TTS fallback remains active. |
 | **404 on page reload** | Reverse proxy misconfiguration or accessing framed HF preview | Always use the direct space address (`https://<space>.hf.space`), which routes unknown paths to `index.html` for client-side routing. |
 | **Cold start delay** | Free Hugging Face Space waking from idle pause | The first visit after a pause waits for the container to start; after that it answers normally. |
@@ -164,6 +164,5 @@ This checklist tracks the final deliverables required for official form submissi
 | **Technical Write-Up** | Comprehensive solution documentation in `docs/WRITEUP.md` | **Verified Ready** |
 | **Health Check & Ops** | Live health probe at `/api/health` and `/health` with log rotation | **Verified Ready** |
 | **Live Deployment URL** | Direct Space URL: `[placeholder: https://<username>-sunn.hf.space]` | *Manual Team Action* |
-| **Evaluator Invite Code** | Passcode for judges: `[placeholder: private code generated for reviewers]` | *Manual Team Action* |
 | **3-Minute Demo Video** | Video link (YouTube/Drive): `[placeholder: demo video link]` | *Manual Team Action* |
 | **Social Announcements** | LinkedIn and X posts prepared in `docs/POSTS.md` | *Manual Team Action* |

@@ -1,4 +1,4 @@
-import { expect, expectNoLeaks, INVITE, LANGS, openSpeak, refuseOnce, signUp, t, test } from './helpers.js'
+import { expect, expectNoLeaks, LANGS, openSpeak, refuseOnce, signUp, t, test } from './helpers.js'
 
 const PROTECTED = ['/app/speak', '/app/enroll', '/app/phrases', '/app/progress', '/app/settings', '/app/onboarding']
 
@@ -54,24 +54,20 @@ for (const lang of LANGS) {
       await expect(page.getByRole('alert')).toHaveText(t(lang, 'error.too_many_attempts', { minutes: 10 }))
       await expectNoLeaks(page, lang)
     })
+
+    test('an unknown email is offered a new account', async ({ page, watch }) => {
+      watch.allow(401, '/api/auth/me')
+      watch.allow(401, '/api/auth/login')
+      await page.goto('/login')
+      await page.getByLabel(t(lang, 'auth.email')).fill(`e2e-nobody-${Date.now()}@example.com`)
+      await page.getByLabel(t(lang, 'auth.password'), { exact: true }).fill('any-password-1')
+      await page.getByRole('button', { name: t(lang, 'login.submit') }).click()
+      const alert = page.getByRole('alert')
+      await expect(alert).toHaveText(`${t(lang, 'error.no_account')} ${t(lang, 'login.createOne')}`)
+      await expectNoLeaks(page, lang)
+      await alert.getByRole('link', { name: t(lang, 'login.createOne') }).click()
+      await expect(page).toHaveURL(/\/signup$/)
+    })
   })
 }
 
-// The one real wrong invite code of a run: the server counts them per address, and five lock
-// sign-up for every test after.
-test('the server refuses a wrong invite code, and the app says so', async ({ page, watch }, info) => {
-  test.skip(info.project.name !== 'phone', 'once per run')
-  watch.allow(401, '/api/auth/me')
-  watch.allow(403, '/api/auth/signup')
-  await page.goto('/signup')
-  await page.getByLabel(t('en', 'signup.name')).fill('Asha')
-  await page.getByLabel(t('en', 'auth.email')).fill(`e2e-wrong-invite-${Date.now()}@example.com`)
-  await page.getByLabel(t('en', 'auth.password'), { exact: true }).fill('e2e-password-1')
-  await page.getByLabel(t('en', 'signup.inviteCode')).fill(`not-${INVITE}`)
-  await page.getByRole('checkbox', { name: t('en', 'signup.consent') }).check()
-  const refused = page.waitForResponse((r) => r.url().endsWith('/api/auth/signup'))
-  await page.getByRole('button', { name: t('en', 'signup.submit') }).click()
-  expect((await refused).status()).toBe(403)
-  await expect(page.getByText(t('en', 'error.invite_required'))).toBeVisible()
-  await expect(page).toHaveURL(/\/signup$/)
-})

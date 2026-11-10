@@ -17,9 +17,9 @@ SpeechSource = Literal["pilot", "torgo", "simulated"]  # where a demo recording 
 ErrorCode = Literal[
     "not_logged_in", "not_found", "consent_required", "invalid_input",
     "audio_too_short", "audio_too_long", "file_too_large", "no_speech",
-    "gnani_unreachable", "gnani_rejected", "credit_limit_reached", "daily_cap_reached", "invite_required",
+    "gnani_unreachable", "gnani_rejected", "credit_limit_reached", "daily_limit",
     # Specific refusals the app words on their own.
-    "bad_login", "too_many_attempts", "email_taken", "no_name", "bad_email", "short_password",
+    "bad_login", "no_account", "too_many_attempts", "email_taken", "no_name", "bad_email", "short_password",
     "phrase_exists", "no_voice", "not_owner", "bad_audio", "server_error",
     "invalid_google_token", "google_unreachable", "unverified_email",
 ]
@@ -42,7 +42,13 @@ class Error(BaseModel):
     error: ErrorCode
     message: str  # plain English, for logs and developers; the app words error itself
     seconds: float | None = None  # audio_too_short, audio_too_long: how long the recording was
-    retry_after: int | None = None  # too_many_attempts: seconds until login opens again
+    retry_after: int | None = None  # too_many_attempts: seconds until it may be tried again
+    # daily_limit: which limit (stt, tts or enroll), its size, calls in the last 24 hours, and
+    # when the oldest of them stops counting
+    kind: Literal["stt", "tts", "enroll"] | None = None
+    limit: int | None = None
+    used: int | None = None
+    resets_at: datetime | None = None
     phrase_id: int | None = None  # phrase_exists: the phrase that already has this text
 
 
@@ -59,7 +65,6 @@ class Signup(Request):
     password: str  # 8 or more characters
     language: Language
     consent: bool = False  # must be true
-    invite_code: str | None = None  # needed when GET /config says invite_required
 
 
 class Login(Request):
@@ -69,7 +74,6 @@ class Login(Request):
 
 class GoogleAuth(Request):
     id_token: str
-    invite_code: str | None = None
     language: Language = "en"
     consent: bool = True
 
@@ -99,11 +103,6 @@ class UserUpdate(Request):
     caregiver_phone: str | None = None  # spaces, dashes, brackets and + are dropped
     language: Language | None = None  # Prisma and new phrases follow it; nothing is deleted
     phrase_goal: int | None = None
-
-
-class Config(BaseModel):
-    model_config = example(invite_required=False)
-    invite_required: bool  # sign-up needs an invite code
 
 
 class GoogleConfig(BaseModel):
@@ -314,6 +313,21 @@ class Usage(BaseModel):
     sent: int
     remaining: int
     by_kind: dict[Literal["stt", "tts", "clone"], KindUsage]
+
+
+class QuotaUsage(BaseModel):
+    used: int  # calls sent to Gnani in the last 24 hours; cached answers don't count
+    limit: int
+    resets_at: datetime | None  # when the oldest of those stops counting; null when there are none
+
+
+class MyUsage(BaseModel):
+    model_config = example(stt={"used": 7, "limit": 20, "resets_at": "2026-11-11T11:00:00Z"},
+                           tts={"used": 3, "limit": 20, "resets_at": "2026-11-11T09:12:00Z"},
+                           enroll={"used": 0, "limit": 40, "resets_at": None})
+    stt: QuotaUsage  # Prisma: Speak and training checks
+    tts: QuotaUsage  # Timbre: speaking, previews and voice cloning
+    enroll: QuotaUsage  # Prisma: recording phrases while teaching Sunn
 
 
 class Health(BaseModel):

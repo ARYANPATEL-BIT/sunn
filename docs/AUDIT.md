@@ -40,8 +40,7 @@ Every automated run used `GNANI_MOCK=1`, except the one real check (section 6).
 
 | Endpoint | Screen | Component | Status |
 | - | - | - | - |
-| `GET /config` | Sign up | `SignupPage` (AuthPages.jsx) | connected: the invite field shows when `invite_required` |
-| `POST /auth/signup` | Sign up | `SignupPage` | connected; sends `invite_code`, the spoken language and consent |
+| `POST /auth/signup` | Sign up | `SignupPage` | connected; sends the spoken language and consent |
 | `POST /auth/login` | Sign in | `LoginPage` | connected |
 | `POST /auth/logout` | app header | `AppShell` via `auth.jsx` | connected; **was** racing to `/login?next=…`, now lands on `/` |
 | `GET /auth/me` | every page load | `AuthProvider` (auth.jsx) | connected |
@@ -62,7 +61,8 @@ Every automated run used `GNANI_MOCK=1`, except the one real check (section 6).
 | `GET /me/stats` | Progress | `Progress.jsx` | connected; the screen **crashed** whenever a recognition had been confirmed (fixed) |
 | `GET/POST/DELETE /me/slot-words`, `POST …/enroll` | none | none | not called: no building-block screens (README says so) |
 | `GET/POST/DELETE /me/templates`, `POST …/enroll` | none | none | not called, as above |
-| `GET /me/usage` | none | none | not called: owner-only, no screen |
+| `GET /me/usage` | Settings | `Settings` | connected: the three daily-limit rows |
+| `GET /admin/usage` | none | none | not called: owner-only, no screen |
 | `GET /health`, `GET /api/health` | none | none | for Docker and Spaces probes |
 
 ### Every control, and what it calls
@@ -75,7 +75,7 @@ Every automated run used `GNANI_MOCK=1`, except the one real check (section 6).
 | Landing | How it works, Who it's for, Privacy links | page anchors | yes |
 | Landing | example pause / play, FAQ questions | nothing | yes |
 | Sign in | email, password, show / hide, Sign in | `POST /auth/login` | yes; wrong password and lockout worded |
-| Sign up | name, email, invite code, password, show / hide, language you speak, consent, Create account | `GET /config`, `POST /auth/signup`, `POST /me/phrases/default` | yes; invite and lockout errors worded |
+| Sign up | name, email, password, show / hide, language you speak, consent, Create account | `POST /auth/signup`, `POST /me/phrases/default` | yes; lockout errors worded |
 | app header | Sunn, Demo, EN / हिं, Settings, Log out | `/`; presenter bar; nothing; `/app/settings`; `POST /auth/logout` | yes |
 | app | bottom tabs | navigation | yes |
 | presenter bar | steps, previous, next, restart, collapse, close, Alt+P | navigation only | yes |
@@ -115,14 +115,13 @@ Speak shows a "record your first phrases" screen until then; the tab itself stay
 
 ## 3. End-to-end tests
 
-`web/e2e`, Playwright against `src/server.py` in mock mode on port 7861 with an invite code and
-an empty data folder, in Chromium at 390 x 844 and 1440 x 900, with a fake microphone that
+`web/e2e`, Playwright against `src/server.py` in mock mode on port 7861 with an empty data folder, in Chromium at 390 x 844 and 1440 x 900, with a fake microphone that
 plays a tone. `cd web; npm run e2e` builds the app and runs them.
 
 | Spec | Covers |
 | - | - |
-| `auth.spec.js` | landing, Start speaking, sign in, back to Speak; every `/app` route sends to `/login?next=…`; wrong password and lockout wording; one real wrong invite code per run |
-| `journey.spec.js` | sign-up with an invite code (wrong code, lockout wording, right code), the welcome guide, Teach with the quick start (record, play back, save), Speak closed then open, a context chip sent and Any sent as none, a candidate confirmed and played (real `audio/wav`, `playing` event), "None of these", the new phrase in the library |
+| `auth.spec.js` | landing, Start speaking, sign in, back to Speak; every `/app` route sends to `/login?next=…`; wrong password and lockout wording; an unknown email offers sign-up |
+| `journey.spec.js` | sign-up (no code needed), the welcome guide, Teach with the quick start (record, play back, save), Speak closed then open, a context chip sent and Any sent as none, a candidate confirmed and played (real `audio/wav`, `playing` event), "None of these", the new phrase in the library |
 | `phrases.spec.js` | edit text, mark urgent, delete with a confirm (and Keep), the "Simulated speech" label |
 | `settings.spec.js` | own voice: upload with consent, toggle, preview, Speak in the cloned voice, remove; app language (no request sent); spoken language (confirm, `PATCH`, new phrases, "Record again" on the old ones, Speak closes); text size; caregiver and its wa.me link; account deletion (signed out, local flag gone, `/auth/me` 401, landing page) |
 | `progress.spec.js` | the empty state of a new account, then counts, first-suggestion match, top phrases, the chart and the 8-week table |
@@ -177,8 +176,8 @@ Last full run: 59 passed, 1 skipped (the once-a-run wrong invite code, skipped o
 - **CORS**: none at all; another origin gets no `Access-Control-Allow-Origin` (new test).
 - **Upload limits**: 10 MB, now refused from `Content-Length` before the body is read (it was
   read in full first); phrases 0.3 to 15 s, a voice 5 to 30 s (tests).
-- **Rate limits**: 5 failed logins lock an email for 15 minutes (new test; it had none), 5 wrong
-  invite codes lock an address, plus the daily cap per account and the server-wide call limit.
+- **Rate limits**: 5 failed logins lock an email for 15 minutes (new test; it had none), 5 new
+  accounts an hour per address, plus the daily limits per account and the server-wide call limit.
 - **Secrets**: the real `GNANI_API_KEY` and `JWT_SECRET` values from `.env` appear in none of
   the 335 commits on any branch; the one pattern match is a made-up value in a test. `.gitignore`
   covers `.env`, `data/`, `logs/`, `web/certs/`, `web/reference/`; only the two default phrase

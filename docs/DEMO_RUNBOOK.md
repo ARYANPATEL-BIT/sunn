@@ -22,8 +22,8 @@ Open `http://localhost:7860` in a desktop browser (Chrome, Edge, or Firefox). De
    ```
    Open `http://localhost:5173`.
 
-### Evaluator Account Setup and Invite Code
-1. Navigate to `/signup`. If `DEMO_INVITE_CODE` is configured on the server, enter the designated evaluator invite code in the demo code field.
+### Evaluator Account Setup
+1. Navigate to `/signup` (anyone can sign up, by email or Google).
 2. Enter Name, Email, Password, select language (Hindi or English), and check the consent box.
 3. Once registered, click the **Demo** pill in the top header (or press **Alt + P** / **Option + P** on macOS) to activate the Presenter Bar. Fresh launch automatically starts at Step 1 (`/app/onboarding`).
 
@@ -98,10 +98,10 @@ Sunn is configured to preserve the majority of the ~5,000 Gnani credit budget fo
 
 1. **Credit Ceilings**:
    - `GNANI_CALL_LIMIT=4000`: Hard stop protecting the final 1,000 credit demo buffer.
-   - `DAILY_CALL_CAP_PER_USER=60`: Prevents presenter account runaway during rehearsals.
-   - `TRAINING_CHECKS_PER_DAY=20`: Limits live STT scoring checks per user per day.
+   - `STT_DAILY_LIMIT=20`, `TTS_DAILY_LIMIT=20`, `ENROLL_DAILY_LIMIT=40`: per account, over a rolling 24 hours (training checks count as STT).
+   - `LIMIT_EXEMPT_EMAILS` (default `OWNER_EMAIL`): the presenter account is never limited.
 2. **Real-Time Usage Monitoring**:
-   - The owner account (`OWNER_EMAIL`) can query `GET /api/me/usage` to inspect live call counts and cache hit ratios.
+   - The owner account (`OWNER_EMAIL`) can query `GET /api/admin/usage` to inspect live call counts and cache hit ratios; every account sees its own daily limits in Settings (`GET /api/me/usage`).
    - Inspect SQLite call records:
      ```powershell
      uv run python -c "import db; print(db.row('SELECT COUNT(*) as live FROM api_calls WHERE cached = 0'))"

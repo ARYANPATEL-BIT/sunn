@@ -187,11 +187,11 @@ def test_voice_deletion_and_consent_revocation(env):
 def test_administrative_usage_endpoint_access_control(env, monkeypatch):
     """Only the owner configured in OWNER_EMAIL can access administrative usage metrics."""
     client_unauth = env.client()
-    unauth_resp = client_unauth.get("/me/usage")
+    unauth_resp = client_unauth.get("/admin/usage")
     assert unauth_resp.status_code == 401
 
     client_user = env.signup(language="en")
-    user_resp = client_user.get("/me/usage")
+    user_resp = client_user.get("/admin/usage")
     assert user_resp.status_code == 403
     assert user_resp.json()["error"] == "not_owner"
 
@@ -203,7 +203,7 @@ def test_administrative_usage_endpoint_access_control(env, monkeypatch):
         "name": "Owner", "email": owner_email, "password": "password123",
         "language": "en", "consent": True
     })
-    owner_resp = client_owner.get("/me/usage")
+    owner_resp = client_owner.get("/admin/usage")
     assert owner_resp.status_code == 200
     usage_data = owner_resp.json()
     assert "limit" in usage_data
@@ -212,7 +212,7 @@ def test_administrative_usage_endpoint_access_control(env, monkeypatch):
 
 
 def test_log_sanitization_and_auth_hygiene(env):
-    """Logging masks sensitive fields and auth error responses do not leak user existence."""
+    """Logging masks sensitive fields; an unknown email is told apart from a wrong password."""
     import log
 
     # Log sanitization defense-in-depth
@@ -242,15 +242,15 @@ def test_log_sanitization_and_auth_hygiene(env):
     assert cleaned["text"] == "[REDACTED]"
     assert cleaned["caregiver_phone"] == "[REDACTED]"
 
-    # Timing-safe and enumeration-safe login responses
+    # Login responses
     client = env.client()
     env.signup(language="en")
 
     resp_unknown_email = client.post("/auth/login", json={"email": "nonexistent@example.com", "password": "password123"})
     assert resp_unknown_email.status_code == 401
-    assert resp_unknown_email.json() == {"error": "bad_login", "message": "wrong email or password"}
+    assert resp_unknown_email.json() == {"error": "no_account", "message": "no account with this email"}
 
     user_row = db.row("SELECT email FROM users LIMIT 1")
     resp_wrong_password = client.post("/auth/login", json={"email": user_row["email"], "password": "wrongpassword"})
     assert resp_wrong_password.status_code == 401
-    assert resp_wrong_password.json() == {"error": "bad_login", "message": "wrong email or password"}
+    assert resp_wrong_password.json() == {"error": "bad_login", "message": "wrong password"}

@@ -83,9 +83,9 @@ uv run scripts/evaluate.py --email demo@example.com --folder data/demo
 ```
 
 Each new enroll recording is one Prisma call for the demo account, so it counts against
-`DAILY_CALL_CAP_PER_USER` (default 60 a day). For a bigger folder, raise it in `.env` while you
-load, or load over several days: the loader stops at the cap and picks up where it left off.
-If the server has an invite code, pass `--invite` or set `$env:DEMO_INVITE_CODE`.
+`ENROLL_DAILY_LIMIT` (default 40 in a rolling 24 hours). For a bigger folder, list the demo
+account in `LIMIT_EXEMPT_EMAILS` (or make it `OWNER_EMAIL`) while you load, or load over several
+days: the loader stops at the limit and picks up where it left off.
 
 Load with `GNANI_MOCK` off. In mock mode every recording gets a made-up transcript, so the demo
 account's fingerprints would be made up too (`scripts/evaluate.py` refuses to run in mock mode).

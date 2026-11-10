@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from contextlib import closing
+from contextlib import closing, contextmanager
 
 from dotenv import load_dotenv
 
@@ -86,15 +86,17 @@ CREATE TABLE IF NOT EXISTS uses (
     phrase_id INTEGER NOT NULL REFERENCES phrases(id),
     created_at TEXT NOT NULL
 );
--- One row per Gnani request, sent or answered from the cache. user_id is who it was for, for
--- the daily cap; NULL for a script, and set to NULL when the account is deleted.
+-- One row per Gnani request, sent or answered from the cache. user_id is who it was for; NULL
+-- for a script, and set to NULL when the account is deleted. quota is the daily limit a sent call
+-- counts against (stt, tts or enroll, see gnani.LIMITS); NULL for a cached call, a retry or a script.
 CREATE TABLE IF NOT EXISTS api_calls (
     id INTEGER PRIMARY KEY,
     kind TEXT NOT NULL CHECK (kind IN ('stt', 'tts', 'clone')),
     cached INTEGER NOT NULL,
     audio_seconds REAL,
     created_at TEXT NOT NULL,
-    user_id INTEGER
+    user_id INTEGER,
+    quota TEXT
 );
 -- Trainings progress: each lesson started, step index, when finished, and last update.
 CREATE TABLE IF NOT EXISTS training_progress (
@@ -153,6 +155,7 @@ ADDED_COLUMNS = [
     ("samples", "language", f"TEXT {LANGUAGE_CHECK}"),
     ("samples", "speech_source", "TEXT CHECK (speech_source IN ('pilot', 'torgo', 'simulated'))"),
     ("api_calls", "user_id", "INTEGER"),
+    ("api_calls", "quota", "TEXT"),
 ]
 
 
@@ -234,6 +237,21 @@ def transaction(*statements):
         for sql, params in statements:
             last = conn.execute(sql, params).lastrowid
         return last
+
+
+@contextmanager
+def locked():
+    """A connection holding the database's write lock from its first read to commit, so a count
+    and the insert that depends on it can't interleave with another request's."""
+    with closing(sqlite3.connect(DB_PATH, isolation_level=None, timeout=30)) as conn:
+        conn.row_factory = sqlite3.Row
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            yield conn
+        except BaseException:
+            conn.execute("ROLLBACK")
+            raise
+        conn.execute("COMMIT")
 
 
 def delete_user(user_id):

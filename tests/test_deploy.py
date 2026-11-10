@@ -4,9 +4,6 @@ import uuid
 
 from fastapi.testclient import TestClient
 
-CODE = "sunrise-42"
-
-
 def signup(client, forwarded_for=None, path="/auth/signup", **extra):
     # A proxy appends its own hop, so the client is the left-most entry and the right one is shared.
     headers = {"X-Forwarded-For": f"{forwarded_for}, 10.0.0.1"} if forwarded_for else {}
@@ -15,24 +12,20 @@ def signup(client, forwarded_for=None, path="/auth/signup", **extra):
         "language": "hi", "consent": True, **extra})
 
 
-def test_without_trust_proxy_forwarded_for_is_ignored(env, monkeypatch):
-    monkeypatch.setenv("DEMO_INVITE_CODE", CODE)
-    client = env.client()
+def test_without_trust_proxy_forwarded_for_is_ignored(env):
     for n in range(5):
-        assert signup(client, f"203.0.113.{n}", invite_code="guess").status_code == 403
+        assert signup(env.client(), f"203.0.113.{n}").status_code == 200
     # All five counted against the connection's own address, whatever the header claimed.
-    assert signup(client, "198.51.100.7", invite_code=CODE).status_code == 429
+    assert signup(env.client(), "198.51.100.7").status_code == 429
 
 
 def test_behind_a_trusted_proxy_each_client_has_its_own_count(env, monkeypatch):
-    monkeypatch.setenv("DEMO_INVITE_CODE", CODE)
     monkeypatch.setenv("TRUST_PROXY", "1")
-    client = env.client()
     for _ in range(5):
-        assert signup(client, "203.0.113.5", invite_code="guess").status_code == 403
-    assert signup(client, "203.0.113.5", invite_code=CODE).status_code == 429
-    assert signup(env.client(), "198.51.100.7", invite_code=CODE).status_code == 200  # someone else
-    assert signup(env.client(), invite_code=CODE).status_code == 200  # no header: the connection's address
+        assert signup(env.client(), "203.0.113.5").status_code == 200
+    assert signup(env.client(), "203.0.113.5").status_code == 429
+    assert signup(env.client(), "198.51.100.7").status_code == 200  # someone else
+    assert signup(env.client()).status_code == 200  # no header: the connection's address
 
 
 def test_one_app_serves_the_api_and_the_web_app(env, tmp_path):
@@ -51,9 +44,9 @@ def test_one_app_serves_the_api_and_the_web_app(env, tmp_path):
     assert client.get("/assets/app.js").text == "console.log('sunn')"
     big = client.get("/assets/big.js", headers={"Accept-Encoding": "gzip"})
     assert big.headers["content-encoding"] == "gzip" and big.text == "console.log('sunn');\n" * 500
-    assert "content-encoding" not in client.get("/api/config", headers={"Accept-Encoding": "gzip"}).headers
+    assert "content-encoding" not in client.get("/api/health", headers={"Accept-Encoding": "gzip"}).headers
 
-    assert client.get("/api/config").json() == {"invite_required": False}
+    assert client.get("/api/health").json() == {"status": "ok"}
     missing = client.get("/api/nowhere")
     assert missing.status_code == 404 and missing.json()["error"] == "not_found"
     assert signup(client, path="/api/auth/signup").status_code == 200  # as the browser does
@@ -173,8 +166,8 @@ def test_database_custom_data_dir_and_persistence_isolation(tmp_path, monkeypatc
     monkeypatch.setenv("DATA_DIR", str(custom_dir))
 
     import db
-    db.DATA_DIR = str(custom_dir)
-    db.DB_PATH = str(custom_dir / "app.db")
+    monkeypatch.setattr(db, "DATA_DIR", str(custom_dir))  # restored after, so later tests keep their own
+    monkeypatch.setattr(db, "DB_PATH", str(custom_dir / "app.db"))
     db.init()
 
     # 1. DB file created inside custom data dir
@@ -248,40 +241,6 @@ def test_static_hosting_path_traversal_protection(env, tmp_path):
         assert res.status_code in (200, 404, 400)
 
 
-def test_signup_invite_code_enforcement_and_frontend_contract(env, monkeypatch):
-    """Verify signup invite code enforcement in API and frontend integration."""
-    from pathlib import Path
-
-    client = env.client()
-
-    # 1. Open signup when DEMO_INVITE_CODE is unset
-    monkeypatch.delenv("DEMO_INVITE_CODE", raising=False)
-    assert client.get("/config").json() == {"invite_required": False}
-    open_res = signup(client)
-    assert open_res.status_code == 200
-
-    # 2. Restricted signup when DEMO_INVITE_CODE is set
-    monkeypatch.setenv("DEMO_INVITE_CODE", "secret-evaluator-pass")
-    assert client.get("/config").json() == {"invite_required": True}
-
-    # Missing invite code is rejected with 403
-    rejected = signup(client)
-    assert rejected.status_code == 403
-    assert rejected.json()["error"] == "invite_required"
-
-    # Valid invite code is accepted with 200
-    allowed = signup(client, invite_code="secret-evaluator-pass")
-    assert allowed.status_code == 200
-
-    # 3. Verify frontend AuthPages and api client have invite code contract
-    root = Path(__file__).resolve().parent.parent
-    auth_pages_code = (root / "web" / "src" / "AuthPages.jsx").read_text(encoding="utf-8")
-    api_js_code = (root / "web" / "src" / "api.js").read_text(encoding="utf-8")
-
-    assert "inviteRequired" in auth_pages_code
-    assert "signup-invite" in auth_pages_code
-    assert "invite_code: inviteCode" in auth_pages_code
-    assert "export const config =" in api_js_code
 
 
 def test_deployment_dry_run_preflight_check():

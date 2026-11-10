@@ -27,7 +27,6 @@ async function setupUser(req, lang) {
       name: lang === 'hi' ? 'आशा' : 'Asha',
       language: lang,
       consent: true,
-      invite_code: 'e2e-invite',
     },
   })
   return req.storageState()

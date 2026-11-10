@@ -2,7 +2,7 @@
 
 Each test recording is converted as the API converts uploads and sent to Prisma (cached in
 DATA_DIR, so a second run sends nothing; a new one counts against GNANI_CALL_LIMIT but not a
-daily cap). Its hypothesis is then ranked the way POST /me/recognize ranks it (matcher.rank),
+daily limit). Its hypothesis is then ranked the way POST /me/recognize ranks it (matcher.rank),
 against the account's phrases and their enrollment recordings in the account's language.
 Confirmed recognitions, template compositions and usage boosts are left out: a demo account
 has no usage history, and the test is how far the enrollment recordings alone get.

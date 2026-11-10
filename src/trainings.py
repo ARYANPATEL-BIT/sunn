@@ -46,7 +46,6 @@ WEB_AUDIO_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__f
 # What a pace check compares against when the step has no pace_wpm of its own.
 DEFAULT_PACE_WPM = (70, 120)
 RECORDED = (content.ListenRepeat, content.SpeakWithMe, content.ReadAloud)  # the steps attempts take
-TRAINING_CHECKS_PER_DAY = int(os.environ.get("TRAINING_CHECKS_PER_DAY", 20))
 WORD_CLEAR_THRESHOLD = float(os.environ.get("WORD_CLEAR_THRESHOLD", 0.70))
 MAX_AUDIO_BYTES = 10 * 1024 * 1024  # 10 MB upload cap
 
@@ -637,14 +636,16 @@ def attempt(
         feedback_type = step.feedback
         pace_range = step.pace_wpm if getattr(step, "pace_wpm", None) else DEFAULT_PACE_WPM
 
-    # Calculate remaining checks today
-    today_str = datetime.now(timezone.utc).date().isoformat()
     now_str = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    used_today = db.row(
-        "SELECT COUNT(*) AS n FROM training_attempts WHERE user_id = ? AND checked = 1 AND created_at >= ?",
-        (user["id"], today_str),
-    )["n"]
-    checks_left = max(0, TRAINING_CHECKS_PER_DAY - used_today)
+
+    def checks_left():
+        """A check is a Prisma call, so it counts against the STT daily limit (gnani.LIMITS)."""
+        stt = gnani.quota_state(db.row, user["id"], "stt")
+        return max(0, stt["limit"] - stt["used"])
+
+    # The STT limit (or the server's) used up: the practice still counts, unchecked.
+    no_checks_left = Attempt(checked=False, words=None, similarity=None, wpm=None, pace=None,
+                             message_key="no_checks_left", checks_left_today=0, transcript=None)
 
     # Read and convert uploaded audio to 16kHz mono WAV for validation and Prisma
     data = audio_file.file.read(MAX_AUDIO_BYTES + 1)
@@ -678,15 +679,12 @@ def attempt(
         # 1. Not checked (check=False) or step feedback is "none"
         if not check or feedback_type == "none":
             # If check requested on feedback="none" step:
-            if check and checks_left > 0:
+            if check:
                 try:
                     hypothesis = prisma.transcribe(wav_path, language=lang, user_id=user["id"])
                 except gnani.GnaniError as ge:
-                    if ge.code in ("daily_cap_reached", "credit_limit_reached"):
-                        return Attempt(
-                            checked=False, words=None, similarity=None, wpm=None, pace=None,
-                            message_key="no_checks_left", checks_left_today=0, transcript=None,
-                        )
+                    if ge.code in ("daily_limit", "credit_limit_reached"):
+                        return no_checks_left
                     raise
                 stored_transcript = None if is_kids else hypothesis
                 db.execute(
@@ -696,7 +694,7 @@ def attempt(
                 )
                 return Attempt(
                     checked=True, words=None, similarity=None, wpm=None, pace=None,
-                    message_key="practised", checks_left_today=max(0, checks_left - 1),
+                    message_key="practised", checks_left_today=checks_left(),
                     transcript=stored_transcript,
                 )
 
@@ -709,31 +707,20 @@ def attempt(
             )
             return Attempt(
                 checked=False, words=None, similarity=None, wpm=None, pace=None,
-                message_key="practised", checks_left_today=checks_left, transcript=None,
+                message_key="practised", checks_left_today=checks_left(), transcript=None,
             )
 
-        # 2. Check requested, but daily check cap reached
-        if checks_left <= 0:
-            stored_transcript = None if is_kids else target_text
-            db.execute(
-                "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (user["id"], lesson_id, step_id, item_id, stored_transcript, None, None, 0, now_str),
-            )
-            return Attempt(
-                checked=False, words=None, similarity=None, wpm=None, pace=None,
-                message_key="no_checks_left", checks_left_today=0, transcript=None,
-            )
-
-        # 3. Check requested and cap available: transcribe with Prisma
+        # 2. Check requested: transcribe with Prisma
         try:
             hypothesis = prisma.transcribe(wav_path, language=lang, user_id=user["id"])
         except gnani.GnaniError as ge:
-            if ge.code in ("daily_cap_reached", "credit_limit_reached"):
-                return Attempt(
-                    checked=False, words=None, similarity=None, wpm=None, pace=None,
-                    message_key="no_checks_left", checks_left_today=0, transcript=None,
+            if ge.code in ("daily_limit", "credit_limit_reached"):
+                db.execute(
+                    "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (user["id"], lesson_id, step_id, item_id, None if is_kids else target_text, None, None, 0, now_str),
                 )
+                return no_checks_left
             raise
 
         if not hypothesis or not hypothesis.strip():
@@ -800,7 +787,7 @@ def attempt(
             wpm=res_wpm,
             pace=res_pace,
             message_key=message_key,
-            checks_left_today=max(0, checks_left - 1),
+            checks_left_today=checks_left(),
             transcript=stored_transcript,
         )
 

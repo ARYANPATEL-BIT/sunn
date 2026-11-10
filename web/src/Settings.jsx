@@ -20,6 +20,7 @@ export default function Settings() {
   const [caregiverName, setCaregiverName] = useState(user?.caregiver_name || '')
   const [caregiverPhone, setCaregiverPhone] = useState(user?.caregiver_phone || '')
   const [phraseCount, setPhraseCount] = useState(50)
+  const [usage, setUsage] = useState(null) // GET /me/usage: speech calls in the last 24 hours
 
   const [busy, setBusy] = useState(null) // 'caregiver' | 'voice' | 'upload' | 'language' | 'account'
   const [playingSample, setPlayingSample] = useState(false)
@@ -54,6 +55,7 @@ export default function Settings() {
     api.listPhrases().then((list) => {
       if (Array.isArray(list) && list.length > 0) setPhraseCount(list.length)
     }).catch(() => {})
+    api.usage().then((found) => isMounted.current && setUsage(found), () => {})
   }, [])
 
   async function handleSetGoal(newGoalStr) {
@@ -522,6 +524,19 @@ export default function Settings() {
           <Icon name="chevronRight" className="row-chevron" />
         </button>
       </Group>
+
+      {/* Speech calls in the last 24 hours, against each daily limit */}
+      {usage && (
+        <Group title={t('settings.usageTitle')} titleId="heading-usage" footer={t('settings.usageHelp')}>
+          {[['stt', 'settings.usageStt'], ['tts', 'settings.usageTts'], ['enroll', 'settings.usageEnroll']].map(
+            ([kind, key]) => (
+              <div className="row" key={kind}>
+                <span className="row-title">{t(key, { used: usage[kind].used, limit: usage[kind].limit })}</span>
+              </div>
+            ),
+          )}
+        </Group>
+      )}
 
       {/* Account and privacy */}
       <Group title={t('settings.sectionAccount')} titleId="heading-account" footer={t('settings.privacyNote')}>

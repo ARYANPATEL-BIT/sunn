@@ -52,7 +52,8 @@ export default defineConfig({
       RERANKER_ENABLED: '0',
       TRUST_PROXY: '0',
       GOOGLE_CLIENT_ID: '',
-      DEMO_INVITE_CODE: 'e2e-invite',
+      // Every e2e sign-up comes from this machine; the 5 an hour per IP is tests/test_signup.py's.
+      SIGNUPS_PER_IP_PER_HOUR: '100000',
       DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'sunn-e2e-data-')),
     },
   },

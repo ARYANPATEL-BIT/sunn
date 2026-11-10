@@ -253,11 +253,6 @@ def test_no_secrets_exposed_in_public_config_routes(env):
     """Public config endpoints return only safe non-secret flags."""
     client = env.client()
 
-    config_res = client.get("/config")
-    assert config_res.status_code == 200
-    config_keys = set(config_res.json().keys())
-    assert config_keys == {"invite_required"}
-
     google_res = client.get("/auth/google/config")
     assert google_res.status_code == 200
     google_keys = set(google_res.json().keys())
@@ -285,8 +280,11 @@ def test_env_example_contains_all_inventoried_variables():
         "GNANI_STT_API_KEY",
         "GNANI_TTS_API_KEY",
         "GNANI_CALL_LIMIT",
-        "DAILY_CALL_CAP_PER_USER",
-        "TRAINING_CHECKS_PER_DAY",
+        "STT_DAILY_LIMIT",
+        "TTS_DAILY_LIMIT",
+        "ENROLL_DAILY_LIMIT",
+        "LIMIT_EXEMPT_EMAILS",
+        "SIGNUPS_PER_IP_PER_HOUR",
         "WORD_CLEAR_THRESHOLD",
         "GNANI_MOCK",
         "GROQ_API_KEY",
@@ -301,7 +299,6 @@ def test_env_example_contains_all_inventoried_variables():
         "LLM_RATE_PER_MIN",
         "JWT_SECRET",
         "OWNER_EMAIL",
-        "DEMO_INVITE_CODE",
         "GOOGLE_CLIENT_ID",
         "DATA_DIR",
         "TRUST_PROXY",

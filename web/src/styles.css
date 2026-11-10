@@ -1548,6 +1548,17 @@ textarea:disabled {
 }
 
 .field-hint,
+/* A phrase shown big for the listener to read, when it can't be spoken (Speak.jsx) */
+.listener-text {
+  margin: 0;
+  padding: 1.5rem 0.5rem;
+  font-size: clamp(2rem, 9vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
 .form-hint {
   color: var(--ink-2);
   font-size: 0.875rem;

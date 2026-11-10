@@ -47,14 +47,14 @@ def test_load_then_evaluate(env, tmp_path):
     rows = load_demo.read_manifest(folder)
     env.fake.transcripts += [heard for *_, kind, _, heard in MANIFEST if kind == "enroll"]
     session = env.client()
-    load_demo.sign_in(session, URL, "demo@example.com", "password123", "Demo", "hi", None)
+    load_demo.sign_in(session, URL, "demo@example.com", "password123", "Demo", "hi")
     assert load_demo.load(session, URL, rows) == 3
     phrases = {p["text"]: p for p in session.get("/me/phrases").json()}
     assert phrases["पानी चाहिए"]["enrolled"] == 2 and phrases["पानी चाहिए"]["sources"] == ["simulated"]
     assert phrases["दर्द हो रहा है"]["sources"] == ["pilot"]
 
     again = env.client()  # a second run signs in to the same account and sends nothing new
-    load_demo.sign_in(again, URL, "demo@example.com", "password123", "Demo", "hi", None)
+    load_demo.sign_in(again, URL, "demo@example.com", "password123", "Demo", "hi")
     assert load_demo.load(again, URL, rows) == 0 and len(env.fake.sent("stt")) == 3
 
     env.fake.transcripts += [heard for *_, kind, _, heard in MANIFEST if kind == "test"]

@@ -53,7 +53,7 @@ This document provides a production-ready recording script and screen capture pl
 
 ## Technical Recording Checklist
 
-- [ ] Clear browser cache or use an incognito window with `DEMO_INVITE_CODE` ready if required.
+- [ ] Clear browser cache or use an incognito window.
 - [ ] Confirm `GNANI_API_KEY` is loaded and `.env` has valid credentials.
 - [ ] Ensure system output volume is set so screen recorder captures Timbre TTS playback clearly.
 - [ ] Verify presenter mode toggle (`Alt + P`) works cleanly for quick navigation if recording in one continuous take.

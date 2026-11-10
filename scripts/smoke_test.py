@@ -16,7 +16,6 @@ https://<space>.hf.space/api for the deployed Space, http://127.0.0.1:8000 for u
 """
 import argparse
 import json
-import os
 import sys
 import uuid
 
@@ -45,8 +44,6 @@ if __name__ == "__main__":
     parser.add_argument("--voice", help="5-30 s of speech to clone; omit to skip the cloned voice")
     parser.add_argument("--url", default="http://127.0.0.1:7860/api")
     parser.add_argument("--language", choices=["hi", "en"], default="hi")
-    parser.add_argument("--invite", default=os.environ.get("DEMO_INVITE_CODE"),
-                        help="the server's DEMO_INVITE_CODE, if it has one (default: $env:DEMO_INVITE_CODE)")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")  # Windows consoles default to cp1252, which can't print Devanagari
 
@@ -54,7 +51,7 @@ if __name__ == "__main__":
     email = f"smoke-{uuid.uuid4().hex[:8]}@example.com"
     signup = session.post(f"{args.url}/auth/signup", json={
         "name": "smoke test", "email": email, "password": "smoke-test-password",
-        "language": args.language, "consent": True, "invite_code": args.invite})
+        "language": args.language, "consent": True})
     show(f"sign up {email}", signup)
     # The server marks the cookie Secure (browsers reach it over https). This script may talk
     # plain http to a local server, so it keeps the cookie without that flag.
@@ -101,6 +98,7 @@ if __name__ == "__main__":
 
     show("phrases", session.get(f"{me}/phrases"))
     show("stats", session.get(f"{me}/stats"))
-    show("usage (403 unless OWNER_EMAIL is this account)", session.get(f"{me}/usage"), ok=False)
+    show("my usage against the daily limits", session.get(f"{me}/usage"))
+    show("server usage (403 unless OWNER_EMAIL is this account)", session.get(f"{args.url}/admin/usage"), ok=False)
     show("delete the account", session.delete(me))
     show("who am I, after deleting (401)", session.get(f"{args.url}/auth/me"), ok=False)

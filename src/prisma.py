@@ -27,9 +27,9 @@ def cache_path(audio_bytes, language):
     return os.path.join(CACHE_DIR, f"{key}.json")
 
 
-def transcribe(wav_path, language="hi", user_id=None):
+def transcribe(wav_path, language="hi", user_id=None, quota="stt"):
     """Prisma transcript for a wav; calls Gnani only on a cache miss. user_id is who the call is
-    for (see gnani.post)."""
+    for, and quota the daily limit it counts against: stt, or enroll (see gnani.post)."""
     with open(wav_path, "rb") as f:
         audio_bytes = f.read()
     if gnani_mock.on():
@@ -37,11 +37,11 @@ def transcribe(wav_path, language="hi", user_id=None):
     seconds = audio.seconds(audio_bytes)
     path = cache_path(audio_bytes, language)
     if os.path.exists(path):
-        gnani.record("stt", True, seconds, user_id)
+        gnani.record_cached("stt", seconds, user_id)
         with open(path, encoding="utf-8") as f:
             return json.load(f)["transcript"]
 
-    response = gnani.post("stt", URL, audio_seconds=seconds, user_id=user_id, data=request_form(language),
+    response = gnani.post("stt", URL, audio_seconds=seconds, user_id=user_id, quota=quota, data=request_form(language),
                           files={"audio_file": ("audio.wav", audio_bytes, "audio/wav")})
     try:
         result = response.json()

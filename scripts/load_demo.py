@@ -10,7 +10,8 @@ The folder holds manifest.csv (docs/DEMO_DATA.md) with the columns:
 The manifest is checked in full before anything is sent. Then this signs in as --email, or
 signs up when there is no such account, adds the default phrases, and enrolls each enroll row
 with POST /me/enroll and its source. Each new recording is one Prisma call (the server caches
-it), so it counts against the account's DAILY_CALL_CAP_PER_USER on that server.
+it), so it counts against the account's ENROLL_DAILY_LIMIT on that server (40 in 24 hours by
+default; list the account in LIMIT_EXEMPT_EMAILS there for a bigger folder).
 
 It stops at the first refused recording. Run it again and it carries on: a phrase that already
 has n enrollment recordings skips its first n rows.
@@ -71,13 +72,12 @@ def check(response, step):
     return response.json()
 
 
-def sign_in(session, url, email, password, name, language, invite):
+def sign_in(session, url, email, password, name, language):
     """Log in, or sign up when the account doesn't exist yet; returns the user."""
     response = session.post(f"{url}/auth/login", json={"email": email, "password": password})
     if response.status_code == 401:
         response = session.post(f"{url}/auth/signup", json={
-            "name": name, "email": email, "password": password, "language": language, "consent": True,
-            "invite_code": invite})
+            "name": name, "email": email, "password": password, "language": language, "consent": True})
         if response.status_code == 409:
             raise SystemExit(f"{email} has an account, and that isn't its password")
     user = check(response, f"sign in as {email}")
@@ -116,15 +116,13 @@ if __name__ == "__main__":
     parser.add_argument("--url", default="http://127.0.0.1:7860/api", help="the API's base")
     parser.add_argument("--language", choices=["hi", "en"], default="hi", help="the language the phrases are in")
     parser.add_argument("--name", default="Demo")
-    parser.add_argument("--invite", default=os.environ.get("DEMO_INVITE_CODE"),
-                        help="the server's DEMO_INVITE_CODE, if it has one (default: $env:DEMO_INVITE_CODE)")
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")  # Windows consoles default to cp1252, which can't print Devanagari
 
     rows = read_manifest(args.folder)
     password = os.environ.get("DEMO_PASSWORD") or getpass.getpass(f"password for {args.email}: ")
     session = requests.Session()
-    sign_in(session, args.url, args.email.strip().lower(), password, args.name, args.language, args.invite)
+    sign_in(session, args.url, args.email.strip().lower(), password, args.name, args.language)
     sent = load(session, args.url, rows)
     enroll = [r for r in rows if r["kind"] == "enroll"]
     print(f"enrolled {sent} new recordings ({len(enroll) - sent} were already there) for "

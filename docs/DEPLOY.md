@@ -17,11 +17,14 @@ Everything comes from environment variables. Locally they live in `.env` (copy
 | `GROQ_API_KEY` | optional, secret | the Groq Cloud API key for AI assistant features |
 | `GROQ_MODEL` | no (default `openai/gpt-oss-120b`) | the Groq model identifier |
 | `JWT_SECRET` | yes, secret | signs session cookies. Make a long random one: `uv run python -c "import secrets; print(secrets.token_urlsafe(48))"`. Changing it signs everyone out |
-| `DEMO_INVITE_CODE` | yes on a public Space, secret | sign-up needs this code. Make it long and random too (see TRUST_PROXY below), and give it only to the people who should try the demo |
 | `TRUST_PROXY` | `1` on the Space, `0` locally | see below |
+| `SIGNUPS_PER_IP_PER_HOUR` | no (default 5) | new accounts one IP address may make an hour |
 | `GNANI_CALL_LIMIT` | no (default 4000) | Gnani calls the whole server may send; past it, new ones are refused |
-| `DAILY_CALL_CAP_PER_USER` | no (default 60) | Gnani calls one account may send per day (UTC). Cached answers don't count |
-| `OWNER_EMAIL` | no | the account that may read `GET /api/me/usage` |
+| `STT_DAILY_LIMIT` | no (default 20) | Prisma calls one account may send in a rolling 24 hours: Speak, training checks |
+| `TTS_DAILY_LIMIT` | no (default 20) | Timbre calls one account may send in a rolling 24 hours: speaking, listening, voice preview and cloning |
+| `ENROLL_DAILY_LIMIT` | no (default 40) | Prisma calls for recording phrases while teaching Sunn, apart from `STT_DAILY_LIMIT` |
+| `LIMIT_EXEMPT_EMAILS` | no (default `OWNER_EMAIL`) | comma-separated accounts the three limits never apply to |
+| `OWNER_EMAIL` | no | the account that may read `GET /api/admin/usage`, and by default exempt from the daily limits |
 | `DATA_DIR` | no (default `data`) | where the database, recordings and caches go |
 
 ## Hosting Options Comparison
@@ -40,10 +43,11 @@ Everything comes from environment variables. Locally they live in `.env` (copy
 
 ### Why TRUST_PROXY is on for Hugging Face and off locally
 
-Sign-up allows 5 wrong invite codes per IP address per 15 minutes. On a Space, the app never
-talks to browsers directly: every request arrives through Hugging Face's proxy, so the
-connection always comes from the proxy's address. Without `TRUST_PROXY`, all users share that
-one address, and one person typing 5 wrong codes locks sign-up for everyone.
+Anyone can sign up, but one IP address can make at most 5 new accounts an hour (by email or
+Google). On a Space, the app never talks to browsers directly: every request arrives through
+Hugging Face's proxy, so the connection always comes from the proxy's address. Without
+`TRUST_PROXY`, all users share that one address, and 5 sign-ups an hour would be all the
+whole Space gets.
 
 With `TRUST_PROXY=1`, the app takes the client's address from the `X-Forwarded-For` header
 instead: its left-most entry, the client as the proxy saw it. `src/server.py` also starts
@@ -55,9 +59,9 @@ too.
 
 One thing I couldn't check: whether Hugging Face's proxy replaces an incoming
 `X-Forwarded-For` or adds to it. If it adds to it, a client can put a made-up address in
-front and dodge the 5-tries limit. That's why the invite code should be long and random:
-then guessing it is hopeless even without the limit. Logins are limited per email, not per
-address, so the proxy doesn't affect them.
+front and dodge the 5-accounts limit. Each new account still has its own daily speech limits
+(`STT_DAILY_LIMIT`, `TTS_DAILY_LIMIT`, `ENROLL_DAILY_LIMIT`), and `GNANI_CALL_LIMIT` caps the
+whole server. Logins are limited per email, not per address, so the proxy doesn't affect them.
 
 ## First deploy
 
@@ -71,9 +75,9 @@ address, so the proxy doesn't affect them.
    SDK with the **Blank** template, and the free **CPU basic** hardware. Make it **Public**, so
    judges can open it without an account. Create it.
 3. In the Space, open **Settings → Variables and secrets** and add:
-   - **New secret**: `GNANI_STT_API_KEY`, `GNANI_TTS_API_KEY`, `JWT_SECRET`, `GROQ_API_KEY`, `DEMO_INVITE_CODE`
-   - **New variable**: `TRUST_PROXY` = `1`, `GNANI_CALL_LIMIT`, `DAILY_CALL_CAP_PER_USER`, `GROQ_MODEL`, and
-     optionally `OWNER_EMAIL`
+   - **New secret**: `GNANI_STT_API_KEY`, `GNANI_TTS_API_KEY`, `JWT_SECRET`, `GROQ_API_KEY`
+   - **New variable**: `TRUST_PROXY` = `1`, `GNANI_CALL_LIMIT`, `GROQ_MODEL`, and optionally
+     `OWNER_EMAIL`, `STT_DAILY_LIMIT`, `TTS_DAILY_LIMIT`, `ENROLL_DAILY_LIMIT`, `LIMIT_EXEMPT_EMAILS`
 
    Secrets and variables reach the container as environment variables when it runs. Nothing
    secret is needed while the image builds.
@@ -134,7 +138,6 @@ Secure session cookie works as it does locally.
 Check it with the smoke test (two short wavs of speech; this makes 2 Prisma calls):
 
 ```powershell
-$env:DEMO_INVITE_CODE = "<the code>"
 uv run scripts/smoke_test.py first.wav second.wav --url https://<you>-sunn.hf.space/api
 ```
 
@@ -166,7 +169,8 @@ All operational events are logged to `logs/app.log`:
 
 When `OWNER_EMAIL` is configured:
 1. Sign in with the owner email account.
-2. Query `GET /api/me/usage` to inspect live Gnani call counters:
+2. Query `GET /api/admin/usage` to inspect live Gnani call counters (any account can read its own
+   against the daily limits at `GET /api/me/usage`, shown in Settings):
    - Breakdown by service: STT, TTS, and voice clone.
    - Sent vs cached calls.
    - Remaining calls before `GNANI_CALL_LIMIT` threshold is reached.
@@ -180,11 +184,13 @@ When `OWNER_EMAIL` is configured:
   recording and cached Gnani answer is gone. Load the demo account again afterwards
   (`scripts/load_demo.py --url https://<you>-sunn.hf.space/api`, docs/DEMO_DATA.md). Since
   the cache is gone too, each reload sends one Prisma call per enrollment recording, and
-  those count against the demo account's daily cap. Hugging Face sells persistent storage;
+  those count against the demo account's `ENROLL_DAILY_LIMIT` (list it in `LIMIT_EXEMPT_EMAILS`
+  to load more than 40). Hugging Face sells persistent storage;
   this setup doesn't use it.
 - **Credits.** Every non-cached Prisma, Timbre and voice clone call spends Gnani credit.
-  `GNANI_CALL_LIMIT` caps the whole server and `DAILY_CALL_CAP_PER_USER` each account;
-  both answer 429 once used up (`credit_limit_reached`, `daily_cap_reached`).
+  `GNANI_CALL_LIMIT` caps the whole server, and `STT_DAILY_LIMIT`, `TTS_DAILY_LIMIT` and
+  `ENROLL_DAILY_LIMIT` each account over a rolling 24 hours; both answer 429 once used up
+  (`credit_limit_reached`, `daily_limit`).
 
 ## Run the same image locally
 
@@ -214,8 +220,10 @@ Sunn operates under a strict credit conservation policy to protect the limited h
 3. **Multi-Tier Safeguards**:
    - Per-call caching via SHA-256 hashes of normalized request parameters and audio bytes in `data/cache/prisma/` and `data/cache/tts/`.
    - Global hard stop: `GNANI_CALL_LIMIT` (default: 4000) prevents total project overage.
-   - Per-user daily cap: `DAILY_CALL_CAP_PER_USER` (default: 60) prevents individual user runaway.
-   - Daily training check cap: `TRAINING_CHECKS_PER_DAY` (default: 20) limits assessment evaluations.
+   - Per-user limits over a rolling 24 hours, checked and recorded in one database transaction before
+     each call: `STT_DAILY_LIMIT` (20, Speak and training checks), `TTS_DAILY_LIMIT` (20) and
+     `ENROLL_DAILY_LIMIT` (40, teaching phrases). Accounts in `LIMIT_EXEMPT_EMAILS` (default
+     `OWNER_EMAIL`) are never limited.
 
 ### Controlled Smoke-Test Utility (`scripts/gnani_live_smoke.py`)
 
@@ -352,13 +360,12 @@ uv run scripts/groq_live_smoke.py --feature-check --confirm-live-call
 Run the automated smoke test script using two sample WAV files:
 
 ```powershell
-$env:DEMO_INVITE_CODE = "<your-invite-code>"
 uv run scripts/smoke_test.py sample1.wav sample2.wav --url https://<you>-sunn.hf.space/api
 ```
 
 This verifies:
 1. Connecting to the live deployment over HTTPS.
-2. Registering a test account with the invite code.
+2. Registering a test account.
 3. Adding a starter phrase.
 4. Uploading an enrollment audio sample through Prisma STT.
 5. Performing recognition and asserting that candidate suggestions are returned.
@@ -369,7 +376,7 @@ This verifies:
 | - | - | - |
 | **502 `gnani_unreachable`** | `GNANI_STT_API_KEY` or `GNANI_TTS_API_KEY` missing or invalid in Space secrets | Open Space Settings -> Variables and secrets, verify the Gnani keys. Audio playback will fall back to browser speech synthesis. |
 | **429 `credit_limit_reached`** | Global `GNANI_CALL_LIMIT` reached | Previously cached phrases continue to play. To increase limit, update `GNANI_CALL_LIMIT` variable in Space settings. |
-| **403 `invite_required`** | Sign-up attempted without valid code | Verify `DEMO_INVITE_CODE` in Space secrets and ensure presenter enters the code on sign-up. |
+| **429 `daily_limit`** | This account used up one of its daily limits | The app says when more are available. Cached phrases still play. For the presenter account, set `LIMIT_EXEMPT_EMAILS` (or `OWNER_EMAIL`). |
 | **404 on page reload** | Reverse proxy misconfiguration | Use direct URL `https://<you>-sunn.hf.space`, not the framed Hugging Face preview page. |
 | **Slow initial response (30s+)** | Free Space waking from idle sleep | Wait 30 seconds for the container to boot, then refresh. The app runs smoothly once awake. |
 
@@ -386,20 +393,20 @@ To stop or remove the live demo and avoid unnecessary resource usage:
 
 | Item | Requirement | Verification Result |
 | - | - | - |
-| **Registration Guard** | Sign-up restricted against quota drainage | **Verified**: `DEMO_INVITE_CODE` supported across API, frontend UI, and i18n dictionaries. |
+| **Registration Guard** | Sign-up open, limited against quota drainage | **Verified**: at most 5 new accounts per IP per hour, and per-account daily speech limits. |
 | **Session Security** | Signed tokens, HttpOnly, Secure, SameSite | **Verified**: `sunn_session` cookie enforces `HttpOnly=True`, `SameSite="Lax"`, `Secure=True`. |
 | **Proxy Safety** | Client IP extracted from trusted proxy header | **Verified**: `TRUST_PROXY=1` uses left-most `X-Forwarded-For` with rate limiting. |
 | **Frontend Secrets** | No server keys bundled in client code | **Verified**: Zero API keys or secrets in `web/src` or production Vite bundle. |
 | **Data Isolation** | Private files unreadable via static routing | **Verified**: Static file server prevents directory traversal out of `web/dist`. |
 | **Account Deletion** | Complete erasure of user recordings and records | **Verified**: `DELETE /me` purges database rows, audio files, and cloned voice directories. |
-| **Quota Caps** | Automatic budget protection against overages | **Verified**: `GNANI_CALL_LIMIT` and `DAILY_CALL_CAP_PER_USER` reject before API calls. |
+| **Quota Caps** | Automatic budget protection against overages | **Verified**: `GNANI_CALL_LIMIT` and the per-account daily limits reject before API calls. |
 | **Fallback Messaging** | Transparent TTS notices | **Verified**: UI displays notice when offline or browser speech synthesis fallback is used. |
 
-### Recommended Deployment Outcome: Ready for Restricted-Access Demo Only
+### Recommended Deployment Outcome: Ready for an Open Demo
 
-**Recommendation**: Set `DEMO_INVITE_CODE` when deploying to a public Hugging Face Space.
+**Recommendation**: Keep the default daily limits on a public Hugging Face Space, and list the presenter account in `LIMIT_EXEMPT_EMAILS` (or set it as `OWNER_EMAIL`).
 
 **Rationale**:
-1. Without `DEMO_INVITE_CODE`, any anonymous visitor or web crawler finding the Space address could create accounts and consume the Gnani credit budget.
-2. With `DEMO_INVITE_CODE` configured, only challenge evaluators and judges possessing the invite code can create accounts and run speech recognitions.
+1. Anyone finding the Space address can create an account, so each account gets at most 20 recognitions, 20 spoken phrases and 40 setup recordings in 24 hours, and one address at most 5 new accounts an hour.
+2. `GNANI_CALL_LIMIT` stays the hard stop for the whole server, whatever the number of accounts.
 3. Free Hugging Face Spaces wipe container storage upon reboot. Real patient recordings must never be stored on ephemeral public cloud tiers; only synthetic demo data should be demonstrated.

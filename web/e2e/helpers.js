@@ -15,7 +15,6 @@ import { wav } from './audio.js'
 export { expect, wav }
 // The interface languages the full journeys run in; languages.spec.js covers the other eight.
 export const LANGS = ['en', 'hi']
-export const INVITE = 'e2e-invite'
 export const PASSWORD = 'e2e-password-1'
 const STRINGS = { en, hi, ta, te, kn, ml, mr, gu, bn, pa }
 
@@ -86,7 +85,7 @@ export async function signUp(request, { speaks = 'en', name } = {}) {
   const email = `e2e-${unique()}@example.com`
   const response = await request.post('/api/auth/signup', {
     data: { name: name || (speaks === 'hi' ? 'आशा' : 'Asha'), email, password: PASSWORD, language: speaks,
-      consent: true, invite_code: INVITE },
+      consent: true },
   })
   expect(response.status(), await response.text()).toBe(200)
   const user = await response.json()
@@ -186,8 +185,8 @@ export const phraseCard = (page, text) =>
 export const openPhrase = (page, text) => phraseCard(page, text).locator('.phrase-row').click()
 
 // Answers the next request to `path` with an API refusal, for checking how the app words it
-// without tripping the server's real limits (5 wrong invite codes from one address lock sign-up
-// for 15 minutes, for every test that runs after).
+// without tripping the server's real limits (locked logins, daily speech limits; mock mode
+// sends nothing to Gnani, so it never reaches those).
 export async function refuseOnce(page, watch, path, status, body) {
   watch.allow(status, path)
   await page.route(`**${path}`, (route) =>

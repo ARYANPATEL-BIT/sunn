@@ -260,9 +260,11 @@ Form: `audio` (the try, 0.3 to 15 s), `step_id`, `item_id` (the item's id, for a
 
 With `check` true and a step whose `feedback` isn't `none`, Prisma hears the try and it is
 scored: `pace` gives `wpm` and `pace`, `words` gives `words` and `similarity` (0 to 1). Else
-nothing is sent to Prisma, `checked` is false and every score is null. Checks use the speech
-service, so there are `checks_left_today`; at 0 a check isn't made (`no_checks_left`). The
-recording itself is never kept.
+nothing is sent to Prisma, `checked` is false and every score is null. A check is a Prisma call,
+so it counts against the user's `STT_DAILY_LIMIT` (see `GET /me/usage` in docs/API.md):
+`checks_left_today` is what is left of it in the last 24 hours. When it (or the server's
+`GNANI_CALL_LIMIT`) is used up, the try still counts as practice, unchecked, with
+`no_checks_left` and status 200. The recording itself is never kept.
 
 `pace` is what to try next time: `slower` when the try was faster than the range, `faster`
 when slower. `message_key` is what the app says, from its own i18n:
@@ -270,7 +272,7 @@ when slower. `message_key` is what the app says, from its own i18n:
 | message_key | when |
 | - | - |
 | `practised` | not checked |
-| `no_checks_left` | `check` was true, but no checks are left today |
+| `no_checks_left` | `check` was true, but the STT daily limit is used up |
 | `pace_good`, `pace_slower`, `pace_faster` | a pace check |
 | `words_clear` | a words check, every word clear |
 | `words_practise` | a words check, some words to practise |
@@ -283,7 +285,7 @@ when slower. `message_key` is what the app says, from its own i18n:
 
 Errors: `not_logged_in`, `not_found`, `invalid_input`, `file_too_large`, `bad_audio`,
 `audio_too_short`, `audio_too_long`, `no_speech`, `gnani_unreachable`, `gnani_rejected`,
-`credit_limit_reached`, `daily_cap_reached`.
+`credit_limit_reached`.
 
 ### `GET /me/trainings/tricky-sounds` · real
 
