@@ -2,9 +2,14 @@
 
 Sunn runs as one Python process: `src/server.py` serves the API under `/api` and the built
 web app (`web/dist`) everywhere else, on port 7860. These steps put it on a free Hugging Face
-**Gradio** Space (Docker Spaces on the free CPU basic hardware now need HF PRO). A Gradio
-Space installs `requirements.txt` with pip and runs `app.py` with Python; `app.py` starts
-`src/server.py` on `0.0.0.0:7860`, as the Dockerfile's CMD does. The Space builds nothing
+**Gradio** Space on **ZeroGPU** hardware. Docker Spaces and CPU basic hardware now need HF
+PRO (CPU basic is refused with 402); a free personal account gets ZeroGPU. ZeroGPU only runs
+Gradio Spaces on Python 3.10.13 or 3.12.12, so the Space runs Python 3.10, and the code and
+`requirements.txt` are kept 3.10-compatible. A Gradio Space installs `requirements.txt` with
+pip and runs `app.py` with Python; `app.py` starts `src/server.py` on `0.0.0.0:7860`, as the
+Dockerfile's CMD does. Sunn needs no GPU, but ZeroGPU stops a Space that reports no
+`@spaces.GPU` function at startup, so `app.py` registers one that is never called (no GPU
+quota used) and sends the report that Gradio's `launch()` would. The Space builds nothing
 else: there is no Node there, so it serves the `web/dist` you committed. The `Dockerfile`
 stays for running the same thing in a container elsewhere (below). Commands are for Windows
 PowerShell, from the repo root.
@@ -76,7 +81,8 @@ whole server. Logins are limited per email, not per address, so the proxy doesn'
    uv run hf auth login
    ```
 2. Open https://huggingface.co/new-space. Pick a name (say `sunn`), choose **Gradio** as the
-   SDK with the **Blank** template, and the free **CPU basic** hardware. Make it **Public**, so
+   SDK with the **Blank** template, and the free **ZeroGPU** hardware (CPU basic needs PRO).
+   Make it **Public**, so
    judges can open it without an account. Create it.
 3. In the Space, open **Settings → Variables and secrets** and add:
    - **New secret**: `GNANI_STT_API_KEY`, `GNANI_TTS_API_KEY`, `JWT_SECRET`, `GROQ_API_KEY`
@@ -102,7 +108,7 @@ git add web/dist
 ```
 
 After a change to the dependencies in `pyproject.toml`, build `requirements.txt` again and
-commit it too. The Space builds on Python 3.10, so the file is resolved for 3.10 Linux, not
+commit it too. The Space runs Python 3.10 (ZeroGPU), so the file is resolved for 3.10 Linux, not
 exported from `uv.lock` (which is for your local 3.13 setup):
 
 ```powershell
@@ -147,9 +153,9 @@ uv run scripts/deploy_space.py --check-only
 The script adds front matter to the top of the uploaded `README.md` (`sdk: gradio`,
 `sdk_version: 6.32.0`, `python_version: "3.10"`, `app_file: app.py`), which is what Hugging
 Face reads as the Space's settings, so the Space's `README.md` is replaced by the repo's on
-every deploy. The Gradio Space builds on Python 3.10 whatever `python_version` says (it
-ignored `"3.13"`), so the code and `requirements.txt` are kept 3.10-compatible, while
-`requires-python` in `pyproject.toml` stays `>=3.13` for local work; the Space
+every deploy. `python_version` is `"3.10"` because ZeroGPU only offers 3.10.13 and 3.12.12
+(an earlier `"3.13"` fell back to 3.10), while `requires-python` in `pyproject.toml` stays
+`>=3.13` for local work. ZeroGPU also installs torch and `spaces` itself; the Space
 installs that Gradio version next to `requirements.txt` (the app doesn't use Gradio, but the
 SDK installs it, and its fastapi, starlette and pydantic ranges fit the pinned versions). The
 Space rebuilds on every upload; follow it in the **Logs** tab. It is ready
@@ -207,7 +213,7 @@ When `OWNER_EMAIL` is configured:
 
 ## What to expect from a free Space
 
-- **It sleeps.** A free CPU Space pauses after 48 hours without visitors. The next visitor
+- **It sleeps.** A free Space pauses after 48 hours without visitors. The next visitor
   wakes it, which takes a while (the container starts again).
 - **Data resets.** The Space's disk is wiped whenever the container restarts: after it wakes
   from sleep, after every upload, and when Hugging Face restarts it. Every account,
