@@ -326,7 +326,7 @@ def done_lessons(user):
     if not user:
         return set()
     result = db.rows(
-        "SELECT lesson_id FROM training_progress WHERE user_id = ? AND completed_at IS NOT NULL",
+        "SELECT lesson_id FROM training_progress WHERE user_id = %s AND completed_at IS NOT NULL",
         (user["id"],)
     )
     return {r["lesson_id"] for r in result if r["lesson_id"] in LIBRARY.lessons}
@@ -414,7 +414,7 @@ def progress(user=Depends(current_user)):
 
     # Every course the user has started (has any row in training_progress)
     prog_rows = db.rows(
-        "SELECT lesson_id, updated_at FROM training_progress WHERE user_id = ? ORDER BY updated_at DESC",
+        "SELECT lesson_id, updated_at FROM training_progress WHERE user_id = %s ORDER BY updated_at DESC",
         (user["id"],)
     )
     started_courses = set()
@@ -431,7 +431,7 @@ def progress(user=Depends(current_user)):
 
     # Resume: the most recently updated unfinished lesson
     unfinished = db.row(
-        "SELECT lesson_id, step_index FROM training_progress WHERE user_id = ? AND completed_at IS NULL ORDER BY updated_at DESC, rowid DESC LIMIT 1",
+        "SELECT lesson_id, step_index FROM training_progress WHERE user_id = %s AND completed_at IS NULL ORDER BY updated_at DESC, id DESC LIMIT 1",
         (user["id"],)
     )
     resume = None
@@ -441,7 +441,7 @@ def progress(user=Depends(current_user)):
 
     # Minutes practised: sum of seconds across all days in training_minutes, rounded to nearest minute
     min_row = db.row(
-        "SELECT COALESCE(SUM(seconds), 0) AS total_seconds FROM training_minutes WHERE user_id = ?",
+        "SELECT COALESCE(SUM(seconds), 0) AS total_seconds FROM training_minutes WHERE user_id = %s",
         (user["id"],)
     )
     total_seconds = min_row["total_seconds"] if min_row else 0
@@ -451,10 +451,10 @@ def progress(user=Depends(current_user)):
     cutoff = (datetime.now(timezone.utc).date() - timedelta(days=6)).isoformat()
     day_row = db.row(
         "SELECT COUNT(DISTINCT day) AS cnt FROM ("
-        "  SELECT day FROM training_minutes WHERE user_id = ? AND day >= ? AND seconds > 0"
+        "  SELECT day FROM training_minutes WHERE user_id = %s AND day >= %s AND seconds > 0"
         "  UNION"
-        "  SELECT substr(updated_at, 1, 10) AS day FROM training_progress WHERE user_id = ? AND updated_at >= ?"
-        ")",
+        "  SELECT substr(updated_at, 1, 10) AS day FROM training_progress WHERE user_id = %s AND updated_at >= %s"
+        ") AS days",
         (user["id"], cutoff, user["id"], cutoff)
     )
     days_this_week = day_row["cnt"] if day_row else 0
@@ -479,7 +479,7 @@ def save_progress(body: ProgressUpdate, user=Depends(current_user)):
     today_str = now_dt.date().isoformat()
 
     # Time tracking: add elapsed seconds since last update to training_minutes (capped at 10 minutes)
-    prev = db.row("SELECT updated_at FROM training_progress WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1", (user["id"],))
+    prev = db.row("SELECT updated_at FROM training_progress WHERE user_id = %s ORDER BY updated_at DESC LIMIT 1", (user["id"],))
     if prev and prev.get("updated_at"):
         try:
             prev_dt = datetime.fromisoformat(prev["updated_at"])
@@ -493,8 +493,8 @@ def save_progress(body: ProgressUpdate, user=Depends(current_user)):
         seconds = 60
 
     db.execute(
-        "INSERT INTO training_minutes (user_id, day, seconds) VALUES (?, ?, ?)"
-        " ON CONFLICT(user_id, day) DO UPDATE SET seconds = seconds + excluded.seconds",
+        "INSERT INTO training_minutes (user_id, day, seconds) VALUES (%s, %s, %s)"
+        " ON CONFLICT(user_id, day) DO UPDATE SET seconds = training_minutes.seconds + excluded.seconds",
         (user["id"], today_str, seconds)
     )
 
@@ -502,7 +502,7 @@ def save_progress(body: ProgressUpdate, user=Depends(current_user)):
     completed_at = now_str if body.completed else None
     db.execute(
         "INSERT INTO training_progress (user_id, lesson_id, step_index, completed_at, updated_at)"
-        " VALUES (?, ?, ?, ?, ?)"
+        " VALUES (%s, %s, %s, %s, %s)"
         " ON CONFLICT(user_id, lesson_id) DO UPDATE SET"
         " step_index = excluded.step_index,"
         " completed_at = COALESCE(training_progress.completed_at, excluded.completed_at),"
@@ -511,7 +511,7 @@ def save_progress(body: ProgressUpdate, user=Depends(current_user)):
     )
 
     # Fetch stored completion state
-    stored = db.row("SELECT completed_at FROM training_progress WHERE user_id = ? AND lesson_id = ?",
+    stored = db.row("SELECT completed_at FROM training_progress WHERE user_id = %s AND lesson_id = %s",
                     (user["id"], body.lesson_id))
     is_completed = bool(stored and stored["completed_at"])
     done = done_lessons(user)
@@ -533,7 +533,7 @@ def reflect(body: Reflection, user=Depends(current_user)):
     now_str = datetime.now(timezone.utc).isoformat(timespec="seconds")
     db.execute(
         "INSERT INTO training_reflections (user_id, lesson_id, step_id, feeling, created_at)"
-        " VALUES (?, ?, ?, ?, ?)",
+        " VALUES (%s, %s, %s, %s, %s)",
         (user["id"], body.lesson_id, body.step_id, body.feeling, now_str)
     )
     return {"ok": True}
@@ -689,7 +689,7 @@ def attempt(
                 stored_transcript = None if is_kids else hypothesis
                 db.execute(
                     "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
-                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     (user["id"], lesson_id, step_id, item_id, stored_transcript, None, None, 1, now_str),
                 )
                 return Attempt(
@@ -702,7 +702,7 @@ def attempt(
             stored_transcript = None if is_kids else target_text
             db.execute(
                 "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 (user["id"], lesson_id, step_id, item_id, stored_transcript, None, None, 0, now_str),
             )
             return Attempt(
@@ -717,7 +717,7 @@ def attempt(
             if ge.code in ("daily_limit", "credit_limit_reached"):
                 db.execute(
                     "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
-                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     (user["id"], lesson_id, step_id, item_id, None if is_kids else target_text, None, None, 0, now_str),
                 )
                 return no_checks_left
@@ -776,7 +776,7 @@ def attempt(
         stored_transcript = None if is_kids else hypothesis
         db.execute(
             "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (user["id"], lesson_id, step_id, item_id, stored_transcript, res_similarity, res_wpm, 1, now_str),
         )
 
@@ -808,7 +808,7 @@ def get_user_tricky_sounds(user: dict) -> list[TrickySound]:
     # 1. Speak evidence: count consistent substitutions
     speak_counts: dict[str, int] = defaultdict(int)
     samples = db.rows(
-        "SELECT s.prisma_hypothesis, p.text FROM samples s JOIN phrases p ON s.phrase_id = p.id WHERE s.user_id = ?",
+        "SELECT s.prisma_hypothesis, p.text FROM samples s JOIN phrases p ON s.phrase_id = p.id WHERE s.user_id = %s",
         (user_id,)
     )
     for sample in samples:
@@ -832,7 +832,7 @@ def get_user_tricky_sounds(user: dict) -> list[TrickySound]:
     practice_words_practise: dict[str, int] = defaultdict(int)
     practice_words_total: dict[str, int] = defaultdict(int)
     attempts = db.rows(
-        "SELECT step_id, item_id, transcript FROM training_attempts WHERE user_id = ? AND checked = 1",
+        "SELECT step_id, item_id, transcript FROM training_attempts WHERE user_id = %s AND checked = 1",
         (user_id,)
     )
     for att in attempts:
@@ -867,7 +867,7 @@ def get_user_tricky_sounds(user: dict) -> list[TrickySound]:
     # 3. Self evidence: "hard" reflections on steps that have focus_sound
     self_counts: dict[str, int] = defaultdict(int)
     reflections = db.rows(
-        "SELECT step_id, feeling FROM training_reflections WHERE user_id = ? AND feeling = 'hard'",
+        "SELECT step_id, feeling FROM training_reflections WHERE user_id = %s AND feeling = 'hard'",
         (user_id,)
     )
     for ref in reflections:

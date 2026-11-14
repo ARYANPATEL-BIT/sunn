@@ -55,7 +55,7 @@ def quota_state(row, user_id, quota):
     """{used, limit, resets_at} for one quota over the last 24 hours; resets_at is when the oldest
     of those calls stops counting. row runs a query and returns its one row."""
     found = row("SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM api_calls"
-                " WHERE user_id = ? AND quota = ? AND created_at > ?",
+                " WHERE user_id = %s AND quota = %s AND created_at > %s",
                 (user_id, quota, stamp(datetime.now(timezone.utc) - WINDOW)))
     oldest = found["oldest"] and stamp(datetime.fromisoformat(found["oldest"]) + WINDOW)
     return {"used": found["n"], "limit": daily_limit(quota), "resets_at": oldest}
@@ -68,9 +68,9 @@ def usage(user_id):
 
 def reserve(kind, audio_seconds, user_id, quota):
     """Check GNANI_CALL_LIMIT and, when quota is given, the user's daily limit for it, then record
-    the call as sent: all in one locked transaction, so two requests can't both take the last one.
-    Returns the new api_calls id."""
-    with db.locked() as conn:
+    the call as sent: all in one transaction holding db.RESERVE_LOCK, so two requests (even on
+    two servers) can't both take the last one. Returns the new api_calls id."""
+    with db.locked(db.RESERVE_LOCK) as conn:
         def row(sql, params=()):
             return conn.execute(sql, params).fetchone()
 
@@ -78,7 +78,7 @@ def reserve(kind, audio_seconds, user_id, quota):
         if row("SELECT COUNT(*) AS n FROM api_calls WHERE cached = 0")["n"] >= limit:
             log.event("gnani_limit_reached", level=logging.WARNING, kind=kind, limit=limit)
             raise GnaniError("credit_limit_reached", f"the Gnani call limit ({limit}) is used up", status=429)
-        user = row("SELECT email FROM users WHERE id = ?", (user_id,)) if quota else None
+        user = row("SELECT email FROM users WHERE id = %s", (user_id,)) if quota else None
         if user and user["email"] not in exempt_emails():
             state = quota_state(row, user_id, quota)
             if state["used"] >= state["limit"]:
@@ -86,8 +86,8 @@ def reserve(kind, audio_seconds, user_id, quota):
                 raise GnaniError("daily_limit", f"this account's {state['limit']} {quota} calls for the last 24 hours"
                                  " are used up", status=429, kind=quota, **state)
         return conn.execute("INSERT INTO api_calls (kind, cached, audio_seconds, created_at, user_id, quota)"
-                            " VALUES (?, 0, ?, ?, ?, ?)",
-                            (kind, audio_seconds, stamp(datetime.now(timezone.utc)), user_id, quota)).lastrowid
+                            " VALUES (%s, 0, %s, %s, %s, %s) RETURNING id",
+                            (kind, audio_seconds, stamp(datetime.now(timezone.utc)), user_id, quota)).fetchone()["id"]
 
 
 def check_startup():
@@ -105,7 +105,7 @@ def check_startup():
 
 def record_cached(kind, audio_seconds, user_id=None):
     """A request answered from the cache: counted, but against no limit."""
-    db.execute("INSERT INTO api_calls (kind, cached, audio_seconds, created_at, user_id) VALUES (?, 1, ?, ?, ?)",
+    db.execute("INSERT INTO api_calls (kind, cached, audio_seconds, created_at, user_id) VALUES (%s, 1, %s, %s, %s)",
                (kind, audio_seconds, stamp(datetime.now(timezone.utc)), user_id))
     log.event("gnani_call", kind=kind, cached=True)
 
@@ -161,7 +161,7 @@ def post(kind, url, audio_seconds=None, user_id=None, quota=None, **request):
         except (requests.Timeout, requests.ConnectionError) as e:
             response, failure = None, type(e).__name__
         if kind == "tts" and failure is None and response.ok:
-            db.execute("UPDATE api_calls SET audio_seconds = ? WHERE id = ?", (audio.seconds(response.content), call_id))
+            db.execute("UPDATE api_calls SET audio_seconds = %s WHERE id = %s", (audio.seconds(response.content), call_id))
         log.event("gnani_call", kind=kind, cached=False, attempt=attempt, failure=failure,
                   status=None if response is None else response.status_code,
                   ms=round(1000 * (time.monotonic() - started)))

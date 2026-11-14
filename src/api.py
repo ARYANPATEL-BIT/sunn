@@ -3,7 +3,6 @@ import logging
 import os
 import re
 import shutil
-import sqlite3
 import subprocess
 import time
 import traceback
@@ -12,6 +11,7 @@ from collections import Counter, defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
+import psycopg
 import requests
 from fastapi import Cookie, Depends, FastAPI, File, Form, Request, Response, UploadFile
 from fastapi.exceptions import RequestValidationError
@@ -148,7 +148,7 @@ def public(user):
 
 
 def get_user(user_id):
-    return db.row("SELECT * FROM users WHERE id = ?", (user_id,))
+    return db.row("SELECT * FROM users WHERE id = %s", (user_id,))
 
 
 def current_user(sunn_session: str | None = Cookie(None)):
@@ -163,7 +163,7 @@ def current_user(sunn_session: str | None = Cookie(None)):
 
 def owned(table, row_id, user_id):
     """A row of table that belongs to user_id, else 404, whether it is missing or someone else's."""
-    found = db.row(f"SELECT * FROM {table} WHERE id = ? AND user_id = ?", (row_id, user_id))
+    found = db.row(f"SELECT * FROM {table} WHERE id = %s AND user_id = %s", (row_id, user_id))
     if found is None:
         raise Refused(404, "not_found", f"{table.rstrip('s').replace('_', ' ')} not found")
     return found
@@ -194,11 +194,11 @@ def find_or_add_phrase(user, text):
     """Phrase id for text in the user's language, reusing an identical phrase so one phrase never
     splits the bank. The same words in another language are another phrase."""
     text = clean_text(text)
-    phrase = db.row("SELECT id FROM phrases WHERE user_id = ? AND text = ? AND language = ?",
+    phrase = db.row("SELECT id FROM phrases WHERE user_id = %s AND text = %s AND language = %s",
                     (user["id"], text, user["language"]))
     if phrase:
         return phrase["id"]
-    return db.execute("INSERT INTO phrases (user_id, text, language) VALUES (?, ?, ?)",
+    return db.execute("INSERT INTO phrases (user_id, text, language) VALUES (%s, %s, %s) RETURNING id",
                       (user["id"], text, user["language"]))
 
 
@@ -268,7 +268,7 @@ def remove_audio(samples):
 
 
 def audio_samples(user, column, value):
-    return db.rows(f"SELECT audio_path, language FROM samples WHERE user_id = ? AND {column} = ?", (user["id"], value))
+    return db.rows(f"SELECT audio_path, language FROM samples WHERE user_id = %s AND {column} = %s", (user["id"], value))
 
 
 def enroll_sample(user, upload, column, value, source=None):
@@ -277,7 +277,7 @@ def enroll_sample(user, upload, column, value, source=None):
     path, hypothesis = save_and_transcribe(user, upload, "enroll")
     sample_id = db.execute(
         f"INSERT INTO samples (user_id, {column}, audio_path, prisma_hypothesis, source, created_at, language,"
-        " speech_source) VALUES (?, ?, ?, ?, 'enroll', ?, ?, ?)",
+        " speech_source) VALUES (%s, %s, %s, %s, 'enroll', %s, %s, %s) RETURNING id",
         (user["id"], value, path, hypothesis, now(), user["language"], source))
     return {"sample_id": sample_id, column: value, "hypothesis": hypothesis, "source": source}
 
@@ -288,29 +288,31 @@ def add_template(user_id, text):
     if parsed is None:
         raise Refused(400, "invalid_input", "a template has one {item}, {person} or {place}, at its start or end,"
                                            " and at least one other word")
-    found = db.row("SELECT id FROM templates WHERE user_id = ? AND text = ?", (user_id, text))
+    found = db.row("SELECT id FROM templates WHERE user_id = %s AND text = %s", (user_id, text))
     if found:
         return found["id"]
-    return db.execute("INSERT INTO templates (user_id, text, fixed_part) VALUES (?, ?, ?)", (user_id, text, parsed[1]))
+    return db.execute("INSERT INTO templates (user_id, text, fixed_part) VALUES (%s, %s, %s) RETURNING id",
+                      (user_id, text, parsed[1]))
 
 
 def add_slot_word(user_id, slot, text):
     text = clean_text(text)
-    found = db.row("SELECT id FROM slot_words WHERE user_id = ? AND slot = ? AND text = ?", (user_id, slot, text))
+    found = db.row("SELECT id FROM slot_words WHERE user_id = %s AND slot = %s AND text = %s", (user_id, slot, text))
     if found:
         return found["id"]
-    return db.execute("INSERT INTO slot_words (user_id, slot, text) VALUES (?, ?, ?)", (user_id, slot, text))
+    return db.execute("INSERT INTO slot_words (user_id, slot, text) VALUES (%s, %s, %s) RETURNING id",
+                      (user_id, slot, text))
 
 
 def add_default_building_blocks(user_id, language):
     """The default slot words and templates for language, in one transaction; ones the user
     already has are skipped."""
-    words = {(w["slot"], w["text"]) for w in db.rows("SELECT slot, text FROM slot_words WHERE user_id = ?", (user_id,))}
-    templates = {t["text"] for t in db.rows("SELECT text FROM templates WHERE user_id = ?", (user_id,))}
-    statements = [("INSERT INTO slot_words (user_id, slot, text) VALUES (?, ?, ?)", (user_id, slot, word))
+    words = {(w["slot"], w["text"]) for w in db.rows("SELECT slot, text FROM slot_words WHERE user_id = %s", (user_id,))}
+    templates = {t["text"] for t in db.rows("SELECT text FROM templates WHERE user_id = %s", (user_id,))}
+    statements = [("INSERT INTO slot_words (user_id, slot, text) VALUES (%s, %s, %s)", (user_id, slot, word))
                   for slot, slot_words in DEFAULT_SLOT_WORDS.get(language, {}).items() for word in slot_words
                   if (slot, word) not in words]
-    statements += [("INSERT INTO templates (user_id, text, fixed_part) VALUES (?, ?, ?)",
+    statements += [("INSERT INTO templates (user_id, text, fixed_part) VALUES (%s, %s, %s)",
                     (user_id, text, matcher.parse_template(text)[1]))
                    for text in DEFAULT_TEMPLATES.get(language, []) if text not in templates]
     if statements:
@@ -369,9 +371,10 @@ def signup(body: schemas.Signup, request: Request, response: Response):
         raise Refused(400, "short_password", f"password needs at least {auth.MIN_PASSWORD} characters")
     try:
         user_id = db.execute(
-            "INSERT INTO users (name, email, password_hash, language, consent_given_at) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO users (name, email, password_hash, language, consent_given_at) VALUES (%s, %s, %s, %s, %s)"
+            " RETURNING id",
             (name, email, auth.hash_password(password), language, now()))
-    except sqlite3.IntegrityError:
+    except psycopg.errors.UniqueViolation:
         raise Refused(409, "email_taken", "an account with this email already exists")
     return new_account(request, response, user_id, language, "signup")
 
@@ -382,7 +385,7 @@ def login(body: schemas.Login, response: Response):
     wait = auth.seconds_locked(email)
     if wait:
         raise Refused(429, "too_many_attempts", "too many failed attempts, try again later", retry_after=wait)
-    user = db.row("SELECT * FROM users WHERE email = ?", (email,))
+    user = db.row("SELECT * FROM users WHERE email = %s", (email,))
     if user is None:
         raise Refused(401, "no_account", "no account with this email")
     if not auth.check_password(user["password_hash"], password):
@@ -438,13 +441,13 @@ def auth_google(body: schemas.GoogleAuth, request: Request, response: Response):
 
     user = None
     if google_id:
-        user = db.row("SELECT * FROM users WHERE google_id = ?", (google_id,))
+        user = db.row("SELECT * FROM users WHERE google_id = %s", (google_id,))
     if not user:
-        user = db.row("SELECT * FROM users WHERE email = ?", (email,))
+        user = db.row("SELECT * FROM users WHERE email = %s", (email,))
 
     if user:
         if google_id and not user["google_id"]:
-            db.execute("UPDATE users SET google_id = ? WHERE id = ?", (google_id, user["id"]))
+            db.execute("UPDATE users SET google_id = %s WHERE id = %s", (google_id, user["id"]))
             user = get_user(user["id"])
         auth.set_session(response, user["id"])
         log.event("login_google", user_id=user["id"])
@@ -457,10 +460,10 @@ def auth_google(body: schemas.GoogleAuth, request: Request, response: Response):
     try:
         user_id = db.execute(
             "INSERT INTO users (name, email, password_hash, language, consent_given_at, google_id) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
+            "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
             (name, email, "oauth:google", language, now(), google_id or None),
         )
-    except sqlite3.IntegrityError:
+    except psycopg.errors.UniqueViolation:
         raise Refused(409, "email_taken", "an account with this email already exists")
     return new_account(request, response, user_id, language, "signup_google")
 
@@ -503,7 +506,7 @@ def update_me(changes: schemas.UserUpdate, user=Depends(current_user)):
                     raise Refused(400, "invalid_input", "caregiver_phone is digits with the country code, like 919876543210")
             updates[field] = value
     if updates:
-        db.execute(f"UPDATE users SET {', '.join(f'{field} = ?' for field in updates)} WHERE id = ?",
+        db.execute(f"UPDATE users SET {', '.join(f'{field} = %s' for field in updates)} WHERE id = %s",
                    (*updates.values(), user["id"]))
     if "language" in updates and updates["language"] != user["language"]:
         log.event("language_changed", user_id=user["id"], language=updates["language"])
@@ -517,7 +520,7 @@ def delete_me(response: Response, user=Depends(current_user)):
     spoken in it. Files go first, so a failure leaves the account in place to try again.
     Kept: the stock-voice Timbre cache (phrase text spoken by Nalini or Kaveri, shared by
     everyone who says it, not tied to anyone) and api_calls (counts only)."""
-    remove_audio(db.rows("SELECT audio_path, language FROM samples WHERE user_id = ?", (user["id"],)))
+    remove_audio(db.rows("SELECT audio_path, language FROM samples WHERE user_id = %s", (user["id"],)))
     if os.path.exists(user_folder(user)):
         shutil.rmtree(user_folder(user))
     db.delete_user(user["id"])
@@ -538,7 +541,7 @@ def set_voice(audio_file: UploadFile = File(alias="audio"), consent: str = Form(
         embedding = speak.clone_voice(wav, voice_folder(user), user["id"])
     finally:
         os.remove(wav)
-    db.execute("UPDATE users SET voice_embedding = ?, voice_consent_given_at = ? WHERE id = ?",
+    db.execute("UPDATE users SET voice_embedding = %s, voice_consent_given_at = %s WHERE id = %s",
                (json.dumps(embedding), now(), user["id"]))
     log.event("voice_cloned", user_id=user["id"])
     return public(get_user(user["id"]))
@@ -550,7 +553,7 @@ def delete_voice(user=Depends(current_user)):
     if os.path.exists(voice_folder(user)):
         shutil.rmtree(voice_folder(user))
     db.execute("UPDATE users SET voice_embedding = NULL, voice_consent_given_at = NULL, use_own_voice = 0"
-               " WHERE id = ?", (user["id"],))
+               " WHERE id = %s", (user["id"],))
     log.event("voice_deleted", user_id=user["id"])
     return public(get_user(user["id"]))
 
@@ -566,11 +569,11 @@ def list_phrases(user=Depends(current_user)):
             for p in db.rows("""
         SELECT p.id, p.text, p.contexts, p.urgent, p.language,
             (SELECT COUNT(*) FROM samples s WHERE s.phrase_id = p.id AND s.source = 'enroll') AS enrolled,
-            (SELECT COUNT(*) FROM samples s WHERE s.phrase_id = p.id AND s.language IN (:language, 'en'))
+            (SELECT COUNT(*) FROM samples s WHERE s.phrase_id = p.id AND s.language IN (%(language)s, 'en'))
                 AS sample_count,
             (SELECT MAX(created_at) FROM uses u WHERE u.phrase_id = p.id) AS last_used_at,
-            (SELECT GROUP_CONCAT(DISTINCT s.speech_source) FROM samples s WHERE s.phrase_id = p.id) AS sources
-        FROM phrases p WHERE p.user_id = :u ORDER BY p.id""", {"u": user["id"], "language": user["language"]})]
+            (SELECT string_agg(DISTINCT s.speech_source, ',') FROM samples s WHERE s.phrase_id = p.id) AS sources
+        FROM phrases p WHERE p.user_id = %(u)s ORDER BY p.id""", {"u": user["id"], "language": user["language"]})]
 
 
 @app.post("/me/phrases", response_model=schemas.Phrase)
@@ -588,7 +591,7 @@ def add_default_phrases(user=Depends(current_user)):
     commit instead of one per phrase, which kept sign-up waiting for seconds."""
     language = user["language"]
     add_default_building_blocks(user["id"], language)
-    have = {p["text"] for p in db.rows("SELECT text FROM phrases WHERE user_id = ? AND language = ?",
+    have = {p["text"] for p in db.rows("SELECT text FROM phrases WHERE user_id = %s AND language = %s",
                                        (user["id"], language))}
     contexts, statements = "any", []
     with open(DEFAULT_PHRASES.format(language=language), encoding="utf-8") as f:
@@ -600,7 +603,7 @@ def add_default_phrases(user=Depends(current_user)):
                 have.add(text)
                 urgent = text in URGENT_PHRASES or bool(gloss) and gloss[-1] in URGENT_PHRASES
                 statements.append(("INSERT INTO phrases (user_id, text, contexts, urgent, language)"
-                                   " VALUES (?, ?, ?, ?, ?)", (user["id"], text, contexts, int(urgent), language)))
+                                   " VALUES (%s, %s, %s, %s, %s)", (user["id"], text, contexts, int(urgent), language)))
     if statements:
         db.transaction(*statements)
     return list_phrases(user)
@@ -614,8 +617,8 @@ def update_phrase(phrase_id: int, changes: schemas.PhraseUpdate, user=Depends(cu
     for field, value in changes.model_dump(exclude_none=True).items():
         if field == "text":
             updates[field] = clean_text(value)
-            taken = db.row("SELECT id FROM phrases WHERE user_id = ? AND text = ? AND id != ? AND language ="
-                           " (SELECT language FROM phrases WHERE id = ?)", (user["id"], updates[field], phrase_id, phrase_id))
+            taken = db.row("SELECT id FROM phrases WHERE user_id = %s AND text = %s AND id != %s AND language ="
+                           " (SELECT language FROM phrases WHERE id = %s)", (user["id"], updates[field], phrase_id, phrase_id))
             if taken:
                 raise Refused(409, "phrase_exists", "another phrase already has this text", phrase_id=taken["id"])
         elif field == "contexts":
@@ -623,7 +626,7 @@ def update_phrase(phrase_id: int, changes: schemas.PhraseUpdate, user=Depends(cu
         elif field == "urgent":
             updates[field] = int(value)
     if updates:
-        db.execute(f"UPDATE phrases SET {', '.join(f'{field} = ?' for field in updates)} WHERE id = ? AND user_id = ?",
+        db.execute(f"UPDATE phrases SET {', '.join(f'{field} = %s' for field in updates)} WHERE id = %s AND user_id = %s",
                    (*updates.values(), phrase_id, user["id"]))
     return get_phrase(user["id"], phrase_id)
 
@@ -633,10 +636,10 @@ def delete_phrase(phrase_id: int, user=Depends(current_user)):
     """Delete a phrase, its samples with their recordings, and its uses."""
     get_phrase(user["id"], phrase_id)
     samples = audio_samples(user, "phrase_id", phrase_id)
-    db.transaction(("DELETE FROM samples WHERE phrase_id = ? AND user_id = ?", (phrase_id, user["id"])),
-                   ("UPDATE samples SET top1_phrase_id = NULL WHERE top1_phrase_id = ? AND user_id = ?", (phrase_id, user["id"])),
-                   ("DELETE FROM uses WHERE phrase_id = ? AND user_id = ?", (phrase_id, user["id"])),
-                   ("DELETE FROM phrases WHERE id = ? AND user_id = ?", (phrase_id, user["id"])))
+    db.transaction(("DELETE FROM samples WHERE phrase_id = %s AND user_id = %s", (phrase_id, user["id"])),
+                   ("UPDATE samples SET top1_phrase_id = NULL WHERE top1_phrase_id = %s AND user_id = %s", (phrase_id, user["id"])),
+                   ("DELETE FROM uses WHERE phrase_id = %s AND user_id = %s", (phrase_id, user["id"])),
+                   ("DELETE FROM phrases WHERE id = %s AND user_id = %s", (phrase_id, user["id"])))
     remove_audio(samples)
     return {"ok": True}
 
@@ -644,7 +647,7 @@ def delete_phrase(phrase_id: int, user=Depends(current_user)):
 @app.delete("/me/samples/{sample_id}", response_model=schemas.Ok)
 def delete_sample(sample_id: int, user=Depends(current_user)):
     sample = owned("samples", sample_id, user["id"])
-    db.execute("DELETE FROM samples WHERE id = ? AND user_id = ?", (sample_id, user["id"]))
+    db.execute("DELETE FROM samples WHERE id = %s AND user_id = %s", (sample_id, user["id"]))
     remove_audio([sample])
     return {"ok": True}
 
@@ -661,7 +664,7 @@ def enroll(phrase_id: int = Form(), audio_file: UploadFile = File(alias="audio")
 def list_slot_words(user=Depends(current_user)):
     return db.rows("SELECT w.id, w.slot, w.text, COUNT(s.id) AS enrolled FROM slot_words w"
                    " LEFT JOIN samples s ON s.slot_word_id = w.id"
-                   " WHERE w.user_id = ? GROUP BY w.id ORDER BY w.id", (user["id"],))
+                   " WHERE w.user_id = %s GROUP BY w.id ORDER BY w.id", (user["id"],))
 
 
 @app.post("/me/slot-words", response_model=schemas.SlotWord)
@@ -674,8 +677,8 @@ def create_slot_word(body: schemas.NewSlotWord, user=Depends(current_user)):
 def delete_slot_word(slot_word_id: int, user=Depends(current_user)):
     owned("slot_words", slot_word_id, user["id"])
     samples = audio_samples(user, "slot_word_id", slot_word_id)
-    db.transaction(("DELETE FROM samples WHERE slot_word_id = ? AND user_id = ?", (slot_word_id, user["id"])),
-                   ("DELETE FROM slot_words WHERE id = ? AND user_id = ?", (slot_word_id, user["id"])))
+    db.transaction(("DELETE FROM samples WHERE slot_word_id = %s AND user_id = %s", (slot_word_id, user["id"])),
+                   ("DELETE FROM slot_words WHERE id = %s AND user_id = %s", (slot_word_id, user["id"])))
     remove_audio(samples)
     return {"ok": True}
 
@@ -692,7 +695,7 @@ def list_templates(user=Depends(current_user)):
     """Each template with its slot and fixed_part: the words recorded on their own."""
     templates = db.rows("SELECT t.id, t.text, t.fixed_part, COUNT(s.id) AS enrolled FROM templates t"
                         " LEFT JOIN samples s ON s.template_id = t.id"
-                        " WHERE t.user_id = ? GROUP BY t.id ORDER BY t.id", (user["id"],))
+                        " WHERE t.user_id = %s GROUP BY t.id ORDER BY t.id", (user["id"],))
     return [{**t, "slot": matcher.parse_template(t["text"])[0]} for t in templates]
 
 
@@ -706,8 +709,8 @@ def create_template(body: schemas.NewTemplate, user=Depends(current_user)):
 def delete_template(template_id: int, user=Depends(current_user)):
     owned("templates", template_id, user["id"])
     samples = audio_samples(user, "template_id", template_id)
-    db.transaction(("DELETE FROM samples WHERE template_id = ? AND user_id = ?", (template_id, user["id"])),
-                   ("DELETE FROM templates WHERE id = ? AND user_id = ?", (template_id, user["id"])))
+    db.transaction(("DELETE FROM samples WHERE template_id = %s AND user_id = %s", (template_id, user["id"])),
+                   ("DELETE FROM templates WHERE id = %s AND user_id = %s", (template_id, user["id"])))
     remove_audio(samples)
     return {"ok": True}
 
@@ -730,19 +733,19 @@ def candidates_for(user):
     standing on its own."""
     user_id, heard, spoken = user["id"], defaultdict(list), (user["language"], "en")
     for s in db.rows("SELECT phrase_id, slot_word_id, template_id, prisma_hypothesis FROM samples"
-                     " WHERE user_id = ? AND source IS NOT NULL AND language IN (?, ?)", (user_id, *spoken)):
+                     " WHERE user_id = %s AND source IS NOT NULL AND language IN (%s, %s)", (user_id, *spoken)):
         for column in ("phrase_id", "slot_word_id", "template_id"):
             if s[column] is not None:
                 heard[column, s[column]].append(s["prisma_hypothesis"])
 
     candidates = {}
-    for p in db.rows("SELECT id, text, contexts, urgent FROM phrases WHERE user_id = ? AND language IN (?, ?)"
+    for p in db.rows("SELECT id, text, contexts, urgent FROM phrases WHERE user_id = %s AND language IN (%s, %s)"
                      " ORDER BY language != 'en', id", (user_id, *spoken)):
         candidates[p["text"]] = {"key": p["id"], "phrase_id": p["id"], "text": p["text"], "composed": False,
                                  "contexts": p["contexts"].split(","), "urgent": bool(p["urgent"]),
                                  "fingerprints": heard["phrase_id", p["id"]]}
-    words = db.rows("SELECT id, slot, text FROM slot_words WHERE user_id = ?", (user_id,))
-    for t in db.rows("SELECT id, text, fixed_part FROM templates WHERE user_id = ?", (user_id,)):
+    words = db.rows("SELECT id, slot, text FROM slot_words WHERE user_id = %s", (user_id,))
+    for t in db.rows("SELECT id, text, fixed_part FROM templates WHERE user_id = %s", (user_id,)):
         slot, _, slot_first = matcher.parse_template(t["text"])
         for w in (w for w in words if w["slot"] == slot):
             fingerprints = [matcher.compose(slot_first, word, fixed)
@@ -759,14 +762,14 @@ def candidates_for(user):
 
 def priors_for(user_id):
     uses = [(u["phrase_id"], datetime.fromisoformat(u["created_at"]))
-            for u in db.rows("SELECT phrase_id, created_at FROM uses WHERE user_id = ?", (user_id,))]
+            for u in db.rows("SELECT phrase_id, created_at FROM uses WHERE user_id = %s", (user_id,))]
     return matcher.usage_priors(uses, matcher.time_bucket(datetime.now(timezone.utc)))
 
 
 def history_for(user_id):
     """(the last 3 phrases the user spoke, newest first; {phrase_id: times used}), for the judge."""
     uses = db.rows("SELECT u.phrase_id, p.text FROM uses u JOIN phrases p ON p.id = u.phrase_id"
-                   " WHERE u.user_id = ? ORDER BY u.created_at DESC, u.id DESC", (user_id,))
+                   " WHERE u.user_id = %s ORDER BY u.created_at DESC, u.id DESC", (user_id,))
     return [u["text"] for u in uses[:3]], Counter(u["phrase_id"] for u in uses)
 
 
@@ -803,8 +806,8 @@ def recognize(audio_file: UploadFile = File(alias="audio"), context: schemas.Con
                                            "template_id", "slot_word_id") if key in c} for c in judged["shown"]]
     sample_id = db.execute(
         "INSERT INTO samples (user_id, audio_path, prisma_hypothesis, top1_phrase_id, created_at, language)"
-        " VALUES (?, ?, ?, ?, ?, ?)", (user["id"], path, hypothesis, candidates[0]["phrase_id"] if candidates else None,
-                                       now(), user["language"]))
+        " VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+        (user["id"], path, hypothesis, candidates[0]["phrase_id"] if candidates else None, now(), user["language"]))
     return {
         "sample_id": sample_id,
         "hypothesis": hypothesis,
@@ -837,8 +840,8 @@ def confirm(body: schemas.Confirm, user=Depends(current_user)):
             raise Refused(400, "invalid_input", f"that template takes a {slot}")
         new_text = matcher.compose(slot_first, word["text"], fixed)
     phrase = get_phrase(user_id, find_or_add_phrase(user, new_text) if new_text is not None else phrase_id)
-    db.transaction(("UPDATE samples SET phrase_id = ?, source = 'correction' WHERE id = ?", (phrase["id"], sample_id)),
-                   ("INSERT INTO uses (user_id, phrase_id, created_at) VALUES (?, ?, ?)", (user_id, phrase["id"], now())))
+    db.transaction(("UPDATE samples SET phrase_id = %s, source = 'correction' WHERE id = %s", (phrase["id"], sample_id)),
+                   ("INSERT INTO uses (user_id, phrase_id, created_at) VALUES (%s, %s, %s)", (user_id, phrase["id"], now())))
     return {"sample_id": sample_id, "phrase_id": phrase["id"], "text": phrase["text"], "urgent": phrase["urgent"]}
 
 
@@ -849,8 +852,10 @@ def speak_text(body: schemas.Speak, user=Depends(current_user)):
     that language offers it (speak.CLONE_LANGUAGES), else in the language's stock voice. Answers
     audio/wav, with how long Timbre took in Server-Timing."""
     text, timings = clean_text(body.text), {}
-    phrase = db.row("SELECT language FROM phrases WHERE user_id = ? AND text = ? ORDER BY language = ? DESC,"
-                    " language = 'en' DESC LIMIT 1", (user["id"], text, user["language"]))
+    # IS TRUE: a phrase without a language sorts last, as it did in SQLite (Postgres puts NULL first).
+    phrase = db.row("SELECT language FROM phrases WHERE user_id = %s AND text = %s"
+                    " ORDER BY (language = %s) IS TRUE DESC, (language = 'en') IS TRUE DESC LIMIT 1",
+                    (user["id"], text, user["language"]))
     language = body.language if (body.language and body.language in languages.CODES) else (phrase["language"] if phrase else user["language"])
     with timer(timings, "tts"):
         if user["use_own_voice"] and user["voice_embedding"] and language in speak.CLONE_LANGUAGES:
@@ -870,13 +875,13 @@ def stats(user=Depends(current_user)):
     understood without the personal layer, not a medical measure of speech."""
     counts = db.row("""
         SELECT
-            (SELECT COUNT(*) FROM phrases WHERE user_id = :u) AS phrases,
+            (SELECT COUNT(*) FROM phrases WHERE user_id = %(u)s) AS phrases,
             COUNT(*) FILTER (WHERE source IS NOT NULL) AS samples,
             COUNT(*) FILTER (WHERE source = 'enroll') AS enroll_samples,
-            COUNT(*) FILTER (WHERE source IS NOT 'enroll') AS recognitions,
+            COUNT(*) FILTER (WHERE source IS DISTINCT FROM 'enroll') AS recognitions,
             COUNT(*) FILTER (WHERE source = 'correction') AS confirmed,
             COUNT(*) FILTER (WHERE source = 'correction' AND phrase_id = top1_phrase_id) AS top1_hits
-        FROM samples WHERE user_id = :u""", {"u": user["id"]})
+        FROM samples WHERE user_id = %(u)s""", {"u": user["id"]})
     confirmed = counts["confirmed"]
     counts["top1_hit_rate"] = round(counts["top1_hits"] / confirmed, 3) if confirmed else None
 
@@ -884,7 +889,7 @@ def stats(user=Depends(current_user)):
     this_week = today - timedelta(days=today.weekday())
     weeks = {this_week - timedelta(weeks=n): [0, 0] for n in range(7, -1, -1)}  # start -> [confirmed, clear]
     for s in db.rows("SELECT s.prisma_hypothesis, s.created_at, p.text FROM samples s JOIN phrases p"
-                     " ON p.id = s.phrase_id WHERE s.user_id = ? AND s.source = 'correction'", (user["id"],)):
+                     " ON p.id = s.phrase_id WHERE s.user_id = %s AND s.source = 'correction'", (user["id"],)):
         day = datetime.fromisoformat(s["created_at"]).astimezone().date()
         week = weeks.get(day - timedelta(days=day.weekday()))
         if week:
@@ -895,7 +900,7 @@ def stats(user=Depends(current_user)):
         for start, (n, clear) in weeks.items()]
     counts["top_phrases"] = db.rows(
         "SELECT p.id AS phrase_id, p.text, COUNT(*) AS uses FROM uses u JOIN phrases p ON p.id = u.phrase_id"
-        " WHERE u.user_id = ? GROUP BY p.id ORDER BY uses DESC, MAX(u.created_at) DESC LIMIT 5", (user["id"],))
+        " WHERE u.user_id = %s GROUP BY p.id ORDER BY uses DESC, MAX(u.created_at) DESC LIMIT 5", (user["id"],))
     return counts
 
 
@@ -913,8 +918,8 @@ def usage(user=Depends(current_user)):
     if not owner or user["email"] != owner:
         raise Refused(403, "not_owner", "only the owner (OWNER_EMAIL in .env) can see usage")
     by_kind = {r.pop("kind"): r for r in db.rows(
-        "SELECT kind, SUM(cached = 0) AS sent, SUM(cached) AS cached,"
-        " ROUND(TOTAL(CASE WHEN cached = 0 THEN audio_seconds END), 1) AS sent_audio_seconds"
+        "SELECT kind, COUNT(*) FILTER (WHERE cached = 0) AS sent, COUNT(*) FILTER (WHERE cached = 1) AS cached,"
+        " ROUND(COALESCE(SUM(audio_seconds) FILTER (WHERE cached = 0), 0)::numeric, 1)::float AS sent_audio_seconds"
         " FROM api_calls GROUP BY kind")}
     sent, limit = sum(r["sent"] for r in by_kind.values()), gnani.call_limit()
     return {"limit": limit, "sent": sent, "remaining": max(0, limit - sent), "by_kind": by_kind}
@@ -926,11 +931,14 @@ def google_config():
     return {"client_id": os.environ.get("GOOGLE_CLIENT_ID", "").strip()}
 
 
-@app.get("/health", response_model=schemas.Health)
-def health():
-    """Liveness probe verifying server process responsiveness and database connectivity."""
-    db.row("SELECT 1")
-    return {"status": "ok"}
+@app.get("/health", response_model=schemas.Health, responses={503: {"model": schemas.Health}})
+def health(response: Response):
+    """The server answers, and whether the database does: asked at most once a minute (db.up), so
+    a poller can't keep Neon awake. 503 when it is down. Never says which database it is."""
+    if db.up():
+        return {"status": "ok", "database": "up"}
+    response.status_code = 503
+    return {"status": "error", "database": "down"}
 
 
 # Last: src/trainings.py takes Refused and current_user from here.

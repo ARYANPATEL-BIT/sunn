@@ -69,13 +69,14 @@ Errors: none.
 
 ### `GET /health` · real
 
-No session needed. Liveness health check confirming server responsiveness and database connectivity.
+No session needed. The server answers, and says whether the database does. The database is asked
+at most once a minute, so a poller can't keep Neon's compute awake. Never says which database.
 
 ```json
-{"status": "ok"}
+{"status": "ok", "database": "up"}
 ```
 
-Errors: none.
+Errors: none. When the database can't be reached: 503 with `{"status": "error", "database": "down"}`.
 
 ### `POST /auth/signup` · real
 

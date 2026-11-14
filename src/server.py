@@ -4,7 +4,7 @@ import argparse
 import os
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException
 from starlette.middleware.gzip import GZipMiddleware
@@ -32,8 +32,8 @@ def make_app(dist=DIST):
     app.mount("/api", api.app)  # first, so an unknown /api path is the API's JSON 404, not the web app
 
     @app.get("/health")
-    def health():
-        return api.health()
+    def health(response: Response):
+        return api.health(response)
 
     if os.path.isdir(dist):
         # Compressed: the built script is about 500 KB, 150 KB gzipped, which matters on a phone.

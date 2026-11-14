@@ -111,6 +111,12 @@ platformdirs==4.12.4
     # via pooch
 pooch==1.9.0
     # via librosa
+psycopg==3.3.9
+    # via sunn (pyproject.toml)
+psycopg-binary==3.3.9
+    # via psycopg
+psycopg-pool==3.3.3
+    # via sunn (pyproject.toml)
 pycparser==3.11
     # via cffi
 pydantic==2.12.5
@@ -178,6 +184,8 @@ typing-extensions==4.16.0
     #   fastapi
     #   librosa
     #   opentelemetry-api
+    #   psycopg
+    #   psycopg-pool
     #   pydantic
     #   pydantic-core
     #   pyjwt

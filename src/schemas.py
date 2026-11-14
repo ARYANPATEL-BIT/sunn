@@ -331,5 +331,6 @@ class MyUsage(BaseModel):
 
 
 class Health(BaseModel):
-    model_config = example(status="ok")
-    status: Literal["ok"]
+    model_config = example(status="ok", database="up")
+    status: Literal["ok", "error"]  # error (503) when the database is down
+    database: Literal["up", "down"]
