@@ -224,7 +224,8 @@ def test_synthetic_demo_data_provenance_and_safety():
     import db
 
     # 1. Schema check for allowed provenance tags
-    cols = [r["name"] for r in db.rows("PRAGMA table_info(samples)")]
+    cols = [r["column_name"] for r in db.rows("SELECT column_name FROM information_schema.columns"
+                                          " WHERE table_name = 'samples'")]
     assert "speech_source" in cols
 
     # 2. Evaluation script exists

@@ -1,6 +1,7 @@
 // End-to-end tests (web/e2e) against the real app: src/server.py serving the API and the built
 // web app on one port, with GNANI_MOCK on so no test spends Gnani credits. `npm run e2e` builds
-// the web app first; the server starts with an empty data folder of its own.
+// the web app first; the server starts with an empty data folder of its own, on the local Docker
+// test database (TEST_DATABASE_URL in .env), emptied first by scripts/reset_test_db.py.
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -40,7 +41,7 @@ export default defineConfig({
     { name: 'desktop', use: { viewport: { width: 1440, height: 900 } } },
   ],
   webServer: {
-    command: `uv run src/server.py --port ${PORT}`,
+    command: `uv run scripts/reset_test_db.py --serve --port ${PORT}`,
     cwd: ROOT,
     url: `http://localhost:${PORT}/health`,
     reuseExistingServer: false,

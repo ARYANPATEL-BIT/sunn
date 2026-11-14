@@ -46,7 +46,7 @@ def test_one_app_serves_the_api_and_the_web_app(env, tmp_path):
     assert big.headers["content-encoding"] == "gzip" and big.text == "console.log('sunn');\n" * 500
     assert "content-encoding" not in client.get("/api/health", headers={"Accept-Encoding": "gzip"}).headers
 
-    assert client.get("/api/health").json() == {"status": "ok"}
+    assert client.get("/api/health").json() == {"status": "ok", "database": "up"}
     missing = client.get("/api/nowhere")
     assert missing.status_code == 404 and missing.json()["error"] == "not_found"
     assert signup(client, path="/api/auth/signup").status_code == 200  # as the browser does
@@ -60,7 +60,7 @@ def test_health_check_endpoint_and_liveness(env, tmp_path):
     client = env.client()
     res = client.get("/health")
     assert res.status_code == 200
-    assert res.json() == {"status": "ok"}
+    assert res.json() == {"status": "ok", "database": "up"}
 
     # 2. Server top-level and /api mounting health probes
     dist = tmp_path / "dist"
@@ -70,11 +70,11 @@ def test_health_check_endpoint_and_liveness(env, tmp_path):
 
     root_health = server_client.get("/health")
     assert root_health.status_code == 200
-    assert root_health.json() == {"status": "ok"}
+    assert root_health.json() == {"status": "ok", "database": "up"}
 
     api_health = server_client.get("/api/health")
     assert api_health.status_code == 200
-    assert api_health.json() == {"status": "ok"}
+    assert api_health.json() == {"status": "ok", "database": "up"}
 
     # 3. Verify no sensitive data or diagnostic leak
     for key in ("secret", "key", "token", "env", "password", "path"):
@@ -126,6 +126,29 @@ def test_deploy_space_secret_and_blocked_path_validation(tmp_path):
     assert "clean_file.py" not in leaks[0]
 
 
+def test_deploy_refuses_a_file_with_the_database_url_or_its_password(tmp_path):
+    """DATABASE_URL is a secret: the whole value, or its password inside another branch's URL."""
+    import deploy_space
+
+    url = "postgresql://neondb_owner:npg_s3cretPassw0rd@ep-dev-1-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+    folder = tmp_path / "repo"
+    folder.mkdir()
+    (folder / "whole.py").write_text(f"URL = '{url}'")
+    (folder / "other_branch.md").write_text(
+        "postgresql://neondb_owner:npg_s3cretPassw0rd@ep-prod-2-pooler.c-2.us-east-1.aws.neon.tech/neondb")
+    (folder / "example.txt").write_text(
+        "DATABASE_URL=postgresql://USER:PASSWORD@HOST-pooler.REGION.aws.neon.tech/neondb?sslmode=require")
+    env_file = tmp_path / ".env"
+    env_file.write_text(f"DATABASE_URL={url}\n")
+
+    leaks = deploy_space.files_with_secrets(["whole.py", "other_branch.md", "example.txt"], folder, env_file)
+    assert sorted(leaks) == ["other_branch.md (DATABASE_URL)", "whole.py (DATABASE_URL)"]
+
+    # The .env.example placeholder in .env is no secret: nothing is flagged for it.
+    env_file.write_text("DATABASE_URL=postgresql://USER:PASSWORD@HOST-pooler.REGION.aws.neon.tech/neondb?sslmode=require\n")
+    assert deploy_space.files_with_secrets(["example.txt"], folder, env_file) == []
+
+
 def test_missing_or_placeholder_gnani_key_fails_safely(env, monkeypatch):
     """When GNANI_STT_API_KEY or GNANI_TTS_API_KEY is unset or set to placeholder, API answers 502 safely."""
     import gnani
@@ -160,46 +183,33 @@ def test_missing_or_placeholder_gnani_key_fails_safely(env, monkeypatch):
     assert "GNANI_TTS_API_KEY is not configured" in exc_info4.value.detail
 
 
-def test_database_custom_data_dir_and_persistence_isolation(tmp_path, monkeypatch):
-    """Verify DATA_DIR configures database path, runs migrations, and handles user lifecycle."""
-    custom_dir = tmp_path / "custom_data"
-    monkeypatch.setenv("DATA_DIR", str(custom_dir))
-
+def test_database_tables_and_user_deletion():
+    """The migrated database has every table, and delete_user removes a user's rows but keeps
+    their api_calls as anonymous counts."""
     import db
-    monkeypatch.setattr(db, "DATA_DIR", str(custom_dir))  # restored after, so later tests keep their own
-    monkeypatch.setattr(db, "DB_PATH", str(custom_dir / "app.db"))
-    db.init()
 
-    # 1. DB file created inside custom data dir
-    assert (custom_dir / "app.db").exists()
-
-    # 2. Tables and columns exist
-    tables = [r["name"] for r in db.rows("SELECT name FROM sqlite_master WHERE type='table'")]
+    tables = [r["tablename"] for r in db.rows("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")]
     for t in ("users", "phrases", "slot_words", "templates", "samples", "uses", "api_calls"):
         assert t in tables
 
-    # 3. Insert and verify single-user deletion cascade
     uid = db.execute(
-        "INSERT INTO users (name, email, password_hash, language, consent_given_at) VALUES (?, ?, ?, ?, ?)",
-        ("Persist User", "persist@example.com", "hash", "en", "2026-10-22T00:00:00Z"),
+        "INSERT INTO users (name, email, password_hash, language, consent_given_at) VALUES (%s, %s, %s, %s, %s)"
+        " RETURNING id", ("Persist User", "persist@example.com", "hash", "en", "2026-10-22T00:00:00Z"),
     )
-    pid = db.execute("INSERT INTO phrases (user_id, text) VALUES (?, ?)", (uid, "Help me"))
-    db.execute("INSERT INTO uses (user_id, phrase_id, created_at) VALUES (?, ?, ?)", (uid, pid, "2026-10-22T00:00:00Z"))
+    pid = db.execute("INSERT INTO phrases (user_id, text) VALUES (%s, %s) RETURNING id", (uid, "Help me"))
+    db.execute("INSERT INTO uses (user_id, phrase_id, created_at) VALUES (%s, %s, %s)", (uid, pid, "2026-10-22T00:00:00Z"))
     db.execute(
-        "INSERT INTO api_calls (kind, cached, audio_seconds, created_at, user_id) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO api_calls (kind, cached, audio_seconds, created_at, user_id) VALUES (%s, %s, %s, %s, %s)",
         ("tts", 0, 1.5, "2026-10-22T00:00:00Z", uid),
     )
 
-    # Before deletion
-    assert db.row("SELECT COUNT(*) AS c FROM phrases WHERE user_id = ?", (uid,))["c"] == 1
-    assert db.row("SELECT user_id FROM api_calls WHERE user_id = ?", (uid,))["user_id"] == uid
+    assert db.row("SELECT COUNT(*) AS c FROM phrases WHERE user_id = %s", (uid,))["c"] == 1
+    assert db.row("SELECT user_id FROM api_calls WHERE user_id = %s", (uid,))["user_id"] == uid
 
-    # Run delete_user
     db.delete_user(uid)
-    assert db.row("SELECT COUNT(*) AS c FROM users WHERE id = ?", (uid,))["c"] == 0
-    assert db.row("SELECT COUNT(*) AS c FROM phrases WHERE user_id = ?", (uid,))["c"] == 0
-    assert db.row("SELECT COUNT(*) AS c FROM uses WHERE user_id = ?", (uid,))["c"] == 0
-    # api_calls retained as anonymous counter with user_id NULL
+    assert db.row("SELECT COUNT(*) AS c FROM users WHERE id = %s", (uid,))["c"] == 0
+    assert db.row("SELECT COUNT(*) AS c FROM phrases WHERE user_id = %s", (uid,))["c"] == 0
+    assert db.row("SELECT COUNT(*) AS c FROM uses WHERE user_id = %s", (uid,))["c"] == 0
     assert db.row("SELECT user_id FROM api_calls")["user_id"] is None
 
 

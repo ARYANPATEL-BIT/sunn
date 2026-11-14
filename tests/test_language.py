@@ -116,7 +116,7 @@ def test_the_matcher_ignores_samples_in_another_language(env):
 def test_deleting_an_old_language_sample_removes_its_own_cache_entry(env):
     client = env.signup("hi")
     water = env.enroll_phrase(client, "पानी चाहिए")
-    hindi = db.row("SELECT id, audio_path FROM samples WHERE phrase_id = ?", (water["id"],))
+    hindi = db.row("SELECT id, audio_path FROM samples WHERE phrase_id = %s", (water["id"],))
     with open(hindi["audio_path"], "rb") as f:
         hindi_cache = os.path.basename(prisma.cache_path(f.read(), "hi"))
     assert cached() == [hindi_cache]
@@ -137,11 +137,3 @@ def test_deleting_an_old_language_sample_removes_its_own_cache_entry(env):
     assert len(cached()) == 1  # only the slot word's, in English
     assert client.delete("/me").json() == {"ok": True}
     assert cached() == []
-
-
-def test_existing_samples_get_their_users_language(env):
-    client = env.signup("en")
-    env.enroll_phrase(client, "I need water")
-    db.execute("UPDATE samples SET language = NULL")
-    db.init()
-    assert db.row("SELECT language FROM samples")["language"] == "en"

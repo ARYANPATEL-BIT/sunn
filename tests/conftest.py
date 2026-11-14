@@ -28,6 +28,16 @@ for name in ("LLM_MODE", "LLM_MARGIN", "LLM_MIN_SCORE", "LLM_TIMEOUT_S", "LLM_RA
              "RERANKER_PATH", "RERANKER_WEIGHT", "RERANKER_THREADS", "SIGNUPS_PER_IP_PER_HOUR"):
     os.environ[name] = ""  # empty is the code's default
 
+# Every test runs on the local Docker Postgres in TEST_DATABASE_URL, emptied before each test
+# (scripts/reset_test_db.py), never on a Neon branch: stop here unless it is safely separate.
+import reset_test_db  # noqa: E402
+
+try:
+    TEST_DATABASE_URL = reset_test_db.checked_url()
+except RuntimeError as e:
+    pytest.exit(str(e), returncode=2)
+os.environ["DATABASE_URL"] = TEST_DATABASE_URL
+
 import auth  # noqa: E402
 import db  # noqa: E402
 import gnani  # noqa: E402
@@ -86,7 +96,7 @@ class Env:
 
     def client(self):
         # https: the session cookie is Secure, so it is only sent back over https.
-        import api  # here, not at the top: importing it runs db.init() in the current folder
+        import api  # here, not at the top: importing it checks the environment the test set
 
         return TestClient(api.app, base_url="https://testserver")
 
@@ -125,9 +135,18 @@ class Env:
         return response.json()
 
 
+@pytest.fixture(autouse=True)
+def empty_database(monkeypatch):
+    """Every test starts on the migrated, empty test database, and leaves the pool pointed at it."""
+    monkeypatch.setenv("DATABASE_URL", TEST_DATABASE_URL)
+    reset_test_db.reset(TEST_DATABASE_URL)
+    yield
+    db.close()
+
+
 @pytest.fixture
 def env(tmp_path, monkeypatch):
-    """The API in an empty folder of its own: its own data/app.db, recordings and caches."""
+    """The API in an empty folder of its own (recordings and caches) on an empty database."""
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("GNANI_CALL_LIMIT", "4000")
     for name, default in (("STT_DAILY_LIMIT", "20"), ("TTS_DAILY_LIMIT", "20"), ("ENROLL_DAILY_LIMIT", "40")):
@@ -138,7 +157,6 @@ def env(tmp_path, monkeypatch):
     monkeypatch.delenv("TRUST_PROXY", raising=False)
     monkeypatch.delenv("GNANI_MOCK", raising=False)  # FakeGnani, not mock mode, unless a test sets it
     monkeypatch.setattr(auth, "_failures", defaultdict(deque))  # no lockouts left by another test
-    db.init()
     fake = FakeGnani()
     monkeypatch.setattr(gnani.requests, "post", fake)
     return Env(fake)

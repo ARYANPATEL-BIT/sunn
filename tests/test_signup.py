@@ -48,7 +48,7 @@ def test_an_existing_user_signs_in(env):
     assert login.status_code == 200 and login.json()["id"] == made["id"]
     with_google = google(env.client(), email)  # the same email through Google: the same account
     assert with_google.status_code == 200 and with_google.json()["id"] == made["id"]
-    assert db.row("SELECT google_id FROM users WHERE id = ?", (made["id"],))["google_id"] == "google-sub-1"
+    assert db.row("SELECT google_id FROM users WHERE id = %s", (made["id"],))["google_id"] == "google-sub-1"
 
 
 def test_an_unknown_email_is_told_apart_from_a_wrong_password(env):

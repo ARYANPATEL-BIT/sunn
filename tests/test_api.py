@@ -351,7 +351,8 @@ def test_credit_limit_refuses_new_calls_but_not_cached_ones(env, monkeypatch):
     assert client.post("/speak", json={"text": "नमस्ते"}).json()["error"] == "credit_limit_reached"
     assert client.post("/me/enroll", data={"phrase_id": pid}, files=first).status_code == 200  # cached
     assert len(env.fake.requests) == 1
-    assert db.row("SELECT SUM(cached = 0) AS sent, SUM(cached) AS cached FROM api_calls") == {"sent": 1, "cached": 1}
+    assert db.row("SELECT COUNT(*) FILTER (WHERE cached = 0) AS sent, COUNT(*) FILTER (WHERE cached = 1) AS cached"
+                  " FROM api_calls") == {"sent": 1, "cached": 1}
 
 
 
@@ -526,5 +527,5 @@ def test_delete_me_removes_everything(env):
     assert len(files_under("data/cache/prisma")) == 1  # only the other user's
     for table in ("users", "phrases", "samples", "uses", "slot_words", "templates"):
         column = "id" if table == "users" else "user_id"
-        assert db.row(f"SELECT COUNT(*) AS n FROM {table} WHERE {column} = ?", (user_id,))["n"] == 0, table
+        assert db.row(f"SELECT COUNT(*) AS n FROM {table} WHERE {column} = %s", (user_id,))["n"] == 0, table
     assert other.get("/me/phrases").json()[1]["enrolled"] == 1  # the other user is untouched

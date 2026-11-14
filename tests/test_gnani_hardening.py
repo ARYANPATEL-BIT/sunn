@@ -197,8 +197,6 @@ def test_stt_rate_limit_and_daily_limit(tmp_path, monkeypatch):
     db_dir = tmp_path / "data"
     db_dir.mkdir()
     monkeypatch.setattr(db, "DATA_DIR", str(db_dir))
-    monkeypatch.setattr(db, "DB_PATH", str(db_dir / "app.db"))
-    db.init()
 
     monkeypatch.delenv("GNANI_MOCK", raising=False)
     monkeypatch.setenv("GNANI_STT_API_KEY", "mock-stt-key")
@@ -216,7 +214,7 @@ def test_stt_rate_limit_and_daily_limit(tmp_path, monkeypatch):
     monkeypatch.delenv("LIMIT_EXEMPT_EMAILS", raising=False)
     monkeypatch.delenv("OWNER_EMAIL", raising=False)
     user_id = db.execute("INSERT INTO users (name, email, password_hash, language, consent_given_at)"
-                         " VALUES ('A', 'a@example.com', 'x', 'hi', '2026-01-01')")
+                         " VALUES ('A', 'a@example.com', 'x', 'hi', '2026-01-01') RETURNING id")
     with pytest.raises(gnani.GnaniError) as exc_cap:
         gnani.post("stt", prisma.URL, user_id=user_id, quota="stt", data={}, files={})
     assert exc_cap.value.status == 429

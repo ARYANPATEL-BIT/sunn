@@ -20,7 +20,7 @@ def fill(uid, quota, n, age=timedelta(0)):
     """n calls sent for uid against quota, age ago."""
     at = (datetime.now(timezone.utc) - age).isoformat(timespec="seconds")
     kind = "tts" if quota == "tts" else "stt"
-    db.transaction(*[("INSERT INTO api_calls (kind, cached, created_at, user_id, quota) VALUES (?, 0, ?, ?, ?)",
+    db.transaction(*[("INSERT INTO api_calls (kind, cached, created_at, user_id, quota) VALUES (%s, 0, %s, %s, %s)",
                       (kind, at, uid, quota))] * n)
 
 
@@ -30,7 +30,7 @@ def recognize(env, client, recording=None):
 
 
 def first_call_plus_a_day(quota):
-    first = db.row("SELECT MIN(created_at) AS at FROM api_calls WHERE quota = ?", (quota,))["at"]
+    first = db.row("SELECT MIN(created_at) AS at FROM api_calls WHERE quota = %s", (quota,))["at"]
     return datetime.fromisoformat(first) + timedelta(hours=24)
 
 

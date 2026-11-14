@@ -100,7 +100,7 @@ def test_reflect(env):
     assert not_a_reflect_step.status_code == 404
     assert client.post("/me/trainings/reflect", json={**body, "feeling": "great"}).status_code == 422
     # Verify reflection row was stored
-    row = db.row("SELECT feeling FROM training_reflections WHERE lesson_id = ? AND step_id = ?",
+    row = db.row("SELECT feeling FROM training_reflections WHERE lesson_id = %s AND step_id = %s",
                  ("easy-starts-1", "easy-starts-1-reflect"))
     assert row and row["feeling"] == "okay"
 
@@ -155,11 +155,11 @@ def test_tricky_sounds_thresholds(env):
     uid = db.row("SELECT id FROM users ORDER BY id DESC LIMIT 1")["id"]
 
     # 1. Speak substitutions: below threshold 5 -> empty
-    phrase_id = db.execute("INSERT INTO phrases (user_id, text) VALUES (?, ?)", (uid, "पानी"))
+    phrase_id = db.execute("INSERT INTO phrases (user_id, text) VALUES (%s, %s) RETURNING id", (uid, "पानी"))
     for _ in range(4):
         db.execute(
             "INSERT INTO samples (user_id, phrase_id, audio_path, prisma_hypothesis, source, created_at)"
-            " VALUES (?, ?, ?, ?, ?, ?)",
+            " VALUES (%s, %s, %s, %s, %s, %s)",
             (uid, phrase_id, "mock.wav", "बानी", "enroll", "2026-11-09T10:00:00Z"),
         )
     assert client.get("/me/trainings/tricky-sounds").json() == []
@@ -167,7 +167,7 @@ def test_tricky_sounds_thresholds(env):
     # 5th substitution triggers qualification for 'p'
     db.execute(
         "INSERT INTO samples (user_id, phrase_id, audio_path, prisma_hypothesis, source, created_at)"
-        " VALUES (?, ?, ?, ?, ?, ?)",
+        " VALUES (%s, %s, %s, %s, %s, %s)",
         (uid, phrase_id, "mock.wav", "बानी", "enroll", "2026-11-09T10:00:00Z"),
     )
     sounds = client.get("/me/trainings/tricky-sounds").json()
@@ -182,7 +182,7 @@ def test_tricky_sounds_thresholds(env):
     # 1 attempt gives 4 words (< 8) -> not qualified yet
     db.execute(
         "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
         (uid, "s-and-sh-1", "s-and-sh-1-echo", None, "कल हम घर गए", 0.1, None, 1, "2026-11-09T10:00:00Z"),
     )
     sounds = client.get("/me/trainings/tricky-sounds").json()
@@ -191,7 +191,7 @@ def test_tricky_sounds_thresholds(env):
     # 2nd attempt brings 's' words to 8 (>= 8) with 100% practise rate -> qualifies!
     db.execute(
         "INSERT INTO training_attempts (user_id, lesson_id, step_id, item_id, transcript, similarity, wpm, checked, created_at)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
         (uid, "s-and-sh-1", "s-and-sh-1-echo", None, "कल हम घर गए", 0.1, None, 1, "2026-11-09T10:00:00Z"),
     )
     sounds = client.get("/me/trainings/tricky-sounds").json()
@@ -205,7 +205,7 @@ def test_tricky_sounds_thresholds(env):
     # 1 reflection -> does not qualify
     db.execute(
         "INSERT INTO training_reflections (user_id, lesson_id, step_id, feeling, created_at)"
-        " VALUES (?, ?, ?, ?, ?)",
+        " VALUES (%s, %s, %s, %s, %s)",
         (uid, "s-and-sh-2", "s-and-sh-2-reflect", "hard", "2026-11-09T10:00:00Z"),
     )
     sounds = client.get("/me/trainings/tricky-sounds").json()
@@ -215,7 +215,7 @@ def test_tricky_sounds_thresholds(env):
     for _ in range(2):
         db.execute(
             "INSERT INTO training_reflections (user_id, lesson_id, step_id, feeling, created_at)"
-            " VALUES (?, ?, ?, ?, ?)",
+            " VALUES (%s, %s, %s, %s, %s)",
             (uid, "s-and-sh-2", "s-and-sh-2-reflect", "hard", "2026-11-09T10:01:00Z"),
         )
     # We now have 4 qualifying sounds ('p', 's', 'r', 'l'). API must return top 3!
@@ -232,11 +232,11 @@ def test_alternatives_library_ranking_and_avoids(env):
     uid = db.row("SELECT id FROM users ORDER BY id DESC LIMIT 1")["id"]
 
     # Give user tricky sound 'p'
-    phrase_id = db.execute("INSERT INTO phrases (user_id, text) VALUES (?, ?)", (uid, "पानी"))
+    phrase_id = db.execute("INSERT INTO phrases (user_id, text) VALUES (%s, %s) RETURNING id", (uid, "पानी"))
     for _ in range(5):
         db.execute(
             "INSERT INTO samples (user_id, phrase_id, audio_path, prisma_hypothesis, source, created_at)"
-            " VALUES (?, ?, ?, ?, ?, ?)",
+            " VALUES (%s, %s, %s, %s, %s, %s)",
             (uid, phrase_id, "mock.wav", "बानी", "enroll", "2026-11-09T10:00:00Z"),
         )
     tricky = client.get("/me/trainings/tricky-sounds").json()
@@ -416,9 +416,9 @@ def test_days_this_week(env):
     d1 = (today - timedelta(days=2)).isoformat()
     d2 = (today - timedelta(days=5)).isoformat()
     d_old = (today - timedelta(days=12)).isoformat()
-    db.execute("INSERT INTO training_minutes (user_id, day, seconds) VALUES (?, ?, ?)", (uid, d1, 180))
-    db.execute("INSERT INTO training_minutes (user_id, day, seconds) VALUES (?, ?, ?)", (uid, d2, 240))
-    db.execute("INSERT INTO training_minutes (user_id, day, seconds) VALUES (?, ?, ?)", (uid, d_old, 300))
+    db.execute("INSERT INTO training_minutes (user_id, day, seconds) VALUES (%s, %s, %s)", (uid, d1, 180))
+    db.execute("INSERT INTO training_minutes (user_id, day, seconds) VALUES (%s, %s, %s)", (uid, d2, 240))
+    db.execute("INSERT INTO training_minutes (user_id, day, seconds) VALUES (%s, %s, %s)", (uid, d_old, 300))
 
     assert client.get("/me/trainings/progress").json()["days_this_week"] == 3
 
@@ -500,7 +500,7 @@ def test_attempts_cap_reaching_zero(env):
 
     # 20 Prisma calls in the last 24 hours use up the STT daily limit, which checks count against
     for i in range(20):
-        db.execute("INSERT INTO api_calls (kind, cached, created_at, user_id, quota) VALUES ('stt', 0, ?, ?, 'stt')",
+        db.execute("INSERT INTO api_calls (kind, cached, created_at, user_id, quota) VALUES ('stt', 0, %s, %s, 'stt')",
                    (now_str, uid))
 
     # Calling with check=true when cap is 0 returns checked=false with friendly message

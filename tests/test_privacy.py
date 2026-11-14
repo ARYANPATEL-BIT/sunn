@@ -141,14 +141,14 @@ def test_account_deletion_cleans_up_all_user_data(env):
     assert not os.path.exists(folder_a)
 
     # User A database records are deleted
-    assert db.row("SELECT id FROM users WHERE id = ?", (user_a_id,)) is None
-    assert db.row("SELECT id FROM phrases WHERE user_id = ?", (user_a_id,)) is None
-    assert db.row("SELECT id FROM samples WHERE user_id = ?", (user_a_id,)) is None
-    assert db.row("SELECT id FROM slot_words WHERE user_id = ?", (user_a_id,)) is None
-    assert db.row("SELECT id FROM templates WHERE user_id = ?", (user_a_id,)) is None
+    assert db.row("SELECT id FROM users WHERE id = %s", (user_a_id,)) is None
+    assert db.row("SELECT id FROM phrases WHERE user_id = %s", (user_a_id,)) is None
+    assert db.row("SELECT id FROM samples WHERE user_id = %s", (user_a_id,)) is None
+    assert db.row("SELECT id FROM slot_words WHERE user_id = %s", (user_a_id,)) is None
+    assert db.row("SELECT id FROM templates WHERE user_id = %s", (user_a_id,)) is None
 
     # User B remains intact
-    assert db.row("SELECT id FROM users WHERE id = ?", (user_b_id,)) is not None
+    assert db.row("SELECT id FROM users WHERE id = %s", (user_b_id,)) is not None
     assert client_b.get("/auth/me").status_code == 200
 
 
@@ -164,7 +164,7 @@ def test_voice_deletion_and_consent_revocation(env):
     voice_dir = f"data/users/{user_id}/voice"
     assert os.path.exists(voice_dir)
 
-    row = db.row("SELECT voice_embedding, voice_consent_given_at, use_own_voice FROM users WHERE id = ?", (user_id,))
+    row = db.row("SELECT voice_embedding, voice_consent_given_at, use_own_voice FROM users WHERE id = %s", (user_id,))
     assert row["voice_embedding"] is not None
     assert row["voice_consent_given_at"] is not None
     assert row["use_own_voice"] == 1
@@ -178,7 +178,7 @@ def test_voice_deletion_and_consent_revocation(env):
 
     # Directory and DB fields are cleared
     assert not os.path.exists(voice_dir)
-    row_after = db.row("SELECT voice_embedding, voice_consent_given_at, use_own_voice FROM users WHERE id = ?", (user_id,))
+    row_after = db.row("SELECT voice_embedding, voice_consent_given_at, use_own_voice FROM users WHERE id = %s", (user_id,))
     assert row_after["voice_embedding"] is None
     assert row_after["voice_consent_given_at"] is None
     assert row_after["use_own_voice"] == 0

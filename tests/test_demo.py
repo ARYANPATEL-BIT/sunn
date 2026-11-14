@@ -130,7 +130,7 @@ def test_demo_source_tagging_contract(env):
     target_phrase = phrases[0]
     db.execute(
         "INSERT INTO samples (user_id, phrase_id, audio_path, prisma_hypothesis, source, speech_source, language, created_at)"
-        " VALUES (1, ?, 'mock.wav', 'mock text', 'enroll', 'pilot', 'hi', datetime('now'))",
+        " VALUES (1, %s, 'mock.wav', 'mock text', 'enroll', 'pilot', 'hi', '2026-11-01T00:00:00+00:00')",
         (target_phrase["id"],)
     )
 
