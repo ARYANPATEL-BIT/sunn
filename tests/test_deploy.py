@@ -286,3 +286,19 @@ def test_exported_readme_starts_with_one_front_matter_block(tmp_path):
     assert b'python_version: "3.10"' in front_matter
     assert b"sdk: gradio" in front_matter
     assert not any(line.endswith(b"\r") for line in front_matter)
+
+
+def test_dockerignore_is_tracked_but_not_uploaded():
+    """HF builds the Gradio Space with a COPY that respects .dockerignore, which leaves out web/dist."""
+    import subprocess
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    assert ".dockerignore" in subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True).stdout.splitlines()
+    env = {k: v for k, v in os.environ.items() if k not in ("GNANI_STT_API_KEY", "GNANI_TTS_API_KEY", "GNANI_API_KEY", "JWT_SECRET", "GROQ_API_KEY", "LLM_API_KEY")}
+    res = subprocess.run(["uv", "run", "scripts/deploy_space.py", "--check-only"], cwd=root, capture_output=True, text=True, env=env)
+    assert res.returncode == 0, res.stdout + res.stderr
+    uploaded = res.stdout.splitlines()
+    assert ".dockerignore" not in uploaded
+    assert "web/dist/index.html" in uploaded
+    assert "Dockerfile" in uploaded

@@ -35,6 +35,9 @@ from pathlib import Path
 from dotenv import dotenv_values
 
 ROOT = Path(__file__).resolve().parent.parent
+# Tracked for the local Docker build, but not uploaded: HF builds a Gradio Space with a COPY that
+# respects .dockerignore, and ours leaves out web/dist, which the Space serves.
+NOT_UPLOADED = [".dockerignore"]
 # fnmatch's * also matches /, so "*/.env*" catches a .env file in any folder.
 BLOCKED = [".env*", "*/.env*", "data/*", "logs/*", "web/certs/*", "web/reference/*", "*.db"]
 # Tracked on purpose: the template with placeholder values, and the default phrase lists the
@@ -130,8 +133,9 @@ if __name__ == "__main__":
         refuse("there are uncommitted changes; commit them first, so the Space gets exactly a commit",
                changed)
 
-    # What git tracks in the last commit, the same files export_head writes.
+    # What git tracks in the last commit, the same files export_head writes, but NOT_UPLOADED.
     files = git("ls-tree", "-r", "-z", "--name-only", "HEAD").decode().split("\0")[:-1]
+    files = [f for f in files if f not in NOT_UPLOADED]
     if bad := blocked_paths(files):
         refuse("these tracked files must never be deployed", bad)
 
