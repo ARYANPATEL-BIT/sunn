@@ -2,7 +2,14 @@
 
 The Space runs app.py with the packages in requirements.txt and serves the committed
 web/dist as it is: nothing is built there, so after a change in web/ run `npm run build`
-in web/ and commit web/dist before deploying.
+in web/ and commit web/dist before deploying. The Space builds on Python 3.10 (it ignores a
+newer python_version), so requirements.txt is resolved for 3.10, not exported from uv.lock
+(3.13); after a change to the dependencies in pyproject.toml, run this and commit the result:
+
+    uv pip compile pyproject.toml --python-version 3.10 --python-platform linux -o requirements.txt
+
+It reads the pydantic<=2.12.5 constraint from [tool.uv] in pyproject.toml, which the Space's
+gradio[mcp] install needs.
 
 Uploads exactly the files git tracks, as they are in the last commit, and nothing else: no
 history, no ignored files. It refuses when the working tree has uncommitted changes, when a
@@ -59,7 +66,7 @@ def export_head(folder):
     with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
         tar.extractall(folder_path, filter="data")
     # Ensure Hugging Face Spaces receives required YAML frontmatter even when repo README omits it.
-    # python_version matches requires-python in pyproject.toml.
+    # python_version: the Python the Space builds on, which requirements.txt is resolved for.
     readme = folder_path / "README.md"
     if readme.exists():
         content = readme.read_bytes()
@@ -69,14 +76,14 @@ def export_head(folder):
                 "title: Sunn\n"
                 "sdk: gradio\n"
                 "sdk_version: 6.32.0\n"
-                "python_version: \"3.13\"\n"
+                "python_version: \"3.10\"\n"
                 "app_file: app.py\n"
                 "pinned: false\n"
                 "short_description: Speech aid for dysarthric speech, Hindi and Indian English\n"
                 "---\n\n"
             )
-            # Bytes, not text: write_text turns every \n into \r\n on Windows, and HF didn't
-            # read the front matter with \r\n endings (it built on the default Python 3.10).
+            # Bytes, not text: write_text turns every \n into \r\n on Windows, and the front
+            # matter must reach HF with \n line endings.
             readme.write_bytes(hf_header.encode("utf-8") + content)
 
 

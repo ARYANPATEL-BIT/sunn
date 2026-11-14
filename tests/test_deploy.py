@@ -268,7 +268,7 @@ def test_deployment_dry_run_preflight_check():
 
 def test_exported_readme_starts_with_one_front_matter_block(tmp_path):
     """HF reads the Space's settings from one front matter block at the top of README.md, with
-    \n line endings (written as text on Windows it got \r\n, and HF built on Python 3.10)."""
+    \n line endings (written as text on Windows it got \r\n)."""
     import sys
     from pathlib import Path
 
@@ -283,6 +283,6 @@ def test_exported_readme_starts_with_one_front_matter_block(tmp_path):
     lines = readme.split(b"\n")
     assert lines[1] != b"---"
     front_matter = lines[1:lines.index(b"---", 1)]
-    assert b'python_version: "3.13"' in front_matter
+    assert b'python_version: "3.10"' in front_matter
     assert b"sdk: gradio" in front_matter
     assert not any(line.endswith(b"\r") for line in front_matter)

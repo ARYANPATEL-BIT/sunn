@@ -101,12 +101,17 @@ cd web; npm ci; npm run build; cd ..
 git add web/dist
 ```
 
-After a change to the dependencies in `pyproject.toml`, export `requirements.txt` again and
-commit it too:
+After a change to the dependencies in `pyproject.toml`, build `requirements.txt` again and
+commit it too. The Space builds on Python 3.10, so the file is resolved for 3.10 Linux, not
+exported from `uv.lock` (which is for your local 3.13 setup):
 
 ```powershell
-uv export --frozen --no-hashes --no-dev --no-emit-project -o requirements.txt
+uv pip compile pyproject.toml --python-version 3.10 --python-platform linux -o requirements.txt
 ```
+
+It reads the `pydantic<=2.12.5` constraint from `[tool.uv]` in `pyproject.toml`: the Space
+installs `gradio[oauth,mcp]==6.32.0`, whose `mcp` extra needs that. Writing over the existing
+file keeps its pins wherever they still fit. No torch is pinned: the Space installs it itself.
 
 Commit what you want deployed, then run the script again:
 
@@ -140,9 +145,11 @@ uv run scripts/deploy_space.py --check-only
 ```
 
 The script adds front matter to the top of the uploaded `README.md` (`sdk: gradio`,
-`sdk_version: 6.32.0`, `python_version: "3.13"`, `app_file: app.py`), which is what Hugging
+`sdk_version: 6.32.0`, `python_version: "3.10"`, `app_file: app.py`), which is what Hugging
 Face reads as the Space's settings, so the Space's `README.md` is replaced by the repo's on
-every deploy. `python_version` matches `requires-python` in `pyproject.toml`; the Space
+every deploy. The Gradio Space builds on Python 3.10 whatever `python_version` says (it
+ignored `"3.13"`), so the code and `requirements.txt` are kept 3.10-compatible, while
+`requires-python` in `pyproject.toml` stays `>=3.13` for local work; the Space
 installs that Gradio version next to `requirements.txt` (the app doesn't use Gradio, but the
 SDK installs it, and its fastapi, starlette and pydantic ranges fit the pinned versions). The
 Space rebuilds on every upload; follow it in the **Logs** tab. It is ready

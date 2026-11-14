@@ -198,5 +198,6 @@ def test_my_usage_counts_each_limit(env):
     usage = client.get("/me/usage").json()
     assert {quota: usage[quota]["used"] for quota in usage} == {"stt": 2, "tts": 1, "enroll": 3}
     for quota in usage:
-        assert datetime.fromisoformat(usage[quota]["resets_at"]) == first_call_plus_a_day(quota)
+        resets_at = usage[quota]["resets_at"].replace("Z", "+00:00")  # 3.10's fromisoformat can't read Z
+        assert datetime.fromisoformat(resets_at) == first_call_plus_a_day(quota)
     assert env.signup().get("/me/usage").json()["stt"]["used"] == 0  # someone else's are their own
