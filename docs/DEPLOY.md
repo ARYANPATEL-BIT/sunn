@@ -1,9 +1,13 @@
 # Deploying Sunn
 
-Sunn ships as one Docker image (`Dockerfile` at the repo root): it builds the web app with
-Node, installs the backend with uv, and runs `src/server.py`, which serves the API under
-`/api` and the web app everywhere else, on port 7860. These steps put it on a free Hugging
-Face Docker Space. Commands are for Windows PowerShell, from the repo root.
+Sunn runs as one Python process: `src/server.py` serves the API under `/api` and the built
+web app (`web/dist`) everywhere else, on port 7860. These steps put it on a free Hugging Face
+**Gradio** Space (Docker Spaces on the free CPU basic hardware now need HF PRO). A Gradio
+Space installs `requirements.txt` with pip and runs `app.py` with Python; `app.py` starts
+`src/server.py` on `0.0.0.0:7860`, as the Dockerfile's CMD does. The Space builds nothing
+else: there is no Node there, so it serves the `web/dist` you committed. The `Dockerfile`
+stays for running the same thing in a container elsewhere (below). Commands are for Windows
+PowerShell, from the repo root.
 
 ## Settings
 
@@ -31,7 +35,7 @@ Everything comes from environment variables. Locally they live in `.env` (copy
 
 | Option | Cost | HTTPS / Mic Support | Data Persistence | Best Used For |
 | - | - | - | - | - |
-| **Hugging Face Docker Space** | Free | Yes (Native HTTPS direct URL) | Ephemeral on free tier (resets on restart) | Public challenge submission and mentor review |
+| **Hugging Face Gradio Space** | Free | Yes (Native HTTPS direct URL) | Ephemeral on free tier (resets on restart) | Public challenge submission and mentor review |
 | **Local Secure Tunnel** (`cloudflared`) | Free | Yes (`*.trycloudflare.com` HTTPS) | 100% persistent (`data/app.db` on host disk) | Live evaluator demos from developer laptop |
 | **Self-Hosted VPS** (Docker + Volume) | Low / Paid | Yes (via Caddy, Nginx, or Let's Encrypt) | 100% persistent (`-v data:/home/user/app/data`) | Long-running pilot programs and care centers |
 
@@ -71,7 +75,7 @@ whole server. Logins are limited per email, not per address, so the proxy doesn'
    ```powershell
    uv run hf auth login
    ```
-2. Open https://huggingface.co/new-space. Pick a name (say `sunn`), choose **Docker** as the
+2. Open https://huggingface.co/new-space. Pick a name (say `sunn`), choose **Gradio** as the
    SDK with the **Blank** template, and the free **CPU basic** hardware. Make it **Public**, so
    judges can open it without an account. Create it.
 3. In the Space, open **Settings → Variables and secrets** and add:
@@ -88,6 +92,21 @@ whole server. Logins are limited per email, not per address, so the proxy doesn'
    ```
 
 ## Every later deploy
+
+The Space serves `web/dist` exactly as committed, so after any change in `web/`, rebuild it
+and commit the result first, or the Space keeps the old web app:
+
+```powershell
+cd web; npm ci; npm run build; cd ..
+git add web/dist
+```
+
+After a change to the dependencies in `pyproject.toml`, export `requirements.txt` again and
+commit it too:
+
+```powershell
+uv export --frozen --no-hashes --no-dev --no-emit-project -o requirements.txt
+```
 
 Commit what you want deployed, then run the script again:
 
@@ -120,9 +139,13 @@ To see what would be uploaded without uploading anything:
 uv run scripts/deploy_space.py --check-only
 ```
 
-The front matter at the top of `README.md` (`sdk: docker`, `app_port: 7860`) is what Hugging
+The script adds front matter to the top of the uploaded `README.md` (`sdk: gradio`,
+`sdk_version: 6.32.0`, `python_version: "3.13"`, `app_file: app.py`), which is what Hugging
 Face reads as the Space's settings, so the Space's `README.md` is replaced by the repo's on
-every deploy. The Space rebuilds on every upload; follow it in the **Logs** tab. It is ready
+every deploy. `python_version` matches `requires-python` in `pyproject.toml`; the Space
+installs that Gradio version next to `requirements.txt` (the app doesn't use Gradio, but the
+SDK installs it, and its fastapi, starlette and pydantic ranges fit the pinned versions). The
+Space rebuilds on every upload; follow it in the **Logs** tab. It is ready
 when the log shows `Uvicorn running on http://0.0.0.0:7860`. Files deleted from the repo stay
 on the Space until you delete them in its **Files** tab.
 
@@ -207,7 +230,8 @@ microphone and the Secure cookie both work), or run the smoke test against
 `-v "${PWD}\data:/home/user/app/data"` to keep it in your `data/` folder instead.
 
 Without Docker: `cd web; npm ci; npm run build; cd ..` then `uv run src/server.py` serves the
-same thing on http://127.0.0.1:7860.
+same thing on http://127.0.0.1:7860. `uv run app.py` runs exactly what the Space runs (on
+`0.0.0.0:7860`, so other machines on your network can reach it too).
 
 ## Gnani Speech Integration, Credit Conservation & Smoke Testing
 

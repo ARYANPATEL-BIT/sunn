@@ -1,4 +1,8 @@
-"""Deploy the last commit to a Hugging Face Docker Space (docs/DEPLOY.md).
+"""Deploy the last commit to a Hugging Face Gradio Space (docs/DEPLOY.md).
+
+The Space runs app.py with the packages in requirements.txt and serves the committed
+web/dist as it is: nothing is built there, so after a change in web/ run `npm run build`
+in web/ and commit web/dist before deploying.
 
 Uploads exactly the files git tracks, as they are in the last commit, and nothing else: no
 history, no ignored files. It refuses when the working tree has uncommitted changes, when a
@@ -55,6 +59,7 @@ def export_head(folder):
     with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
         tar.extractall(folder_path, filter="data")
     # Ensure Hugging Face Spaces receives required YAML frontmatter even when repo README omits it.
+    # python_version matches requires-python in pyproject.toml.
     readme = folder_path / "README.md"
     if readme.exists():
         content = readme.read_text(encoding="utf-8")
@@ -62,8 +67,10 @@ def export_head(folder):
             hf_header = (
                 "---\n"
                 "title: Sunn\n"
-                "sdk: docker\n"
-                "app_port: 7860\n"
+                "sdk: gradio\n"
+                "sdk_version: 6.32.0\n"
+                "python_version: \"3.13\"\n"
+                "app_file: app.py\n"
                 "pinned: false\n"
                 "short_description: Speech aid for dysarthric speech, Hindi and Indian English\n"
                 "---\n\n"
