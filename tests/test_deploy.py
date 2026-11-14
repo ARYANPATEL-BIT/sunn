@@ -264,3 +264,25 @@ def test_deployment_dry_run_preflight_check():
     assert "docs/SUBMISSION_PACKAGE.md" in res.stdout
     assert "data/app.db" not in res.stdout
     assert ".env" not in res.stdout.splitlines()
+
+
+def test_exported_readme_starts_with_one_front_matter_block(tmp_path):
+    """HF reads the Space's settings from one front matter block at the top of README.md, with
+    \n line endings (written as text on Windows it got \r\n, and HF built on Python 3.10)."""
+    import sys
+    from pathlib import Path
+
+    scripts_dir = str(Path(__file__).resolve().parent.parent / "scripts")
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    import deploy_space
+
+    deploy_space.export_head(tmp_path)
+    readme = (tmp_path / "README.md").read_bytes()
+    assert readme.startswith(b"---\n")
+    lines = readme.split(b"\n")
+    assert lines[1] != b"---"
+    front_matter = lines[1:lines.index(b"---", 1)]
+    assert b'python_version: "3.13"' in front_matter
+    assert b"sdk: gradio" in front_matter
+    assert not any(line.endswith(b"\r") for line in front_matter)

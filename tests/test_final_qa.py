@@ -46,7 +46,7 @@ def test_gitignore_protects_local_data_and_secrets():
     assert "!data/default_phrases_*.txt" in ignored_patterns
     assert "logs/" in ignored_patterns
     assert "web/node_modules/" in ignored_patterns
-    assert "web/dist/" in ignored_patterns
+    assert "web/dist/" not in ignored_patterns  # committed: the Gradio Space has no Node to build it
     assert "web/certs/" in ignored_patterns
 
 

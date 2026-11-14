@@ -37,6 +37,10 @@ train = [
     "transformers>=4.56.0",
 ]
 
+[tool.uv]
+# gradio[mcp] 6.32.0, which the HF Gradio Space installs next to requirements.txt, needs pydantic<=2.12.5.
+constraint-dependencies = ["pydantic<=2.12.5"]
+
 [tool.uv.sources]
 torch = { index = "pytorch-cu128" }
 

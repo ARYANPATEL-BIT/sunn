@@ -115,9 +115,9 @@ pooch==1.9.0
     # via librosa
 pycparser==3.11 ; implementation_name != 'PyPy'
     # via cffi
-pydantic==2.14.1
+pydantic==2.12.5
     # via fastapi
-pydantic-core==2.50.1
+pydantic-core==2.41.5
     # via pydantic
 pygments==2.21.0
     # via rich

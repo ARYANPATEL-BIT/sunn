@@ -62,8 +62,8 @@ def export_head(folder):
     # python_version matches requires-python in pyproject.toml.
     readme = folder_path / "README.md"
     if readme.exists():
-        content = readme.read_text(encoding="utf-8")
-        if not content.startswith("---"):
+        content = readme.read_bytes()
+        if not content.startswith(b"---"):
             hf_header = (
                 "---\n"
                 "title: Sunn\n"
@@ -75,7 +75,9 @@ def export_head(folder):
                 "short_description: Speech aid for dysarthric speech, Hindi and Indian English\n"
                 "---\n\n"
             )
-            readme.write_text(hf_header + content, encoding="utf-8")
+            # Bytes, not text: write_text turns every \n into \r\n on Windows, and HF didn't
+            # read the front matter with \r\n endings (it built on the default Python 3.10).
+            readme.write_bytes(hf_header.encode("utf-8") + content)
 
 
 def blocked_paths(files):
