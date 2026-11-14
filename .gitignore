@@ -1,5 +1,6 @@
 .env
 .env.*
+.env.backup
 !.env.example
 .venv/
 __pycache__/
@@ -22,3 +23,11 @@ web/.env.*
 !web/.env.example
 web/reference/
 web/certs/
+.neon
+node_modules/
+# Neon CLI setup at the repo root (neon init): kept local, never committed. Root-only, so web/package.json stays tracked.
+/neon.ts
+/package.json
+/package-lock.json
+# Throwaway test recordings.
+/backend/tmp/

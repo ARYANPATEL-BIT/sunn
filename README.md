@@ -192,8 +192,8 @@ flowchart TD
         TrickySvc["Tricky Sound Evidence Aggregator"]
     end
 
-    subgraph Storage ["Persistent Local Storage"]
-        DB[("SQLite Database - 11 Tables")]
+    subgraph Storage ["Storage"]
+        DB[("Postgres on Neon - 11 Tables")]
         AudioDisk["User Audio File Store"]
         TTSCache["TTS Audio Cache"]
     end
@@ -236,7 +236,7 @@ flowchart TD
   - Lucide React icon library.
 - **Backend Service**:
   - Python 3.12 / 3.14 with FastAPI and Uvicorn.
-  - SQLite3 with parameterized queries and foreign-key integrity.
+  - Postgres (Neon) through psycopg 3, with parameterized queries, foreign keys and numbered SQL migrations.
   - Password security via bcrypt with cryptographic salt rounds.
   - HTTP-only signed session cookies (`sunn_session`).
 - **Speech and AI Engines**:
@@ -277,7 +277,7 @@ sunn/
 │   └── validate_trainings.py   # Training content schema validator
 ├── src/                        # FastAPI backend application
 │   ├── api.py                  # Authentication, speak, phrases, and settings routes
-│   ├── db.py                   # SQLite schema, migrations, and transactional helpers
+│   ├── db.py                   # Postgres connection pool, migrations, and transactional helpers
 │   ├── gnani.py                # Gnani Prisma and Timbre HTTP client with retry logic
 │   ├── gnani_mock.py           # Zero-cost local mock provider for development/testing
 │   ├── matcher.py              # Levenshtein distance and phonetic alignment
@@ -393,7 +393,9 @@ All external service credentials reside strictly on the server:
 | `GROQ_MODEL` | No | `openai/gpt-oss-120b` | Groq model identifier |
 | `LLM_ENABLED` | No | `true` | Enable or disable LLM alternative phrasing |
 | `LLM_TIMEOUT_S` | No | `3` | Maximum timeout for LLM inference |
-| `DATA_DIR` | No | `data` | Directory for SQLite database and audio files |
+| `DATABASE_URL` | Yes | none | Postgres connection string: the Neon dev branch locally, production's on the Space (secret) |
+| `TEST_DATABASE_URL` | For tests | none | The local Docker Postgres the tests empty (docs/DEPLOY.md) |
+| `DATA_DIR` | No | `data` | Directory for audio recordings and caches, which may be lost |
 | `STT_DAILY_LIMIT` | No | `20` | Prisma calls per account in a rolling 24 hours (Speak, training checks) |
 | `TTS_DAILY_LIMIT` | No | `20` | Timbre calls per account in a rolling 24 hours (speaking, previews, voice cloning) |
 | `ENROLL_DAILY_LIMIT` | No | `40` | Prisma calls per account in a rolling 24 hours for recording phrases while teaching Sunn |
@@ -445,7 +447,7 @@ The Sunn backend exposes 28 REST endpoints:
 Sunn maintains an exhaustive verification suite across backend and frontend:
 
 ```bash
-# 1. Run all backend unit and integration tests (294 tests)
+# 1. Run all backend unit and integration tests, on the local Docker Postgres (docs/DEPLOY.md)
 GNANI_MOCK=1 uv run pytest
 
 # 2. Run i18n translation key parity and unit checks (18 tests)
@@ -477,7 +479,7 @@ uv run scripts/deploy_space.py --check-only
 - **Local Audio Storage**: Recordings and voice embeddings are partitioned in user-specific local directories (`data/users/:id/`).
 - **Child Privacy**: Lessons in the `kids-speaking` category do not persist speech transcripts to disk or database.
 - **Zero Log Leakage**: Server logs (`logs/app.log`) capture operational metrics, timings, and status codes. Personal audio, phrase text, passwords, and tokens are never logged.
-- **Full Account Deletion**: `DELETE /me` completely removes user records from all SQLite tables and purges audio directories on disk.
+- **Full Account Deletion**: `DELETE /me` completely removes user records from all database tables and purges audio directories on disk.
 
 ---
 

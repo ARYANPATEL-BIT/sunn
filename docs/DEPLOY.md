@@ -21,6 +21,7 @@ Everything comes from environment variables. Locally they live in `.env` (copy
 
 | name | needed | what it does |
 | - | - | - |
+| `DATABASE_URL` | yes, secret | the Postgres connection string (Neon, below). The app refuses to start without it. On the Space: the **production** branch's pooled URL; locally: the **dev** branch's |
 | `GNANI_STT_API_KEY` | yes, secret | the Gnani Prisma Speech-to-Text API key |
 | `GNANI_TTS_API_KEY` | yes, secret | the Gnani Timbre Text-to-Speech API key |
 | `GROQ_API_KEY` | optional, secret | the Groq Cloud API key for AI assistant features |
@@ -34,21 +35,35 @@ Everything comes from environment variables. Locally they live in `.env` (copy
 | `ENROLL_DAILY_LIMIT` | no (default 40) | Prisma calls for recording phrases while teaching Sunn, apart from `STT_DAILY_LIMIT` |
 | `LIMIT_EXEMPT_EMAILS` | no (default `OWNER_EMAIL`) | comma-separated accounts the three limits never apply to |
 | `OWNER_EMAIL` | no | the account that may read `GET /api/admin/usage`, and by default exempt from the daily limits |
-| `DATA_DIR` | no (default `data`) | where the database, recordings and caches go |
+| `DATA_DIR` | no (default `data`) | where recordings and the Gnani caches go; none of it has to survive a restart |
+| `TEST_DATABASE_URL` | tests only, never on the Space | the local Docker Postgres the tests empty (below) |
 
 ## Hosting Options Comparison
 
 | Option | Cost | HTTPS / Mic Support | Data Persistence | Best Used For |
 | - | - | - | - | - |
-| **Hugging Face Gradio Space** | Free | Yes (Native HTTPS direct URL) | Ephemeral on free tier (resets on restart) | Public challenge submission and mentor review |
-| **Local Secure Tunnel** (`cloudflared`) | Free | Yes (`*.trycloudflare.com` HTTPS) | 100% persistent (`data/app.db` on host disk) | Live evaluator demos from developer laptop |
-| **Self-Hosted VPS** (Docker + Volume) | Low / Paid | Yes (via Caddy, Nginx, or Let's Encrypt) | 100% persistent (`-v data:/home/user/app/data`) | Long-running pilot programs and care centers |
+| **Hugging Face Gradio Space** | Free | Yes (Native HTTPS direct URL) | Database kept (Neon); recordings and caches reset on restart | Public challenge submission and mentor review |
+| **Local Secure Tunnel** (`cloudflared`) | Free | Yes (`*.trycloudflare.com` HTTPS) | Database kept (Neon); files on the host disk | Live evaluator demos from developer laptop |
+| **Self-Hosted VPS** (Docker + Volume) | Low / Paid | Yes (via Caddy, Nginx, or Let's Encrypt) | Database kept (Neon); files kept with `-v data:/home/user/app/data` | Long-running pilot programs and care centers |
 
-### Storage Persistence Trade-offs
+### What survives a restart
 
-1. **Free Hugging Face Space**: The container filesystem is ephemeral. Reboots, idle sleep (after 48 hours), or redeployments wipe `data/` (SQLite database, user recordings, and cached TTS audio). To preserve demo accounts, run `scripts/load_demo.py` after a restart, or enable Hugging Face persistent disk in Space settings.
-2. **Local Tunnel**: All writes persist directly into your local `data/` directory. Zero data loss across reboots. Requires keeping your development computer awake and connected to the internet during demonstration.
-3. **Container Volumes**: When deploying to any Docker VPS or container host, always mount a persistent volume to `/home/user/app/data` to ensure user profiles and speech fingerprints survive container restarts.
+Everything that has to last is in the Postgres database on Neon (below): accounts, phrases,
+the Prisma transcripts the matcher uses, uses, usage counts and trainings progress. A restart,
+idle sleep or redeploy of the Space doesn't touch it.
+
+The Space's disk is still wiped on every restart, and with it what `DATA_DIR` holds. None of
+that is needed after the request that wrote it:
+
+| on disk | what it is | after a wipe |
+| - | - | - |
+| `data/users/<id>/*.wav` | enrollment and recognition recordings | matching keeps working: it uses `samples.prisma_hypothesis` from the database, not the audio. Deleting a sample or account skips a missing file |
+| `data/users/<id>/voice/` | the voice-clone embedding cache and phrases spoken in the cloned voice | the embedding is also in `users.voice_embedding`; a phrase is synthesized again (one Timbre call) |
+| `data/cache/tts/` | stock-voice Timbre audio (about 300 KB a phrase) | synthesized again on next use (one Timbre call each) |
+| `data/cache/prisma/` | Prisma transcripts by audio hash | only a re-sent identical recording would have hit it |
+| `data/mock/`, `logs/app.log` | mock silence, the JSON log | made again |
+
+Too big for the database (the audio) or not worth keeping (caches), and no paid storage is used.
 
 ### Why TRUST_PROXY is on for Hugging Face and off locally
 
@@ -72,6 +87,64 @@ front and dodge the 5-accounts limit. Each new account still has its own daily s
 (`STT_DAILY_LIMIT`, `TTS_DAILY_LIMIT`, `ENROLL_DAILY_LIMIT`), and `GNANI_CALL_LIMIT` caps the
 whole server. Logins are limited per email, not per address, so the proxy doesn't affect them.
 
+## The database (Neon Postgres)
+
+Sunn keeps its data in a Neon Postgres project with two branches:
+
+- **production**: the Space's database. Its pooled connection string lives only in the Space's
+  secret `DATABASE_URL`, never in a local file. To copy it to the clipboard without showing it:
+  `neon connection-string production --pooled | clip`, then paste it into the Space's secret.
+- **dev**: for running the app locally. `neon checkout dev` (or `neon env pull --branch dev`)
+  writes its `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `NEON_BRANCH` and `NEON_BRANCH_ID` into
+  `.env` without printing them, and leaves your other lines alone. Don't run
+  `neon checkout production` in this folder: it would put production's URL into `.env`.
+
+`neon init` also left `neon.ts`, `package.json`, `package-lock.json` and `.neon` in the repo
+root. They are for the Neon CLI only and are git-ignored.
+
+**The schema** is the numbered SQL files in `src/migrations/`. At start the app applies the ones
+not yet listed in the `schema_migrations` table, each in one transaction, under an advisory lock
+so two processes starting together can't both apply one. To change the schema, add the next
+numbered file; never edit one that has been applied.
+
+**Compute hours.** Neon's free plan suspends the compute after a few idle minutes and counts the
+hours it runs. The app lets it sleep: its connection pool keeps no connection open while idle
+(`min_size` 0, idle connections closed after 5 minutes, no keep-alive pings), and `/api/health`
+asks the database at most once a minute, so a health poller can't keep it awake. Nothing in
+this repo or the Space polls `/api/health` on a timer. A real request wakes the compute, which
+takes a second or two; a connect that fails is retried once, straight away, and a statement is
+never retried. Every page load asks `/api/auth/me`, which reads the database, so visitors and
+crawlers wake it.
+
+**Gnani call counts are for good now.** `api_calls` is in the database, so it survives restarts:
+`GNANI_CALL_LIMIT` (4000) caps the Space's sent calls for its whole life, not per container, and
+the per-account daily limits really cover 24 hours. Raise the variable when it runs out.
+
+**The rate limit stays atomic.** `gnani.reserve` checks `GNANI_CALL_LIMIT` and the account's
+daily limit and records the call in one transaction that first takes
+`pg_advisory_xact_lock`, so two requests, even on two servers, can't both take the last call.
+The lock is released at commit and works through Neon's pooler.
+
+**Tests never touch Neon.** pytest and the e2e server run on a local Postgres in Docker, emptied
+before every test, and refuse to start unless `TEST_DATABASE_URL` is set, differs from
+`DATABASE_URL` and isn't on Neon. With Docker Desktop running:
+
+```powershell
+# once: make the container (Postgres 17 on port 5433, so it can't clash with one on 5432)
+docker run -d --name sunn-test-pg -e POSTGRES_PASSWORD=sunn-test -e POSTGRES_DB=sunn_test -p 5433:5432 postgres:17
+# later
+docker start sunn-test-pg
+docker stop sunn-test-pg
+```
+
+with `TEST_DATABASE_URL=postgresql://postgres:sunn-test@localhost:5433/sunn_test?sslmode=disable`
+in `.env` (as in `.env.example`).
+
+**Old local data.** `scripts/copy_sqlite_to_postgres.py` copies a pre-Postgres `data/app.db`
+into the dev branch, once. It is a dry run unless you pass `--apply`, refuses unless `.env`'s
+`NEON_BRANCH` is `dev`, refuses a target that already has users, keeps the ids, and skips
+`api_calls` unless `--with-api-calls`. It never prints connection details.
+
 ## First deploy
 
 1. Make a free **write** token at https://huggingface.co/settings/tokens and sign in with it
@@ -85,7 +158,8 @@ whole server. Logins are limited per email, not per address, so the proxy doesn'
    Make it **Public**, so
    judges can open it without an account. Create it.
 3. In the Space, open **Settings → Variables and secrets** and add:
-   - **New secret**: `GNANI_STT_API_KEY`, `GNANI_TTS_API_KEY`, `JWT_SECRET`, `GROQ_API_KEY`
+   - **New secret**: `DATABASE_URL` (production's pooled URL, above), `GNANI_STT_API_KEY`,
+     `GNANI_TTS_API_KEY`, `JWT_SECRET`, `GROQ_API_KEY`
    - **New variable**: `TRUST_PROXY` = `1`, `GNANI_CALL_LIMIT`, `GROQ_MODEL`, and optionally
      `OWNER_EMAIL`, `STT_DAILY_LIMIT`, `TTS_DAILY_LIMIT`, `ENROLL_DAILY_LIMIT`, `LIMIT_EXEMPT_EMAILS`
 
@@ -189,10 +263,13 @@ curl -s https://<you>-sunn.hf.space/api/health
 
 Expected response:
 ```json
-{"status": "ok"}
+{"status": "ok", "database": "up"}
 ```
 
-The health check executes a database query (`SELECT 1`) to ensure SQLite is readable and writable without leaking environment variables, secrets, or file paths.
+When the database can't be reached it answers 503 with `{"status": "error", "database": "down"}`.
+The database check (`SELECT 1`) runs at most once a minute and the answer is remembered in
+between, so polling `/api/health` doesn't keep Neon's compute awake. Neither answer says which
+database it is: no host, URL or error message.
 
 ### 2. Operational Logging and Log Rotation
 
@@ -215,18 +292,16 @@ When `OWNER_EMAIL` is configured:
 
 - **It sleeps.** A free Space pauses after 48 hours without visitors. The next visitor
   wakes it, which takes a while (the container starts again).
-- **Data resets.** The Space's disk is wiped whenever the container restarts: after it wakes
-  from sleep, after every upload, and when Hugging Face restarts it. Every account,
-  recording and cached Gnani answer is gone. Load the demo account again afterwards
-  (`scripts/load_demo.py --url https://<you>-sunn.hf.space/api`, docs/DEMO_DATA.md). Since
-  the cache is gone too, each reload sends one Prisma call per enrollment recording, and
-  those count against the demo account's `ENROLL_DAILY_LIMIT` (list it in `LIMIT_EXEMPT_EMAILS`
-  to load more than 40). Hugging Face sells persistent storage;
-  this setup doesn't use it.
+- **The disk resets, the database doesn't.** The Space's disk is wiped whenever the container
+  restarts: after it wakes from sleep, after every upload, and when Hugging Face restarts it.
+  Recordings and cached Gnani audio go with it (see "What survives a restart"); accounts,
+  phrases, usage and trainings progress stay in Neon. The demo account only needs loading once
+  (`scripts/load_demo.py --url https://<you>-sunn.hf.space/api`, docs/DEMO_DATA.md).
 - **Credits.** Every non-cached Prisma, Timbre and voice clone call spends Gnani credit.
-  `GNANI_CALL_LIMIT` caps the whole server, and `STT_DAILY_LIMIT`, `TTS_DAILY_LIMIT` and
-  `ENROLL_DAILY_LIMIT` each account over a rolling 24 hours; both answer 429 once used up
-  (`credit_limit_reached`, `daily_limit`).
+  `GNANI_CALL_LIMIT` caps the whole server for good (the counts are in the database), and
+  `STT_DAILY_LIMIT`, `TTS_DAILY_LIMIT` and `ENROLL_DAILY_LIMIT` each account over a rolling 24
+  hours; both answer 429 once used up (`credit_limit_reached`, `daily_limit`). After a restart
+  the Timbre cache is empty, so a phrase spoken again costs one more call.
 
 ## Run the same image locally
 
@@ -239,8 +314,9 @@ docker run --rm -p 7860:7860 --env-file .env -e TRUST_PROXY=0 sunn
 
 Then open http://localhost:7860 (desktop browsers treat localhost as a secure context, so the
 microphone and the Secure cookie both work), or run the smoke test against
-`http://127.0.0.1:7860/api`. Data stays inside the container and is gone when it stops; add
-`-v "${PWD}\data:/home/user/app/data"` to keep it in your `data/` folder instead.
+`http://127.0.0.1:7860/api`. It uses the database in `.env`'s `DATABASE_URL` (the dev
+branch). Recordings and caches stay inside the container and are gone when it stops; add
+`-v "${PWD}\data:/home/user/app/data"` to keep them in your `data/` folder instead.
 
 Without Docker: `cd web; npm ci; npm run build; cd ..` then `uv run src/server.py` serves the
 same thing on http://127.0.0.1:7860. `uv run app.py` runs exactly what the Space runs (on
@@ -256,7 +332,8 @@ Sunn operates under a strict credit conservation policy to protect the limited h
 2. **Batch Generation Safeguards**: The training catalog contains 128 audio keys. Audio files are intentionally NOT generated in bulk. The lesson player handles ungenerated audio gracefully without blocking navigation or checking.
 3. **Multi-Tier Safeguards**:
    - Per-call caching via SHA-256 hashes of normalized request parameters and audio bytes in `data/cache/prisma/` and `data/cache/tts/`.
-   - Global hard stop: `GNANI_CALL_LIMIT` (default: 4000) prevents total project overage.
+   - Global hard stop: `GNANI_CALL_LIMIT` (default: 4000) prevents total project overage. It counts
+     every call the server has ever sent, since `api_calls` lives in the database.
    - Per-user limits over a rolling 24 hours, checked and recorded in one database transaction before
      each call: `STT_DAILY_LIMIT` (20, Speak and training checks), `TTS_DAILY_LIMIT` (20) and
      `ENROLL_DAILY_LIMIT` (40, teaching phrases). Accounts in `LIMIT_EXEMPT_EMAILS` (default
@@ -446,4 +523,4 @@ To stop or remove the live demo and avoid unnecessary resource usage:
 **Rationale**:
 1. Anyone finding the Space address can create an account, so each account gets at most 20 recognitions, 20 spoken phrases and 40 setup recordings in 24 hours, and one address at most 5 new accounts an hour.
 2. `GNANI_CALL_LIMIT` stays the hard stop for the whole server, whatever the number of accounts.
-3. Free Hugging Face Spaces wipe container storage upon reboot. Real patient recordings must never be stored on ephemeral public cloud tiers; only synthetic demo data should be demonstrated.
+3. The demo runs on free tiers: a public Space whose disk is wiped on reboot, and a free Neon project that now keeps accounts and transcripts across restarts. Real patients' recordings or data must never go there; only synthetic demo data should be demonstrated.
