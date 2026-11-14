@@ -1,6 +1,5 @@
-import os
-import sqlite3
 import sys
+from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, "src")
 import auth
@@ -16,12 +15,17 @@ GROUP_CONTEXTS = {
 }
 URGENT_PHRASES = {"मदद चाहिए", "दर्द हो रहा है", "I need help", "I'm in pain"}
 
+
+def ago(**delta):
+    """An ISO timestamp that long before now, in UTC, as the app writes them."""
+    return (datetime.now(timezone.utc) - timedelta(**delta)).isoformat(timespec="seconds")
+
 def seed():
     email = "demo@sunn.app"
     password = "password123"
     
     # Remove existing demo user if present
-    existing = db.row("SELECT id FROM users WHERE email = ?", (email,))
+    existing = db.row("SELECT id FROM users WHERE email = %s", (email,))
     if existing:
         db.delete_user(existing["id"])
     
@@ -29,10 +33,10 @@ def seed():
     pw_hash = auth.hash_password(password)
     db.execute(
         """INSERT INTO users (name, email, password_hash, language, consent_given_at, caregiver_name, caregiver_phone, use_own_voice)
-           VALUES (?, ?, ?, ?, datetime('now'), ?, ?, ?)""",
-        ("Asha", email, pw_hash, "en", "Dr. Ananya", "+919876543210", 0)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+        ("Asha", email, pw_hash, "en", ago(), "Dr. Ananya", "+919876543210", 0)
     )
-    user = db.row("SELECT * FROM users WHERE email = ?", (email,))
+    user = db.row("SELECT * FROM users WHERE email = %s", (email,))
     uid = user["id"]
     print(f"Created demo user id {uid}")
 
@@ -47,11 +51,11 @@ def seed():
             elif text:
                 urgent = 1 if text in URGENT_PHRASES else 0
                 db.execute(
-                    "INSERT INTO phrases (user_id, text, contexts, urgent) VALUES (?, ?, ?, ?)",
+                    "INSERT INTO phrases (user_id, text, contexts, urgent) VALUES (%s, %s, %s, %s)",
                     (uid, text, contexts, urgent)
                 )
 
-    phrases = db.rows("SELECT id, text FROM phrases WHERE user_id = ?", (uid,))
+    phrases = db.rows("SELECT id, text FROM phrases WHERE user_id = %s", (uid,))
     print(f"Added {len(phrases)} phrases")
 
     # Add 3 enroll samples per phrase so all are ready and Speak is unlocked
@@ -59,41 +63,40 @@ def seed():
         for i in range(3):
             db.execute(
                 """INSERT INTO samples (user_id, phrase_id, audio_path, prisma_hypothesis, source, created_at, language, speech_source)
-                   VALUES (?, ?, ?, ?, 'enroll', datetime('now', '-' || ? || ' days'), 'en', 'pilot')""",
-                (uid, p["id"], f"audio/sample_{p['id']}_{i}.wav", p["text"], i)
+                   VALUES (%s, %s, %s, %s, 'enroll', %s, 'en', 'pilot')""",
+                (uid, p["id"], f"audio/sample_{p['id']}_{i}.wav", p["text"], ago(days=i))
             )
 
     # Add usage records for progress screen
     for i, p in enumerate(phrases[:12]):
         for j in range(i + 2):
             db.execute(
-                "INSERT INTO uses (user_id, phrase_id, created_at) VALUES (?, ?, datetime('now', '-' || ? || ' hours'))",
-                (uid, p["id"], j * 4)
+                "INSERT INTO uses (user_id, phrase_id, created_at) VALUES (%s, %s, %s)",
+                (uid, p["id"], ago(hours=j * 4))
             )
 
     # Add training progress and practice minutes
     db.execute(
-        "INSERT OR REPLACE INTO training_progress (user_id, lesson_id, step_index, completed_at, updated_at) "
-        "VALUES (?, 'easy-starts-1', 5, datetime('now', '-2 days'), datetime('now', '-2 days'))",
-        (uid,)
+        "INSERT INTO training_progress (user_id, lesson_id, step_index, completed_at, updated_at) "
+        "VALUES (%s, 'easy-starts-1', 5, %s, %s)",
+        (uid, ago(days=2), ago(days=2))
     )
     db.execute(
-        "INSERT OR REPLACE INTO training_progress (user_id, lesson_id, step_index, completed_at, updated_at) "
-        "VALUES (?, 'easy-starts-2', 3, NULL, datetime('now', '-1 hours'))",
-        (uid,)
+        "INSERT INTO training_progress (user_id, lesson_id, step_index, completed_at, updated_at) "
+        "VALUES (%s, 'easy-starts-2', 3, NULL, %s)",
+        (uid, ago(hours=1))
     )
     for d in range(5):
         db.execute(
-            "INSERT OR REPLACE INTO training_minutes (user_id, day, seconds) "
-            "VALUES (?, date('now', '-' || ? || ' days'), ?)",
-            (uid, d, 420 + d * 60)
+            "INSERT INTO training_minutes (user_id, day, seconds) VALUES (%s, %s, %s)",
+            (uid, ago(days=d)[:10], 420 + d * 60)
         )
     # Reflections and attempts for tricky sounds evidence ('s' and 'sh')
     for _ in range(2):
         db.execute(
             "INSERT INTO training_reflections (user_id, lesson_id, step_id, feeling, created_at) "
-            "VALUES (?, 's-and-sh-2', 's-and-sh-2-reflect', 'hard', datetime('now'))",
-            (uid,)
+            "VALUES (%s, 's-and-sh-2', 's-and-sh-2-reflect', 'hard', %s)",
+            (uid, ago())
         )
 
     print("Demo account successfully seeded!")

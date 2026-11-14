@@ -56,7 +56,7 @@ def bank(user):
     least one enrollment recording in the user's current language."""
     found = {}
     for s in db.rows("SELECT p.text, p.contexts, s.prisma_hypothesis FROM samples s JOIN phrases p ON p.id = s.phrase_id"
-                     " WHERE s.user_id = ? AND s.source = 'enroll' AND s.language = ? ORDER BY s.id",
+                     " WHERE s.user_id = %s AND s.source = 'enroll' AND s.language = %s ORDER BY s.id",
                      (user["id"], user["language"])):
         found.setdefault(s["text"], (s["contexts"].split(","), []))[1].append(s["prisma_hypothesis"])
     return found
@@ -173,9 +173,9 @@ def plot(account, summary, samples, phrases):
 
 
 def evaluate(email, folder):
-    user = db.row("SELECT * FROM users WHERE email = ?", (email.strip().lower(),))
+    user = db.row("SELECT * FROM users WHERE email = %s", (email.strip().lower(),))
     if user is None:
-        raise SystemExit(f"no account {email} in {db.DB_PATH}; load it with scripts/load_demo.py first")
+        raise SystemExit(f"no account {email} in the database; load it with scripts/load_demo.py first")
     phrases = bank(user)
     tests = [r for r in read_manifest(folder) if r["kind"] == "test"]
     missing = sorted({r["phrase"] for r in tests} - phrases.keys())

@@ -14,8 +14,8 @@ gradio[mcp] install needs.
 Uploads exactly the files git tracks, as they are in the last commit, and nothing else: no
 history, no ignored files. It refuses when the working tree has uncommitted changes, when a
 file is one that must never leave this machine (.env*, data/, logs/, web/certs/,
-web/reference/, *.db), or when a file contains the GNANI_API_KEY or JWT_SECRET from the local
-.env (or the environment).
+web/reference/, *.db), or when a file contains a secret from the local .env (or the
+environment): the API keys, JWT_SECRET, or DATABASE_URL, whose password is looked for on its own too.
 
     uv run scripts/deploy_space.py --space <you>/sunn
     uv run scripts/deploy_space.py --check-only    # list what would be uploaded, upload nothing
@@ -31,6 +31,7 @@ import tarfile
 import tempfile
 from fnmatch import fnmatchcase
 from pathlib import Path
+from urllib.parse import urlparse
 
 from dotenv import dotenv_values
 
@@ -43,7 +44,11 @@ BLOCKED = [".env*", "*/.env*", "data/*", "logs/*", "web/certs/*", "web/reference
 # Tracked on purpose: the template with placeholder values, and the default phrase lists the
 # image needs (the same exceptions as .gitignore and .dockerignore).
 ALLOWED = [".env.example", "data/default_phrases_*.txt"]
-SECRETS = ["GNANI_STT_API_KEY", "GNANI_TTS_API_KEY", "GNANI_API_KEY", "JWT_SECRET", "GROQ_API_KEY", "LLM_API_KEY"]
+SECRETS = ["GNANI_STT_API_KEY", "GNANI_TTS_API_KEY", "GNANI_API_KEY", "JWT_SECRET", "GROQ_API_KEY", "LLM_API_KEY",
+           "DATABASE_URL", "DATABASE_URL_UNPOOLED"]
+# Connection strings: their password is searched for as well, so a pasted URL for another Neon
+# branch of the same role (production's, say) is caught even though it isn't .env's.
+URL_SECRETS = {"DATABASE_URL", "DATABASE_URL_UNPOOLED"}
 # Safe default placeholders from .env.example that should not be flagged as real secrets.
 SAFE_PLACEHOLDERS = {
     "your-key-here",
@@ -53,6 +58,7 @@ SAFE_PLACEHOLDERS = {
     "generate-one-with-the-command-above",
     "change-me",
     "placeholder",
+    "postgresql://USER:PASSWORD@HOST-pooler.REGION.aws.neon.tech/neondb?sslmode=require",
     "",
 }
 
@@ -108,7 +114,11 @@ def files_with_secrets(files, folder, env_path):
         if value in SAFE_PLACEHOLDERS:
             print(f"note: {name} is set to placeholder '{value}' in {env_path}, skipping secret leak check")
             continue
-        found += [f"{f} ({name})" for f in files if value.encode() in (folder / f).read_bytes()]
+        needles = [value]
+        if name in URL_SECRETS and (password := urlparse(value).password) and len(password) >= 8:
+            needles.append(password)
+        found += [f"{f} ({name})" for f in files
+                  if any(needle.encode() in (folder / f).read_bytes() for needle in needles)]
     return found
 
 
@@ -162,6 +172,6 @@ if __name__ == "__main__":
     print(f"open it at {api.space_info(args.space).host} (follow the build in the Logs tab of "
           f"https://huggingface.co/spaces/{args.space})")
     print("the Space needs these in Settings > Variables and secrets:\n"
-          "  secrets:   GNANI_STT_API_KEY, GNANI_TTS_API_KEY, JWT_SECRET, GROQ_API_KEY\n"
+          "  secrets:   DATABASE_URL, GNANI_STT_API_KEY, GNANI_TTS_API_KEY, JWT_SECRET, GROQ_API_KEY\n"
           "  variables: TRUST_PROXY=1, GNANI_CALL_LIMIT, GROQ_MODEL, and optionally OWNER_EMAIL,\n"
           "             STT_DAILY_LIMIT, TTS_DAILY_LIMIT, ENROLL_DAILY_LIMIT, LIMIT_EXEMPT_EMAILS")
