@@ -25,6 +25,9 @@ HEALTH_SECONDS = 60  # how long /health remembers its answer, so a poller can't 
 # How long a query waits for a connection: room for a connect (connect_timeout 10 s, while Neon's
 # compute wakes from idle) and the one retry after it.
 WAIT_SECONDS = 25
+# A connection back in the pool for longer than this is pinged before it is used, since Neon may
+# have closed it (it does when its compute suspends); a newer one is used straight away.
+CHECK_IDLE_SECONDS = 30
 
 _pool = None
 _health = {"at": None, "up": False}
@@ -60,17 +63,29 @@ def _conninfo():
     return make_conninfo(**params)
 
 
+def _returned(conn):
+    conn._returned_at = time.monotonic()
+
+
+def _check(conn):
+    """Ping only a connection idle over CHECK_IDLE_SECONDS; one just made has no _returned_at."""
+    if time.monotonic() - getattr(conn, "_returned_at", time.monotonic()) > CHECK_IDLE_SECONDS:
+        ConnectionPool.check_connection(conn)
+
+
 def pool():
     """The connection pool, made on first use. It holds no connection while the app is idle
     (min_size 0, idle ones closed after 5 minutes, no pings), so Neon can suspend its compute.
     A failed connect is tried once more straight away, then given up (reconnect_timeout 0): only
-    connecting is retried, never a statement. No prepared statements: Neon's pooler is PgBouncer."""
+    connecting is retried, never a statement. No prepared statements: Neon's pooler is PgBouncer.
+    Autocommit, so a single statement is one round trip (no BEGIN, no COMMIT); connection()
+    opens a transaction for whatever needs one."""
     global _pool
     if _pool is None:
         _pool = ConnectionPool(
             _conninfo(), min_size=0, max_size=5, max_idle=300, reconnect_timeout=0, timeout=WAIT_SECONDS,
-            check=ConnectionPool.check_connection,  # on checkout only: drops one Neon closed while idle
-            kwargs={"row_factory": dict_row, "prepare_threshold": None, "connect_timeout": 10},
+            check=_check, reset=_returned,
+            kwargs={"autocommit": True, "row_factory": dict_row, "prepare_threshold": None, "connect_timeout": 10},
             open=True, name="sunn")
     return _pool
 
@@ -85,14 +100,21 @@ def close():
 
 
 @contextmanager
-def connection():
-    """A pooled connection holding one transaction: committed when the block ends, rolled
-    back when it raises."""
+def _autocommit():
+    """A pooled connection on which each statement commits by itself: for a single statement."""
     try:
         with pool().connection() as conn:
             yield conn
     except (psycopg.OperationalError, PoolTimeout) as e:
         raise DatabaseUnavailable(f"the database could not be reached ({type(e).__name__})") from None
+
+
+@contextmanager
+def connection():
+    """A pooled connection holding one transaction: committed when the block ends, rolled
+    back when it raises."""
+    with _autocommit() as conn, conn.transaction():
+        yield conn
 
 
 def init():
@@ -112,18 +134,21 @@ def init():
 
 
 def rows(sql, params=()):
-    with connection() as conn:
+    with _autocommit() as conn:
         return conn.execute(sql, params).fetchall()
 
 
 def row(sql, params=()):
-    with connection() as conn:
+    with _autocommit() as conn:
         return conn.execute(sql, params).fetchone()
 
 
 def execute(sql, params=()):
-    """Run one write and commit it; returns the first column it returns (RETURNING id)."""
-    return transaction((sql, params))
+    """Run one write, committed by itself; returns the first column it returns (RETURNING id)."""
+    with _autocommit() as conn:
+        cursor = conn.execute(sql, params)
+        found = cursor.fetchone() if cursor.description else None
+        return next(iter(found.values())) if found else None
 
 
 def transaction(*statements):

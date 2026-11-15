@@ -16,15 +16,21 @@ DIST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
 
 class WebApp(StaticFiles):
     """web/dist, answering index.html for a path that isn't a file there, so a reload of
-    /app/speak reaches React Router instead of a 404."""
+    /app/speak reaches React Router instead of a 404. The files under assets/ have a hash of
+    their content in their name, so a browser may keep them a year; index.html (the only other
+    file) is checked on every visit, so a deploy shows at once."""
 
     async def get_response(self, path, scope):
         try:
-            return await super().get_response(path, scope)
+            response = await super().get_response(path, scope)
+            # path has the OS's separators: assets\app.js on Windows
+            is_asset = path.replace(os.sep, "/").startswith("assets/")
         except HTTPException as e:
             if e.status_code != 404:
                 raise
-            return await super().get_response("index.html", scope)
+            response, is_asset = await super().get_response("index.html", scope), False
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable" if is_asset else "no-cache"
+        return response
 
 
 def make_app(dist=DIST):
